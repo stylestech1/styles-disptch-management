@@ -1,9 +1,23 @@
-import React from 'react'
+'use client'
 
-const Btns = () => {
+// Types
+type TBtns = {
+  children: React.ReactNode;
+  style?: string;
+  action?: () => void;
+  type?: "submit" | "button";
+};
+
+const Btns = ({ children, style, action, type }: TBtns) => {
   return (
-    <div>Btns</div>
-  )
-}
+    <button
+      type={type}
+      className={`${style} py-2 px-5 rounded-lg text-white bg-blue-700 hover:bg-blue-800 transition-colors cursor-pointer`}
+      onClick={() => action}
+    >
+      {children}
+    </button>
+  );
+};
 
-export default Btns
+export default Btns;

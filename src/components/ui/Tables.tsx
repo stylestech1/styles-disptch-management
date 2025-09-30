@@ -1,8 +1,14 @@
-import React from 'react'
+// Types
+type TTable ={
+  children : React.ReactNode
+  style?: string
+}
 
-const Tables = () => {
+const Tables = ({children, style} : TTable) => {
   return (
-    <div>Tables</div>
+    <table className={style}>
+      {children}
+    </table>
   )
 }
 

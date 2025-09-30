@@ -2,7 +2,9 @@ import React from 'react'
 
 const DispatcherDashboard = () => {
   return (
-    <div>DispatcherDashboard</div>
+    <section className='container mx-auto my-20'>
+      
+    </section>
   )
 }
 

@@ -1,8 +1,14 @@
-import React from 'react'
+// Types
+type TTaps = {
+  children : React.ReactNode
+  style: string
+}
 
-const Taps = () => {
+const Taps = ({children ,style} : TTaps) => {
   return (
-    <div>Taps</div>
+    <aside className={`${style} bg-gray-200 h-screen w-full`}>
+      {children}
+    </aside>
   )
 }
 
