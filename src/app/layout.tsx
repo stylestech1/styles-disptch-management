@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+// Importing Layout Components
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
-import Taps from '@/components/ui/Taps'
+// Importing Provider in RTK
+import ProviderRedux from "@/redux/provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,10 +32,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Header />
-        {/* {role === 'admin' ? <Taps role="admin" /> : <Taps role="dispatcher" />} */}
-        {children}
-        <Footer />
+        <ProviderRedux>
+          {/* <Header /> */}
+          {children}
+          {/* <Footer /> */}
+        </ProviderRedux>
       </body>
     </html>
   );
