@@ -6,7 +6,7 @@ import { useAppDispatch } from "@/redux/store";
 // Importing Next Components
 import { useRouter } from "next/navigation";
 // Importing React Hooks
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const Login = () => {
   const dispatch = useAppDispatch();
@@ -38,7 +38,10 @@ const Login = () => {
 
       if (!res.ok) throw new Error(result.message || "Invalid Credentials");
 
-      dispatch(loginSuccess(result));
+      dispatch(loginSuccess({
+        user: result.data,
+        token: result.token
+      }));
 
       if (result.data.role === "admin") {
         router.push("/admin/loads");

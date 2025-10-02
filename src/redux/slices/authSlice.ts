@@ -2,16 +2,24 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { TUserRole } from "@/types/globalTypes";
 // types
+type TUser = {
+  id: string
+  name: string
+  active: boolean
+  email: string
+  phone: string
+  role: TUserRole
+  position: string
+  jobId: number
+}
 type TAuthState = {
-  user: {
-    id: string;
-    name: string;
-    role: TUserRole;
-  } | null;
+  user: TUser | null;
+  token: string | null;
 };
 
 const initialState: TAuthState = {
   user: null,
+  token: null,
 };
 
 const authSlice = createSlice({
@@ -20,19 +28,15 @@ const authSlice = createSlice({
   reducers: {
     loginSuccess: (
       state,
-      action: PayloadAction<{ id: string; name: string; role: string }>
+      action: PayloadAction<{ user: TUser; token: string }>
     ) => {
-      const rawRole = action.payload.role ?? "dispatcher";
-      const normalizedRole = rawRole.toLowerCase() as TUserRole;
-
-      state.user = {
-        id: action.payload.id,
-        name: action.payload.name,
-        role: normalizedRole,
-      };
+      state.user = action.payload.user
+      state.token = action.payload.token
+      localStorage.setItem("authToken", action.payload.token);
     },
     logout: (state) => {
       state.user = null;
+      state.token = null;
     },
   },
 });
