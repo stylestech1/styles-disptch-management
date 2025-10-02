@@ -22,7 +22,9 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<{ id: string; name: string; role: string }>
     ) => {
-      const normalizedRole = action.payload.role.toLowerCase() as TUserRole;
+      const rawRole = action.payload.role ?? "dispatcher";
+      const normalizedRole = rawRole.toLowerCase() as TUserRole;
+
       state.user = {
         id: action.payload.id,
         name: action.payload.name,
