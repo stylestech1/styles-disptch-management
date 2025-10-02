@@ -1,4 +1,7 @@
 "use client";
+import LocationAutocomplete, {
+  TPlace,
+} from "@/components/sections/LocationAutocomplete";
 import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
@@ -72,6 +75,9 @@ const LoadsPage = () => {
   const [popup, setPopup] = useState(false);
   const [drivers, setDrivers] = useState<TDriver[]>([]);
   const [truck, setTruck] = useState<TTruck[]>([]);
+  const [origin, setOrigin] = useState<TPlace | null>(null);
+  const [destination, setDestination] = useState<TPlace | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -179,6 +185,42 @@ const LoadsPage = () => {
 
     getDrivers();
   }, [apiURL, token]);
+
+  // Calc Mile
+  const haversineDistance = (
+    coords1: { lat: number; lon: number },
+    coords2: { lat: number; lon: number }
+  ) => {
+    const toRad = (x: number) => (x * Math.PI) / 180;
+    const R = 3958.8;
+
+    const dLat = toRad(coords2.lat - coords1.lat);
+    const dLon = toRad(coords2.lon - coords1.lon);
+
+    const lat1 = toRad(coords1.lat);
+    const lat2 = toRad(coords2.lat);
+
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+    return R * c;
+  };
+
+  // Get Miles
+  useEffect(() => {
+    if (origin && destination) {
+      const miles = haversineDistance(
+        { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) },
+        { lat: parseFloat(destination.lat), lon: parseFloat(destination.lon) }
+      );
+      setDistance(miles);
+    } else {
+      setDistance(null);
+    }
+  }, [origin, destination]);
 
   // set loading
   if (loading) return <Loading />;
@@ -344,29 +386,26 @@ const LoadsPage = () => {
             </button>
 
             <form className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="">Pick Up</label>
-                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
-                  <option value="newYork">New York</option>
-                  <option value="california">California</option>
-                  <option value="Sydni">Sydni</option>
-                </select>
-              </div>
+              <LocationAutocomplete
+                label="Pick Up (Origin)"
+                value={origin}
+                setValue={setOrigin}
+                placeholder="Enter origin"
+              />
 
-              <div className="flex flex-col gap-2">
-                <label htmlFor="">Deliver</label>
-                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
-                  <option value="newYork">New York</option>
-                  <option value="california">California</option>
-                  <option value="Sydni">Sydni</option>
-                </select>
-              </div>
+              <LocationAutocomplete
+                label="Deliver (Destination)"
+                value={destination}
+                setValue={setDestination}
+                placeholder="Enter destination"
+              />
 
               <div className="flex flex-col gap-2 col-span-2">
-                <label htmlFor="">Miles</label>
+                <label>Miles</label>
                 <input
                   type="text"
-                  className="border border-gray-500 p-2 rounded-lg bg-gray-100"
+                  value={distance ? distance.toFixed(2) : ""}
+                  className="border p-2 rounded bg-gray-100"
                   disabled
                 />
               </div>

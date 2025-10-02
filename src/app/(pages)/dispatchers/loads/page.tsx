@@ -5,9 +5,11 @@ import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { IoClose } from "react-icons/io5";
 
 // type
-type TStatus = "pending" | "in_transit" | "delivered" | "cancelled";
+type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
+type TStatusDriver = "inactive" | "available" | "busy";
 type TDriverID = {
   name: string;
   driverId: number;
@@ -26,10 +28,32 @@ type TLoads = {
   distanceMiles: number;
   pricePerMileCents: number;
   totalPriceCents: number;
-  status: TStatus;
+  status: TStatusLoad;
   driverId: TDriverID;
   truckId: TTruckId;
   deliveredAt: string;
+};
+type TDriver = {
+  id: string;
+  driverId: number;
+  name: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  status: TStatusDriver;
+  hireDate: string;
+  createdBy: string;
+};
+type TTruck = {
+  id: string;
+  truckId: number;
+  plateNumber: string;
+  model: string;
+  year: number;
+  capacity: number;
+  status: TStatusDriver;
+  createdBy: string;
+  updatedBy: string;
 };
 type TPagination = {
   currentPage: number;
@@ -45,11 +69,15 @@ const LoadsPage = () => {
   const [err, setErr] = useState("");
   const [pagination, setPagination] = useState<TPagination | null>(null);
   const [page, setPage] = useState(1);
+  const [popup, setPopup] = useState(false);
+  const [drivers, setDrivers] = useState<TDriver[]>([]);
+  const [truck, setTruck] = useState<TTruck[]>([]);
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
+  // Get all Loads
   useEffect(() => {
     if (!token) {
       console.log("No token found, redirecting to login");
@@ -92,21 +120,87 @@ const LoadsPage = () => {
     fetchLoads();
   }, [apiURL, token, router, page]);
 
+  // Get all driver
+  useEffect(() => {
+    setLoading(true);
+
+    const getDrivers = async () => {
+      try {
+        const res = await fetch(`${apiURL}/api/v1/drivers?status=available`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        setDrivers(result.data);
+      } catch (error) {
+        if (error instanceof Error) {
+          setErr(error.message || "Loading Failed");
+          alert(error.message || "Loading Failed");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDrivers();
+  }, [apiURL, token]);
+
+  // Get all trucks
+  useEffect(() => {
+    setLoading(true);
+
+    const getDrivers = async () => {
+      try {
+        const res = await fetch(`${apiURL}/api/v1/trucks`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        setTruck(result.data.data);
+      } catch (error) {
+        if (error instanceof Error) {
+          setErr(error.message || "Loading Failed");
+          alert(error.message || "Loading Failed");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDrivers();
+  }, [apiURL, token]);
+
   // set loading
   if (loading) return <Loading />;
 
   return (
-    <section>
+    <section className="relative">
+      {/* Titles */}
       <div className="flex items-center justify-between">
         <Titles>All Loads</Titles>
 
-        <button className="py-2 px-5 cursor-pointer text-white bg-green-700 hover:bg-green-800 transition-colors rounded-lg">
+        <button
+          onClick={() => setPopup(true)}
+          className="py-2 px-5 cursor-pointer text-white bg-green-700 hover:bg-green-800 transition-colors rounded-lg"
+        >
           Create New Load
         </button>
       </div>
 
+      {/* Errors */}
       {err && <Erros message={err} />}
 
+      {/* Table For Loads */}
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse border border-gray-200 my-10 text-center">
           <thead>
@@ -235,6 +329,124 @@ const LoadsPage = () => {
           >
             Next
           </button>
+        </div>
+      )}
+
+      {/* Popup | Modal */}
+      {popup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-white/20 backdrop-blur-sm z-50">
+          <div className="relative rounded-lg shadow-xl border border-gray-300 bg-white/80 backdrop-blur-md p-5 max-w-3xl w-full">
+            <button
+              onClick={() => setPopup(false)}
+              className="cursor-pointer text-red-600 absolute top-2 right-2"
+            >
+              <IoClose size={25} />
+            </button>
+
+            <form className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Pick Up</label>
+                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
+                  <option value="newYork">New York</option>
+                  <option value="california">California</option>
+                  <option value="Sydni">Sydni</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Deliver</label>
+                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
+                  <option value="newYork">New York</option>
+                  <option value="california">California</option>
+                  <option value="Sydni">Sydni</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2 col-span-2">
+                <label htmlFor="">Miles</label>
+                <input
+                  type="text"
+                  className="border border-gray-500 p-2 rounded-lg bg-gray-100"
+                  disabled
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Price</label>
+                <input
+                  type="number"
+                  className="border border-gray-500 p-2 rounded-lg"
+                  placeholder="9.9$"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Load Number</label>
+                <input
+                  type="number"
+                  className="border border-gray-500 p-2 rounded-lg bg-gray-100"
+                  disabled
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Load Status</label>
+                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
+                  <option value="pickedUp">Picked Up</option>
+                  <option value="in-transit">In-Transit</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Driver Name</label>
+                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
+                  {drivers.map((drv, i) => (
+                    <option key={i} value={drv.name}>
+                      {drv.name} - {drv.driverId}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Truck Number</label>
+                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
+                  {truck.map((trk, i) => (
+                    <option key={i} value={trk.truckId}>
+                      {trk.truckId}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Trailer Name</label>
+                <input
+                  type="text"
+                  className="border border-gray-500 p-2 rounded-lg"
+                  placeholder="Wick"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2 col-span-2">
+                <label htmlFor="">Load Status</label>
+                <input
+                  type="text"
+                  className="border border-gray-500 p-2 rounded-lg bg-gray-100"
+                  disabled
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full col-span-2 py-2 px-5 cursor-pointer text-white bg-green-700 hover:bg-green-800 transition-colors rounded-lg"
+              >
+                Create
+              </button>
+            </form>
+          </div>
         </div>
       )}
     </section>
