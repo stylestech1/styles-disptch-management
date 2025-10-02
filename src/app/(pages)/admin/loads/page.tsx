@@ -8,7 +8,8 @@ import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 
 // type
-type TStatus = "pending" | "in_transit" | "delivered" | "cancelled";
+type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
+type TStatusDriver = "inactive" | "available" | "busy";
 type TDriverID = {
   name: string;
   driverId: number;
@@ -27,10 +28,32 @@ type TLoads = {
   distanceMiles: number;
   pricePerMileCents: number;
   totalPriceCents: number;
-  status: TStatus;
+  status: TStatusLoad;
   driverId: TDriverID;
   truckId: TTruckId;
   deliveredAt: string;
+};
+type TDriver = {
+  id: string;
+  driverId: number;
+  name: string;
+  email: string;
+  phone: string;
+  licenseNumber: string;
+  status: TStatusDriver;
+  hireDate: string;
+  createdBy: string;
+};
+type TTruck = {
+  id: string;
+  truckId: number;
+  plateNumber: string;
+  model: string;
+  year: number;
+  capacity: number;
+  status: TStatusDriver;
+  createdBy: string;
+  updatedBy: string;
 };
 type TPagination = {
   currentPage: number;
@@ -47,6 +70,8 @@ const LoadsPage = () => {
   const [pagination, setPagination] = useState<TPagination | null>(null);
   const [page, setPage] = useState(1);
   const [popup, setPopup] = useState(false);
+  const [drivers, setDrivers] = useState<TDriver[]>([]);
+  const [truck, setTruck] = useState<TTruck[]>([]);
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -94,6 +119,66 @@ const LoadsPage = () => {
 
     fetchLoads();
   }, [apiURL, token, router, page]);
+
+  // Get all driver
+  useEffect(() => {
+    setLoading(true);
+
+    const getDrivers = async () => {
+      try {
+        const res = await fetch(`${apiURL}/api/v1/drivers?status=available`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        setDrivers(result.data);
+      } catch (error) {
+        if (error instanceof Error) {
+          setErr(error.message || "Loading Failed");
+          alert(error.message || "Loading Failed");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDrivers();
+  }, [apiURL, token]);
+
+  // Get all trucks
+  useEffect(() => {
+    setLoading(true);
+
+    const getDrivers = async () => {
+      try {
+        const res = await fetch(`${apiURL}/api/v1/trucks`, {
+          method: "GET",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const result = await res.json();
+        if (!res.ok) throw new Error(result.message);
+        setTruck(result.data.data);
+      } catch (error) {
+        if (error instanceof Error) {
+          setErr(error.message || "Loading Failed");
+          alert(error.message || "Loading Failed");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    getDrivers();
+  }, [apiURL, token]);
 
   // set loading
   if (loading) return <Loading />;
@@ -316,20 +401,24 @@ const LoadsPage = () => {
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="">Driver Name</label>
-                <input
-                  type="text"
-                  className="border border-gray-500 p-2 rounded-lg"
-                  placeholder="John"
-                />
+                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
+                  {drivers.map((drv, i) => (
+                    <option key={i} value={drv.name}>
+                      {drv.name} - {drv.driverId}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="">Truck Number</label>
-                <input
-                  type="number"
-                  className="border border-gray-500 p-2 rounded-lg"
-                  placeholder="abc-111"
-                />
+                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
+                  {truck.map((trk, i) => (
+                    <option key={i} value={trk.truckId}>
+                      {trk.truckId}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -343,12 +432,11 @@ const LoadsPage = () => {
 
               <div className="flex flex-col gap-2 col-span-2">
                 <label htmlFor="">Load Status</label>
-                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
-                  <option value="dispatcher1">Dispatcher 1</option>
-                  <option value="dispatcher2">Dispatcher 2</option>
-                  <option value="dispatcher3">Dispatcher 3</option>
-                  <option value="dispatcher4">Dispatcher 4</option>
-                </select>
+                <input
+                  type="text"
+                  className="border border-gray-500 p-2 rounded-lg bg-gray-100"
+                  disabled
+                />
               </div>
 
               <button
