@@ -6,19 +6,28 @@ import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
-import { TDriver, TLoads, TPagination, TTruck } from "@/types/globalTypes";
-import Link from "next/link";
+import {
+  TDriver,
+  TLoads,
+  TPagination,
+  TTruck,
+  TStatusLoad,
+} from "@/types/globalTypes";
+import { apiFetcher } from "@/utils/APIFetcher";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
 
 const LoadsPage = () => {
-  const [load, setLoad] = useState<TLoads[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [pagination, setPagination] = useState<TPagination | null>(null);
   const [page, setPage] = useState(1);
   const [popup, setPopup] = useState(false);
+  const [popupLoadStatus, setPopupLoadStatus] = useState(false);
+
+  const [load, setLoad] = useState<TLoads[]>([]);
   const [drivers, setDrivers] = useState<TDriver[]>([]);
   const [truck, setTruck] = useState<TTruck[]>([]);
   const [origin, setOrigin] = useState<TPlace | null>(null);
@@ -28,6 +37,8 @@ const LoadsPage = () => {
   const [driverId, setDriverId] = useState<string>("");
   const [truckId, setTruckId] = useState<string>("");
   const [currency, setCurrency] = useState<string>("USD");
+  const [selectedLoadId, setSelectedLoadId] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -172,28 +183,53 @@ const LoadsPage = () => {
     }
   }, [origin, destination]);
 
+  // helper: reload loads
+  const fetchLoads = async () => {
+    try {
+      setLoading(true);
+      const result = await apiFetcher(
+        `${apiURL}/api/v1/loads?page=${page}&limit=10`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setLoad(result.data);
+      setPagination(result.paginationResult);
+    } catch (error) {
+      if (error instanceof Error) {
+        setErr(error.message || "Loading Failed");
+        alert(error.message || "Loading Failed");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // fetch on mount
+  useEffect(() => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+    fetchLoads();
+  }, [apiURL, token, router, page]);
+
   // Create Load
   const handleCreateLoad = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const total = Number(price);
 
-    if (!origin || !destination) {
-      alert("Please select origin and destination");
-      return;
-    }
-    if (!driverId || !truckId) {
-      alert("Please select driver and truck");
-      return;
-    }
-    if (!total || total <= 0) {
-      alert("Please enter a valid total price");
-      return;
-    }
-    if (!distance || distance <= 0) {
-      alert("Invalid distance calculated");
-      return;
-    }
+    if (!origin || !destination)
+      return alert("Please select origin and destination");
+    if (!driverId || !truckId) return alert("Please select driver and truck");
+    if (!total || total <= 0) return alert("Please enter a valid total price");
+    if (!distance || distance <= 0) return alert("Invalid distance calculated");
 
     const body = {
       origin: { address: origin.display_name },
@@ -207,7 +243,7 @@ const LoadsPage = () => {
     };
 
     try {
-      const res = await fetch(`${apiURL}/api/v1/loads`, {
+      const result = await apiFetcher(`${apiURL}/api/v1/loads`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -216,17 +252,45 @@ const LoadsPage = () => {
         body: JSON.stringify(body),
       });
 
-      const result = await res.json();
-      console.log("Result = ", result);
+      toast.success(result.message || "Load created ✅", {
+        style: { background: "#16a34a", color: "#fff" },
+      });
 
-      if (!res.ok) throw new Error(result.message);
-
-      alert(result.message || "🚛 Load created successfully");
+      await fetchLoads();
       setPopup(false);
-      setLoad((prev) => [...prev, result.data]);
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
+      if (err instanceof Error) alert(err.message);
+    }
+  };
+
+  // Update Load Status
+  const handleUpdateLoadStatus = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLoadId) return alert("Please select a load");
+
+    try {
+      const result = await apiFetcher(
+        `${apiURL}/api/v1/loads/status/${selectedLoadId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: selectedStatus }),
+        }
+      );
+
+      toast.success(result.message || "Load updated ✅", {
+        style: { background: "#16a34a", color: "#fff" },
+      });
+
+      await fetchLoads();
+      setPopupLoadStatus(false);
+    } catch (error) {
+      if (error instanceof Error) {
+        setErr(error.message || "Update failed");
+        alert(error.message || "Update failed");
       }
     }
   };
@@ -240,12 +304,21 @@ const LoadsPage = () => {
       <div className="flex items-center justify-between">
         <Titles>All Loads</Titles>
 
-        <button
-          onClick={() => setPopup(true)}
-          className="py-2 px-5 cursor-pointer text-white bg-green-700 hover:bg-green-800 transition-colors rounded-lg"
-        >
-          Create New Load
-        </button>
+        <div className="flex items-center gap-5">
+          <button
+            onClick={() => setPopupLoadStatus(true)}
+            className="py-2 px-5 cursor-pointer text-white bg-blue-700 hover:bg-blue-800 transition-colors rounded-lg"
+          >
+            Update Load Status
+          </button>
+
+          <button
+            onClick={() => setPopup(true)}
+            className="py-2 px-5 cursor-pointer text-white bg-green-700 hover:bg-green-800 transition-colors rounded-lg"
+          >
+            Create New Load
+          </button>
+        </div>
       </div>
 
       {/* Errors */}
@@ -299,6 +372,12 @@ const LoadsPage = () => {
               <th className="border border-gray-500 p-2 capitalize">
                 delivered At
               </th>
+              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
+                Created By
+              </th>
+              <th className="border border-gray-500 p-2 capitalize">
+                Updated By
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -307,10 +386,10 @@ const LoadsPage = () => {
                 <tr key={i}>
                   <td className="border p-2">{load.loadId}</td>
                   <td className="border p-2">
-                    {load.origin ? load.origin : "-"}
+                    {load.origin ? load.origin.split(",")[0] : "-"}
                   </td>
                   <td className="border p-2">
-                    {load.destination ? load.destination : "-"}
+                    {load.destination ? load.destination.split(",")[0] : "-"}
                   </td>
                   <td className="border p-2">
                     {load.distanceMiles ? load.distanceMiles : "-"}
@@ -347,6 +426,12 @@ const LoadsPage = () => {
                   </td>
                   <td className="border p-2">
                     {load.deliveredAt ? load.deliveredAt.split("T")[0] : "-"}
+                  </td>
+                  <td className="border p-2">
+                    {load.createdBy ? load.createdBy : "-"}
+                  </td>
+                  <td className="border p-2">
+                    {load.updatedBy ? load.updatedBy : "-"}
                   </td>
                 </tr>
               ))
@@ -389,7 +474,7 @@ const LoadsPage = () => {
         </div>
       )}
 
-      {/* Popup | Modal */}
+      {/* Popup For Create Load */}
       {popup && (
         <div className="fixed inset-0 flex items-center justify-center bg-white/20 backdrop-blur-sm z-50">
           <div className="relative rounded-lg shadow-xl border border-gray-300 bg-white/80 backdrop-blur-md p-5 max-w-3xl w-full">
@@ -533,6 +618,68 @@ const LoadsPage = () => {
                 className="w-full col-span-2 py-2 px-5 cursor-pointer text-white bg-green-700 hover:bg-green-800 transition-colors rounded-lg"
               >
                 Create
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Popup For Update Load Status */}
+      {popupLoadStatus && (
+        <div className="fixed inset-0 flex items-center justify-center bg-white/20 backdrop-blur-sm z-50">
+          <div className="relative rounded-lg shadow-xl border border-gray-300 bg-white/80 backdrop-blur-md p-5 max-w-3xl w-full">
+            <button
+              onClick={() => setPopupLoadStatus(false)}
+              className="cursor-pointer text-white absolute top-3 right-3 p-1 rounded-lg bg-red-600"
+            >
+              <IoClose size={20} />
+            </button>
+
+            <form
+              onSubmit={handleUpdateLoadStatus}
+              className="mt-10 flex flex-col gap-5"
+            >
+              {/* Load ID */}
+              <div className="flex flex-col gap-2">
+                <label>Load ID</label>
+                <select
+                  className="border p-2 rounded cursor-pointer"
+                  value={selectedLoadId}
+                  onChange={(e) => setSelectedLoadId(e.target.value)}
+                  required
+                >
+                  <option value="">Select Load</option>
+                  {load.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.loadId}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Status */}
+              <div className="flex flex-col gap-2">
+                <label>Status</label>
+                <select
+                  className="border p-2 rounded cursor-pointer"
+                  value={selectedStatus}
+                  onChange={(e) =>
+                    setSelectedStatus(e.target.value as TStatusLoad)
+                  }
+                  required
+                >
+                  <option value="pending">Pending</option>
+                  <option value="in_transit">In Transit</option>
+                  <option value="delivered">Delivered</option>
+                  <option value="cancelled">Cancelled</option>
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full col-span-2 py-2 px-5 cursor-pointer text-white bg-orange-500 hover:bg-orange-600 transition-colors rounded-lg"
+              >
+                Update
               </button>
             </form>
           </div>
