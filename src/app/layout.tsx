@@ -6,6 +6,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 // Importing Provider in RTK
 import ProviderRedux from "@/redux/provider";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,6 +37,8 @@ export default function RootLayout({
           {/* <Header /> */}
           {children}
           {/* <Footer /> */}
+          <Toaster position="top-right" reverseOrder={false} />
+
         </ProviderRedux>
       </body>
     </html>

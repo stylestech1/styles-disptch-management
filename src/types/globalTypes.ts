@@ -21,6 +21,7 @@ export type TLoads = {
   currency: string;
   createdBy: string
   updatedBy?: string
+  cancelledAt?: string
 };
 export type TDriver = {
   id: string;

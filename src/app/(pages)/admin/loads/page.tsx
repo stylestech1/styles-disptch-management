@@ -16,7 +16,7 @@ import {
 import { apiFetcher } from "@/utils/APIFetcher";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
 
 const LoadsPage = () => {
@@ -303,6 +303,7 @@ const LoadsPage = () => {
       {/* Titles */}
       <div className="flex items-center justify-between">
         <Titles>All Loads</Titles>
+        <Toaster position="top-right" />
 
         <div className="flex items-center gap-5">
           <button
