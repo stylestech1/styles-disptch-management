@@ -6,65 +6,11 @@ import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
+import { TDriver, TLoads, TPagination, TTruck } from "@/types/globalTypes";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
-
-// type
-type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
-type TStatusDriver = "inactive" | "available" | "busy";
-type TDriverID = {
-  name: string;
-  driverId: number;
-  phone: string;
-};
-type TTruckId = {
-  model: string;
-  truckId: number;
-  plateNumber: string;
-};
-type TLoads = {
-  id?: string;
-  loadId: number;
-  origin: string;
-  destination: string;
-  distanceMiles: number;
-  pricePerMileCents: number;
-  totalPriceCents: number;
-  status: TStatusLoad;
-  driverId: TDriverID;
-  truckId: TTruckId;
-  deliveredAt: string;
-};
-type TDriver = {
-  id: string;
-  driverId: number;
-  name: string;
-  email: string;
-  phone: string;
-  licenseNumber: string;
-  status: TStatusDriver;
-  hireDate: string;
-  createdBy: string;
-};
-type TTruck = {
-  id: string;
-  truckId: number;
-  plateNumber: string;
-  model: string;
-  year: number;
-  capacity: number;
-  status: TStatusDriver;
-  createdBy: string;
-  updatedBy: string;
-};
-type TPagination = {
-  currentPage: number;
-  limit: number;
-  totalPages: number;
-  next?: number;
-  prev?: number;
-};
 
 const LoadsPage = () => {
   const [load, setLoad] = useState<TLoads[]>([]);
@@ -78,6 +24,10 @@ const LoadsPage = () => {
   const [origin, setOrigin] = useState<TPlace | null>(null);
   const [destination, setDestination] = useState<TPlace | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
+  const [price, setPrice] = useState<string>("");
+  const [driverId, setDriverId] = useState<string>("");
+  const [truckId, setTruckId] = useState<string>("");
+  const [currency, setCurrency] = useState<string>("USD");
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -162,7 +112,7 @@ const LoadsPage = () => {
 
     const getDrivers = async () => {
       try {
-        const res = await fetch(`${apiURL}/api/v1/trucks`, {
+        const res = await fetch(`${apiURL}/api/v1/trucks?status=available`, {
           method: "GET",
           headers: {
             "content-type": "application/json",
@@ -222,6 +172,65 @@ const LoadsPage = () => {
     }
   }, [origin, destination]);
 
+  // Create Load
+  const handleCreateLoad = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const total = Number(price);
+
+    if (!origin || !destination) {
+      alert("Please select origin and destination");
+      return;
+    }
+    if (!driverId || !truckId) {
+      alert("Please select driver and truck");
+      return;
+    }
+    if (!total || total <= 0) {
+      alert("Please enter a valid total price");
+      return;
+    }
+    if (!distance || distance <= 0) {
+      alert("Invalid distance calculated");
+      return;
+    }
+
+    const body = {
+      origin: { address: origin.display_name },
+      destination: { address: destination.display_name },
+      driverId,
+      truckId,
+      distanceMiles: Math.round(distance),
+      totalPrice: total,
+      pricePerMile: total / distance,
+      currency,
+    };
+
+    try {
+      const res = await fetch(`${apiURL}/api/v1/loads`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(body),
+      });
+
+      const result = await res.json();
+      console.log("Result = ", result);
+
+      if (!res.ok) throw new Error(result.message);
+
+      alert(result.message || "🚛 Load created successfully");
+      setPopup(false);
+      setLoad((prev) => [...prev, result.data]);
+    } catch (err) {
+      if (err instanceof Error) {
+        alert(err.message);
+      }
+    }
+  };
+
   // set loading
   if (loading) return <Loading />;
 
@@ -244,7 +253,7 @@ const LoadsPage = () => {
 
       {/* Table For Loads */}
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-200 my-10 text-center">
+        <table className="min-w-[1200px] w-full border-collapse border border-gray-200 my-10 text-center">
           <thead>
             <tr className="text-sm">
               <th className="border border-gray-500 p-2 capitalize">#</th>
@@ -258,36 +267,41 @@ const LoadsPage = () => {
                 distanceMiles
               </th>
               <th className="border border-gray-500 p-2 capitalize">
-                pricePerMileCents
+                pricePerMile
               </th>
               <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                totalPriceCents
+                totalPrice
               </th>
-              <th className="border border-gray-500 p-2 capitalize">status</th>
+              <th className="border border-gray-500 p-2 capitalize">
+                currency
+              </th>
               <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
+                status
+              </th>
+              <th className="border border-gray-500 p-2 capitalize">
                 driver name
               </th>
-              <th className="border border-gray-500 p-2 capitalize">
+              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
                 driver ID
               </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
+              <th className="border border-gray-500 p-2 capitalize">
                 driver phone
               </th>
-              <th className="border border-gray-500 p-2 capitalize">
+              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
                 turck model
               </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
+              <th className="border border-gray-500 p-2 capitalize">
                 truck ID
               </th>
-              <th className="border border-gray-500 p-2 capitalize">
+              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
                 plate Number
               </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
+              <th className="border border-gray-500 p-2 capitalize">
                 delivered At
               </th>
             </tr>
           </thead>
-          <tbody className="overflow-x-auto">
+          <tbody>
             {load.length > 0 ? (
               load.map((load, i) => (
                 <tr key={i}>
@@ -302,12 +316,13 @@ const LoadsPage = () => {
                     {load.distanceMiles ? load.distanceMiles : "-"}
                   </td>
                   <td className="border p-2">
-                    {load.pricePerMileCents
-                      ? load.pricePerMileCents + "¢"
-                      : "-"}
+                    {load.pricePerMile ? load.pricePerMile.toFixed(2) : "-"}
                   </td>
                   <td className="border p-2">
-                    {load.totalPriceCents ? load.totalPriceCents + "¢" : "-"}
+                    {load.totalPrice ? load.totalPrice : "-"}
+                  </td>
+                  <td className="border p-2">
+                    {load.currency ? load.currency : "-"}
                   </td>
                   <td className="border p-2">
                     {load.status ? load.status : "-"}
@@ -380,12 +395,15 @@ const LoadsPage = () => {
           <div className="relative rounded-lg shadow-xl border border-gray-300 bg-white/80 backdrop-blur-md p-5 max-w-3xl w-full">
             <button
               onClick={() => setPopup(false)}
-              className="cursor-pointer text-red-600 absolute top-2 right-2"
+              className="cursor-pointer text-white absolute top-3 right-3 p-1 rounded-lg bg-red-600"
             >
-              <IoClose size={25} />
+              <IoClose size={20} />
             </button>
 
-            <form className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <form
+              onSubmit={handleCreateLoad}
+              className="mt-10 grid grid-cols-1 md:grid-cols-2 gap-5"
+            >
               <LocationAutocomplete
                 label="Pick Up (Origin)"
                 value={origin}
@@ -411,12 +429,33 @@ const LoadsPage = () => {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor="">Price</label>
+                <label htmlFor="">Price Per Mile</label>
                 <input
                   type="number"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
                   className="border border-gray-500 p-2 rounded-lg"
                   placeholder="9.9$"
                 />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Currency</label>
+                <select
+                  className="border p-2 rounded"
+                  required
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                >
+                  <option value="" disabled>
+                    Select Currency
+                  </option>
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="EGP">EGP</option>
+                  <option value="GBP">GBP</option>
+                  <option value="SAR">SAR</option>
+                </select>
               </div>
 
               <div className="flex flex-col gap-2">
@@ -430,31 +469,42 @@ const LoadsPage = () => {
 
               <div className="flex flex-col gap-2">
                 <label htmlFor="">Load Status</label>
-                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
-                  <option value="pickedUp">Picked Up</option>
-                  <option value="in-transit">In-Transit</option>
-                  <option value="delivered">Delivered</option>
-                  <option value="paid">Paid</option>
-                </select>
+                <input
+                  type="number"
+                  className="border border-gray-500 p-2 rounded-lg bg-gray-100"
+                  disabled
+                />
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor="">Driver Name</label>
-                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
-                  {drivers.map((drv, i) => (
-                    <option key={i} value={drv.name}>
-                      {drv.name} - {drv.driverId}
+                <label>Driver</label>
+                <select
+                  className="border p-2 rounded"
+                  value={driverId}
+                  onChange={(e) => setDriverId(e.target.value)}
+                  required
+                >
+                  <option>Select Driver</option>
+                  {drivers.map((d, i) => (
+                    <option key={i} value={d.id}>
+                      {d.name} {"->"} {d.driverId}
                     </option>
                   ))}
                 </select>
               </div>
 
               <div className="flex flex-col gap-2">
-                <label htmlFor="">Truck Number</label>
-                <select className="border border-gray-500 p-2 rounded-lg cursor-pointer">
-                  {truck.map((trk, i) => (
-                    <option key={i} value={trk.truckId}>
-                      {trk.truckId}
+                <label>Truck</label>
+                <select
+                  className="border p-2 rounded"
+                  value={truckId}
+                  onChange={(e) => setTruckId(e.target.value)}
+                  required
+                >
+                  <option>Select Truck</option>
+                  {truck.map((t, i) => (
+                    <option key={i} value={t.id}>
+                      {t.model} - {t.truckId}
                     </option>
                   ))}
                 </select>
@@ -469,8 +519,8 @@ const LoadsPage = () => {
                 />
               </div>
 
-              <div className="flex flex-col gap-2 col-span-2">
-                <label htmlFor="">Load Status</label>
+              <div className="flex flex-col gap-2">
+                <label htmlFor="">Dispatcher</label>
                 <input
                   type="text"
                   className="border border-gray-500 p-2 rounded-lg bg-gray-100"
