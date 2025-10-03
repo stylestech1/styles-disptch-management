@@ -92,7 +92,6 @@ const DriversPage = () => {
       });
 
       const result = await res.json();
-      console.log("create driver result:", result);
 
       if (!res.ok) {
         if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
