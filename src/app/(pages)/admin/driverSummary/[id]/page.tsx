@@ -7,6 +7,18 @@ import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
 import { useParams } from "next/navigation";
+import { 
+  IoPersonCircleOutline, 
+  IoMailOutline, 
+  IoCallOutline,
+  IoIdCardOutline,
+  IoCalendarOutline,
+  IoCheckmarkCircleOutline,
+  IoStatsChart,
+  IoNavigate,
+  IoCashOutline,
+  IoTimeOutline
+} from "react-icons/io5";
 
 type TPeriod = {
   from: string;
@@ -125,151 +137,243 @@ const LoadSummary = () => {
     fetchLoadSummary();
   }, [apiURL, token, drivers, id]);
 
+  // Status badge component
+  const StatusBadge = ({ status }: { status: TStatusLoad }) => {
+    const statusConfig = {
+      pending: { color: "bg-amber-100 text-amber-800 border-amber-300", icon: <IoTimeOutline size={14} className="mr-1" /> },
+      in_transit: { color: "bg-blue-100 text-blue-800 border-blue-300", icon: <IoNavigate size={14} className="mr-1" /> },
+      delivered: { color: "bg-emerald-100 text-emerald-800 border-emerald-300", icon: <IoCheckmarkCircleOutline size={14} className="mr-1" /> },
+      cancelled: { color: "bg-red-100 text-red-800 border-red-300", icon: <IoTimeOutline size={14} className="mr-1" /> },
+    };
+
+    const config = statusConfig[status] || statusConfig.pending;
+
+    return (
+      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+        {config.icon}
+        {status.replace('_', ' ')}
+      </span>
+    );
+  };
+
   if (loading) return <Loading />;
 
   return (
-    <section className="container mx-auto">
-      {/* Titles */}
-      <div className="flex items-start justify-between">
+    <section className="container mx-auto p-6">
+      {/* Header */}
+      <div className="mb-8">
         <Titles>Driver Summary</Titles>
+        <p className="text-slate-600 mt-2 text-sm">Detailed overview of driver performance and loads</p>
+      </div>
 
-        <div className="flex items-center gap-5">
-          <div className="flex flex-wrap gap-5 border border-gray-700 rounded-lg p-5">
-            {profile && (
+      {/* Errors */}
+      {err && <div className="mb-6"><Erros message={err} /></div>}
+
+      {/* Profile and Summary Cards */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+        {/* Driver Profile Card */}
+        {profile && (
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center gap-4 mb-5">
+              <div className="p-3 bg-slate-100 rounded-xl">
+                <IoPersonCircleOutline size={28} className="text-slate-600" />
+              </div>
               <div>
-                <div className="flex items-center gap-3">
-                  <span className="font-bold">Name:</span>
-                  <span>{profile.name}</span>
-                </div>
+                <h3 className="text-lg font-semibold text-slate-800">{profile.name}</h3>
+                <p className="text-slate-500 text-sm mt-0.5">{profile.driverId}</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3.5">
+              <div className="flex items-center gap-3 text-sm">
+                <IoMailOutline className="text-slate-400 flex-shrink-0" size={16} />
+                <span className="text-slate-600 truncate">{profile.email}</span>
+              </div>
+              
+              <div className="flex items-center gap-3 text-sm">
+                <IoCallOutline className="text-slate-400 flex-shrink-0" size={16} />
+                <span className="text-slate-600">{profile.phone}</span>
+              </div>
+              
+              <div className="flex items-center gap-3 text-sm">
+                <IoIdCardOutline className="text-slate-400 flex-shrink-0" size={16} />
+                <span className="text-slate-600 font-mono text-xs">{profile.licenseNumber}</span>
+              </div>
+              
+              <div className="flex items-center gap-3 text-sm">
+                <IoCalendarOutline className="text-slate-400 flex-shrink-0" size={16} />
+                <span className="text-slate-600">
+                  {new Date(profile.hireDate).toLocaleDateString()}
+                </span>
+              </div>
+              
+              <div className="flex items-center gap-3 text-sm">
+                <IoCheckmarkCircleOutline className="text-slate-400 flex-shrink-0" size={16} />
+                <span className={`px-2.5 py-1 rounded-full text-xs font-medium`}>
+                  {profile.status}
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
 
-                <div className="flex items-center gap-3">
-                  <span className="font-bold">Email:</span>
-                  <span>{profile.email}</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="font-bold">Phone:</span>
-                  <span>{profile.phone}</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="font-bold">License Number:</span>
-                  <span>{profile.licenseNumber}</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="font-bold">Hire Date:</span>
-                  <span>{new Date(profile.hireDate).toLocaleDateString()}</span>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="font-bold">Status:</span>
-                  <span>{profile.status}</span>
+        {/* Summary Stats */}
+        {loadSummary.length > 0 && loadSummary.map((sum, i) => (
+          <div key={i} className="xl:col-span-2">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              {/* Total Loads Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">Total Loads</p>
+                    <p className="text-2xl font-bold text-slate-800">{sum.totalLoads}</p>
+                  </div>
+                  <div className="p-2.5 bg-blue-50 rounded-lg">
+                    <IoStatsChart size={20} className="text-blue-600" />
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
 
-          <div className="flex flex-wrap gap-5 border border-gray-700 rounded-lg p-5">
-            {loadSummary.length > 0 ? (
-              loadSummary.map((sum, i) => (
-                <div key={i}>
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">Total Loads</span>
-                    <span>{sum.totalLoads}</span>
+              {/* Total Miles Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">Total Miles</p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {sum.totalMiles.toLocaleString()}
+                    </p>
                   </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">Total Miles</span>
-                    <span>{sum.totalMiles}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">Total Earnings</span>
-                    <span>{sum.totalEarnings}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">Currency</span>
-                    <span>{sum.currency}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">Period From</span>
-                    <span>{sum.period.from.split("T")[0]}</span>
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <span className="font-bold">Period To</span>
-                    <span>{sum.period.to.split("T")[0]}</span>
+                  <div className="p-2.5 bg-emerald-50 rounded-lg">
+                    <IoNavigate size={20} className="text-emerald-600" />
                   </div>
                 </div>
-              ))
-            ) : (
-              <div>No data</div>
-            )}
+              </div>
+
+              {/* Total Earnings Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">Total Earnings</p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {sum.currency} {sum.totalEarnings.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="p-2.5 bg-amber-50 rounded-lg">
+                    <IoCashOutline size={20} className="text-amber-600" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Period Info */}
+            <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
+                <div className="flex items-center gap-2">
+                  <IoCalendarOutline size={14} className="flex-shrink-0" />
+                  <span>Period: </span>
+                  <span className="font-medium text-slate-700">
+                    {sum.period.from.split("T")[0]} to {sum.period.to.split("T")[0]}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span>Currency: </span>
+                  <span className="font-medium text-slate-700">{sum.currency}</span>
+                </div>
+              </div>
+            </div>
           </div>
+        ))}
+      </div>
+
+      {/* Loads Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <h3 className="text-lg font-semibold text-slate-800 mb-1">Load Details</h3>
+          <p className="text-slate-500 text-sm">Detailed breakdown of all loads</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-white border-b border-slate-200">
+              <tr>
+                <th className="text-left p-4 font-medium text-slate-600">Load ID</th>
+                <th className="text-left p-4 font-medium text-slate-600">Origin</th>
+                <th className="text-left p-4 font-medium text-slate-600">Destination</th>
+                <th className="text-right p-4 font-medium text-slate-600">Miles</th>
+                <th className="text-right p-4 font-medium text-slate-600">Price/Mile</th>
+                <th className="text-right p-4 font-medium text-slate-600">Total</th>
+                <th className="text-center p-4 font-medium text-slate-600">Status</th>
+                <th className="text-left p-4 font-medium text-slate-600">Truck</th>
+                <th className="text-center p-4 font-medium text-slate-600">Delivered</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200">
+              {loadSummary.length > 0 ? (
+                loadSummary.map((sum) =>
+                  sum.loads.map((load, i) => (
+                    <tr key={i} className="hover:bg-slate-50 transition-colors group">
+                      <td className="p-4 font-medium text-slate-900">
+                        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+                          {load.loadId}
+                        </span>
+                      </td>
+                      <td className="p-4 text-slate-700 max-w-[140px]">
+                        <div className="truncate" title={load.origin}>
+                          {load.origin.split(',')[0]}
+                        </div>
+                      </td>
+                      <td className="p-4 text-slate-700 max-w-[140px]">
+                        <div className="truncate" title={load.destination}>
+                          {load.destination.split(',')[0]}
+                        </div>
+                      </td>
+                      <td className="p-4 text-right text-slate-700 font-medium">
+                        {load.distanceMiles?.toLocaleString()}
+                      </td>
+                      <td className="p-4 text-right text-slate-700">
+                        {load.currency} {load.pricePerMile?.toFixed(2)}
+                      </td>
+                      <td className="p-4 text-right font-semibold text-emerald-700">
+                        {load.currency} {load.totalPrice?.toLocaleString()}
+                      </td>
+                      <td className="p-4 text-center">
+                        <StatusBadge status={load.status} />
+                      </td>
+                      <td className="p-4 text-slate-700 font-mono text-xs">
+                        {load.truckId?.truckId || '-'}
+                      </td>
+                      <td className="p-4 text-center text-slate-600 text-xs">
+                        {load.deliveredAt ? load.deliveredAt.split('T')[0] : '-'}
+                      </td>
+                    </tr>
+                  ))
+                )
+              ) : (
+                <tr>
+                  <td colSpan={9} className="px-4 py-12 text-center text-slate-500">
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="text-3xl mb-3">📦</div>
+                      <div className="text-slate-600">No load records found for this period</div>
+                      <div className="text-slate-400 text-sm mt-1">Please check the selected time range</div>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {err && <Erros message={err} />}
-
-      <div className="overflow-x-auto my-10">
-        <table className="min-w-full border-collapse border border-gray-200 my-5 text-center">
-          <thead>
-            <tr className="text-sm">
-              <th className="border p-2 capitalize">loadId</th>
-              <th className="border p-2 capitalize">origin</th>
-              <th className="border p-2 capitalize">destination</th>
-              <th className="border p-2 capitalize">distance Miles</th>
-              <th className="border p-2 capitalize">price Per Mile</th>
-              <th className="border p-2 capitalize">total Price</th>
-              <th className="border p-2 capitalize">currency</th>
-              <th className="border p-2 capitalize">status</th>
-              <th className="border p-2 capitalize">Driver Id</th>
-              <th className="border p-2 capitalize">Truck Id</th>
-              <th className="border p-2 capitalize">delivered At</th>
-              <th className="border p-2 capitalize">cancelled At</th>
-              <th className="border p-2 capitalize">created By</th>
-              <th className="border p-2 capitalize">updated By</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loadSummary.length > 0 ? (
-              loadSummary.map((sum) =>
-                sum.loads.map((load, i) => (
-                  <tr key={i}>
-                    <td className="border p-2">{load.loadId}</td>
-                    <td className="border p-2">{load.origin.split(',')[0]}</td>
-                    <td className="border p-2">{load.destination.split(',')[0]}</td>
-                    <td className="border p-2">{load.distanceMiles}</td>
-                    <td className="border p-2">{load.pricePerMile}</td>
-                    <td className="border p-2">{load.totalPrice}</td>
-                    <td className="border p-2">{load.currency}</td>
-                    <td className="border p-2">{load.status}</td>
-                    <td className="border p-2">{load.driverId.driverId}</td>
-                    <td className="border p-2">{load.truckId.truckId}</td>
-                    <td className="border p-2">{load.deliveredAt?.split('T')[0]}</td>
-                    <td className="border p-2">{load.cancelledAt ? load.cancelledAt?.split('T')[0] : '-'}</td>
-                    <td className="border p-2">
-                      {load.createdBy === 'undefined' ? "-" : load.createdBy}
-                    </td>
-                    <td className="border p-2">
-                      {load.updatedBy === 'undefined' ? "-" : load.updatedBy}
-                    </td>
-                  </tr>
-                ))
-              )
-            ) : (
-              <tr>
-                <td colSpan={19} className="px-4 py-8 text-gray-500">
-                  No Driver records found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      {/* Summary Footer */}
+      {loadSummary.length > 0 && (
+        <div className="mt-6 flex justify-end">
+          <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+            <p className="text-sm text-slate-600">
+              Showing {loadSummary.reduce((total, sum) => total + sum.loads.length, 0)} loads
+            </p>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
