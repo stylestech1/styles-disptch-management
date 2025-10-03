@@ -7,22 +7,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import toast from "react-hot-toast";
-
-type TTruck = {
-  id: string;
-  truckId: number;
-  plateNumber: string;
-  model: string;
-  year: number;
-  capacity: number;
-  status: string;
-  assignedDriver?: {
-    name: string;
-    driverId: number;
-  };
-  createdBy?: string;
-  updatedBy?: string;
-};
+import { TTruck } from "@/types/globalTypes";
 
 const TrucksPage = () => {
   const [trucks, setTrucks] = useState<TTruck[]>([]);
@@ -36,7 +21,7 @@ const TrucksPage = () => {
     model: "",
     year: "",
     capacity: "",
-    status: "available", 
+    status: "available",
   });
 
   const router = useRouter();
@@ -70,7 +55,6 @@ const TrucksPage = () => {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
           toast.error(error.message || "Loading Failed");
-
         }
       } finally {
         setLoading(false);
@@ -102,7 +86,7 @@ const TrucksPage = () => {
           model: newTruck.model,
           year: Number(newTruck.year),
           capacity: Number(newTruck.capacity),
-          status: newTruck.status.toLowerCase(), 
+          status: newTruck.status.toLowerCase(),
         }),
       });
 
@@ -111,7 +95,7 @@ const TrucksPage = () => {
 
       if (!res.ok) {
         if (result.errors && Array.isArray(result.errors)) {
-          result.errors.forEach((err: any) => {
+          result.errors.forEach((err: { msg?: string }) => {
             toast.error(err.msg || "Validation error");
           });
         } else {
@@ -120,10 +104,10 @@ const TrucksPage = () => {
         return;
       }
 
-
       toast.success("Truck created successfully!", {
         style: { background: "#16a34a", color: "#fff" },
-      });      setTrucks((prev) => [...prev, result.data]);
+      });
+      setTrucks((prev) => [...prev, result.data]);
       setPopup(false);
       setNewTruck({
         plateNumber: "",
@@ -134,9 +118,10 @@ const TrucksPage = () => {
       });
     } catch (error) {
       if (error instanceof Error) {
-   toast.error(error.message, {
+        toast.error(error.message, {
           style: { background: "#dc2626", color: "#fff" },
-        });      }
+        });
+      }
     }
   };
 
@@ -169,52 +154,44 @@ const TrucksPage = () => {
       {err && <Erros message={err} />}
 
       {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-200 my-10 text-center">
-          <thead>
-            <tr className="text-sm">
-              <th className="border border-gray-500 p-2">#</th>
-              <th className="bg-gray-100 border border-gray-500 p-2">
-                Truck ID
-              </th>
-              <th className="border border-gray-500 p-2">Plate Number</th>
-              <th className="bg-gray-100 border border-gray-500 p-2">Model</th>
-              <th className="border border-gray-500 p-2">Year</th>
-              <th className="bg-gray-100 border border-gray-500 p-2">
-                Capacity
-              </th>
-              <th className="border border-gray-500 p-2">Status</th>
-              <th className="bg-gray-100 border border-gray-500 p-2">Driver</th>
-              <th className="border border-gray-500 p-2">Created By</th>
-              <th className="bg-gray-100 border border-gray-500 p-2">
-                Updated By
-              </th>
+      <div className="overflow-x-auto my-10">
+        <table className="min-w-full border border-gray-200 rounded-lg shadow-md text-sm">
+          <thead className="bg-gray-800 text-white">
+            <tr className="text-sm text-white font-semibold uppercase">
+              <th className="p-3 text-left">#</th>
+              <th className="p-3 text-left">Truck ID</th>
+              <th className="p-3 text-left">Plate Number</th>
+              <th className="p-3 text-left">Model</th>
+              <th className="p-3 text-left">Year</th>
+              <th className="p-3 text-left">Capacity</th>
+              <th className="p-3 text-left">Status</th>
+              <th className="p-3 text-left">Driver</th>
+              <th className="p-3 text-left">Created By</th>
+              <th className="p-3 text-left">Updated By</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="text-gray-600">
             {filteredTrucks.length > 0 ? (
               filteredTrucks.map((truck, i) => (
-                <tr key={truck.id}>
-                  <td className="border p-2">{i + 1}</td>
-                  <td className="border p-2">{truck.truckId}</td>
-                  <td className="border p-2">{truck.plateNumber}</td>
-                  <td className="border p-2">{truck.model}</td>
-                  <td className="border p-2">{truck.year}</td>
-                  <td className="border p-2">{truck.capacity}</td>
-                  <td className="border p-2">{truck.status}</td>
-                  <td className="border p-2">
-                    {truck.assignedDriver?.name || "-"}
-                  </td>
-                  <td className="border p-2">{truck.createdBy || "-"}</td>
-                  <td className="border p-2">{truck.updatedBy || "-"}</td>
+                <tr
+                  key={truck.id}
+                  className="border-b hover:bg-gray-50 odd:bg-white even:bg-gray-50"
+                >
+                  <td className="p-3">{i + 1}</td>
+                  <td className="p-3">{truck.truckId}</td>
+                  <td className="p-3">{truck.plateNumber}</td>
+                  <td className="p-3">{truck.model}</td>
+                  <td className="p-3">{truck.year}</td>
+                  <td className="p-3">{truck.capacity}</td>
+                  <td className="p-3">{truck.status}</td>
+                  <td className="p-3">{truck.assignedDriver?.name || "-"}</td>
+                  <td className="p-3">{truck.createdBy || "-"}</td>
+                  <td className="p-3">{truck.updatedBy || "-"}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td
-                  colSpan={10}
-                  className="px-4 py-8 text-center text-gray-500"
-                >
+                <td colSpan={10} className="p-6 text-gray-400">
                   No Truck records found
                 </td>
               </tr>

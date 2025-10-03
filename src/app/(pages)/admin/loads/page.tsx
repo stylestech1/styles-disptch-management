@@ -326,114 +326,82 @@ const LoadsPage = () => {
       {err && <Erros message={err} />}
 
       {/* Table For Loads */}
-      <div className="overflow-x-auto">
-        <table className="min-w-[1200px] w-full border-collapse border border-gray-200 my-10 text-center">
-          <thead>
-            <tr className="text-sm">
-              <th className="border border-gray-500 p-2 capitalize">#</th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                Origin
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                destination
-              </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                distanceMiles
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                pricePerMile
-              </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                totalPrice
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                currency
-              </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                status
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                driver name
-              </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                driver ID
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                driver phone
-              </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                turck model
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                truck ID
-              </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                plate Number
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                delivered At
-              </th>
-              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
-                Created By
-              </th>
-              <th className="border border-gray-500 p-2 capitalize">
-                Updated By
-              </th>
+      <div className="overflow-x-auto my-10">
+        <table className="w-full border border-gray-200 rounded-lg shadow-md text-sm">
+          <thead className="bg-gray-800 text-white">
+            <tr>
+              <th className="p-3 text-left">#</th>
+              <th className="p-3 text-left">Origin</th>
+              <th className="p-3 text-left">Destination</th>
+              <th className="p-3 text-center">Distance (mi)</th>
+              <th className="p-3 text-center">Price/Mile</th>
+              <th className="p-3 text-center">Total Price</th>
+              <th className="p-3 text-center">Currency</th>
+              <th className="p-3 text-center">Status</th>
+              <th className="p-3 text-left">Driver</th>
+              <th className="p-3 text-center">Truck</th>
+              <th className="p-3 text-center">Plate</th>
+              <th className="p-3 text-center">Delivered At</th>
+              <th className="p-3 text-center">Created By</th>
+              <th className="p-3 text-center">Updated By</th>
             </tr>
           </thead>
           <tbody>
             {load.length > 0 ? (
               load.map((load, i) => (
-                <tr key={i}>
-                  <td className="border p-2">{load.loadId}</td>
-                  <td className="border p-2">
-                    {load.origin ? load.origin.split(",")[0] : "-"}
+                <tr
+                  key={i}
+                  className="border-b hover:bg-gray-50 odd:bg-white even:bg-gray-50"
+                >
+                  <td className="p-3 font-semibold">{load.loadId}</td>
+                  <td className="p-3 truncate">
+                    {load.origin?.split(",")[0] || "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.destination ? load.destination.split(",")[0] : "-"}
+                  <td className="p-3 truncate">
+                    {load.destination?.split(",")[0] || "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.distanceMiles ? load.distanceMiles : "-"}
+                  <td className="p-3 text-center">
+                    {load.distanceMiles || "-"}
                   </td>
-                  <td className="border p-2">
+                  <td className="p-3 text-center">
                     {load.pricePerMile ? load.pricePerMile.toFixed(2) : "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.totalPrice ? load.totalPrice : "-"}
+                  <td className="p-3 text-center font-semibold text-green-700">
+                    {load.totalPrice || "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.currency ? load.currency : "-"}
+                  <td className="p-3 text-center">{load.currency || "-"}</td>
+                  <td
+                    className={`p-3 text-center font-medium ${
+                      load.status === "in_transit"
+                        ? "text-blue-600"
+                        : load.status === "delivered"
+                        ? "text-green-600"
+                        : "text-yellow-600"
+                    }`}
+                  >
+                    {load.status || "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.status ? load.status : "-"}
+                  <td className="p-3">
+                    <div className="flex flex-col">
+                      <span className="font-semibold">
+                        {load.driverId?.name || "-"}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {load.driverId?.phone || "-"}
+                      </span>
+                    </div>
                   </td>
-                  <td className="border p-2">
-                    {load.driverId.name ? load.driverId.name : "-"}
+                  <td className="p-3 text-center">
+                    {load.truckId?.model || "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.driverId.driverId ? load.driverId.driverId : "-"}
+                  <td className="p-3 text-center">
+                    {load.truckId?.plateNumber || "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.driverId.phone ? load.driverId.phone : "-"}
-                  </td>
-                  <td className="border p-2">
-                    {load.truckId.model ? load.truckId.model : "-"}
-                  </td>
-                  <td className="border p-2">
-                    {load.truckId.truckId ? load.truckId.truckId : "-"}
-                  </td>
-                  <td className="border p-2">
-                    {load.truckId.plateNumber ? load.truckId.plateNumber : "-"}
-                  </td>
-                  <td className="border p-2">
+                  <td className="p-3 text-center">
                     {load.deliveredAt ? load.deliveredAt.split("T")[0] : "-"}
                   </td>
-                  <td className="border p-2">
-                    {load.createdBy ? load.createdBy : "-"}
-                  </td>
-                  <td className="border p-2">
-                    {load.updatedBy ? load.updatedBy : "-"}
-                  </td>
+                  <td className="p-3 text-center">{load.createdBy || "-"}</td>
+                  <td className="p-3 text-center">{load.updatedBy || "-"}</td>
                 </tr>
               ))
             ) : (

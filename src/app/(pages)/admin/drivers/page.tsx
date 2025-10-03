@@ -136,43 +136,43 @@ const DriversPage = () => {
 
       {err && <Erros message={err} />}
 
-      <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-200 my-5 text-center">
-          <thead>
-            <tr className="text-sm">
-              <th className="border p-2">#</th>
-              <th className="border p-2">Driver Name</th>
-              <th className="border p-2">Email</th>
-              <th className="border p-2">Phone</th>
-              <th className="border p-2">License Number</th>
-              <th className="border p-2">Summary</th>
+      <div className="overflow-x-auto my-5">
+        <table className="min-w-full border border-gray-200 rounded-lg shadow-md text-sm">
+          <thead className="bg-gray-800 text-white">
+            <tr>
+              <th className="p-3 text-left">#</th>
+              <th className="p-3 text-left">Driver Name</th>
+              <th className="p-3 text-left">Email</th>
+              <th className="p-3 text-left">Phone</th>
+              <th className="p-3 text-left">License Number</th>
+              <th className="p-3 text-center">Summary</th>
             </tr>
           </thead>
           <tbody>
             {filteredDrivers.length > 0 ? (
               filteredDrivers.map((driver, i) => (
-                <React.Fragment key={driver.driverId}>
-                  <tr>
-                    <td className="border p-2">{i + 1}</td>
-                    <td className="border p-2">{driver.name || "-"}</td>
-                    <td className="border p-2">{driver.email || "-"}</td>
-                    <td className="border p-2">{driver.phone || "-"}</td>
-                    <td className="border p-2">{driver.licenseNumber || "-"}</td>
-                    <td className="border p-2">
-                      <Link href={`/admin/driverSummary/${driver.id}`}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-                      >
-                        View
-                      </Link>
-                    </td>
-                  </tr>
-
-               
-                </React.Fragment>
+                <tr
+                  key={driver.driverId}
+                  className="border-b hover:bg-gray-50 odd:bg-white even:bg-gray-50"
+                >
+                  <td className="p-3">{i + 1}</td>
+                  <td className="p-3 font-medium">{driver.name || "-"}</td>
+                  <td className="p-3">{driver.email || "-"}</td>
+                  <td className="p-3">{driver.phone || "-"}</td>
+                  <td className="p-3">{driver.licenseNumber || "-"}</td>
+                  <td className="p-3 text-center">
+                    <Link
+                      href={`/admin/driverSummary/${driver.id}`}
+                      className="inline-block bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-full shadow-sm transition"
+                    >
+                      View
+                    </Link>
+                  </td>
+                </tr>
               ))
             ) : (
               <tr>
-                <td colSpan={6} className="px-4 py-8 text-gray-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
                   No Driver records found
                 </td>
               </tr>
