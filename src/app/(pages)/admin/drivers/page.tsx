@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
@@ -7,19 +8,24 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { IoClose } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
+
 type TDriver = {
   id: string;
+  driverId: number;
   name: string;
   email: string;
   phone: string;
   licenseNumber: string;
+  hireDate: string;
+  createdBy: string;
 };
 
 const DriversPage = () => {
   const [drivers, setDrivers] = useState<TDriver[]>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-  const [popup, setPopup] = useState(false);
+
+  const [search, setSearch] = useState("");
 
   const [newDriver, setNewDriver] = useState({
     name: "",
@@ -28,6 +34,8 @@ const DriversPage = () => {
     licenseNumber: "",
   });
 
+  const [popup, setPopup] = useState(false);
+
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
@@ -35,7 +43,6 @@ const DriversPage = () => {
   // Get all Drivers
   useEffect(() => {
     if (!token) {
-      console.log("No token found, redirecting to login");
       router.replace("/");
       return;
     }
@@ -59,10 +66,7 @@ const DriversPage = () => {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
           toast.error(error.message || "Failed to load drivers", {
-            style: {
-              background: "#dc2626", 
-              color: "#fff",
-            },
+            style: { background: "#dc2626", color: "#fff" },
           });
         }
       } finally {
@@ -72,6 +76,12 @@ const DriversPage = () => {
 
     fetchDrivers();
   }, [apiURL, token, router]);
+
+  const filteredDrivers = drivers.filter((driver) =>
+    driver.name.toLowerCase().includes(search.toLowerCase())
+  );
+
+ 
 
   // Create Driver
   const handleCreateDriver = async (e: React.FormEvent) => {
@@ -83,21 +93,12 @@ const DriversPage = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name: newDriver.name,
-          email: newDriver.email,
-          phone: newDriver.phone,
-          licenseNumber: newDriver.licenseNumber,
-        }),
+        body: JSON.stringify(newDriver),
       });
 
       const result = await res.json();
-      console.log("create driver result:", result);
-
       if (!res.ok) {
-        if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
-          throw new Error(result.errors[0].msg);
-        }
+        if (result.errors?.length) throw new Error(result.errors[0].msg);
         throw new Error(result.message || "Create driver failed");
       }
 
@@ -106,18 +107,12 @@ const DriversPage = () => {
       setNewDriver({ name: "", email: "", phone: "", licenseNumber: "" });
 
       toast.success("Driver created successfully!", {
-        style: {
-          background: "#16a34a",
-          color: "#fff",
-        },
+        style: { background: "#16a34a", color: "#fff" },
       });
     } catch (error) {
       if (error instanceof Error) {
         toast.error(error.message, {
-          style: {
-            background: "#dc2626",
-            color: "#fff",
-          },
+          style: { background: "#dc2626", color: "#fff" },
         });
       }
     }
@@ -129,7 +124,7 @@ const DriversPage = () => {
     <section className="relative">
       <Toaster position="top-right" />
 
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mb-4">
         <Titles>All Drivers</Titles>
 
         <button
@@ -140,49 +135,61 @@ const DriversPage = () => {
         </button>
       </div>
 
+      <div className="mb-5">
+        <input
+          type="text"
+          placeholder="Search by name..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border border-gray-400 p-2 rounded w-1/3"
+        />
+      </div>
+
       {err && <Erros message={err} />}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse border border-gray-200 my-10 text-center">
+        <table className="min-w-full border-collapse border border-gray-200 my-5 text-center">
           <thead>
-  <tr className="text-sm">
-    <th className="border border-gray-500 p-2">#</th>
-    <th className="bg-gray-100 border border-gray-500 p-2">Driver Name</th>
-    <th className="border border-gray-500 p-2">Email</th>
-    <th className="bg-gray-100 border border-gray-500 p-2">Phone</th>
-    <th className="border border-gray-500 p-2">License Number</th>
-    <th className="bg-gray-100 border border-gray-500 p-2">Actions</th>
-  </tr>
-</thead>
+            <tr className="text-sm">
+              <th className="border p-2">#</th>
+              <th className="border p-2">Driver Name</th>
+              <th className="border p-2">Email</th>
+              <th className="border p-2">Phone</th>
+              <th className="border p-2">License Number</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredDrivers.length > 0 ? (
+              filteredDrivers.map((driver, i) => (
+                <React.Fragment key={driver.driverId}>
+                  <tr>
+                    <td className="border p-2">{i + 1}</td>
+                    <td className="border p-2">{driver.name || "-"}</td>
+                    <td className="border p-2">{driver.email || "-"}</td>
+                    <td className="border p-2">{driver.phone || "-"}</td>
+                    <td className="border p-2">{driver.licenseNumber || "-"}</td>
+                    <td className="border p-2">
+                      <button
+                   
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                      >
+                        View
+                      </button>
+                    </td>
+                  </tr>
 
-        <tbody>
-  {drivers.length > 0 ? (
-    drivers.map((driver, i) => (
-      <tr key={driver.id}>
-        <td className="border p-2">{i + 1}</td>
-        <td className="border p-2">{driver.name || "-"}</td>
-        <td className="border p-2">{driver.email || "-"}</td>
-        <td className="border p-2">{driver.phone || "-"}</td>
-        <td className="border p-2">{driver.licenseNumber || "-"}</td>
-        <td className="border p-2">
-          <button
-            onClick={() => router.push(`/drivers/${driver.id}`)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
-          >
-            View
-          </button>
-        </td>
-      </tr>
-    ))
-  ) : (
-    <tr>
-      <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-        No Driver records found
-      </td>
-    </tr>
-  )}
-</tbody>
-
+               
+                </React.Fragment>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={6} className="px-4 py-8 text-gray-500">
+                  No Driver records found
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </div>
 
@@ -248,7 +255,10 @@ const DriversPage = () => {
                   type="text"
                   value={newDriver.licenseNumber}
                   onChange={(e) =>
-                    setNewDriver({ ...newDriver, licenseNumber: e.target.value })
+                    setNewDriver({
+                      ...newDriver,
+                      licenseNumber: e.target.value,
+                    })
                   }
                   className="border border-gray-500 p-2 rounded-lg"
                   placeholder="ABC12345"
@@ -270,4 +280,4 @@ const DriversPage = () => {
   );
 };
 
-export default DriversPage
+export default DriversPage;
