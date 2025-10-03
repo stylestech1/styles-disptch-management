@@ -13,6 +13,7 @@ import {
   TTruck,
   TStatusLoad,
 } from "@/types/globalTypes";
+import { apiFetcher } from "@/utils/APIFetcher";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -182,28 +183,53 @@ const LoadsPage = () => {
     }
   }, [origin, destination]);
 
+  // helper: reload loads
+  const fetchLoads = async () => {
+    try {
+      setLoading(true);
+      const result = await apiFetcher(
+        `${apiURL}/api/v1/loads?page=${page}&limit=10`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setLoad(result.data);
+      setPagination(result.paginationResult);
+    } catch (error) {
+      if (error instanceof Error) {
+        setErr(error.message || "Loading Failed");
+        alert(error.message || "Loading Failed");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // fetch on mount
+  useEffect(() => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+    fetchLoads();
+  }, [apiURL, token, router, page]);
+
   // Create Load
   const handleCreateLoad = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const total = Number(price);
 
-    if (!origin || !destination) {
-      alert("Please select origin and destination");
-      return;
-    }
-    if (!driverId || !truckId) {
-      alert("Please select driver and truck");
-      return;
-    }
-    if (!total || total <= 0) {
-      alert("Please enter a valid total price");
-      return;
-    }
-    if (!distance || distance <= 0) {
-      alert("Invalid distance calculated");
-      return;
-    }
+    if (!origin || !destination)
+      return alert("Please select origin and destination");
+    if (!driverId || !truckId) return alert("Please select driver and truck");
+    if (!total || total <= 0) return alert("Please enter a valid total price");
+    if (!distance || distance <= 0) return alert("Invalid distance calculated");
 
     const body = {
       origin: { address: origin.display_name },
@@ -217,7 +243,7 @@ const LoadsPage = () => {
     };
 
     try {
-      const res = await fetch(`${apiURL}/api/v1/loads`, {
+      const result = await apiFetcher(`${apiURL}/api/v1/loads`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -226,66 +252,40 @@ const LoadsPage = () => {
         body: JSON.stringify(body),
       });
 
-      const result = await res.json();
-      console.log("Result = ", result);
-
-      if (!res.ok) throw new Error(result.message);
-
-      setLoad((prev) => [...prev, result.data]);
-      toast.success(result.message || "Load updated ✅", {
-        style: {
-          background: "#16a34a",
-          color: "#fff",
-        },
+      toast.success(result.message || "Load created ✅", {
+        style: { background: "#16a34a", color: "#fff" },
       });
-      router.refresh();
+
+      await fetchLoads();
       setPopup(false);
     } catch (err) {
-      if (err instanceof Error) {
-        alert(err.message);
-      }
+      if (err instanceof Error) alert(err.message);
     }
   };
 
   // Update Load Status
   const handleUpdateLoadStatus = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!selectedLoadId) {
-      alert("Please select a load");
-      return;
-    }
+    if (!selectedLoadId) return alert("Please select a load");
 
     try {
-      const res = await fetch(
+      const result = await apiFetcher(
         `${apiURL}/api/v1/loads/status/${selectedLoadId}`,
         {
           method: "PATCH",
           headers: {
-            "content-type": "application/json",
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({ status: selectedStatus }),
         }
       );
 
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message);
-
-      setLoad((prev) =>
-        prev.map((l) =>
-          l.loadId.toString() === selectedLoadId
-            ? { ...l, status: selectedStatus }
-            : l
-        )
-      );
       toast.success(result.message || "Load updated ✅", {
-        style: {
-          background: "#16a34a",
-          color: "#fff",
-        },
+        style: { background: "#16a34a", color: "#fff" },
       });
-      router.refresh();
+
+      await fetchLoads();
       setPopupLoadStatus(false);
     } catch (error) {
       if (error instanceof Error) {
@@ -372,6 +372,12 @@ const LoadsPage = () => {
               <th className="border border-gray-500 p-2 capitalize">
                 delivered At
               </th>
+              <th className="bg-gray-100 border border-gray-500 p-2 capitalize">
+                Created By
+              </th>
+              <th className="border border-gray-500 p-2 capitalize">
+                Updated By
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -380,10 +386,10 @@ const LoadsPage = () => {
                 <tr key={i}>
                   <td className="border p-2">{load.loadId}</td>
                   <td className="border p-2">
-                    {load.origin ? load.origin.split(',')[0] : "-"}
+                    {load.origin ? load.origin.split(",")[0] : "-"}
                   </td>
                   <td className="border p-2">
-                    {load.destination ? load.destination.split(',')[0] : "-"}
+                    {load.destination ? load.destination.split(",")[0] : "-"}
                   </td>
                   <td className="border p-2">
                     {load.distanceMiles ? load.distanceMiles : "-"}
@@ -420,6 +426,12 @@ const LoadsPage = () => {
                   </td>
                   <td className="border p-2">
                     {load.deliveredAt ? load.deliveredAt.split("T")[0] : "-"}
+                  </td>
+                  <td className="border p-2">
+                    {load.createdBy ? load.createdBy : "-"}
+                  </td>
+                  <td className="border p-2">
+                    {load.updatedBy ? load.updatedBy : "-"}
                   </td>
                 </tr>
               ))
