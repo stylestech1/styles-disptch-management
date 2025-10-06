@@ -13,6 +13,7 @@ import {
   TPagination,
   TTruck,
   TStatusLoad,
+  TTruckType,
 } from "@/types/globalTypes";
 import { apiFetcher } from "@/utils/APIFetcher";
 import { haversineDistance } from "@/utils/haversineDistance";
@@ -45,8 +46,11 @@ const LoadsPage = () => {
   const [destination, setDestination] = useState<TPlace | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
+  const [fees, setFees] = useState<number>();
   const [driverId, setDriverId] = useState<string>("");
   const [truckId, setTruckId] = useState<string>("");
+  const [truckType, setTruckType] = useState<string>("reefer");
+  const [truckTemp, setTruckTemp] = useState<number>(0);
   const [currency, setCurrency] = useState<string>("USD");
   const [selectedLoadId, setSelectedLoadId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
@@ -243,10 +247,13 @@ const LoadsPage = () => {
       destination: { address: destination.display_name },
       driverId,
       truckId,
+      truckTemp,
+      truckType,
       distanceMiles: Math.round(distance),
       totalPrice: total,
       pricePerMile: total / distance,
       currency,
+      feesNumber: fees,
     };
 
     try {
@@ -653,7 +660,7 @@ const LoadsPage = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Calculated Distance
@@ -689,6 +696,25 @@ const LoadsPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Fees Number
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <IoCash className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={fees}
+                      onChange={(e) => setFees(Number(e.target.value))}
+                      className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                      placeholder="115"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Currency
                   </label>
                   <select
@@ -709,7 +735,7 @@ const LoadsPage = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Driver
@@ -731,6 +757,25 @@ const LoadsPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Truck Type
+                  </label>
+                  <select
+                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    value={truckType}
+                    onChange={(e) => {
+                      setTruckType(e.target.value as TTruckType);
+                      setTruckId("");
+                    }}
+                    required
+                  >
+                    <option value="">Select Type</option>
+                    <option value="reefer">Reefer</option>
+                    <option value="van">Van</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Truck
                   </label>
                   <select
@@ -738,14 +783,38 @@ const LoadsPage = () => {
                     value={truckId}
                     onChange={(e) => setTruckId(e.target.value)}
                     required
+                    disabled={!truckType}
                   >
                     <option value="">Select Truck</option>
-                    {truck.map((t, i) => (
-                      <option key={i} value={t.id}>
-                        {t.model} ({t.truckId})
-                      </option>
-                    ))}
+                    {truck
+                      .filter((t) => !truckType || t.type === truckType)
+                      .map((t, i) => (
+                        <option key={i} value={t.id}>
+                          {t.model} ({t.truckId}) ({t.type})
+                        </option>
+                      ))}
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Temperature
+                  </label>
+                  <input
+                    type="number"
+                    value={truckTemp}
+                    onChange={(e) => setTruckTemp(Number(e.target.value))}
+                    className={`${
+                      truck.find((t) => t.id === truckId)?.type !== "reefer"
+                        ? "cursor-not-allowed"
+                        : ""
+                    } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
+                    placeholder="-10"
+                    disabled={
+                      !truckId ||
+                      truck.find((t) => t.id === truckId)?.type !== "reefer"
+                    }
+                  />
                 </div>
               </div>
 

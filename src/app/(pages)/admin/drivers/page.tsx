@@ -213,6 +213,7 @@ const DriversPage = () => {
                 <th className="text-left p-4 font-medium text-slate-600">Contact</th>
                 <th className="text-left p-4 font-medium text-slate-600">License</th>
                 <th className="text-left p-4 font-medium text-slate-600">Status</th>
+                <th className="text-left p-4 font-medium text-slate-600">Price Per Mile</th>
                 <th className="text-center p-4 font-medium text-slate-600">Actions</th>
               </tr>
             </thead>
@@ -258,6 +259,11 @@ const DriversPage = () => {
                     <td className="p-4">
                       <span className={`px-2.5 py-1 rounded-full text-xs font-medium`}>
                         {driver.status || 'inactive'}
+                      </span>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-medium`}>
+                        {driver.pricePerMile + '$' || '-'}
                       </span>
                     </td>
                     <td className="p-4 text-center">

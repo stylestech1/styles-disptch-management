@@ -1,6 +1,7 @@
 export type TUserRole = "admin" | "employee";
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
+export type TTruckType = 'reefer' | 'van'
 export type TTruckId = {
   model: string;
   truckId: number;
@@ -22,6 +23,10 @@ export type TLoads = {
   createdBy: string
   updatedBy?: string
   cancelledAt?: string
+  truckType: TTruckType
+  truckTemp: number
+  comments: string[]
+  feesNumber: string
 };
 export type TDriver = {
   id: string;
@@ -33,6 +38,7 @@ export type TDriver = {
   status: TStatusDriver;
   hireDate: string;
   createdBy: string;
+  pricePerMile: number
 };
 export type TTruck = {
   id: string;
@@ -45,6 +51,7 @@ export type TTruck = {
   createdBy: string;
   updatedBy: string;
   assignedDriver: {name: string; driverId: number}
+  type: TTruckType
 };
 export type TPagination = {
   currentPage: number;
