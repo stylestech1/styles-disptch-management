@@ -6,6 +6,11 @@ import { TUserRole } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
+import { IoKeyOutline } from "react-icons/io5";
+import { useRouter } from "next/navigation";
+
+
+
 import {
   IoPersonCircleOutline,
   IoMailOutline,
@@ -35,7 +40,14 @@ const AdminProfile = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
-  
+  const [changePasswordPopup, setChangePasswordPopup] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    newPasswordConfirm: "",
+  });
+
+
   // State for form data
   const [formData, setFormData] = useState({
     name: "",
@@ -45,6 +57,7 @@ const AdminProfile = () => {
 
   const token = useAppSelector((state: RootState) => state.auth.token);
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
+  const router = useRouter();
 
   // Get My Data
   useEffect(() => {
@@ -83,7 +96,7 @@ const AdminProfile = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdateLoading(true);
-    
+
     try {
       const res = await fetch(`${apiURL}/api/v1/userDashboard/updateMyData`, {
         method: "PUT",
@@ -100,11 +113,11 @@ const AdminProfile = () => {
 
       const result = await res.json();
       if (!res.ok) throw new Error(result.message || "Update Failed");
-      
+
       toast.success(result.message || "Profile updated successfully! ✅", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      
+
       setProfile(result.data);
       setPopup(false);
     } catch (error) {
@@ -139,6 +152,37 @@ const AdminProfile = () => {
     }
     setPopup(true);
   };
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    try {
+      const res = await fetch(`${apiURL}/api/v1/updatePassword/`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(passwordData),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.message || "Password update failed");
+
+      toast.success(result.message || "Password updated successfully!");
+
+      // Reset and close popup
+      setChangePasswordPopup(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        newPasswordConfirm: "",
+      });
+    } catch (error) {
+      if (error instanceof Error)
+        toast.error(error.message || "Password update failed ❌");
+    }
+  };
 
   if (loading) return <Loading />;
 
@@ -152,13 +196,25 @@ const AdminProfile = () => {
             You can Update or View your information
           </p>
         </div>
-        <button
-          onClick={openUpdatePopup}
-          className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
-        >
-          <IoRefresh size={18} />
-          Update Profile
-        </button>
+   <div className="flex flex-wrap gap-4">
+  <button
+    onClick={openUpdatePopup}
+    className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
+  >
+    <IoRefresh size={18} />
+    Update Profile
+  </button>
+
+  <button
+    onClick={() => setChangePasswordPopup(true)}
+    className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
+  >
+    <IoKeyOutline size={18} />
+    Change Password
+  </button>
+</div>
+
+
       </div>
 
       {/* Errors */}
@@ -226,11 +282,10 @@ const AdminProfile = () => {
                   size={16}
                 />
                 <span
-                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    profile.active 
-                      ? "bg-emerald-100 text-emerald-800 border border-emerald-200" 
-                      : "bg-slate-100 text-slate-800 border border-slate-200"
-                  }`}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium ${profile.active
+                    ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                    : "bg-slate-100 text-slate-800 border border-slate-200"
+                    }`}
                 >
                   {profile.active ? "Active" : "Inactive"}
                 </span>
@@ -356,13 +411,62 @@ const AdminProfile = () => {
                 Note:
               </h4>
               <p className="text-xs text-slate-600">
-                Role, Position, and Status cannot be changed from this form. 
+                Role, Position, and Status cannot be changed from this form.
                 Please contact administrator for these changes.
               </p>
             </div>
           </div>
         </div>
       )}
+
+      {/* Update Password Popup */}
+      {changePasswordPopup && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
+          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-slate-800">Change Password</h3>
+              <button
+                onClick={() => setChangePasswordPopup(false)}
+                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+              >
+                <IoClose size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              {["currentPassword", "newPassword", "newPasswordConfirm"].map((key) => (
+                <div key={key}>
+                  <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                    {key.replace(/([A-Z])/g, " $1")}
+                  </label>
+                  <input
+                    type="password"
+                    value={passwordData[key as keyof typeof passwordData]}
+                    onChange={(e) =>
+                      setPasswordData({
+                        ...passwordData,
+                        [key]: e.target.value,
+                      })
+                    }
+                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    required
+                  />
+                </div>
+              ))}
+
+              <button
+                type="submit"
+                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all"
+              >
+                Update Password
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+
+
     </section>
   );
 };

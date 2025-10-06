@@ -56,6 +56,7 @@ const LoadsPage = () => {
   const [driverId, setDriverId] = useState<string>("");
   const [truckId, setTruckId] = useState<string>("");
   const [deliveredAt, setDeliveredAt] = useState<string>('')
+  const [cancelledAt, setCancelledAt] = useState<string>('')
   const [truckType, setTruckType] = useState<string>("reefer");
   const [truckTemp, setTruckTemp] = useState<number>(0);
   const [currency, setCurrency] = useState<string>("USD");
@@ -261,6 +262,7 @@ const LoadsPage = () => {
       driverId,
       truckId,
       deliveredAt,
+      cancelledAt,
       truckTemp,
       truckType,
       distanceMiles: Math.round(distance),
@@ -591,6 +593,9 @@ const LoadsPage = () => {
                   Delivered
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
+                  Cancelled
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
                   Notes
                 </th>
               </tr>
@@ -670,6 +675,11 @@ const LoadsPage = () => {
                     <td className="p-4 text-center text-slate-600 text-xs">
                       {loadItem.deliveredAt
                         ? loadItem.deliveredAt.split("T")[0]
+                        : "-"}
+                    </td>
+                    <td className="p-4 text-center text-slate-600 text-xs">
+                      {loadItem.cancelledAt
+                        ? loadItem.cancelledAt.split("T")[0]
                         : "-"}
                     </td>
 
