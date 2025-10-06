@@ -54,7 +54,9 @@ const TrucksPage = () => {
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          toast.error(error.message || "Loading Failed");
+          toast.error(error.message || "Loading Failed", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         }
       } finally {
         setLoading(false);
@@ -96,10 +98,14 @@ const TrucksPage = () => {
       if (!res.ok) {
         if (result.errors && Array.isArray(result.errors)) {
           result.errors.forEach((err: { msg?: string }) => {
-            toast.error(err.msg || "Validation error");
+            toast.error(err.msg || "Validation error", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
           });
         } else {
-          toast.error(result.message || "Create truck failed");
+          toast.error(result.message || "Create truck failed", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         }
         return;
       }

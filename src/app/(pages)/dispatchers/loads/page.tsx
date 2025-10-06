@@ -77,7 +77,9 @@ const LoadsPage = () => {
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          alert(error.message || "Loading Failed");
+          toast.error(error.message || "Loading failed ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         }
       } finally {
         setLoading(false);
@@ -107,7 +109,9 @@ const LoadsPage = () => {
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          alert(error.message || "Loading Failed");
+          toast.error(error.message || "Loading failed ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         }
       } finally {
         setLoading(false);
@@ -137,7 +141,9 @@ const LoadsPage = () => {
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          alert(error.message || "Loading Failed");
+          toast.error(error.message || "Loading failed ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         }
       } finally {
         setLoading(false);
@@ -203,7 +209,9 @@ const LoadsPage = () => {
     } catch (error) {
       if (error instanceof Error) {
         setErr(error.message || "Loading Failed");
-        alert(error.message || "Loading Failed");
+        toast.error(error.message || "Loading failed ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
       }
     } finally {
       setLoading(false);
@@ -226,10 +234,10 @@ const LoadsPage = () => {
     const total = Number(price);
 
     if (!origin || !destination)
-      return alert("Please select origin and destination");
-    if (!driverId || !truckId) return alert("Please select driver and truck");
-    if (!total || total <= 0) return alert("Please enter a valid total price");
-    if (!distance || distance <= 0) return alert("Invalid distance calculated");
+      return toast.error("Please select origin and destination", {style: { background: "#dc2626", color: "#fff" }});
+    if (!driverId || !truckId) return toast.error("Please select driver and truck", {style: { background: "#dc2626", color: "#fff" }});
+    if (!total || total <= 0) return toast.error("Please enter a valid total price", {style: { background: "#dc2626", color: "#fff" }});
+    if (!distance || distance <= 0) return toast.error("Invalid distance calculated", {style: { background: "#dc2626", color: "#fff" }});
 
     const body = {
       origin: { address: origin.display_name },
@@ -259,14 +267,18 @@ const LoadsPage = () => {
       await fetchLoads();
       setPopup(false);
     } catch (err) {
-      if (err instanceof Error) alert(err.message);
+      if (err instanceof Error){
+        toast.error(err.message || "Update failed ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
     }
   };
 
   // Update Load Status
   const handleUpdateLoadStatus = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedLoadId) return alert("Please select a load");
+    if (!selectedLoadId) return toast.error("Please select a load", {style: { background: "#dc2626", color: "#fff" }});
 
     try {
       const result = await apiFetcher(
@@ -290,7 +302,9 @@ const LoadsPage = () => {
     } catch (error) {
       if (error instanceof Error) {
         setErr(error.message || "Update failed");
-        alert(error.message || "Update failed");
+        toast.error(error.message || "Update failed ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
       }
     }
   };

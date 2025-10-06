@@ -4,12 +4,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { logout } from "@/redux/slices/authSlice";
-import { 
-  IoLogOutOutline, 
-  IoPersonCircleOutline, 
+import {
+  IoLogOutOutline,
+  IoPersonCircleOutline,
   IoChevronForward,
   IoMenu,
-  IoClose 
+  IoClose,
 } from "react-icons/io5";
 import { useState, useEffect } from "react";
 
@@ -37,13 +37,13 @@ export default function AdminLayout({
     };
 
     checkScreenSize();
-    window.addEventListener('resize', checkScreenSize);
-    
-    return () => window.removeEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
   if (!user) return null;
-  
+
   const tabs = TABS_CONFIG[user.role];
   const base = user.role === "admin" ? "/admin" : "/dispatchers";
 
@@ -60,29 +60,37 @@ export default function AdminLayout({
     <section className="flex h-screen bg-slate-50">
       {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-slate-900 bg-opacity-40 z-40 md:hidden"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
-      <div className={`
+      <div
+        className={`
         fixed md:relative z-50 w-80 h-full bg-gradient-to-b from-slate-800 to-slate-700 text-white
         transform transition-transform duration-300 ease-in-out
-        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+        ${
+          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }
         flex flex-col shadow-xl border-r border-slate-600
-      `}>
+      `}
+      >
         {/* Header */}
         <div className="p-6 border-b border-slate-600">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-slate-700 rounded-xl">
-              <IoPersonCircleOutline size={24} className="text-slate-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-lg truncate text-slate-100">{user?.name}</h2>
-              <p className="text-slate-400 text-sm capitalize">{user.role}</p>
-            </div>
+          <div>
+            <Link href={user.id} className="flex items-center gap-3">
+              <div className="p-2 bg-slate-700 rounded-xl">
+                <IoPersonCircleOutline size={24} className="text-slate-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h2 className="font-semibold text-lg truncate text-slate-100">
+                  {user?.name}
+                </h2>
+                <p className="text-slate-400 text-sm capitalize">{user.role}</p>
+              </div>
+            </Link>
             <button
               onClick={toggleSidebar}
               className="md:hidden p-2 hover:bg-slate-600 rounded-lg transition-colors text-slate-300"
@@ -104,24 +112,31 @@ export default function AdminLayout({
                 onClick={() => isMobile && setIsSidebarOpen(false)}
                 className={`
                   flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all duration-200
-                  ${active 
-                    ? 'bg-emerald-500 text-white shadow-lg transform scale-[1.02]' 
-                    : 'text-slate-300 hover:bg-slate-600 hover:text-white hover:shadow-md'
+                  ${
+                    active
+                      ? "bg-emerald-500 text-white shadow-lg transform scale-[1.02]"
+                      : "text-slate-300 hover:bg-slate-600 hover:text-white hover:shadow-md"
                   }
                   group
                 `}
               >
                 <span className="flex items-center gap-3">
-                  <div className={`w-1.5 h-1.5 rounded-full ${
-                    active ? 'bg-white' : 'bg-slate-400 group-hover:bg-emerald-200'
-                  }`} />
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      active
+                        ? "bg-white"
+                        : "bg-slate-400 group-hover:bg-emerald-200"
+                    }`}
+                  />
                   {tab}
                 </span>
-                <IoChevronForward 
-                  size={16} 
+                <IoChevronForward
+                  size={16}
                   className={`transform transition-transform ${
-                    active ? 'rotate-90 text-white' : 'text-slate-400 group-hover:text-slate-200'
-                  }`} 
+                    active
+                      ? "rotate-90 text-white"
+                      : "text-slate-400 group-hover:text-slate-200"
+                  }`}
                 />
               </Link>
             );
@@ -154,22 +169,19 @@ export default function AdminLayout({
             >
               <IoMenu size={20} />
             </button>
-            
             <div className="flex-1 md:flex-none">
               <h1 className="text-xl font-semibold text-slate-800 text-center md:text-left">
-                AII Loads Management
+                Styles Dispatch System EG
               </h1>
             </div>
-            
-            <div className="w-9 md:hidden"></div> {/* Spacer for mobile alignment */}
+            <div className="w-9 md:hidden"></div>{" "}
+            {/* Spacer for mobile alignment */}
           </div>
         </header>
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 bg-slate-50">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
+          <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
     </section>

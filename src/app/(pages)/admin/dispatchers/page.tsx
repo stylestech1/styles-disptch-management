@@ -81,7 +81,8 @@ const Dispatchers = () => {
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          toast.error(error.message || "Loading Failed");
+          toast.error(error.message || "Loading Failed" , {
+          style: { background: "#dc2626", color: "#fff" }});
         }
       } finally {
         setLoading(false);
@@ -113,7 +114,9 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Create user failed");
+        toast.error(result.message || "Create user failed", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         return;
       }
 
@@ -158,7 +161,9 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Failed to update role");
+        toast.error(result.message || "Failed to update role", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         return;
       }
 
@@ -200,7 +205,9 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Failed to activate user");
+        toast.error(result.message || "Failed to activate user", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         return;
       }
 
@@ -239,7 +246,9 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Failed to deactivate user");
+        toast.error(result.message || "Failed to deactivate user", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         return;
       }
 

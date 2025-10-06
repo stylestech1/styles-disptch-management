@@ -54,7 +54,7 @@ const DriversPage = () => {
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          toast.error(error.message || "Failed to load drivers", {
+          toast.error(error.message || "Loading Failed", {
             style: { background: "#dc2626", color: "#fff" },
           });
         }
