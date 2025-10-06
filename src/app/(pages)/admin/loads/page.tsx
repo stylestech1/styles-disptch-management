@@ -55,6 +55,7 @@ const LoadsPage = () => {
   const [fees, setFees] = useState<string>('');
   const [driverId, setDriverId] = useState<string>("");
   const [truckId, setTruckId] = useState<string>("");
+  const [deliveredAt, setDeliveredAt] = useState<string>('')
   const [truckType, setTruckType] = useState<string>("reefer");
   const [truckTemp, setTruckTemp] = useState<number>(0);
   const [currency, setCurrency] = useState<string>("USD");
@@ -259,6 +260,7 @@ const LoadsPage = () => {
       destination: { address: destination.display_name },
       driverId,
       truckId,
+      deliveredAt,
       truckTemp,
       truckType,
       distanceMiles: Math.round(distance),
