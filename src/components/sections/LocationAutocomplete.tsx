@@ -8,6 +8,20 @@ export type TPlace = {
   place_id: string;
 };
 
+type NominatimResult = {
+  place_id: string;
+  lat: string;
+  lon: string;
+  address: {
+    city?: string;
+    town?: string;
+    village?: string;
+    state?: string;
+    country?: string;
+    county?: string;
+  };
+};
+
 interface Props {
   label: string;
   value: TPlace | null;
@@ -45,10 +59,33 @@ const LocationAutocomplete = ({
           },
         });
 
-        const data = await res.json();
-        setSuggestions(data);
+        const data: NominatimResult[] = await res.json();
+
+        const filtered = data
+          .map((p) => {
+            const { address } = p;
+            const city = address.city || address.town || address.village || "";
+            const state = address.state || "";
+            const country = address.country || "";
+
+            const display_name = [city, state, country]
+              .filter(Boolean)
+              .join(", ");
+
+            if (!city && !state) return null;
+
+            return {
+              place_id: p.place_id,
+              lat: p.lat,
+              lon: p.lon,
+              display_name,
+            };
+          })
+          .filter((p): p is TPlace => p !== null);
+
+        setSuggestions(filtered);
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching places:", err);
       } finally {
         setLoading(false);
       }
@@ -64,15 +101,17 @@ const LocationAutocomplete = ({
         type="text"
         value={input}
         onChange={(e) => setInput(e.target.value)}
-        placeholder={placeholder || "Type a state, city or district"}
+        placeholder={placeholder || "Type a state or city"}
         className="border p-2 rounded w-full"
       />
+
       {loading && (
         <div className="absolute top-full left-0 bg-white border p-2 w-full z-50">
           Loading...
         </div>
       )}
-      {suggestions.length > 0 && (
+
+      {!loading && suggestions.length > 0 && (
         <ul className="absolute top-full left-0 bg-white border w-full max-h-40 overflow-auto z-50">
           {suggestions.map((s) => (
             <li

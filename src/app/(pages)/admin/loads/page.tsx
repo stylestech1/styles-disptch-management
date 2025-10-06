@@ -2,6 +2,7 @@
 import LocationAutocomplete, {
   TPlace,
 } from "@/components/sections/LocationAutocomplete";
+import MapView from "@/components/sections/MapView";
 import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
@@ -14,6 +15,7 @@ import {
   TStatusLoad,
 } from "@/types/globalTypes";
 import { apiFetcher } from "@/utils/APIFetcher";
+import { haversineDistance } from "@/utils/haversineDistance";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -161,29 +163,6 @@ const LoadsPage = () => {
 
     getDrivers();
   }, [apiURL, token]);
-
-  // Calc Mile
-  const haversineDistance = (
-    coords1: { lat: number; lon: number },
-    coords2: { lat: number; lon: number }
-  ) => {
-    const toRad = (x: number) => (x * Math.PI) / 180;
-    const R = 3958.8;
-
-    const dLat = toRad(coords2.lat - coords1.lat);
-    const dLon = toRad(coords2.lon - coords1.lon);
-
-    const lat1 = toRad(coords1.lat);
-    const lat2 = toRad(coords2.lat);
-
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-    return R * c;
-  };
 
   // Get Miles
   useEffect(() => {
@@ -652,7 +631,7 @@ const LoadsPage = () => {
             </div>
 
             <form onSubmit={handleCreateLoad} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 z-2">
                 <LocationAutocomplete
                   label="Pick Up (Origin)"
                   value={origin}
@@ -666,6 +645,12 @@ const LoadsPage = () => {
                   setValue={setDestination}
                   placeholder="Enter destination address"
                 />
+              </div>
+
+              <div className="grid grid-cols-1 gap-6">
+                {origin && destination && (
+                  <MapView origin={origin} destination={destination} />
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
