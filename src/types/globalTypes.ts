@@ -9,7 +9,7 @@ export type TTruckId = {
 };
 export type TLoads = {
   id?: string;
-  loadId: number;
+  loadId: string;
   origin: string;
   destination: string;
   distanceMiles: number;
@@ -25,7 +25,7 @@ export type TLoads = {
   cancelledAt?: string
   truckType: TTruckType
   truckTemp: number
-  comments: string[]
+  comments: TComments[]
   feesNumber: string
 };
 export type TDriver = {
@@ -60,3 +60,14 @@ export type TPagination = {
   next?: number;
   prev?: number;
 };
+export type TComments = {
+  id: string
+  load: TLoads
+  driver: TDriver
+  truck: TTruck
+  text: string
+  addedBy: {_id: string; name: string; jobId: number}
+  _id: string
+  createdAt: string
+  updatedAt: string
+}

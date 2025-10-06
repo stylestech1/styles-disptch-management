@@ -471,7 +471,7 @@ const Dispatchers = () => {
                     </td>
                     <td className="p-4">
                       <button
-                        onClick={() => openSettingsPopup(dispatcher)} // تم التصحيح هنا
+                        onClick={() => openSettingsPopup(dispatcher)}
                         className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-800 hover:text-blue-200 transition-colors"
                       >
                         <IoSettingsOutline />
@@ -483,7 +483,7 @@ const Dispatchers = () => {
               ) : (
                 <tr>
                   <td
-                    colSpan={9} // تم التصحيح هنا (9 بدلاً من 8)
+                    colSpan={9}
                     className="px-4 py-12 text-center text-slate-500"
                   >
                     <div className="flex flex-col items-center justify-center">

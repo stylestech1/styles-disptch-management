@@ -14,12 +14,15 @@ import {
   TTruck,
   TStatusLoad,
   TTruckType,
+  TComments,
 } from "@/types/globalTypes";
 import { apiFetcher } from "@/utils/APIFetcher";
 import { haversineDistance } from "@/utils/haversineDistance";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import { CiStickyNote } from "react-icons/ci";
+import { IoMdKey } from "react-icons/io";
 import {
   IoClose,
   IoAdd,
@@ -30,6 +33,7 @@ import {
   IoNavigate,
   IoCash,
 } from "react-icons/io5";
+import { MdEdit } from "react-icons/md";
 
 const LoadsPage = () => {
   const [loading, setLoading] = useState(false);
@@ -38,6 +42,8 @@ const LoadsPage = () => {
   const [page, setPage] = useState(1);
   const [popup, setPopup] = useState(false);
   const [popupLoadStatus, setPopupLoadStatus] = useState(false);
+  const [popupNote, setPopupNote] = useState(false);
+  const [popupAllNote, setPopupAllNote] = useState(false);
 
   const [load, setLoad] = useState<TLoads[]>([]);
   const [drivers, setDrivers] = useState<TDriver[]>([]);
@@ -46,7 +52,7 @@ const LoadsPage = () => {
   const [destination, setDestination] = useState<TPlace | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
-  const [fees, setFees] = useState<number>();
+  const [fees, setFees] = useState<string>('');
   const [driverId, setDriverId] = useState<string>("");
   const [truckId, setTruckId] = useState<string>("");
   const [truckType, setTruckType] = useState<string>("reefer");
@@ -54,6 +60,12 @@ const LoadsPage = () => {
   const [currency, setCurrency] = useState<string>("USD");
   const [selectedLoadId, setSelectedLoadId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
+  const [addingNote, setAddingNote] = useState<string>("");
+  const [selectedLoadIdForNote, setSelectedLoadIdForNote] = useState("");
+  const [allNotes, setAllNotes] = useState<TComments[]>([]); 
+  const [selectedLoadForNotes, setSelectedLoadForNotes] =
+  useState<TLoads | null>(null);
+  const [loadIDInp,setLoadIDInp] = useState<string>('')
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -254,6 +266,7 @@ const LoadsPage = () => {
       pricePerMile: total / distance,
       currency,
       feesNumber: fees,
+      loadId: loadIDInp
     };
 
     try {
@@ -318,6 +331,88 @@ const LoadsPage = () => {
     }
   };
 
+  // Add Notes
+  const handleNotes = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedLoadIdForNote)
+      return toast.error("Please select a load", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+
+    if (!addingNote.trim())
+      return toast.error("Please enter a note", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+
+    try {
+      const res = await fetch(
+        `${apiURL}/api/v1/loads/${selectedLoadIdForNote}/comments`,
+        {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ text: addingNote }),
+        }
+      );
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Failed to add note");
+
+      toast.success(result.message || "Note was Added ✅", {
+        style: { background: "#16a34a", color: "#fff" },
+      });
+
+      // Reset form
+      setAddingNote("");
+      setSelectedLoadIdForNote("");
+      setPopupNote(false);
+    } catch (error) {
+      if (error instanceof Error) {
+        setErr(error.message || "Adding note failed");
+        toast.error(error.message || "Adding note failed ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
+    }
+  };
+
+  // Get All Notes
+  const fetchAllNotes = async (loadId: string) => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${apiURL}/api/v1/loads/${loadId}/comments`, {
+        method: "GET",
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Failed to fetch notes");
+
+      setAllNotes(result.comments || []);
+    } catch (error) {
+      if (error instanceof Error) {
+        setErr(error.message || "Failed to fetch notes");
+        toast.error(error.message || "Failed to fetch notes ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openAllNotesPopup = async (loadItem: TLoads) => {
+    if (!loadItem?.id) return;
+    setSelectedLoadForNotes(loadItem);
+    await fetchAllNotes(loadItem?.id);
+    setPopupAllNote(true);
+  };
+
   // Status badge component
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {
     const statusConfig = {
@@ -366,6 +461,14 @@ const LoadsPage = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={() => setPopupNote(true)}
+            className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
+          >
+            <MdEdit size={18} />
+            Add Note
+          </button>
+
           <button
             onClick={() => setPopupLoadStatus(true)}
             className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
@@ -485,6 +588,9 @@ const LoadsPage = () => {
                 <th className="text-center p-4 font-medium text-slate-600">
                   Delivered
                 </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Notes
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -564,12 +670,22 @@ const LoadsPage = () => {
                         ? loadItem.deliveredAt.split("T")[0]
                         : "-"}
                     </td>
+
+                    <td className="p-4 text-center text-slate-600 text-xs">
+                      <button
+                        onClick={() => openAllNotesPopup(loadItem)}
+                        className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-800 hover:text-blue-200 transition-colors"
+                      >
+                        <CiStickyNote />
+                        <span>view</span>
+                      </button>
+                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
                   <td
-                    colSpan={9}
+                    colSpan={10}
                     className="px-4 py-12 text-center text-slate-500"
                   >
                     <div className="flex flex-col items-center justify-center">
@@ -660,7 +776,7 @@ const LoadsPage = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Calculated Distance
@@ -706,7 +822,7 @@ const LoadsPage = () => {
                       type="number"
                       step="0.01"
                       value={fees}
-                      onChange={(e) => setFees(Number(e.target.value))}
+                      onChange={(e) => setFees(e.target.value)}
                       className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                       placeholder="115"
                     />
@@ -732,6 +848,24 @@ const LoadsPage = () => {
                     <option value="GBP">GBP</option>
                     <option value="SAR">SAR</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Load Id
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <IoMdKey className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="text"
+                      value={loadIDInp}
+                      onChange={(e) => setLoadIDInp(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                      placeholder="A101"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -893,6 +1027,125 @@ const LoadsPage = () => {
                 Update Status
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Popup For Adding Note */}
+      {popupNote && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
+          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-slate-800">Add Note</h3>
+              <button
+                onClick={() => {
+                  setPopupNote(false);
+                  setAddingNote("");
+                  setSelectedLoadIdForNote("");
+                }}
+                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+              >
+                <IoClose size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleNotes} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Load ID
+                </label>
+                <select
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
+                  value={selectedLoadIdForNote}
+                  onChange={(e) => setSelectedLoadIdForNote(e.target.value)}
+                  required
+                >
+                  <option value="">Select Load</option>
+                  {load.map((l) => (
+                    <option key={l.id} value={l.id}>
+                      {l.loadId}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Note
+                </label>
+                <textarea
+                  value={addingNote}
+                  onChange={(e) => setAddingNote(e.target.value)}
+                  cols={30}
+                  rows={5}
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+                  placeholder="Enter your note here..."
+                  required
+                ></textarea>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-4"
+              >
+                <IoAdd size={18} />
+                Add Note
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Popup For Showing Note */}
+      {popupAllNote && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
+          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-slate-800">
+                All Notes - ({selectedLoadForNotes?.loadId})
+              </h3>
+              <button
+                onClick={() => {
+                  setPopupAllNote(false);
+                }}
+                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+              >
+                <IoClose size={24} />
+              </button>
+            </div>
+
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {allNotes.length > 0 ? (
+                allNotes.map((note, i) => (
+                  <div
+                    key={note._id || i}
+                    className="p-4 rounded-lg bg-slate-100 border border-slate-200"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium text-slate-700">
+                        Note {i + 1}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {new Date(note.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <p className="text-slate-800 whitespace-pre-wrap">
+                      {note.text}
+                    </p>
+                    {note.addedBy && (
+                      <div className="mt-2 text-xs text-slate-500">
+                        Added by: {note.addedBy.name} ({note.addedBy.jobId})
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-500">
+                  <CiStickyNote size={48} className="mx-auto mb-4 opacity-50" />
+                  <p>No notes found for this load</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
