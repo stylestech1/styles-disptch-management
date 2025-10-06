@@ -17,7 +17,7 @@ import { apiFetcher } from "@/utils/APIFetcher";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { IoClose, IoAdd, IoRefresh, IoCheckmark, IoTime, IoCar, IoNavigate, IoCash, IoCalendar } from "react-icons/io5";
+import { IoClose, IoAdd, IoRefresh, IoCheckmark, IoTime, IoCar, IoNavigate, IoCash } from "react-icons/io5";
 
 const LoadsPage = () => {
   const [loading, setLoading] = useState(false);
