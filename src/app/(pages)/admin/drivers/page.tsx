@@ -549,7 +549,7 @@ const DriversPage = () => {
                   className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 >
                   <option value="available">Available</option>
-                  <option value="Booked">Booked</option>
+                  <option value="busy">Busy</option>
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
@@ -688,7 +688,7 @@ const DriversPage = () => {
                   className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 >
                   <option value="available">Available</option>
-                  <option value="booked">Booked</option>
+                  <option value="busy">Busy</option>
                   <option value="inactive">Inactive</option>
                 </select>
               </div>

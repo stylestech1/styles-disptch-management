@@ -81,7 +81,9 @@ const TrucksPage = () => {
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          toast.error(error.message || "Loading Failed");
+          toast.error(error.message || "Loading Failed", {
+            style: { background: "#dc2626", color: "#fff" },
+          });
         }
       } finally {
         setLoading(false);
@@ -120,7 +122,17 @@ const TrucksPage = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Create truck failed");
+        if (result.errors && Array.isArray(result.errors)) {
+          result.errors.forEach((err: { msg?: string }) => {
+            toast.error(err.msg || "Validation error", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        } else {
+          toast.error(result.message || "Create truck failed", {
+            style: { background: "#dc2626", color: "#fff" },
+          });
+        }
         return;
       }
 
@@ -148,7 +160,7 @@ const TrucksPage = () => {
     if (!selectedTruck) return;
 
     try {
-      const truckId = selectedTruck.id || selectedTruck._id;
+      const truckId = selectedTruck.id;
       const res = await fetch(`${apiURL}/api/v1/trucks/${truckId}`, {
         method: "PUT",
         headers: {
@@ -173,7 +185,7 @@ const TrucksPage = () => {
 
       toast.success("Truck updated successfully!");
       setTrucks((prev) =>
-        prev.map((t) => (t.id === truckId || t._id === truckId ? result.data : t))
+        prev.map((t) => (t.id === truckId ? result.data : t))
       );
       setEditPopup(false);
       setSelectedTruck(null);
@@ -222,7 +234,7 @@ const TrucksPage = () => {
 
       toast.success("Truck deleted successfully!");
       setTrucks((prev) =>
-        prev.filter((t) => t.id !== deleteAlert.truckId && t._id !== deleteAlert.truckId)
+        prev.filter((t) => t.id !== deleteAlert.truckId)
       );
       hideDeleteAlert();
     } catch (error) {
@@ -237,7 +249,7 @@ const TrucksPage = () => {
   return (
     <section className="relative p-6">
       <Toaster position="top-right" />
-      
+
       {/* Header */}
       <div className="flex justify-between mb-8">
         <div>
@@ -246,7 +258,7 @@ const TrucksPage = () => {
             Manage your truck fleet and assignments
           </p>
         </div>
-        
+
         <button
           onClick={() => setPopup(true)}
           className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
@@ -271,6 +283,63 @@ const TrucksPage = () => {
       </div>
 
       {err && <Erros message={err} />}
+      {/* Truck Statistics */}
+<div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-slate-500 text-sm font-medium">Total Trucks</p>
+        <p className="text-2xl font-bold text-slate-800 mt-1">{trucks.length}</p>
+      </div>
+      <div className="p-2 bg-blue-50 rounded-lg">
+        <IoCar size={20} className="text-blue-600" />
+      </div>
+    </div>
+  </div>
+
+  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-slate-500 text-sm font-medium">Available</p>
+        <p className="text-2xl font-bold text-slate-800 mt-1">
+          {trucks.filter(t => t.status === "available").length}
+        </p>
+      </div>
+      <div className="p-2 bg-emerald-50 rounded-lg">
+        <IoCar size={20} className="text-emerald-600" />
+      </div>
+    </div>
+  </div>
+
+  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-slate-500 text-sm font-medium">Booked</p>
+        <p className="text-2xl font-bold text-slate-800 mt-1">
+          {trucks.filter(t => t.status === "busy").length}
+        </p>
+      </div>
+      <div className="p-2 bg-amber-50 rounded-lg">
+        <IoCar size={20} className="text-amber-600" />
+      </div>
+    </div>
+  </div>
+
+  <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
+    <div className="flex items-center justify-between">
+      <div>
+        <p className="text-slate-500 text-sm font-medium">Inactive</p>
+        <p className="text-2xl font-bold text-slate-800 mt-1">
+          {trucks.filter(t => t.status === "inactive").length}
+        </p>
+      </div>
+      <div className="p-2 bg-slate-50 rounded-lg">
+        <IoCar size={20} className="text-slate-600" />
+      </div>
+    </div>
+  </div>
+</div>
+
 
       {/* Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -288,7 +357,7 @@ const TrucksPage = () => {
           <tbody className="divide-y divide-slate-200">
             {filteredTrucks.length > 0 ? (
               filteredTrucks.map((truck, i) => (
-                <tr key={truck.id || truck._id} className="hover:bg-slate-50">
+                <tr key={truck.id} className="hover:bg-slate-50">
                   <td className="p-4">{i + 1}</td>
                   <td className="p-4">
                     <div className="font-medium">{truck.model}</div>
@@ -298,7 +367,7 @@ const TrucksPage = () => {
                     <div className="text-slate-600">Year: {truck.year}</div>
                     <div className="text-slate-600">Capacity: {truck.capacity} kg</div>
                   </td>
-                  <td className="p-4 capitalize">{truck.type || "-"}</td>
+                  <td className="p-4 ">{truck.type || "-"}</td>
                   <td className="p-4 capitalize">{truck.status}</td>
                   <td className="p-4 flex gap-2 justify-center">
                     <button
@@ -320,7 +389,7 @@ const TrucksPage = () => {
                     </button>
 
                     <button
-                      onClick={() => showDeleteAlert(truck.id || truck._id!, truck.model)}
+                      onClick={() => showDeleteAlert(truck.id, truck.model)}
                       className="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium"
                     >
                       <IoTrash size={14} />
@@ -348,13 +417,13 @@ const TrucksPage = () => {
               <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
                 <IoTrash size={32} className="text-red-600" />
               </div>
-              
+
               <h3 className="text-lg font-semibold text-slate-800 mb-2">
                 Delete Truck
               </h3>
-              
+
               <p className="text-slate-600 mb-6">
-                Are you sure you want to delete <strong>"{deleteAlert.truckName}"</strong>? 
+                Are you sure you want to delete <strong>"{deleteAlert.truckName}"</strong>?
                 This action cannot be undone.
               </p>
 
@@ -365,7 +434,7 @@ const TrucksPage = () => {
                 >
                   Cancel
                 </button>
-                
+
                 <button
                   onClick={handleDeleteTruck}
                   className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
@@ -422,15 +491,18 @@ const TrucksPage = () => {
                 className="w-full border border-slate-300 rounded-lg p-2"
                 required
               />
-           
-                   <select
+
+              <select
                 value={newTruck.type}
                 onChange={(e) => setNewTruck({ ...newTruck, type: e.target.value })}
                 className="w-full border border-slate-300 rounded-lg p-2"
+                required
               >
-                <option value="refeer">refeer</option>
+                <option value="">Select Type</option>
+                <option value="reefer">reefer</option>
                 <option value="van">van</option>
               </select>
+
 
               <select
                 value={newTruck.status}
@@ -497,14 +569,17 @@ const TrucksPage = () => {
                 className="w-full border border-slate-300 rounded-lg p-2"
               />
 
-                    <select
-                value={newTruck.type}
-                onChange={(e) => setNewTruck({ ...newTruck, type: e.target.value })}
+              <select
+                value={updateTruck.type}
+                onChange={(e) => setUpdateTruck({ ...updateTruck, type: e.target.value })}
                 className="w-full border border-slate-300 rounded-lg p-2"
+                required
               >
-                <option value="refeer">refeer</option>
+                <option value="">Select Type</option>
+                <option value="reefer">reefer</option>
                 <option value="van">van</option>
               </select>
+
 
               <select
                 value={updateTruck.status}
