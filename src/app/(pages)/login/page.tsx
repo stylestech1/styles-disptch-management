@@ -142,6 +142,7 @@ const Login = () => {
                 <IoLogInOutline className="w-5 h-5" />
                 {loading ? "Signing In..." : "Sign In"}
               </button>
+   
 
               <div className="text-center">
                 <p className="text-xs text-slate-500">
