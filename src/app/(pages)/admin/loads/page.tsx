@@ -64,13 +64,29 @@ const LoadsPage = () => {
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
   const [addingNote, setAddingNote] = useState<string>("");
   const [selectedLoadIdForNote, setSelectedLoadIdForNote] = useState("");
-  const [allNotes, setAllNotes] = useState<TComments[]>([]); 
+  const [allNotes, setAllNotes] = useState<TComments[]>([]);
   const [selectedLoadForNotes, setSelectedLoadForNotes] =
-  useState<TLoads | null>(null);
-  const [loadIDInp,setLoadIDInp] = useState<string>('')
+    useState<TLoads | null>(null);
+  const [loadIDInp, setLoadIDInp] = useState<string>('')
+  const [deletePopup, setDeletePopup] = useState<{ open: boolean; noteId: string | null }>({
+    open: false,
+    noteId: null,
+  });
+  const [editPopup, setEditPopup] = useState<{ open: boolean; noteId: string | null; text: string }>({
+    open: false,
+    noteId: null,
+    text: "",
+  });
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [editingLoadId, setEditingLoadId] = useState<string | null>(null);
+
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
+
+
+
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
   // Get all Loads
@@ -381,6 +397,47 @@ const LoadsPage = () => {
       }
     }
   };
+  // Edit Note Function
+
+  const handleEditNote = async (loadId: string, commentId: string, newText: string) => {
+
+    if (!loadId || !commentId) {
+      toast.error("Missing load or comment ID ❌");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: newText }),
+      });
+
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.message || "Failed to edit note");
+
+      toast.success(result.message || "Note updated successfully ✅", {
+        style: { background: "#16a34a", color: "#fff" },
+
+      });
+
+
+      await fetchAllNotes(loadId);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to edit note ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
+    } return false;
+
+  };
+
+
+
 
   // Get All Notes
   const fetchAllNotes = async (loadId: string) => {
@@ -449,6 +506,39 @@ const LoadsPage = () => {
       </span>
     );
   };
+  const handleDeleteNote = async (loadId: string, commentId: string) => {
+
+    try {
+      const res = await fetch(
+        `${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const result = await res.json();
+
+      if (!res.ok) throw new Error(result.message || "Failed to delete note");
+
+      toast.success(result.message || "Note deleted successfully ✅", {
+        style: { background: "#16a34a", color: "#fff" },
+      });
+
+      await fetchAllNotes(loadId);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Failed to delete note ❌", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
+    } finally {
+      setDeletePopup({ open: false, noteId: null });
+    }
+  };
+
 
   // set loading
   if (loading) return <Loading />;
@@ -642,8 +732,8 @@ const LoadsPage = () => {
                     <td className="p-4 text-right text-slate-700">
                       {loadItem.pricePerMile
                         ? `${loadItem.currency} ${loadItem.pricePerMile.toFixed(
-                            2
-                          )}`
+                          2
+                        )}`
                         : "-"}
                     </td>
                     <td className="p-4 text-right font-semibold text-emerald-700">
@@ -805,7 +895,7 @@ const LoadsPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Total Price
+                    Total Price <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -864,7 +954,7 @@ const LoadsPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Load Id
+                    Load Id <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -884,7 +974,7 @@ const LoadsPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Driver
+                    Driver <span className="text-red-500">*</span>
                   </label>
                   <select
                     className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
@@ -903,7 +993,7 @@ const LoadsPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Truck Type
+                    Truck Type <span className="text-red-500">*</span>
                   </label>
                   <select
                     className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
@@ -950,11 +1040,10 @@ const LoadsPage = () => {
                     type="number"
                     value={truckTemp}
                     onChange={(e) => setTruckTemp(Number(e.target.value))}
-                    className={`${
-                      truck.find((t) => t.id === truckId)?.type !== "reefer"
+                    className={`${truck.find((t) => t.id === truckId)?.type !== "reefer"
                         ? "cursor-not-allowed"
                         : ""
-                    } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
+                      } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
                     placeholder="-10"
                     disabled={
                       !truckId ||
@@ -1061,7 +1150,18 @@ const LoadsPage = () => {
               </button>
             </div>
 
-            <form onSubmit={handleNotes} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (isEditing) {
+                  handleEditNote(editingLoadId!, editingNoteId!, addingNote);
+
+                } else {
+                  handleNotes(e);
+                }
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Load ID
@@ -1071,6 +1171,7 @@ const LoadsPage = () => {
                   value={selectedLoadIdForNote}
                   onChange={(e) => setSelectedLoadIdForNote(e.target.value)}
                   required
+                  disabled={isEditing}
                 >
                   <option value="">Select Load</option>
                   {load.map((l) => (
@@ -1098,12 +1199,29 @@ const LoadsPage = () => {
 
               <button
                 type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 mt-4"
+                className={`w-full flex items-center justify-center gap-2 py-3 px-4 ${isEditing ? "bg-yellow-600 hover:bg-yellow-700" : "bg-blue-600 hover:bg-blue-700"
+                  } text-white rounded-lg font-medium transition-all duration-200`}
               >
-                <IoAdd size={18} />
-                Add Note
+                {isEditing ? "Update Note" : "Add Note"}
               </button>
+
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditingNoteId(null);
+                    setEditingLoadId(null);
+                    setAddingNote("");
+                  }}
+                  className="w-full py-2 text-slate-600 hover:text-slate-900 transition-all"
+                >
+                  Cancel Edit
+                </button>
+              )}
             </form>
+
+
           </div>
         </div>
       )}
@@ -1125,38 +1243,131 @@ const LoadsPage = () => {
                 <IoClose size={24} />
               </button>
             </div>
-
-            <div className="space-y-4 max-h-96 overflow-y-auto">
-              {allNotes.length > 0 ? (
-                allNotes.map((note, i) => (
-                  <div
-                    key={note._id || i}
-                    className="p-4 rounded-lg bg-slate-100 border border-slate-200"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-sm font-medium text-slate-700">
-                        Note {i + 1}
-                      </span>
-                      <span className="text-xs text-slate-500">
-                        {new Date(note.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                    <p className="text-slate-800 whitespace-pre-wrap">
-                      {note.text}
-                    </p>
-                    {note.addedBy && (
-                      <div className="mt-2 text-xs text-slate-500">
-                        Added by: {note.addedBy.name} ({note.addedBy.jobId})
-                      </div>
-                    )}
+            <div className="space-y-4 max-h-96 overflow-y-auto relative">
+              {allNotes.map((note, i) => (
+                <div
+                  key={note._id || i}
+                  className="relative p-4 rounded-lg bg-slate-100 border border-slate-200"
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <span className="text-sm font-medium text-slate-700">
+                      Note {i + 1}
+                    </span>
+                    <span className="text-xs text-slate-500">
+                      {new Date(note.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                ))
-              ) : (
-                <div className="text-center py-8 text-slate-500">
-                  <CiStickyNote size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>No notes found for this load</p>
+
+                  <p className="text-slate-800 whitespace-pre-wrap">{note.text}</p>
+
+                  {note.addedBy && (
+                    <div className="mt-2 text-xs text-slate-500">
+                      Added by: {note.addedBy.name} ({note.addedBy.jobId})
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={() => setEditPopup({ open: true, noteId: note._id, text: note.text })}
+                      className="p-1.5 rounded-md bg-blue-500 text-white hover:bg-blue-600 text-xs"
+                    >
+                      ✏️ Edit
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        setDeletePopup({ open: true, noteId: note._id })
+
+                      }
+                      className="p-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 text-xs"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+
+                  {/* ✅ Edit Popup Form */}
+                  {editPopup.open && editPopup.noteId === note._id && (
+                    <div className="mt-4 border-t border-slate-200 pt-4">
+                      <form
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+
+                          await handleEditNote(
+                            selectedLoadForNotes?.id!,
+                            note._id,
+                            editPopup.text
+                          );
+
+                          setEditPopup({ open: false, noteId: null, text: "" });
+                          setPopupAllNote(false);
+
+                        }}
+
+                        className="space-y-2"
+                      >
+                        <textarea
+                          value={editPopup.text}
+                          onChange={(e) =>
+                            setEditPopup((prev) => ({ ...prev, text: e.target.value }))
+                          }
+                          rows={4}
+                          className="w-full border border-slate-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="flex justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setEditPopup({ open: false, noteId: null, text: "" })
+                            }
+                            className="px-3 py-1 rounded-md border border-slate-300 text-slate-700 hover:bg-slate-200 text-xs"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            className="px-3 py-1 rounded-md bg-blue-600 text-white hover:bg-blue-700 text-xs"
+
+                          >
+                            Save
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                  {deletePopup.open && (
+                    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-[9999] p-4">
+                      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm">
+                        <h3 className="text-lg font-semibold text-slate-800 mb-4">
+                          Confirm Deletion
+                        </h3>
+                        <p className="text-slate-600 mb-6">
+                          Are you sure you want to delete this note? This action cannot be undone.
+                        </p>
+
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={() => setDeletePopup({ open: false, noteId: null })}
+                            className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 transition"
+                          >
+                            Cancel
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              handleDeleteNote(selectedLoadForNotes?.id!, deletePopup.noteId!)
+                            }
+                            className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                 </div>
-              )}
+              ))}
+
             </div>
           </div>
         </div>
