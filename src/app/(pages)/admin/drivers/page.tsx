@@ -19,7 +19,7 @@ import {
   IoCash,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
-import { TDriver } from "@/types/globalTypes";
+import { TDriver, TPagination } from "@/types/globalTypes";
 import Link from "next/link";
 
 const DriversPage = () => {
@@ -30,6 +30,8 @@ const DriversPage = () => {
   const [popup, setPopup] = useState(false);
   const [editPopup, setEditPopup] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<TDriver | null>(null);
+  const [pagination, setPagination] = useState<TPagination | null>(null);
+  const [page, setPage] = useState(1);
 
   const [newDriver, setNewDriver] = useState({
     name: "",
@@ -73,6 +75,7 @@ const DriversPage = () => {
         const result = await res.json();
         if (!res.ok) throw new Error(result.message);
         setDrivers(result.data);
+        setPagination(result.paginationResult);
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message);
@@ -154,7 +157,9 @@ const DriversPage = () => {
 
   // Delete driver
   const handleDeleteDriver = async (id: string) => {
-    const confirmDelete = confirm("Are you sure you want to delete this driver?");
+    const confirmDelete = confirm(
+      "Are you sure you want to delete this driver?"
+    );
     if (!confirmDelete) return;
 
     try {
@@ -180,15 +185,28 @@ const DriversPage = () => {
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
     const statusConfig = {
-      available: { color: "bg-emerald-100 text-emerald-800 border-emerald-300", icon: <IoPerson size={14} className="mr-1" /> },
-      busy: { color: "bg-blue-100 text-blue-800 border-blue-300", icon: <IoPerson size={14} className="mr-1" /> },
-      inactive: { color: "bg-slate-100 text-slate-800 border-slate-300", icon: <IoPerson size={14} className="mr-1" /> },
+      available: {
+        color: "bg-emerald-100 text-emerald-800 border-emerald-300",
+        icon: <IoPerson size={14} className="mr-1" />,
+      },
+      busy: {
+        color: "bg-blue-100 text-blue-800 border-blue-300",
+        icon: <IoPerson size={14} className="mr-1" />,
+      },
+      inactive: {
+        color: "bg-slate-100 text-slate-800 border-slate-300",
+        icon: <IoPerson size={14} className="mr-1" />,
+      },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.available;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.available;
 
     return (
-      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}>
+      <span
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}
+      >
         {config.icon}
         {status}
       </span>
@@ -200,7 +218,7 @@ const DriversPage = () => {
   return (
     <section className="relative p-6">
       <Toaster position="top-right" />
-      
+
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
         <div className="mb-4 lg:mb-0">
@@ -209,7 +227,7 @@ const DriversPage = () => {
             Manage your drivers and their information
           </p>
         </div>
-        
+
         <button
           onClick={() => setPopup(true)}
           className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
@@ -235,15 +253,23 @@ const DriversPage = () => {
         </div>
       </div>
 
-      {err && <div className="mb-6"><Erros message={err} /></div>}
+      {err && (
+        <div className="mb-6">
+          <Erros message={err} />
+        </div>
+      )}
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-slate-500 text-sm font-medium">Total Drivers</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">{drivers.length}</p>
+              <p className="text-slate-500 text-sm font-medium">
+                Total Drivers
+              </p>
+              <p className="text-2xl font-bold text-slate-800 mt-1">
+                {drivers.length}
+              </p>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">
               <IoPerson size={20} className="text-blue-600" />
@@ -256,7 +282,7 @@ const DriversPage = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium">Available</p>
               <p className="text-2xl font-bold text-slate-800 mt-1">
-                {drivers.filter(d => d.status === 'available').length}
+                {drivers.filter((d) => d.status === "available").length}
               </p>
             </div>
             <div className="p-2 bg-emerald-50 rounded-lg">
@@ -270,7 +296,7 @@ const DriversPage = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium">Busy</p>
               <p className="text-2xl font-bold text-slate-800 mt-1">
-                {drivers.filter(d => d.status === 'busy').length}
+                {drivers.filter((d) => d.status === "busy").length}
               </p>
             </div>
             <div className="p-2 bg-amber-50 rounded-lg">
@@ -284,7 +310,7 @@ const DriversPage = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium">Inactive</p>
               <p className="text-2xl font-bold text-slate-800 mt-1">
-                {drivers.filter(d => d.status === 'inactive').length}
+                {drivers.filter((d) => d.status === "inactive").length}
               </p>
             </div>
             <div className="p-2 bg-slate-50 rounded-lg">
@@ -301,11 +327,21 @@ const DriversPage = () => {
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
                 <th className="text-left p-4 font-medium text-slate-600">#</th>
-                <th className="text-left p-4 font-medium text-slate-600">Driver Details</th>
-                <th className="text-left p-4 font-medium text-slate-600">Contact Information</th>
-                <th className="text-left p-4 font-medium text-slate-600">License & Pricing</th>
-                <th className="text-left p-4 font-medium text-slate-600">Status</th>
-                <th className="text-left p-4 font-medium text-slate-600">Actions</th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Driver Details
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Contact Information
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  License & Pricing
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Status
+                </th>
+                <th className="text-left p-4 font-medium text-slate-600">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -316,15 +352,19 @@ const DriversPage = () => {
                     className="hover:bg-slate-50 transition-colors group"
                   >
                     <td className="p-4 text-slate-600 font-medium">{i + 1}</td>
-                    
+
                     <td className="p-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
                           <IoPerson size={18} className="text-slate-600" />
                         </div>
                         <div>
-                          <div className="font-medium text-slate-900">{driver.name}</div>
-                          <div className="text-xs text-slate-500 mt-1">ID: {driver.id}</div>
+                          <div className="font-medium text-slate-900">
+                            {driver.name}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-1">
+                            ID: {driver.id}
+                          </div>
                         </div>
                       </div>
                     </td>
@@ -351,13 +391,17 @@ const DriversPage = () => {
                         {driver.licenseNumber && (
                           <div className="flex items-center gap-2 text-slate-700">
                             <IoCard size={14} className="text-slate-400" />
-                            <span className="text-sm">{driver.licenseNumber}</span>
+                            <span className="text-sm">
+                              {driver.licenseNumber}
+                            </span>
                           </div>
                         )}
                         {driver.pricePerMile && (
                           <div className="flex items-center gap-2 text-slate-700">
                             <IoCash size={14} className="text-slate-400" />
-                            <span className="text-sm">${driver.pricePerMile.toFixed(2)}/mile</span>
+                            <span className="text-sm">
+                              ${driver.pricePerMile.toFixed(2)}/mile
+                            </span>
                           </div>
                         )}
                       </div>
@@ -385,7 +429,8 @@ const DriversPage = () => {
                               phone: driver.phone || "",
                               email: driver.email || "",
                               licenseNumber: driver.licenseNumber || "",
-                              pricePerMile: driver.pricePerMile?.toString() || "",
+                              pricePerMile:
+                                driver.pricePerMile?.toString() || "",
                               status: driver.status || "available",
                             });
                             setEditPopup(true);
@@ -409,12 +454,17 @@ const DriversPage = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-slate-500">
+                  <td
+                    colSpan={6}
+                    className="px-4 py-12 text-center text-slate-500"
+                  >
                     <div className="flex flex-col items-center justify-center">
                       <div className="text-3xl mb-3">👨‍💼</div>
                       <div className="text-slate-600">No drivers found</div>
                       <div className="text-slate-400 text-sm mt-1">
-                        {search ? 'Try adjusting your search terms' : 'Get started by adding your first driver'}
+                        {search
+                          ? "Try adjusting your search terms"
+                          : "Get started by adding your first driver"}
                       </div>
                     </div>
                   </td>
@@ -430,7 +480,9 @@ const DriversPage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
           <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">Add New Driver</h3>
+              <h3 className="text-xl font-semibold text-slate-800">
+                Add New Driver
+              </h3>
               <button
                 onClick={() => setPopup(false)}
                 className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
@@ -441,7 +493,9 @@ const DriversPage = () => {
 
             <form onSubmit={handleCreateDriver} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Full Name
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoPerson className="h-5 w-5 text-slate-400" />
@@ -460,7 +514,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Email
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoMail className="h-5 w-5 text-slate-400" />
@@ -479,7 +535,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Phone Number
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCall className="h-5 w-5 text-slate-400" />
@@ -498,7 +556,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">License Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  License Number
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCard className="h-5 w-5 text-slate-400" />
@@ -520,7 +580,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Price per Mile (USD)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Price per Mile (USD)
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCash className="h-5 w-5 text-slate-400" />
@@ -531,7 +593,10 @@ const DriversPage = () => {
                     placeholder="0.00"
                     value={newDriver.pricePerMile}
                     onChange={(e) =>
-                      setNewDriver({ ...newDriver, pricePerMile: e.target.value })
+                      setNewDriver({
+                        ...newDriver,
+                        pricePerMile: e.target.value,
+                      })
                     }
                     className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     required
@@ -540,7 +605,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Status
+                </label>
                 <select
                   value={newDriver.status}
                   onChange={(e) =>
@@ -571,7 +638,9 @@ const DriversPage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
           <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">Edit Driver</h3>
+              <h3 className="text-xl font-semibold text-slate-800">
+                Edit Driver
+              </h3>
               <button
                 onClick={() => setEditPopup(false)}
                 className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
@@ -582,7 +651,9 @@ const DriversPage = () => {
 
             <form onSubmit={handleUpdateDriver} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Full Name</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Full Name
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoPerson className="h-5 w-5 text-slate-400" />
@@ -600,7 +671,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Email</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Email
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoMail className="h-5 w-5 text-slate-400" />
@@ -610,7 +683,10 @@ const DriversPage = () => {
                     placeholder="Email Address"
                     value={updateDriver.email}
                     onChange={(e) =>
-                      setUpdateDriver({ ...updateDriver, email: e.target.value })
+                      setUpdateDriver({
+                        ...updateDriver,
+                        email: e.target.value,
+                      })
                     }
                     className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                   />
@@ -618,7 +694,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Phone Number
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCall className="h-5 w-5 text-slate-400" />
@@ -628,7 +706,10 @@ const DriversPage = () => {
                     placeholder="Contact Number"
                     value={updateDriver.phone}
                     onChange={(e) =>
-                      setUpdateDriver({ ...updateDriver, phone: e.target.value })
+                      setUpdateDriver({
+                        ...updateDriver,
+                        phone: e.target.value,
+                      })
                     }
                     className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                   />
@@ -636,7 +717,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">License Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  License Number
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCard className="h-5 w-5 text-slate-400" />
@@ -657,7 +740,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Price per Mile (USD)</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Price per Mile (USD)
+                </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCash className="h-5 w-5 text-slate-400" />
@@ -679,7 +764,9 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Status</label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Status
+                </label>
                 <select
                   value={updateDriver.status}
                   onChange={(e) =>
@@ -701,6 +788,38 @@ const DriversPage = () => {
                 Update Driver
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+        {/* Pagination */}
+      {pagination && (
+        <div className="flex justify-between items-center mt-6">
+          <div className="text-sm text-slate-600">
+            Showing {(page - 1) * 10 + 1} to{" "}
+            {Math.min(page * 10, pagination.totalPages)} of{" "}
+            {pagination.totalPages} entries
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-2 text-sm text-slate-700">
+              Page {pagination.currentPage} of {pagination.totalPages}
+            </span>
+            <button
+              disabled={page >= pagination.totalPages}
+              onClick={() =>
+                setPage((p) => Math.min(pagination.totalPages, p + 1))
+              }
+              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
           </div>
         </div>
       )}
