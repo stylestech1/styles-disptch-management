@@ -2,7 +2,7 @@
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
-import { TUserRole } from "@/types/globalTypes";
+import { TErrors, TUserRole } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
@@ -67,7 +67,16 @@ const AdminProfile = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
         setProfile(result.data);
         // Initialize form data with current profile data
         setFormData({
@@ -106,7 +115,16 @@ const AdminProfile = () => {
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Update Failed");
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
 
       toast.success(result.message || "Profile updated successfully! ✅", {
         style: { background: "#16a34a", color: "#fff" },
@@ -163,7 +181,16 @@ const AdminProfile = () => {
 
       const result = await res.json();
 
-      if (!res.ok) throw new Error(result.message || "Password update failed");
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
 
       toast.success(result.message || "Password updated successfully!");
 

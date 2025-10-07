@@ -2,7 +2,7 @@
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
-import { TDriver, TLoads, TStatusLoad } from "@/types/globalTypes";
+import { TDriver, TErrors, TLoads, TStatusLoad } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
@@ -60,7 +60,16 @@ const LoadSummary = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
         setDrivers(result.data);
       } catch (error) {
         if (error instanceof Error) {
@@ -89,7 +98,16 @@ const LoadSummary = () => {
 
         const result = await res.json();
         console.log("Profile Result= ", result);
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
 
         setProfile(result.data);
       } catch (error) {
@@ -121,7 +139,16 @@ const LoadSummary = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
         console.log(result.data);
         if (!Array.isArray(result.data)) {
           setLoadSummary([result.data]);

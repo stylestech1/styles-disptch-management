@@ -19,7 +19,7 @@ import {
   IoCash,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
-import { TDriver, TPagination } from "@/types/globalTypes";
+import { TDriver, TErrors, TPagination } from "@/types/globalTypes";
 import Link from "next/link";
 
 const DriversPage = () => {
@@ -73,7 +73,16 @@ const DriversPage = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
         setDrivers(result.data);
         setPagination(result.paginationResult);
       } catch (error) {
@@ -110,7 +119,16 @@ const DriversPage = () => {
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message);
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
       setDrivers((prev) => [...prev, result.data]);
       toast.success("Driver created successfully!");
       setPopup(false);
@@ -144,7 +162,16 @@ const DriversPage = () => {
         }),
       });
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message);
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
       setDrivers((prev) =>
         prev.map((d) => (d.id === selectedDriver.id ? result.data : d))
       );
@@ -170,9 +197,16 @@ const DriversPage = () => {
         },
       });
 
+      const result = await res.json();
       if (!res.ok) {
-        const result = await res.json();
-        throw new Error(result.message || "Failed to delete driver");
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
       }
 
       setDrivers((prev) => prev.filter((d) => d.id !== id));
@@ -792,7 +826,7 @@ const DriversPage = () => {
         </div>
       )}
 
-        {/* Pagination */}
+      {/* Pagination */}
       {pagination && (
         <div className="flex justify-between items-center mt-6">
           <div className="text-sm text-slate-600">

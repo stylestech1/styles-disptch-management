@@ -71,3 +71,11 @@ export type TComments = {
   createdAt: string
   updatedAt: string
 }
+export type TErrors = {
+  type: 'field'
+  value: string
+  msg: string
+  path: string
+  location: string
+  message?: string
+}

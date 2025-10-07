@@ -16,8 +16,8 @@ import {
   IoBriefcase,
   IoSettingsOutline,
 } from "react-icons/io5";
-import toast from "react-hot-toast";
-import Link from "next/link";
+import toast, { Toaster } from "react-hot-toast";
+import { TErrors } from "@/types/globalTypes";
 
 type TDispatcher = {
   id: string;
@@ -75,14 +75,24 @@ const Dispatchers = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
 
         setDispatchers(result.data || []);
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
-          toast.error(error.message || "Loading Failed" , {
-          style: { background: "#dc2626", color: "#fff" }});
+          toast.error(error.message || "Loading Failed", {
+            style: { background: "#dc2626", color: "#fff" },
+          });
         }
       } finally {
         setLoading(false);
@@ -114,9 +124,13 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Create user failed", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
         return;
       }
 
@@ -161,9 +175,13 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Failed to update role", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err : TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
         return;
       }
 
@@ -205,9 +223,13 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Failed to activate user", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err : TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
         return;
       }
 
@@ -246,9 +268,13 @@ const Dispatchers = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Failed to deactivate user", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err : TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
         return;
       }
 
@@ -275,7 +301,7 @@ const Dispatchers = () => {
   const openSettingsPopup = (user: TDispatcher) => {
     setSelectedUser(user);
     setTempUser({
-      role: user.role as "admin" | "employee", // تم التصحيح هنا
+      role: user.role as "admin" | "employee",
       status: user.active ? "active" : "deactive",
     });
     setPopupSetting(true);
@@ -302,6 +328,8 @@ const Dispatchers = () => {
           Add New User
         </button>
       </div>
+
+      <Toaster position="top-center" reverseOrder={false} />
 
       {/* Search */}
       <div className="mb-8">

@@ -2,9 +2,15 @@
 import Loading from "@/components/ui/Loading";
 import { loginSuccess } from "@/redux/slices/authSlice";
 import { useAppDispatch } from "@/redux/store";
+import { TErrors } from "@/types/globalTypes";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { IoMailOutline, IoLockClosedOutline, IoLogInOutline } from "react-icons/io5";
+import toast from "react-hot-toast";
+import {
+  IoMailOutline,
+  IoLockClosedOutline,
+  IoLogInOutline,
+} from "react-icons/io5";
 
 const Login = () => {
   const dispatch = useAppDispatch();
@@ -34,12 +40,23 @@ const Login = () => {
 
       const result = await res.json();
 
-      if (!res.ok) throw new Error(result.message || "Invalid Credentials");
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
 
-      dispatch(loginSuccess({
-        user: result.data,
-        token: result.token
-      }));
+      dispatch(
+        loginSuccess({
+          user: result.data,
+          token: result.token,
+        })
+      );
 
       if (result.data.role === "admin") {
         router.push("/admin/loads");
@@ -67,19 +84,37 @@ const Login = () => {
             <div className="text-center lg:text-left mb-8">
               <div className="flex items-center justify-center lg:justify-start gap-3 mb-4">
                 <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  <svg
+                    className="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 10V3L4 14h7v7l9-11h-7z"
+                    />
                   </svg>
                 </div>
-                <h1 className="text-2xl font-bold text-slate-800">Styles Dispatch</h1>
+                <h1 className="text-2xl font-bold text-slate-800">
+                  Styles Dispatch
+                </h1>
               </div>
-              <p className="text-slate-600 text-sm">Professional Load Management System</p>
+              <p className="text-slate-600 text-sm">
+                Professional Load Management System
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
-                <h2 className="text-xl font-semibold text-slate-800 mb-2">Welcome Back</h2>
-                <p className="text-slate-500 text-sm">Sign in to your account</p>
+                <h2 className="text-xl font-semibold text-slate-800 mb-2">
+                  Welcome Back
+                </h2>
+                <p className="text-slate-500 text-sm">
+                  Sign in to your account
+                </p>
               </div>
 
               {err && (
@@ -90,7 +125,10 @@ const Login = () => {
 
               <div className="space-y-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
                     Email Address
                   </label>
                   <div className="relative">
@@ -112,7 +150,10 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-slate-700 mb-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-slate-700 mb-2"
+                  >
                     Password
                   </label>
                   <div className="relative">
@@ -142,7 +183,6 @@ const Login = () => {
                 <IoLogInOutline className="w-5 h-5" />
                 {loading ? "Signing In..." : "Sign In"}
               </button>
-   
 
               <div className="text-center">
                 <p className="text-xs text-slate-500">
@@ -156,35 +196,72 @@ const Login = () => {
           <div className="bg-gradient-to-br from-emerald-600 to-emerald-700 p-8 lg:p-12 text-white relative overflow-hidden">
             <div className="relative z-10 h-full flex flex-col justify-center">
               <div className="text-center lg:text-left">
-                <h3 className="text-2xl lg:text-3xl font-bold mb-4">Efficient Dispatch Management</h3>
+                <h3 className="text-2xl lg:text-3xl font-bold mb-4">
+                  Efficient Dispatch Management
+                </h3>
                 <p className="text-emerald-100 text-lg mb-6 leading-relaxed">
-                  Streamline your logistics operations with our professional dispatch services platform. 
-                  Manage loads, track shipments, and optimize your workflow.
+                  Streamline your logistics operations with our professional
+                  dispatch services platform. Manage loads, track shipments, and
+                  optimize your workflow.
                 </p>
-                
+
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </div>
-                    <span className="text-emerald-50">Real-time load tracking</span>
+                    <span className="text-emerald-50">
+                      Real-time load tracking
+                    </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </div>
-                    <span className="text-emerald-50">Driver performance analytics</span>
+                    <span className="text-emerald-50">
+                      Driver performance analytics
+                    </span>
                   </div>
-                  
+
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     </div>
                     <span className="text-emerald-50">Automated reporting</span>
@@ -192,16 +269,16 @@ const Login = () => {
                 </div>
               </div>
             </div>
-            
+
             {/* Background Pattern */}
             <div className="absolute inset-0 opacity-10">
               <svg className="w-full h-full" viewBox="0 0 100 100">
-                <circle cx="20" cy="20" r="2" fill="white"/>
-                <circle cx="50" cy="30" r="1.5" fill="white"/>
-                <circle cx="80" cy="20" r="2" fill="white"/>
-                <circle cx="30" cy="70" r="1.5" fill="white"/>
-                <circle cx="70" cy="80" r="2" fill="white"/>
-                <circle cx="90" cy="60" r="1.5" fill="white"/>
+                <circle cx="20" cy="20" r="2" fill="white" />
+                <circle cx="50" cy="30" r="1.5" fill="white" />
+                <circle cx="80" cy="20" r="2" fill="white" />
+                <circle cx="30" cy="70" r="1.5" fill="white" />
+                <circle cx="70" cy="80" r="2" fill="white" />
+                <circle cx="90" cy="60" r="1.5" fill="white" />
               </svg>
             </div>
           </div>

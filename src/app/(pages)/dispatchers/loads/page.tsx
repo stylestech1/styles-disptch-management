@@ -15,6 +15,7 @@ import {
   TStatusLoad,
   TTruckType,
   TComments,
+  TErrors,
 } from "@/types/globalTypes";
 import { apiFetcher } from "@/utils/APIFetcher";
 import { haversineDistance } from "@/utils/haversineDistance";
@@ -52,11 +53,11 @@ const LoadsPage = () => {
   const [destination, setDestination] = useState<TPlace | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
-  const [fees, setFees] = useState<string>('');
+  const [fees, setFees] = useState<string>("");
   const [driverId, setDriverId] = useState<string>("");
   const [truckId, setTruckId] = useState<string>("");
-  const [deliveredAt, setDeliveredAt] = useState<string>('')
-  const [cancelledAt, setCancelledAt] = useState<string>('')
+  const [deliveredAt, setDeliveredAt] = useState<string>("");
+  const [cancelledAt, setCancelledAt] = useState<string>("");
   const [truckType, setTruckType] = useState<string>("reefer");
   const [truckTemp, setTruckTemp] = useState<number>(0);
   const [currency, setCurrency] = useState<string>("USD");
@@ -64,10 +65,10 @@ const LoadsPage = () => {
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
   const [addingNote, setAddingNote] = useState<string>("");
   const [selectedLoadIdForNote, setSelectedLoadIdForNote] = useState("");
-  const [allNotes, setAllNotes] = useState<TComments[]>([]); 
+  const [allNotes, setAllNotes] = useState<TComments[]>([]);
   const [selectedLoadForNotes, setSelectedLoadForNotes] =
-  useState<TLoads | null>(null);
-  const [loadIDInp,setLoadIDInp] = useState<string>('')
+    useState<TLoads | null>(null);
+  const [loadIDInp, setLoadIDInp] = useState<string>("");
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -99,7 +100,16 @@ const LoadsPage = () => {
 
         const result = await res.json();
 
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
 
         setLoad(result.data);
         setPagination(result.paginationResult);
@@ -133,7 +143,16 @@ const LoadsPage = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
         setDrivers(result.data);
       } catch (error) {
         if (error instanceof Error) {
@@ -165,7 +184,16 @@ const LoadsPage = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
         setTruck(result.data.data);
       } catch (error) {
         if (error instanceof Error) {
@@ -270,7 +298,7 @@ const LoadsPage = () => {
       pricePerMile: total / distance,
       currency,
       feesNumber: fees,
-      loadId: loadIDInp
+      loadId: loadIDInp,
     };
 
     try {
@@ -362,7 +390,16 @@ const LoadsPage = () => {
       );
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Failed to add note");
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
 
       toast.success(result.message || "Note was Added ✅", {
         style: { background: "#16a34a", color: "#fff" },
@@ -395,7 +432,16 @@ const LoadsPage = () => {
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Failed to fetch notes");
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
 
       setAllNotes(result.comments || []);
     } catch (error) {

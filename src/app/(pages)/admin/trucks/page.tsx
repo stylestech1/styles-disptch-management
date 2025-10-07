@@ -17,7 +17,7 @@ import {
   IoTrash,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
-import { TPagination, TTruck } from "@/types/globalTypes";
+import { TErrors, TPagination, TTruck } from "@/types/globalTypes";
 
 const TrucksPage = () => {
   const [trucks, setTrucks] = useState<TTruck[]>([]);
@@ -79,7 +79,16 @@ const TrucksPage = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
 
         setTrucks(result.data?.data || []);
         setPagination(result.data.paginationResult);
@@ -184,7 +193,13 @@ const TrucksPage = () => {
 
       const result = await res.json();
       if (!res.ok) {
-        toast.error(result.message || "Update truck failed");
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
         return;
       }
 
@@ -237,7 +252,14 @@ const TrucksPage = () => {
       const result = await res.json();
 
       if (!res.ok) {
-        throw new Error(result.message || "Failed to delete truck");
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
       }
 
       toast.success("Truck deleted successfully!");

@@ -2,7 +2,7 @@
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
-import { TUserRole } from "@/types/globalTypes";
+import { TErrors, TUserRole } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
@@ -35,7 +35,7 @@ const AdminProfile = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
-  
+
   // State for form data
   const [formData, setFormData] = useState({
     name: "",
@@ -60,7 +60,16 @@ const AdminProfile = () => {
         });
 
         const result = await res.json();
-        if (!res.ok) throw new Error(result.message);
+        if (!res.ok) {
+          if (Array.isArray(result.errors)) {
+            result.errors.forEach((err: TErrors) => {
+              toast.error(err.msg || "Create user failed", {
+                style: { background: "#dc2626", color: "#fff" },
+              });
+            });
+          }
+          return;
+        }
         setProfile(result.data);
         // Initialize form data with current profile data
         setFormData({
@@ -83,7 +92,7 @@ const AdminProfile = () => {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdateLoading(true);
-    
+
     try {
       const res = await fetch(`${apiURL}/api/v1/userDashboard/updateMyData`, {
         method: "PUT",
@@ -99,12 +108,21 @@ const AdminProfile = () => {
       });
 
       const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Update Failed");
-      
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
+
       toast.success(result.message || "Profile updated successfully! ✅", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      
+
       setProfile(result.data);
       setPopup(false);
     } catch (error) {
@@ -122,9 +140,9 @@ const AdminProfile = () => {
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
@@ -181,7 +199,9 @@ const AdminProfile = () => {
                 <h3 className="text-lg font-semibold text-slate-800">
                   {profile.name}
                 </h3>
-                <p className="text-slate-500 text-sm mt-0.5">ID: {profile.jobId}</p>
+                <p className="text-slate-500 text-sm mt-0.5">
+                  ID: {profile.jobId}
+                </p>
               </div>
             </div>
 
@@ -227,8 +247,8 @@ const AdminProfile = () => {
                 />
                 <span
                   className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                    profile.active 
-                      ? "bg-emerald-100 text-emerald-800 border border-emerald-200" 
+                    profile.active
+                      ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
                       : "bg-slate-100 text-slate-800 border border-slate-200"
                   }`}
                 >
@@ -352,11 +372,9 @@ const AdminProfile = () => {
 
             {/* Read-only fields info */}
             <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-              <h4 className="text-sm font-medium text-slate-700 mb-2">
-                Note:
-              </h4>
+              <h4 className="text-sm font-medium text-slate-700 mb-2">Note:</h4>
               <p className="text-xs text-slate-600">
-                Role, Position, and Status cannot be changed from this form. 
+                Role, Position, and Status cannot be changed from this form.
                 Please contact administrator for these changes.
               </p>
             </div>
