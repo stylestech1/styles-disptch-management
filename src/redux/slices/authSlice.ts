@@ -1,6 +1,7 @@
 "use client";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { TUserRole } from "@/types/globalTypes";
+import Cookies from "js-cookie";
 // types
 type TUser = {
   id: string
@@ -30,10 +31,13 @@ const authSlice = createSlice({
       state,
       action: PayloadAction<{ user: TUser; token: string }>
     ) => {
-      state.user = action.payload.user
-      state.token = action.payload.token
+      const {user, token} = action.payload
+      Cookies.set('token', token, {expires: 7})
+      state.user = user
+      state.token = token
     },
     logout: (state) => {
+      Cookies.remove('token')
       state.user = null;
       state.token = null;
     },
