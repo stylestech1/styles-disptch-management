@@ -17,18 +17,7 @@ import {
   IoSettingsOutline,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
-import { TErrors } from "@/types/globalTypes";
-
-type TDispatcher = {
-  id: string;
-  name: string;
-  active: boolean;
-  email: string;
-  phone: string;
-  role: string;
-  position: string;
-  jobId: number;
-};
+import { TDispatcher, TErrors, TPagination } from "@/types/globalTypes";
 
 const Dispatchers = () => {
   const [dispatchers, setDispatchers] = useState<TDispatcher[]>([]);
@@ -37,7 +26,9 @@ const Dispatchers = () => {
   const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [popupSetting, setPopupSetting] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<TDispatcher | null>(null); // تم التصحيح هنا
+  const [selectedUser, setSelectedUser] = useState<TDispatcher | null>(null);
+  const [pagination, setPagination] = useState<TPagination | null>(null);
+  const [page, setPage] = useState(1);
   const [tempUser, setTempUser] = useState({
     role: "employee" as "admin" | "employee",
     status: "active" as "active" | "deactive",
@@ -87,6 +78,7 @@ const Dispatchers = () => {
         }
 
         setDispatchers(result.data || []);
+        setPagination(result.paginationResult);
       } catch (error) {
         if (error instanceof Error) {
           setErr(error.message || "Loading Failed");
@@ -176,7 +168,7 @@ const Dispatchers = () => {
       const result = await res.json();
       if (!res.ok) {
         if (Array.isArray(result.errors)) {
-          result.errors.forEach((err : TErrors) => {
+          result.errors.forEach((err: TErrors) => {
             toast.error(err.msg || "Create user failed", {
               style: { background: "#dc2626", color: "#fff" },
             });
@@ -224,7 +216,7 @@ const Dispatchers = () => {
       const result = await res.json();
       if (!res.ok) {
         if (Array.isArray(result.errors)) {
-          result.errors.forEach((err : TErrors) => {
+          result.errors.forEach((err: TErrors) => {
             toast.error(err.msg || "Create user failed", {
               style: { background: "#dc2626", color: "#fff" },
             });
@@ -269,7 +261,7 @@ const Dispatchers = () => {
       const result = await res.json();
       if (!res.ok) {
         if (Array.isArray(result.errors)) {
-          result.errors.forEach((err : TErrors) => {
+          result.errors.forEach((err: TErrors) => {
             toast.error(err.msg || "Create user failed", {
               style: { background: "#dc2626", color: "#fff" },
             });
@@ -804,6 +796,38 @@ const Dispatchers = () => {
                 <span>Update User</span>
               </button>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && (
+        <div className="flex justify-between items-center mt-6">
+          <div className="text-sm text-slate-600">
+            Showing {(page - 1) * 10 + 1} to{" "}
+            {Math.min(page * 10, pagination.totalPages)} of{" "}
+            {pagination.totalPages} entries
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Previous
+            </button>
+            <span className="px-3 py-2 text-sm text-slate-700">
+              Page {pagination.currentPage} of {pagination.totalPages}
+            </span>
+            <button
+              disabled={page >= pagination.totalPages}
+              onClick={() =>
+                setPage((p) => Math.min(pagination.totalPages, p + 1))
+              }
+              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              Next
+            </button>
           </div>
         </div>
       )}

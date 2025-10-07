@@ -79,3 +79,13 @@ export type TErrors = {
   location: string
   message?: string
 }
+export type TDispatcher = {
+  id: string;
+  name: string;
+  active: boolean;
+  email: string;
+  phone: string;
+  role: string;
+  position: string;
+  jobId: number;
+};

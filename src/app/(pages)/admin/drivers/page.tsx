@@ -527,9 +527,7 @@ const DriversPage = () => {
 
             <form onSubmit={handleCreateDriver} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Full Name
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Full Name <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoPerson className="h-5 w-5 text-slate-400" />
@@ -548,9 +546,7 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Email
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Email <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoMail className="h-5 w-5 text-slate-400" />
@@ -569,9 +565,7 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Phone Number
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCall className="h-5 w-5 text-slate-400" />
@@ -590,9 +584,7 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  License Number
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">License Number <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCard className="h-5 w-5 text-slate-400" />
@@ -614,9 +606,7 @@ const DriversPage = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Price per Mile (USD)
-                </label>
+                <label className="block text-sm font-medium text-slate-700 mb-2">Price per Mile (USD) <span className="text-red-500">*</span></label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <IoCash className="h-5 w-5 text-slate-400" />
