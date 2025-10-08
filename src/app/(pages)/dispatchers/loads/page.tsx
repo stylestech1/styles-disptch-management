@@ -66,7 +66,7 @@ const LoadsPage = () => {
   const [cancelledAt, setCancelledAt] = useState<string>("");
   const [pickupAt, setPickupAt] = useState<string>("");
   const [truckType, setTruckType] = useState<string>("reefer");
-  const [truckTemp, setTruckTemp] = useState<number>(0);
+  const [truckTemp, setTruckTemp] = useState<string>('');
   const [selectedLoadId, setSelectedLoadId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
   const [addingNote, setAddingNote] = useState<string>("");
@@ -78,6 +78,7 @@ const LoadsPage = () => {
   const [noteType, setNoteType] = useState<"dispatcher" | "driver">(
     "dispatcher"
   );
+
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
 
@@ -436,8 +437,10 @@ const LoadsPage = () => {
 
     const body = {
       origin: { address: origin.display_name },
-      destination: validDestinations.map((dest) => dest.display_name),
-      dho: dho ? { address: dho.display_name } : null,
+      destination: validDestinations.map((dest) => ({
+        address: dest.display_name,
+      })),
+      DHO: dho ? { address: dho.display_name } : null,
       driverId,
       truckId,
       deliveredAt,
@@ -467,14 +470,32 @@ const LoadsPage = () => {
       });
 
       await fetchLoads();
-      setPopup(false);
-      setDestinations([]);
       setDho(null);
       setOrigin(null);
+      setDestinations([]);
+      setPopup(false)
+
+      // Distance and price fields
+      setDistance(null);
+      setDhoToOriginDistance(null);
+      setAverageTime(null);
       setPrice("");
+      setPricePerMile(null);
       setFees("");
-      setLoadIDInp("");
+
+      // Driver and truck fields
+      setDriverId("");
+      setTruckId("");
+      setTruckType("reefer");
+      setTruckTemp('');
+
+      // Time fields
       setPickupAt("");
+      setDeliveredAt("");
+      setCancelledAt("");
+
+      // Load ID
+      setLoadIDInp("");
     } catch (err) {
       if (err instanceof Error) {
         toast.error(err.message || "Load creation failed ❌", {
@@ -521,6 +542,7 @@ const LoadsPage = () => {
     }
   };
 
+  // Add Notes
   const handleNotes = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedLoadIdForNote)
@@ -859,8 +881,8 @@ const LoadsPage = () => {
                     <td className="p-4 text-right text-slate-700">
                       {loadItem.pricePerMile
                         ? `${loadItem.currency} ${loadItem.pricePerMile.toFixed(
-                          2
-                        )}`
+                            2
+                          )}`
                         : "-"}
                     </td>
                     <td className="p-4 text-right font-semibold text-emerald-700">
@@ -1074,8 +1096,9 @@ const LoadsPage = () => {
                             setValue={(place) =>
                               updateDestination(index, place)
                             }
-                            placeholder={`Enter destination ${index + 1
-                              } address`}
+                            placeholder={`Enter destination ${
+                              index + 1
+                            } address`}
                           />
                         </div>
 
@@ -1166,9 +1189,9 @@ const LoadsPage = () => {
                       type="text"
                       value={
                         price &&
-                          distance &&
-                          Number(price) > 0 &&
-                          Number(distance) > 0
+                        distance &&
+                        Number(price) > 0 &&
+                        Number(distance) > 0
                           ? `$${(Number(price) / Number(distance)).toFixed(3)}`
                           : "$0.000"
                       }
@@ -1299,11 +1322,12 @@ const LoadsPage = () => {
                   <input
                     type="number"
                     value={truckTemp}
-                    onChange={(e) => setTruckTemp(Number(e.target.value))}
-                    className={`${truck.find((t) => t.id === truckId)?.type !== "reefer"
+                    onChange={(e) => setTruckTemp(e.target.value)}
+                    className={`${
+                      truck.find((t) => t.id === truckId)?.type !== "reefer"
                         ? "cursor-not-allowed"
                         : ""
-                      } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
+                    } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
                     placeholder="-10"
                     disabled={
                       !truckId ||
@@ -1392,15 +1416,14 @@ const LoadsPage = () => {
         </div>
       )}
 
+      {/* Popup For Adding Note */}
       {popupNote && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
           <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <h3 className="text-xl font-semibold text-slate-800">
-                {noteType === "driver"
-                  ? "Add Driver Note"
-                  : "Add Dispatcher Note"}
+                {noteType === "driver" ? "Add Driver Note" : "Add Load Note"}
               </h3>
               <button
                 onClick={() => {
@@ -1520,12 +1543,15 @@ const LoadsPage = () => {
                     </div>
                     <div className="mb-3">
                       <span
-                        className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${note.type === "dispatcher"
-                          ? "bg-blue-100 text-blue-700"
-                          : "bg-amber-100 text-amber-700"
-                          }`}
+                        className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                          note.type === "dispatcher"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
                       >
-                        {note.type === "dispatcher" ? "Load Note" : "Driver Note"}
+                        {note.type === "dispatcher"
+                          ? "Load Note"
+                          : "Driver Note"}
                       </span>
                     </div>
 
