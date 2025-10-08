@@ -15,6 +15,8 @@ type NominatimResult = {
   lon: string;
   display_name: string;
   address: {
+    house_number?: string;
+    road?: string;
     city?: string;
     town?: string;
     village?: string;
@@ -22,7 +24,7 @@ type NominatimResult = {
     country?: string;
     county?: string;
     postcode?: string;
-    road? : string
+    suburb?: string;
   };
 };
 
@@ -47,6 +49,7 @@ const LocationAutocomplete = ({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isSelecting, setIsSelecting] = useState(false);
 
   useEffect(() => {
     if (input.length < 2) {
@@ -55,12 +58,14 @@ const LocationAutocomplete = ({
       return;
     }
 
+    if (isSelecting) return;
+
     const timeout = setTimeout(async () => {
       setLoading(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
           input
-        )}&countrycodes=US&format=json&addressdetails=1&limit=5`;
+        )}&countrycodes=US&addressdetails=1&limit=5&dedupe=1`;
 
         const res = await fetch(url, {
           headers: {
@@ -74,19 +79,39 @@ const LocationAutocomplete = ({
         const filtered: TPlace[] = data
           .map((p): TPlace | null => {
             const { address, display_name } = p;
-            const city = address.city || address.town || address.village || "";
+
+            const houseNumber = address.house_number || "";
+            const road = address.road || "";
+            const city =
+              address.city ||
+              address.town ||
+              address.village ||
+              address.suburb ||
+              "";
             const state = address.state || "";
             const country = address.country || "";
             const postcode = address.postcode || "";
-            const road = address.road || ''
 
-            if (!city && !state && !postcode && !road) {
-              return null;
-            }
-
-            const formattedDisplayName = [road, city, state, postcode, country]
+            const streetAddress = [houseNumber, road].filter(Boolean).join(" ");
+            const formattedDisplayName = [
+              streetAddress,
+              city,
+              state,
+              postcode,
+              country,
+            ]
               .filter(Boolean)
               .join(", ");
+
+            if (!streetAddress && !city && !state && !postcode) {
+              return {
+                place_id: p.place_id,
+                lat: p.lat,
+                lon: p.lon,
+                display_name: display_name,
+                postcode: postcode || undefined,
+              };
+            }
 
             return {
               place_id: p.place_id,
@@ -96,9 +121,15 @@ const LocationAutocomplete = ({
               postcode: postcode || undefined,
             };
           })
-          .filter((p): p is TPlace => p !== null); 
+          .filter((p): p is TPlace => p !== null);
 
-        setSuggestions(filtered);
+        const uniqueSuggestions = filtered.filter(
+          (place, index, self) =>
+            index ===
+            self.findIndex((p) => p.display_name === place.display_name)
+        );
+
+        setSuggestions(uniqueSuggestions);
         setShowSuggestions(true);
       } catch (err) {
         console.error("Error fetching places:", err);
@@ -106,14 +137,17 @@ const LocationAutocomplete = ({
       } finally {
         setLoading(false);
       }
-    }, 300);
+    }, 400);
 
     return () => clearTimeout(timeout);
-  }, [input]);
+  }, [input, isSelecting]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setShowSuggestions(false);
       }
     };
@@ -129,17 +163,24 @@ const LocationAutocomplete = ({
     setInput("");
     setSuggestions([]);
     setShowSuggestions(false);
+    setIsSelecting(false);
   };
 
   const handleSelectPlace = (place: TPlace) => {
+    setIsSelecting(true);
+
     setValue(place);
     setInput(place.display_name);
     setSuggestions([]);
     setShowSuggestions(false);
-    
+
     if (inputRef.current) {
       inputRef.current.focus();
     }
+
+    setTimeout(() => {
+      setIsSelecting(false);
+    }, 100);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,16 +191,20 @@ const LocationAutocomplete = ({
   };
 
   const handleInputFocus = () => {
-    if (suggestions.length > 0 && input.length >= 2) {
+    if (suggestions.length > 0 && input.length >= 2 && !isSelecting) {
       setShowSuggestions(true);
     }
   };
 
-  const formatSuggestionDisplay = (place: TPlace) => {
-    if (!showZipCode) {
-      return place.display_name;
-    }
+  const handleInputBlur = () => {
+    setTimeout(() => {
+      if (!isSelecting) {
+        setShowSuggestions(false);
+      }
+    }, 200);
+  };
 
+  const formatSuggestionDisplay = (place: TPlace) => {
     return place.display_name;
   };
 
@@ -173,15 +218,16 @@ const LocationAutocomplete = ({
           value={input}
           onChange={handleInputChange}
           onFocus={handleInputFocus}
-          placeholder={placeholder || "Type a state or city"}
-          className="border p-2 rounded w-full pr-10"
+          onBlur={handleInputBlur}
+          placeholder={placeholder || "Enter address, city, state or ZIP"}
+          className="border p-2 rounded w-full pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
 
         {input && (
           <button
             type="button"
             onClick={clearValue}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
           >
             ✕
           </button>
@@ -190,24 +236,30 @@ const LocationAutocomplete = ({
 
       {loading && (
         <div className="absolute top-full left-0 bg-white border p-2 w-full z-50 shadow-lg rounded-b">
-          Loading...
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+            Searching...
+          </div>
         </div>
       )}
 
       {!loading && showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute top-full left-0 bg-white border w-full max-h-40 overflow-auto z-50 shadow-lg rounded-b">
+        <ul className="absolute top-full left-0 bg-white border w-full max-h-60 overflow-auto z-50 shadow-lg rounded-b">
           {suggestions.map((s) => (
             <li
               key={s.place_id}
-              className="p-2 cursor-pointer hover:bg-gray-100 border-b last:border-b-0"
-              onClick={() => handleSelectPlace(s)}
+              className="p-3 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 transition-colors"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                handleSelectPlace(s);
+              }}
             >
-              <div className="text-sm">
+              <div className="text-sm font-medium text-gray-800">
                 {formatSuggestionDisplay(s)}
               </div>
               {showZipCode && s.postcode && (
-                <div className="text-xs text-green-600 mt-1 font-medium">
-                  ZIP: {s.postcode}
+                <div className="text-xs text-green-600 mt-1 font-semibold">
+                  📮 ZIP: {s.postcode}
                 </div>
               )}
             </li>
@@ -219,8 +271,8 @@ const LocationAutocomplete = ({
         showSuggestions &&
         suggestions.length === 0 &&
         input.length >= 2 && (
-          <div className="absolute top-full left-0 bg-white border p-2 w-full z-50 shadow-lg rounded-b text-gray-500">
-            No results found
+          <div className="absolute top-full left-0 bg-white border p-3 w-full z-50 shadow-lg rounded-b text-gray-500">
+            No locations found. Try a different search term.
           </div>
         )}
     </div>
