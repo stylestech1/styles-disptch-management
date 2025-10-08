@@ -869,9 +869,9 @@ const LoadsPage = () => {
                 <th className="text-center p-4 font-medium text-slate-600">
                   Driver
                 </th>
-                <th className="text-center p-4 font-medium text-slate-600">
+                {/* <th className="text-center p-4 font-medium text-slate-600">
                   Truck
-                </th>
+                </th> */}
                 <th className="text-center p-4 font-medium text-slate-600">
                   Pickup Appointment
                 </th>
@@ -881,12 +881,12 @@ const LoadsPage = () => {
                 <th className="text-center p-4 font-medium text-slate-600">
                   Delivered Appointment
                 </th>
-                <th className="text-center p-4 font-medium text-slate-600">
+                {/* <th className="text-center p-4 font-medium text-slate-600">
                   Created By
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
                   Updated By
-                </th>
+                </th> */}
                 <th className="text-center p-4 font-medium text-slate-600">
                   Notes
                 </th>
@@ -963,9 +963,9 @@ const LoadsPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-slate-700 text-sm text-center">
+                    {/* <td className="p-4 text-slate-700 text-sm text-center">
                       {loadItem.truckId?.model || "-"}
-                    </td>
+                    </td> */}
                     <td className="p-4">
                       <div className="text-center space-y-1">
                         {loadItem.pickupAt ? (
@@ -1034,12 +1034,12 @@ const LoadsPage = () => {
                         )}
                       </div>
                     </td>
-                    <td className="p-4 text-slate-700 text-sm text-center">
+                    {/* <td className="p-4 text-slate-700 text-sm text-center">
                       {loadItem.createdBy || "-"}
                     </td>
                     <td className="p-4 text-slate-700 text-sm text-center">
                       {loadItem.updatedBy || "-"}
-                    </td>
+                    </td> */}
                     <td className="p-4 text-center text-slate-600 text-xs">
                       <button
                         onClick={() => openAllNotesPopup(loadItem)}
