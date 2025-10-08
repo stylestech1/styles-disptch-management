@@ -760,7 +760,7 @@ const LoadsPage = () => {
                             className="text-sm max-w-[120px] truncate"
                             title={loadItem.origin}
                           >
-                            {loadItem.origin?.split(",")[0] || "-"}
+                            {loadItem.origin}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700">
@@ -769,7 +769,7 @@ const LoadsPage = () => {
                             className="text-sm max-w-[120px] truncate"
                             title={loadItem.destination}
                           >
-                            {loadItem.destination?.split(",")[0] || "-"}
+                            {loadItem.destination}
                           </span>
                         </div>
                       </div>

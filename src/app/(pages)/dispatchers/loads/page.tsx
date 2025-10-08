@@ -89,6 +89,8 @@ const LoadsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingLoadId, setEditingLoadId] = useState<string | null>(null);
+  const [noteType, setNoteType] = useState<"dispatcher" | "driver">("dispatcher");
+
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -385,60 +387,118 @@ const LoadsPage = () => {
   };
 
   // Add Notes
-  const handleNotes = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedLoadIdForNote)
-      return toast.error("Please select a load", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
+// const handleNotes = async (e: React.FormEvent) => {
+//     e.preventDefault();
+//     if (!selectedLoadIdForNote)
+//       return toast.error("Please select a load", {
+//         style: { background: "#dc2626", color: "#fff" },
+//       });
 
-    if (!addingNote.trim())
-      return toast.error("Please enter a note", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
+//     if (!addingNote.trim())
+//       return toast.error("Please enter a note", {
+//         style: { background: "#dc2626", color: "#fff" },
+//       });
 
-    try {
-      const res = await fetch(
-        `${apiURL}/api/v1/loads/${selectedLoadIdForNote}/comments`,
-        {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ text: addingNote }),
-        }
-      );
+//     try {
+//       const res = await fetch(
+//         `${apiURL}/api/v1/loads/${selectedLoadIdForNote}/comments`,
+//         {
+//           method: "POST",
+//           headers: {
+//             "content-type": "application/json",
+//             Authorization: `Bearer ${token}`,
+//           },
+//           body: JSON.stringify({ text: addingNote }),
+//         }
+//       );
 
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
-        return;
+//       const result = await res.json();
+//       if (!res.ok) {
+//         if (Array.isArray(result.errors)) {
+//           result.errors.forEach((err: TErrors) => {
+//             toast.error(err.msg || "Create user failed", {
+//               style: { background: "#dc2626", color: "#fff" },
+//             });
+//           });
+//         }
+//         return;
+//       }
+
+//       toast.success(result.message || "Note was Added ✅", {
+//         style: { background: "#16a34a", color: "#fff" },
+//       });
+
+//       // Reset form
+//       setAddingNote("");
+//       setSelectedLoadIdForNote("");
+//       setPopupNote(false);
+//     } catch (error) {
+//       if (error instanceof Error) {
+//         setErr(error.message || "Adding note failed");
+//         toast.error(error.message || "Adding note failed ❌", {
+//           style: { background: "#dc2626", color: "#fff" },
+//         });
+//       }
+//     }
+//   };
+
+
+const handleNotes = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!selectedLoadIdForNote)
+    return toast.error("Please select a load", {
+      style: { background: "#dc2626", color: "#fff" },
+    });
+
+  if (!addingNote.trim())
+    return toast.error("Please enter a note", {
+      style: { background: "#dc2626", color: "#fff" },
+    });
+
+  try {
+    const res = await fetch(
+      `${apiURL}/api/v1/loads/${selectedLoadIdForNote}/comments`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        // ✅ أضفنا type
+        body: JSON.stringify({ text: addingNote, type: noteType }),
       }
+    );
 
-      toast.success(result.message || "Note was Added ✅", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
+    const result = await res.json();
 
-      // Reset form
-      setAddingNote("");
-      setSelectedLoadIdForNote("");
-      setPopupNote(false);
-    } catch (error) {
-      if (error instanceof Error) {
-        setErr(error.message || "Adding note failed");
-        toast.error(error.message || "Adding note failed ❌", {
-          style: { background: "#dc2626", color: "#fff" },
+    if (!res.ok) {
+      if (Array.isArray(result.errors)) {
+        result.errors.forEach((err: TErrors) => {
+          toast.error(err.msg || "Add note failed", {
+            style: { background: "#dc2626", color: "#fff" },
+          });
         });
       }
+      return;
     }
-  };
+
+    toast.success(result.message || "Note was Added ✅", {
+      style: { background: "#16a34a", color: "#fff" },
+    });
+
+    // Reset form
+    setAddingNote("");
+    setSelectedLoadIdForNote("");
+    setPopupNote(false);
+  } catch (error) {
+    if (error instanceof Error) {
+      setErr(error.message || "Adding note failed");
+      toast.error(error.message || "Adding note failed ❌", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+    }
+  }
+};
   // Edit Note Function
 
   const handleEditNote = async (
@@ -760,7 +820,7 @@ const LoadsPage = () => {
                             className="text-sm max-w-[120px] truncate"
                             title={loadItem.origin}
                           >
-                            {loadItem.origin?.split(",")[0] || "-"}
+                            {loadItem.origin}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700">
@@ -769,7 +829,7 @@ const LoadsPage = () => {
                             className="text-sm max-w-[120px] truncate"
                             title={loadItem.destination}
                           >
-                            {loadItem.destination?.split(",")[0] || "-"}
+                            {loadItem.destination}
                           </span>
                         </div>
                       </div>
@@ -1184,7 +1244,7 @@ const LoadsPage = () => {
       )}
 
       {/* Popup For Adding Note */}
-      {popupNote && (
+      {/* {popupNote && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
           <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
@@ -1275,7 +1335,123 @@ const LoadsPage = () => {
             </form>
           </div>
         </div>
-      )}
+      )} */}
+
+      {popupNote && (
+  <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
+    <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-semibold text-slate-800">
+          {noteType === "driver" ? "Add Driver Note" : "Add Dispatcher Note"}
+        </h3>
+        <button
+          onClick={() => {
+            setPopupNote(false);
+            setAddingNote("");
+            setSelectedLoadIdForNote("");
+          }}
+          className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+        >
+          <IoClose size={24} />
+        </button>
+      </div>
+
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          if (isEditing) {
+            handleEditNote(editingLoadId!, editingNoteId!, addingNote);
+          } else {
+            handleNotes(e);
+          }
+        }}
+        className="space-y-4"
+      >
+        {/* Load ID */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Load ID
+          </label>
+          <select
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
+            value={selectedLoadIdForNote}
+            onChange={(e) => setSelectedLoadIdForNote(e.target.value)}
+            required
+            disabled={isEditing}
+          >
+            <option value="">Select Load</option>
+            {load.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.loadId}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* ✅ Note Type */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Note Type
+          </label>
+          <select
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
+            value={noteType}
+            onChange={(e) =>
+              setNoteType(e.target.value as "dispatcher" | "driver")
+            }
+            required
+          >
+            <option value="dispatcher">Dispatcher Note</option>
+            <option value="driver">Driver Note</option>
+          </select>
+        </div>
+
+        {/* Note Text */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Note
+          </label>
+          <textarea
+            value={addingNote}
+            onChange={(e) => setAddingNote(e.target.value)}
+            cols={30}
+            rows={5}
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+            placeholder="Enter your note here..."
+            required
+          ></textarea>
+        </div>
+
+        <button
+          type="submit"
+          className={`w-full flex items-center justify-center gap-2 py-3 px-4 ${
+            isEditing
+              ? "bg-yellow-600 hover:bg-yellow-700"
+              : "bg-blue-600 hover:bg-blue-700"
+          } text-white rounded-lg font-medium transition-all duration-200`}
+        >
+          {isEditing ? "Update Note" : "Add Note"}
+        </button>
+
+        {isEditing && (
+          <button
+            type="button"
+            onClick={() => {
+              setIsEditing(false);
+              setEditingNoteId(null);
+              setEditingLoadId(null);
+              setAddingNote("");
+            }}
+            className="w-full py-2 text-slate-600 hover:text-slate-900 transition-all"
+          >
+            Cancel Edit
+          </button>
+        )}
+      </form>
+    </div>
+  </div>
+)}
+
 
       {/* Popup For Showing Note */}
       {popupAllNote && (

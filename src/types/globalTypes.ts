@@ -70,6 +70,7 @@ export type TComments = {
   _id: string
   createdAt: string
   updatedAt: string
+  type: 'disptacher' | 'driver'
 }
 export type TErrors = {
   type: 'field'
