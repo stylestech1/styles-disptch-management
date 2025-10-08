@@ -21,6 +21,7 @@ import {
 import toast, { Toaster } from "react-hot-toast";
 import { TDriver, TErrors, TPagination } from "@/types/globalTypes";
 import Link from "next/link";
+import { apiFetcher } from "@/utils/APIFetcher";
 
 const DriversPage = () => {
   const [drivers, setDrivers] = useState<TDriver[]>([]);
@@ -32,7 +33,7 @@ const DriversPage = () => {
   const [selectedDriver, setSelectedDriver] = useState<TDriver | null>(null);
   const [pagination, setPagination] = useState<TPagination | null>(null);
   const [page, setPage] = useState(1);
-
+  const [allDrivers, setAllDrivers] = useState<TDriver[]>([]);
   const [newDriver, setNewDriver] = useState({
     name: "",
     phone: "",
@@ -94,9 +95,38 @@ const DriversPage = () => {
     fetchDrivers();
   }, [apiURL, token, router]);
 
-  const filteredDrivers = drivers.filter((driver) =>
-    driver.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter DriverId & Name & Phone & Email
+  const fetchAllDrivers = async () => {
+    try {
+      const result = await apiFetcher(`${apiURL}/api/v1/drivers?limit=1000`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setAllDrivers(result.data || []);
+    } catch (error) {
+      console.error("Error fetching all loads:", error);
+    }
+  };
+  useEffect(() => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+    fetchAllDrivers();
+  }, [apiURL, token, router, page]);
+  const filteredDrivers = search
+    ? allDrivers.filter(
+        (d) =>
+          d.name.toLowerCase().includes(search.toLowerCase()) ||
+          d.phone.toLowerCase().includes(search.toLowerCase()) ||
+          d.email.toLowerCase().includes(search.toLowerCase()) ||
+          d.driverId.toString().toLowerCase().includes(search.toLowerCase())
+      )
+    : drivers;
 
   // Create driver
   const handleCreateDriver = async (e: React.FormEvent) => {
@@ -294,7 +324,7 @@ const DriversPage = () => {
                 Total Drivers
               </p>
               <p className="text-2xl font-bold text-slate-800 mt-1">
-                {drivers.length}
+                {allDrivers.length}
               </p>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">

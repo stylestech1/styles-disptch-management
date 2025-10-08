@@ -18,6 +18,7 @@ import {
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import { TErrors, TPagination, TTruck } from "@/types/globalTypes";
+import { apiFetcher } from "@/utils/APIFetcher";
 
 const TrucksPage = () => {
   const [trucks, setTrucks] = useState<TTruck[]>([]);
@@ -27,6 +28,7 @@ const TrucksPage = () => {
   const [editPopup, setEditPopup] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedTruck, setSelectedTruck] = useState<TTruck | null>(null);
+  const [allTrucks, setAllTrucks] = useState<TTruck[]>([]);
   const [deleteAlert, setDeleteAlert] = useState<{
     show: boolean;
     truckId: string | null;
@@ -107,12 +109,37 @@ const TrucksPage = () => {
     fetchTrucks();
   }, [apiURL, token, router]);
 
-  // Search Filter
-  const filteredTrucks = trucks.filter(
-    (truck) =>
-      truck.model.toLowerCase().includes(search.toLowerCase()) ||
-      truck.plateNumber.toLowerCase().includes(search.toLowerCase())
-  );
+  // Filter TruckId & Model & PlateNumber
+  const fetchAllTrucks = async () => {
+    try {
+      const result = await apiFetcher(`${apiURL}/api/v1/trucks?limit=1000`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setAllTrucks(result.data.data || []);
+    } catch (error) {
+      console.error("Error fetching all loads:", error);
+    }
+  };
+  useEffect(() => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+    fetchAllTrucks();
+  }, [apiURL, token, router, page]);
+  const filteredTrucks = search
+    ? allTrucks.filter(
+        (t) =>
+          t.truckId.toString().toLowerCase().includes(search.toLowerCase()) || 
+          t.model.toLowerCase().includes(search.toLowerCase()) ||
+          t.plateNumber.toLowerCase().includes(search.toLowerCase())
+      )
+    : trucks;
 
   // Create Truck
   const handleCreateTruck = async (e: React.FormEvent) => {
@@ -380,7 +407,7 @@ const TrucksPage = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium">Total Trucks</p>
               <p className="text-2xl font-bold text-slate-800 mt-1">
-                {trucks.length}
+                {allTrucks.length}
               </p>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">

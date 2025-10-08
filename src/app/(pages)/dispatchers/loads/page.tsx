@@ -687,13 +687,16 @@ const LoadsPage = () => {
   // Filter loadId
   const fetchAllLoads = async () => {
     try {
-      const result = await apiFetcher(`${apiURL}/api/v1/loads?limit=1000`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const result = await apiFetcher(
+        `${apiURL}/api/v1/loads?limit=1000`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       setAllLoads(result.data || []);
     } catch (error) {
@@ -706,13 +709,13 @@ const LoadsPage = () => {
       return;
     }
     fetchLoads();
-    fetchAllLoads();
+    fetchAllLoads(); 
   }, [apiURL, token, router, page]);
   const filteredLoads = search
-    ? allLoads.filter((l) =>
-        l.loadId.toLowerCase().includes(search.toLowerCase())
-      )
-    : load;
+  ? allLoads.filter((l) =>
+      l.loadId.toLowerCase().includes(search.toLowerCase())
+    )
+  : load;
 
   // set loading
   if (loading) return <Loading />;
@@ -787,7 +790,7 @@ const LoadsPage = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium">Total Loads</p>
               <p className="text-2xl font-bold text-slate-800 mt-1">
-                {load.length || 0}
+                {allLoads.length || 0}
               </p>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">
@@ -877,6 +880,12 @@ const LoadsPage = () => {
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
                   Delivered Appointment
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Created By
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Updated By
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
                   Notes
@@ -1025,7 +1034,12 @@ const LoadsPage = () => {
                         )}
                       </div>
                     </td>
-
+                    <td className="p-4 text-slate-700 text-sm text-center">
+                      {loadItem.createdBy || "-"}
+                    </td>
+                    <td className="p-4 text-slate-700 text-sm text-center">
+                      {loadItem.updatedBy || "-"}
+                    </td>
                     <td className="p-4 text-center text-slate-600 text-xs">
                       <button
                         onClick={() => openAllNotesPopup(loadItem)}
@@ -1255,7 +1269,7 @@ const LoadsPage = () => {
                       <IoCash className="h-5 w-5 text-slate-400" />
                     </div>
                     <input
-                      type="number"
+                      type="text"
                       step="0.01"
                       value={price}
                       onChange={(e) => {
@@ -1304,7 +1318,7 @@ const LoadsPage = () => {
                       <IoCash className="h-5 w-5 text-slate-400" />
                     </div>
                     <input
-                      type="number"
+                      type="text"
                       step="0.01"
                       value={fees}
                       onChange={(e) => setFees(e.target.value)}

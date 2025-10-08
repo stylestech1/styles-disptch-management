@@ -445,12 +445,12 @@ const LoadSummary = () => {
                       </td>
                       <td className="p-4 text-slate-700 max-w-[140px]">
                         <div className="truncate" title={load.origin}>
-                          {load.origin.split(",")[0]}
+                          {load.origin}
                         </div>
                       </td>
                       <td className="p-4 text-slate-700 max-w-[140px]">
                         <div className="truncate" title={load.destination}>
-                          {load.destination.split(",")[0]}
+                          {load.destination}
                         </div>
                       </td>
                       <td className="p-4 text-right text-slate-700 font-medium">
