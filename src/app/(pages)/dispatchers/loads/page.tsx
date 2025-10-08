@@ -33,6 +33,7 @@ import {
   IoCar,
   IoNavigate,
   IoCash,
+  IoSearch,
 } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 
@@ -79,6 +80,8 @@ const LoadsPage = () => {
   const [noteType, setNoteType] = useState<"dispatcher" | "driver">(
     "dispatcher"
   );
+  const [allLoads, setAllLoads] = useState<TLoads[]>([]);
+  const [search, setSearch] = useState("");
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -681,18 +684,64 @@ const LoadsPage = () => {
     );
   };
 
+  // Filter loadId
+  const fetchAllLoads = async () => {
+    try {
+      const result = await apiFetcher(`${apiURL}/api/v1/loads?limit=1000`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setAllLoads(result.data || []);
+    } catch (error) {
+      console.error("Error fetching all loads:", error);
+    }
+  };
+  useEffect(() => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+    fetchLoads();
+    fetchAllLoads();
+  }, [apiURL, token, router, page]);
+  const filteredLoads = search
+    ? allLoads.filter((l) =>
+        l.loadId.toLowerCase().includes(search.toLowerCase())
+      )
+    : load;
+
   // set loading
   if (loading) return <Loading />;
 
   return (
     <section className="relative p-6">
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+      <div className="flex flex-col lg:flex-row md:items-center lg:justify-between mb-10">
         <div className="mb-4 lg:mb-0">
           <Titles>Load Management</Titles>
           <p className="text-slate-600 mt-2 text-sm">
             Manage and track all your shipments and deliveries
           </p>
+        </div>
+
+        {/* Search */}
+        <div>
+          <div className="relative max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <IoSearch className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              placeholder="Search drivers by name..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            />
+          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -835,8 +884,8 @@ const LoadsPage = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
-              {load.length > 0 ? (
-                load.map((loadItem, i) => (
+              {filteredLoads.length > 0 ? (
+                filteredLoads.map((loadItem, i) => (
                   <tr
                     key={i}
                     className="hover:bg-slate-50 transition-colors group"
@@ -935,16 +984,17 @@ const LoadsPage = () => {
                         {loadItem.completedAt ? (
                           <>
                             <div className="text-sm font-medium text-slate-800">
-                              {new Date(loadItem.completedAt).toLocaleDateString()}
+                              {new Date(
+                                loadItem.completedAt
+                              ).toLocaleDateString()}
                             </div>
                             <div className="text-xs text-slate-500">
-                              {new Date(loadItem.completedAt).toLocaleTimeString(
-                                [],
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                }
-                              )}
+                              {new Date(
+                                loadItem.completedAt
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
                             </div>
                           </>
                         ) : (
