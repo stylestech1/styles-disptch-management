@@ -19,6 +19,7 @@ export type TLoads = {
   driverId: TDriver;
   truckId: TTruckId;
   deliveredAt?: string;
+  pickupAt: string
   currency: string;
   createdBy: string
   updatedBy?: string

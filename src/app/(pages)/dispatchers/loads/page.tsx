@@ -70,22 +70,22 @@ const LoadsPage = () => {
   const [selectedLoadForNotes, setSelectedLoadForNotes] =
     useState<TLoads | null>(null);
   const [loadIDInp, setLoadIDInp] = useState<string>("");
-  const [deletePopup, setDeletePopup] = useState<{
-    open: boolean;
-    noteId: string | null;
-  }>({
-    open: false,
-    noteId: null,
-  });
-  const [editPopup, setEditPopup] = useState<{
-    open: boolean;
-    noteId: string | null;
-    text: string;
-  }>({
-    open: false,
-    noteId: null,
-    text: "",
-  });
+  // const [deletePopup, setDeletePopup] = useState<{
+  //   open: boolean;
+  //   noteId: string | null;
+  // }>({
+  //   open: false,
+  //   noteId: null,
+  // });
+  // const [editPopup, setEditPopup] = useState<{
+  //   open: boolean;
+  //   noteId: string | null;
+  //   text: string;
+  // }>({
+  //   open: false,
+  //   noteId: null,
+  //   text: "",
+  // });
   const [isEditing, setIsEditing] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
   const [editingLoadId, setEditingLoadId] = useState<string | null>(null);
@@ -439,49 +439,7 @@ const LoadsPage = () => {
       }
     }
   };
-  // Edit Note Function
-
-  const handleEditNote = async (
-    loadId: string,
-    commentId: string,
-    newText: string
-  ) => {
-    if (!loadId || !commentId) {
-      toast.error("Missing load or comment ID ❌");
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ text: newText }),
-        }
-      );
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Failed to edit note");
-
-      toast.success(result.message || "Note updated successfully ✅", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
-
-      await fetchAllNotes(loadId);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message || "Failed to edit note ❌", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
-    }
-    return false;
-  };
-
+  
   // Get All Notes
   const fetchAllNotes = async (loadId: string) => {
     try {
@@ -526,7 +484,83 @@ const LoadsPage = () => {
     setPopupAllNote(true);
   };
 
+  // Edit Note Function
+  // const handleEditNote = async (
+  //   loadId: string,
+  //   commentId: string,
+  //   newText: string
+  // ) => {
+  //   if (!loadId || !commentId) {
+  //     toast.error("Missing load or comment ID ❌");
+  //     return;
+  //   }
+
+  //   try {
+  //     const res = await fetch(
+  //       `${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`,
+  //       {
+  //         method: "PATCH",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({ text: newText }),
+  //       }
+  //     );
+
+  //     const result = await res.json();
+  //     if (!res.ok) throw new Error(result.message || "Failed to edit note");
+
+  //     toast.success(result.message || "Note updated successfully ✅", {
+  //       style: { background: "#16a34a", color: "#fff" },
+  //     });
+
+  //     await fetchAllNotes(loadId);
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       toast.error(error.message || "Failed to edit note ❌", {
+  //         style: { background: "#dc2626", color: "#fff" },
+  //       });
+  //     }
+  //   }
+  //   return false;
+  // };
+  // Delete Note Function
+  // const handleDeleteNote = async (loadId: string, commentId: string) => {
+  //   try {
+  //     const res = await fetch(
+  //       `${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`,
+  //       {
+  //         method: "DELETE",
+  //         headers: {
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //       }
+  //     );
+
+  //     const result = await res.json();
+
+  //     if (!res.ok) throw new Error(result.message || "Failed to delete note");
+
+  //     toast.success(result.message || "Note deleted successfully ✅", {
+  //       style: { background: "#16a34a", color: "#fff" },
+  //     });
+
+  //     await fetchAllNotes(loadId);
+  //   } catch (error) {
+  //     if (error instanceof Error) {
+  //       toast.error(error.message || "Failed to delete note ❌", {
+  //         style: { background: "#dc2626", color: "#fff" },
+  //       });
+  //     }
+  //   } finally {
+  //     setDeletePopup({ open: false, noteId: null });
+  //   }
+  // };
+
   // Status badge component
+  
+  // Status Badge
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {
     const statusConfig = {
       pending: {
@@ -558,37 +592,7 @@ const LoadsPage = () => {
       </span>
     );
   };
-  const handleDeleteNote = async (loadId: string, commentId: string) => {
-    try {
-      const res = await fetch(
-        `${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result.message || "Failed to delete note");
-
-      toast.success(result.message || "Note deleted successfully ✅", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
-
-      await fetchAllNotes(loadId);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message || "Failed to delete note ❌", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
-    } finally {
-      setDeletePopup({ open: false, noteId: null });
-    }
-  };
+  
 
   // set loading
   if (loading) return <Loading />;
@@ -1204,11 +1208,7 @@ const LoadsPage = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (isEditing) {
-                  handleEditNote(editingLoadId!, editingNoteId!, addingNote);
-                } else {
-                  handleNotes(e);
-                }
+                handleNotes(e);
               }}
               className="space-y-4"
             >
@@ -1301,11 +1301,11 @@ const LoadsPage = () => {
                   className="relative p-4 rounded-lg bg-slate-100 border border-slate-200"
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-medium text-slate-700">
+                    <span className="text-sm font-medium text-slate-500">
                       Note {i + 1}
                     </span>
                     <span className="text-xs text-slate-500">
-                      {new Date(note.createdAt).toLocaleDateString()}
+                      {new Date(note.createdAt).toLocaleTimeString()} - {new Date(note.createdAt).toLocaleDateString()}
                     </span>
                   </div>
 
@@ -1315,11 +1315,12 @@ const LoadsPage = () => {
 
                   {note.addedBy && (
                     <div className="mt-2 text-xs text-slate-500">
-                      Added by: {note.addedBy.name} ({note.addedBy.jobId})
+                      Added by: <span className="font-bold">{note.addedBy.name} ({note.addedBy.jobId})</span>
                     </div>
                   )}
 
-                  <div className="flex gap-2 mt-4">
+                  {/* TODO: --- CRUD Note Operation --- TODO: */}
+                  {/* <div className="flex gap-2 mt-4">
                     <button
                       onClick={() =>
                         setEditPopup({
@@ -1341,10 +1342,9 @@ const LoadsPage = () => {
                     >
                       🗑️ Delete
                     </button>
-                  </div>
-
+                  </div> */}
                   {/* ✅ Edit Popup Form */}
-                  {editPopup.open && editPopup.noteId === note._id && (
+                  {/* {editPopup.open && editPopup.noteId === note._id && (
                     <div className="mt-4 border-t border-slate-200 pt-4">
                       <form
                         onSubmit={async (e) => {
@@ -1409,13 +1409,11 @@ const LoadsPage = () => {
                         </div>
                       </form>
                     </div>
-                  )}
-
+                  )} */}
                   {/* ✅ Delete Popup Form */}
-                  {deletePopup.open && (
+                  {/* {deletePopup.open && (
                     <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-[9999] p-4">
                       <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-sm">
-                        {/* Warning Icon */}
                         <div className="flex flex-col items-center text-center mb-4">
                           <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
                             <IoTrash size={24} className="text-red-600" />
@@ -1462,7 +1460,7 @@ const LoadsPage = () => {
                         </div>
                       </div>
                     </div>
-                  )}
+                  )} */}
                 </div>
               ))}
             </div>

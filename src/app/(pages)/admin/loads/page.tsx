@@ -33,7 +33,6 @@ import {
   IoCar,
   IoNavigate,
   IoCash,
-  IoTrash,
 } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 
@@ -51,17 +50,22 @@ const LoadsPage = () => {
   const [drivers, setDrivers] = useState<TDriver[]>([]);
   const [truck, setTruck] = useState<TTruck[]>([]);
   const [origin, setOrigin] = useState<TPlace | null>(null);
-  const [destination, setDestination] = useState<TPlace | null>(null);
+  const [destinations, setDestinations] = useState<(TPlace | null)[]>([]);
+  const [dho, setDho] = useState<TPlace | null>(null);
+  const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
+    null
+  );
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
   const [fees, setFees] = useState<string>("");
+  const [pricePerMile, setPricePerMile] = useState<number | null>(null);
   const [driverId, setDriverId] = useState<string>("");
   const [truckId, setTruckId] = useState<string>("");
   const [deliveredAt, setDeliveredAt] = useState<string>("");
   const [cancelledAt, setCancelledAt] = useState<string>("");
+  const [pickupAt, setPickupAt] = useState<string>("");
   const [truckType, setTruckType] = useState<string>("reefer");
   const [truckTemp, setTruckTemp] = useState<number>(0);
-  const [currency, setCurrency] = useState<string>("USD");
   const [selectedLoadId, setSelectedLoadId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
   const [addingNote, setAddingNote] = useState<string>("");
@@ -70,25 +74,6 @@ const LoadsPage = () => {
   const [selectedLoadForNotes, setSelectedLoadForNotes] =
     useState<TLoads | null>(null);
   const [loadIDInp, setLoadIDInp] = useState<string>("");
-  const [deletePopup, setDeletePopup] = useState<{
-    open: boolean;
-    noteId: string | null;
-  }>({
-    open: false,
-    noteId: null,
-  });
-  const [editPopup, setEditPopup] = useState<{
-    open: boolean;
-    noteId: string | null;
-    text: string;
-  }>({
-    open: false,
-    noteId: null,
-    text: "",
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
-  const [editingLoadId, setEditingLoadId] = useState<string | null>(null);
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -231,18 +216,119 @@ const LoadsPage = () => {
     getDrivers();
   }, [apiURL, token]);
 
-  // Get Miles
+  // Multiple Destinations Functions
+  const addDestination = () => {
+    setDestinations([...destinations, null]);
+  };
+  const updateDestination = (index: number, place: TPlace | null) => {
+    const newDestinations = [...destinations];
+    newDestinations[index] = place;
+    setDestinations(newDestinations);
+  };
+  const removeDestination = (index: number) => {
+    const newDestinations = destinations.filter((_, i) => i !== index);
+    setDestinations(newDestinations);
+  };
+
+  // Get Distance between DHO and Origin (Miles)
   useEffect(() => {
-    if (origin && destination) {
-      const miles = haversineDistance(
-        { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) },
-        { lat: parseFloat(destination.lat), lon: parseFloat(destination.lon) }
-      );
-      setDistance(miles);
-    } else {
-      setDistance(null);
-    }
-  }, [origin, destination]);
+    const calculateDhoToOriginDistance = () => {
+      if (dho && origin) {
+        const distance = haversineDistance(
+          { lat: parseFloat(dho.lat), lon: parseFloat(dho.lon) },
+          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) }
+        );
+        setDhoToOriginDistance(distance);
+      } else {
+        setDhoToOriginDistance(null);
+      }
+    };
+    calculateDhoToOriginDistance();
+  }, [dho, origin]);
+
+  // Get All Distance (Miles)
+  useEffect(() => {
+    const calculateTotalDistance = () => {
+      // Type guard function
+      const isValidPlace = (place: TPlace | null): place is TPlace => {
+        return place !== null;
+      };
+
+      // Filter out null destinations
+      const validDestinations = destinations.filter(isValidPlace);
+
+      if (dho && origin && validDestinations.length > 0) {
+        let totalDistance = 0;
+
+        // DHO to Origin
+        const dhoToOrigin = haversineDistance(
+          { lat: parseFloat(dho.lat), lon: parseFloat(dho.lon) },
+          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) }
+        );
+        totalDistance += dhoToOrigin;
+
+        // Origin to first destination
+        const originToFirstDest = haversineDistance(
+          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) },
+          {
+            lat: parseFloat(validDestinations[0].lat),
+            lon: parseFloat(validDestinations[0].lon),
+          }
+        );
+        totalDistance += originToFirstDest;
+
+        // Between destinations
+        for (let i = 0; i < validDestinations.length - 1; i++) {
+          const segmentDistance = haversineDistance(
+            {
+              lat: parseFloat(validDestinations[i].lat),
+              lon: parseFloat(validDestinations[i].lon),
+            },
+            {
+              lat: parseFloat(validDestinations[i + 1].lat),
+              lon: parseFloat(validDestinations[i + 1].lon),
+            }
+          );
+          totalDistance += segmentDistance;
+        }
+
+        setDistance(totalDistance);
+      } else if (origin && validDestinations.length > 0) {
+        let totalDistance = 0;
+
+        // Origin to first destination
+        const originToFirstDest = haversineDistance(
+          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) },
+          {
+            lat: parseFloat(validDestinations[0].lat),
+            lon: parseFloat(validDestinations[0].lon),
+          }
+        );
+        totalDistance += originToFirstDest;
+
+        // Between destinations
+        for (let i = 0; i < validDestinations.length - 1; i++) {
+          const segmentDistance = haversineDistance(
+            {
+              lat: parseFloat(validDestinations[i].lat),
+              lon: parseFloat(validDestinations[i].lon),
+            },
+            {
+              lat: parseFloat(validDestinations[i + 1].lat),
+              lon: parseFloat(validDestinations[i + 1].lon),
+            }
+          );
+          totalDistance += segmentDistance;
+        }
+
+        setDistance(totalDistance);
+      } else {
+        setDistance(null);
+      }
+    };
+
+    calculateTotalDistance();
+  }, [origin, destinations, dho]);
 
   // helper: reload loads
   const fetchLoads = async () => {
@@ -282,14 +368,26 @@ const LoadsPage = () => {
     fetchLoads();
   }, [apiURL, token, router, page]);
 
+  // Send PickupAt as Date formate to Backend
+  const formatPickupAt = (timeString: string): string | null => {
+    if (!timeString) return null;
+    const [hours, minutes] = timeString.split(":");
+    const pickupDate = new Date();
+    pickupDate.setHours(Number(hours), Number(minutes), 0, 0);
+
+    return pickupDate.toISOString();
+  };
+  const pickupAtISO = formatPickupAt(pickupAt);
+
   // Create Load
   const handleCreateLoad = async (e: React.FormEvent) => {
     e.preventDefault();
 
     const total = Number(price);
 
-    if (!origin || !destination)
-      return toast.error("Please select origin and destination", {
+    const validDestinations = destinations.filter((dest) => dest !== null);
+    if (!origin || validDestinations.length === 0)
+      return toast.error("Please select origin and at least one destination", {
         style: { background: "#dc2626", color: "#fff" },
       });
     if (!driverId || !truckId)
@@ -307,17 +405,18 @@ const LoadsPage = () => {
 
     const body = {
       origin: { address: origin.display_name },
-      destination: { address: destination.display_name },
+      destination: validDestinations.map((dest) => dest.display_name),
+      dho: dho ? { address: dho.display_name } : null,
       driverId,
       truckId,
       deliveredAt,
       cancelledAt,
+      pickupAt: pickupAtISO,
       truckTemp,
       truckType,
       distanceMiles: Math.round(distance),
       totalPrice: total,
       pricePerMile: total / distance,
-      currency,
       feesNumber: fees,
       loadId: loadIDInp,
     };
@@ -338,6 +437,13 @@ const LoadsPage = () => {
 
       await fetchLoads();
       setPopup(false);
+      setDestinations([]);
+      setDho(null);
+      setOrigin(null);
+      setPrice("");
+      setFees("");
+      setLoadIDInp("");
+      setPickupAt("");
     } catch (err) {
       if (err instanceof Error) {
         toast.error(err.message || "Load creation failed ❌", {
@@ -439,48 +545,6 @@ const LoadsPage = () => {
       }
     }
   };
-  // Edit Note Function
-
-  const handleEditNote = async (
-    loadId: string,
-    commentId: string,
-    newText: string
-  ) => {
-    if (!loadId || !commentId) {
-      toast.error("Missing load or comment ID ❌");
-      return;
-    }
-
-    try {
-      const res = await fetch(
-        `${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ text: newText }),
-        }
-      );
-
-      const result = await res.json();
-      if (!res.ok) throw new Error(result.message || "Failed to edit note");
-
-      toast.success(result.message || "Note updated successfully ✅", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
-
-      await fetchAllNotes(loadId);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message || "Failed to edit note ❌", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
-    }
-    return false;
-  };
 
   // Get All Notes
   const fetchAllNotes = async (loadId: string) => {
@@ -526,7 +590,7 @@ const LoadsPage = () => {
     setPopupAllNote(true);
   };
 
-  // Status badge component
+  // Status Badge
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {
     const statusConfig = {
       pending: {
@@ -557,37 +621,6 @@ const LoadsPage = () => {
         {status.replace("_", " ")}
       </span>
     );
-  };
-  const handleDeleteNote = async (loadId: string, commentId: string) => {
-    try {
-      const res = await fetch(
-        `${apiURL}/api/v1/loads/${loadId}/comments/${commentId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const result = await res.json();
-
-      if (!res.ok) throw new Error(result.message || "Failed to delete note");
-
-      toast.success(result.message || "Note deleted successfully ✅", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
-
-      await fetchAllNotes(loadId);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message || "Failed to delete note ❌", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
-    } finally {
-      setDeletePopup({ open: false, noteId: null });
-    }
   };
 
   // set loading
@@ -730,10 +763,16 @@ const LoadsPage = () => {
                   Truck
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
-                  Delivered
+                  Pickup Time
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
-                  Cancelled
+                  Pickup Date
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Delivered Time
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Delivered Date
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
                   Notes
@@ -760,16 +799,22 @@ const LoadsPage = () => {
                             className="text-sm max-w-[120px] truncate"
                             title={loadItem.origin}
                           >
-                            {loadItem.origin?.split(",")[0] || "-"}
+                            {loadItem.origin || "-"}
                           </span>
                         </div>
                         <div className="flex items-center gap-2 text-slate-700">
                           <IoCheckmark size={14} className="text-slate-400" />
                           <span
                             className="text-sm max-w-[120px] truncate"
-                            title={loadItem.destination}
+                            title={
+                              Array.isArray(loadItem.destination)
+                                ? loadItem.destination.join(", ")
+                                : loadItem.destination
+                            }
                           >
-                            {loadItem.destination?.split(",")[0] || "-"}
+                            {Array.isArray(loadItem.destination)
+                              ? loadItem.destination.join(", ")
+                              : loadItem.destination || "-"}
                           </span>
                         </div>
                       </div>
@@ -813,13 +858,23 @@ const LoadsPage = () => {
                       {loadItem.truckId?.model || "-"}
                     </td>
                     <td className="p-4 text-center text-slate-600 text-xs">
-                      {loadItem.deliveredAt
-                        ? loadItem.deliveredAt.split("T")[0]
+                      {loadItem.pickupAt
+                        ? new Date(loadItem.pickupAt).toLocaleTimeString()
                         : "-"}
                     </td>
                     <td className="p-4 text-center text-slate-600 text-xs">
-                      {loadItem.cancelledAt
-                        ? loadItem.cancelledAt.split("T")[0]
+                      {loadItem.pickupAt
+                        ? new Date(loadItem.pickupAt).toLocaleDateString()
+                        : "-"}
+                    </td>
+                    <td className="p-4 text-center text-slate-600 text-xs">
+                      {loadItem.deliveredAt
+                        ? new Date(loadItem.deliveredAt).toLocaleTimeString()
+                        : "-"}
+                    </td>
+                    <td className="p-4 text-center text-slate-600 text-xs">
+                      {loadItem.deliveredAt
+                        ? new Date(loadItem.deliveredAt).toLocaleDateString()
                         : "-"}
                     </td>
 
@@ -837,7 +892,7 @@ const LoadsPage = () => {
               ) : (
                 <tr>
                   <td
-                    colSpan={10}
+                    colSpan={13}
                     className="px-4 py-12 text-center text-slate-500"
                   >
                     <div className="flex flex-col items-center justify-center">
@@ -906,39 +961,141 @@ const LoadsPage = () => {
             </div>
 
             <form onSubmit={handleCreateLoad} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 z-2">
-                <LocationAutocomplete
-                  label="Pick Up (Origin)"
-                  value={origin}
-                  setValue={setOrigin}
-                  placeholder="Enter origin address"
-                />
+              {/* Inputs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Direction */}
+                <div className="space-y-6">
+                  <LocationAutocomplete
+                    label="DHO (Driver Home Origin)"
+                    value={dho}
+                    setValue={setDho}
+                    placeholder="Enter driver's starting location"
+                  />
 
-                <LocationAutocomplete
-                  label="Deliver (Destination)"
-                  value={destination}
-                  setValue={setDestination}
-                  placeholder="Enter destination address"
-                />
+                  <LocationAutocomplete
+                    label="Pick Up (Origin)"
+                    value={origin}
+                    setValue={setOrigin}
+                    placeholder="Enter origin address"
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        DHO to Origin Distance
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={
+                            dhoToOriginDistance
+                              ? `${dhoToOriginDistance.toFixed(2)} miles`
+                              : ""
+                          }
+                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                          readOnly
+                          placeholder="Distance will auto-calculate"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        DHO to Origin Distance
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={
+                            dhoToOriginDistance
+                              ? `${dhoToOriginDistance.toFixed(2)} miles`
+                              : ""
+                          }
+                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                          readOnly
+                          placeholder="Distance will auto-calculate"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Destinations Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-slate-700">
+                        Destinations
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addDestination}
+                        className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <IoAdd size={16} />
+                        Add Destination
+                      </button>
+                    </div>
+
+                    {destinations.map((destination, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <LocationAutocomplete
+                            label={`Destination ${index + 1}`}
+                            value={destination}
+                            setValue={(place) =>
+                              updateDestination(index, place)
+                            }
+                            placeholder={`Enter destination ${
+                              index + 1
+                            } address`}
+                          />
+                        </div>
+
+                        {destinations.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeDestination(index)}
+                            className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <IoClose size={20} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    {destinations.length === 0 && (
+                      <div className="text-center py-6 border-2 border-dashed border-slate-300 rounded-lg">
+                        <p className="text-slate-500">
+                          No destinations added yet
+                        </p>
+                        <p className="text-slate-400 text-sm mt-1">
+                          {'Click "Add Destination" to start adding stops'}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Maps */}
+                <div className="grid grid-cols-1 gap-6">
+                  <MapView
+                    origin={origin}
+                    destinations={destinations}
+                    dho={dho}
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-6">
-                {origin && destination && (
-                  <MapView origin={origin} destination={destination} />
-                )}
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Calculated Distance
+                    Calculated All Distance
                   </label>
                   <div className="relative">
                     <input
                       type="text"
                       value={distance ? `${distance.toFixed(2)} miles` : ""}
                       className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                      disabled
+                      readOnly
                     />
                   </div>
                 </div>
@@ -955,9 +1112,39 @@ const LoadsPage = () => {
                       type="number"
                       step="0.01"
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setPrice(value);
+                        if (distance && Number(distance) > 0) {
+                          const perMile = Number(value) / Number(distance);
+                          setPricePerMile(perMile);
+                        } else {
+                          setPricePerMile(null);
+                        }
+                      }}
                       className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                       placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Price Per Mile
+                  </label>
+                  <div>
+                    <input
+                      type="text"
+                      value={
+                        price &&
+                        distance &&
+                        Number(price) > 0 &&
+                        Number(distance) > 0
+                          ? `$${(Number(price) / Number(distance)).toFixed(3)}`
+                          : "$0.000"
+                      }
+                      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                      readOnly
                     />
                   </div>
                 </div>
@@ -983,27 +1170,6 @@ const LoadsPage = () => {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Currency
-                  </label>
-                  <select
-                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    required
-                    value={currency}
-                    onChange={(e) => setCurrency(e.target.value)}
-                  >
-                    <option value="" disabled>
-                      Select Currency
-                    </option>
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="EGP">EGP</option>
-                    <option value="GBP">GBP</option>
-                    <option value="SAR">SAR</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
                     Load Id <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
@@ -1019,9 +1185,24 @@ const LoadsPage = () => {
                     />
                   </div>
                 </div>
-              </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Pickup At <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <IoTime className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="time"
+                      value={pickupAt}
+                      onChange={(e) => setPickupAt(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-2">
                     Driver <span className="text-red-500">*</span>
@@ -1116,6 +1297,7 @@ const LoadsPage = () => {
         </div>
       )}
 
+      {/* باقي الـ Popups (Update Load Status, Add Note, All Notes) تبقى كما هي */}
       {/* Popup For Update Load Status */}
       {popupLoadStatus && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
@@ -1204,11 +1386,7 @@ const LoadsPage = () => {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (isEditing) {
-                  handleEditNote(editingLoadId!, editingNoteId!, addingNote);
-                } else {
-                  handleNotes(e);
-                }
+                handleNotes(e);
               }}
               className="space-y-4"
             >
@@ -1221,7 +1399,6 @@ const LoadsPage = () => {
                   value={selectedLoadIdForNote}
                   onChange={(e) => setSelectedLoadIdForNote(e.target.value)}
                   required
-                  disabled={isEditing}
                 >
                   <option value="">Select Load</option>
                   {load.map((l) => (
@@ -1249,35 +1426,15 @@ const LoadsPage = () => {
 
               <button
                 type="submit"
-                className={`w-full flex items-center justify-center gap-2 py-3 px-4 ${
-                  isEditing
-                    ? "bg-yellow-600 hover:bg-yellow-700"
-                    : "bg-blue-600 hover:bg-blue-700"
-                } text-white rounded-lg font-medium transition-all duration-200`}
+                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200"
               >
-                {isEditing ? "Update Note" : "Add Note"}
+                Add Note
               </button>
-
-              {isEditing && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsEditing(false);
-                    setEditingNoteId(null);
-                    setEditingLoadId(null);
-                    setAddingNote("");
-                  }}
-                  className="w-full py-2 text-slate-600 hover:text-slate-900 transition-all"
-                >
-                  Cancel Edit
-                </button>
-              )}
             </form>
           </div>
         </div>
       )}
 
-      {/* Popup For Showing Note */}
       {popupAllNote && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
           <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
@@ -1294,178 +1451,85 @@ const LoadsPage = () => {
                 <IoClose size={24} />
               </button>
             </div>
+
             <div className="space-y-4 max-h-96 overflow-y-auto relative">
-              {allNotes.map((note, i) => (
-                <div
-                  key={note._id || i}
-                  className="relative p-4 rounded-lg bg-slate-100 border border-slate-200"
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-sm font-medium text-slate-700">
-                      Note {i + 1}
-                    </span>
-                    <span className="text-xs text-slate-500">
-                      {new Date(note.createdAt).toLocaleDateString()}
-                    </span>
-                  </div>
-
-                  <p className="text-slate-800 whitespace-pre-wrap">
-                    {note.text}
-                  </p>
-
-                  {note.addedBy && (
-                    <div className="mt-2 text-xs text-slate-500">
-                      Added by: {note.addedBy.name} ({note.addedBy.jobId})
+              {allNotes.length > 0 ? (
+                allNotes.map((note, i) => (
+                  <div
+                    key={note._id || i}
+                    className="relative p-4 rounded-lg bg-slate-100 border border-slate-200"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-sm font-medium text-slate-700">
+                        Note {i + 1}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {new Date(note.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}{" "}
+                        - {new Date(note.createdAt).toLocaleDateString()}
+                      </span>
                     </div>
-                  )}
 
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={() =>
-                        setEditPopup({
-                          open: true,
-                          noteId: note._id,
-                          text: note.text,
-                        })
-                      }
-                      className="p-1.5 rounded-md bg-blue-500 text-white hover:bg-blue-600 text-xs"
-                    >
-                      ✏️ Edit
-                    </button>
-
-                    <button
-                      onClick={() =>
-                        setDeletePopup({ open: true, noteId: note._id })
-                      }
-                      className="p-1.5 rounded-md bg-red-500 text-white hover:bg-red-600 text-xs"
-                    >
-                      🗑️ Delete
-                    </button>
-                  </div>
-
-                  {/* ✅ Edit Popup Form */}
-                  {editPopup.open && editPopup.noteId === note._id && (
-                    <div className="mt-4 border-t border-slate-200 pt-4">
-                      <form
-                        onSubmit={async (e) => {
-                          e.preventDefault();
-
-                          if (!selectedLoadForNotes?.id) {
-                            console.error("No selected load found");
-                            return;
-                          }
-
-                          await handleEditNote(
-                            selectedLoadForNotes.id,
-                            note._id,
-                            editPopup.text
-                          );
-
-                          setEditPopup({ open: false, noteId: null, text: "" });
-                          setPopupAllNote(false);
-                        }}
-                        className="space-y-3"
-                      >
-                        <div>
-                          <label className="block text-sm font-medium text-slate-700 mb-2">
-                            Edit Note
-                          </label>
-                          <textarea
-                            value={editPopup.text}
-                            onChange={(e) =>
-                              setEditPopup((prev) => ({
-                                ...prev,
-                                text: e.target.value,
-                              }))
-                            }
-                            rows={4}
-                            className="w-full px-3 py-2 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors resize-none"
-                            placeholder="Enter your note here..."
-                          />
-                        </div>
-
-                        <div className="flex justify-end gap-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditPopup({
-                                open: false,
-                                noteId: null,
-                                text: "",
-                              })
-                            }
-                            className="flex items-center gap-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm"
-                          >
-                            <IoClose size={14} />
-                            Cancel
-                          </button>
-                          <button
-                            type="submit"
-                            className="flex items-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors text-sm"
-                          >
-                            <IoCheckmark size={14} />
-                            Save Changes
-                          </button>
-                        </div>
-                      </form>
+                    <div className="my-4 p-4 rounded-lg bg-slate-200">
+                      <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
+                        {note.text}
+                      </p>
                     </div>
-                  )}
 
-                  {/* ✅ Delete Popup Form */}
-                  {deletePopup.open && (
-                    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-[9999] p-4">
-                      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-sm">
-                        {/* Warning Icon */}
-                        <div className="flex flex-col items-center text-center mb-4">
-                          <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
-                            <IoTrash size={24} className="text-red-600" />
-                          </div>
-                          <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                            Delete Note
-                          </h3>
-                          <p className="text-slate-600 text-sm">
-                            Are you sure you want to delete this note? This
-                            action cannot be undone.
-                          </p>
-                        </div>
-
-                        <div className="flex gap-3">
-                          <button
-                            onClick={() =>
-                              setDeletePopup({ open: false, noteId: null })
-                            }
-                            className="flex-1 py-2.5 px-4 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors text-sm"
-                          >
-                            Cancel
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              if (
-                                !selectedLoadForNotes?.id ||
-                                !deletePopup.noteId
-                              ) {
-                                console.error("Missing data for delete");
-                                return;
-                              }
-
-                              handleDeleteNote(
-                                selectedLoadForNotes.id,
-                                deletePopup.noteId
-                              );
-                            }}
-                            className="flex-1 py-2.5 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition-colors text-sm flex items-center justify-center gap-1"
-                          >
-                            <IoTrash size={14} />
-                            Delete
-                          </button>
-                        </div>
+                    {note.addedBy && (
+                      <div className="mt-3 text-right text-xs text-slate-600">
+                        <span className="font-semibold text-slate-700">
+                          Added by: {note.addedBy.name}
+                        </span>
+                        <span className="text-slate-500 ml-2">
+                          (ID: {note.addedBy.jobId})
+                        </span>
                       </div>
-                    </div>
-                  )}
+                    )}
+                  </div>
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mb-4 border border-slate-300">
+                    <CiStickyNote size={32} className="text-slate-400" />
+                  </div>
+                  <h4 className="text-lg font-semibold text-slate-700 mb-2">
+                    No Notes Found
+                  </h4>
+                  <p className="text-slate-500 text-sm max-w-xs">
+                    There are no notes for this load yet. Add the first note to
+                    track important information.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setPopupAllNote(false);
+                      setPopupNote(true);
+                    }}
+                    className="mt-4 flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
+                  >
+                    <MdEdit size={16} />
+                    Add First Note
+                  </button>
                 </div>
-              ))}
+              )}
             </div>
+
+            {allNotes.length > 0 && (
+              <div className="mt-6 pt-4 border-t border-slate-200">
+                <button
+                  onClick={() => {
+                    setPopupAllNote(false);
+                    setPopupNote(true);
+                  }}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200"
+                >
+                  <IoAdd size={18} />
+                  Add New Note
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

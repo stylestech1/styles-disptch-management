@@ -25,7 +25,7 @@ type NominatimResult = {
 interface Props {
   label: string;
   value: TPlace | null;
-  setValue: (place: TPlace) => void;
+  setValue: (place: TPlace | null) => void; 
   placeholder?: string;
 }
 
@@ -94,16 +94,34 @@ const LocationAutocomplete = ({
     return () => clearTimeout(timeout);
   }, [input]);
 
+  const clearValue = () => {
+    setValue(null);
+    setInput("");
+    setSuggestions([]);
+  };
+
   return (
     <div className="relative w-full">
       <label className="block mb-1 font-medium">{label}</label>
-      <input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder={placeholder || "Type a state or city"}
-        className="border p-2 rounded w-full"
-      />
+      <div className="relative">
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={placeholder || "Type a state or city"}
+          className="border p-2 rounded w-full pr-10"
+        />
+        
+        {input && (
+          <button
+            type="button"
+            onClick={clearValue}
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          >
+            ✕
+          </button>
+        )}
+      </div>
 
       {loading && (
         <div className="absolute top-full left-0 bg-white border p-2 w-full z-50">
