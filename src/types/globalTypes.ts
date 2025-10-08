@@ -28,6 +28,7 @@ export type TLoads = {
   truckTemp: number
   comments: TComments[]
   feesNumber: string
+  completedAt: string
 };
 export type TDriver = {
   id: string;
