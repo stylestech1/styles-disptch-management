@@ -65,6 +65,7 @@ const LoadsPage = () => {
   const [deliveredAt, setDeliveredAt] = useState<string>("");
   const [cancelledAt, setCancelledAt] = useState<string>("");
   const [pickupAt, setPickupAt] = useState<string>("");
+  const [completedAt, setCompletedAt] = useState<string>("");
   const [truckType, setTruckType] = useState<string>("reefer");
   const [truckTemp, setTruckTemp] = useState<string>("");
   const [selectedLoadId, setSelectedLoadId] = useState("");
@@ -410,6 +411,7 @@ const LoadsPage = () => {
     return pickupDate.toISOString();
   };
   const pickupAtISO = formatPickupAt(pickupAt);
+  const completedAtISO = formatPickupAt(completedAt);
 
   // Create Load
   const handleCreateLoad = async (e: React.FormEvent) => {
@@ -446,6 +448,7 @@ const LoadsPage = () => {
       deliveredAt,
       cancelledAt,
       pickupAt: pickupAtISO,
+      completedAt: completedAtISO,
       truckTemp,
       truckType,
       distanceMiles: Math.round(distance),
@@ -491,6 +494,7 @@ const LoadsPage = () => {
 
       // Time fields
       setPickupAt("");
+      setCompletedAt("");
       setDeliveredAt("");
       setCancelledAt("");
 
@@ -817,10 +821,13 @@ const LoadsPage = () => {
                   Truck
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
-                  Pickup
+                  Pickup Appointment
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
-                  Delivered 
+                  Completed
+                </th>
+                <th className="text-center p-4 font-medium text-slate-600">
+                  Delivered Appointment
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
                   Notes
@@ -874,15 +881,11 @@ const LoadsPage = () => {
                     </td>
                     <td className="p-4 text-center text-slate-700">
                       {loadItem.pricePerMile
-                        ? `${loadItem.pricePerMile.toFixed(
-                            2
-                          )} $`
+                        ? `${loadItem.pricePerMile.toFixed(2)} $`
                         : "-"}
                     </td>
                     <td className="p-4 text-center font-semibold text-emerald-700">
-                      {loadItem.totalPrice
-                        ? `${loadItem.totalPrice} $`
-                        : "-"}
+                      {loadItem.totalPrice ? `${loadItem.totalPrice} $` : "-"}
                     </td>
                     <td className="p-4 text-center">
                       <StatusBadge status={loadItem.status} />
@@ -914,6 +917,28 @@ const LoadsPage = () => {
                             </div>
                             <div className="text-xs text-slate-500">
                               {new Date(loadItem.pickupAt).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-sm text-slate-400">-</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <div className="text-center space-y-1">
+                        {loadItem.completedAt ? (
+                          <>
+                            <div className="text-sm font-medium text-slate-800">
+                              {new Date(loadItem.completedAt).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {new Date(loadItem.completedAt).toLocaleTimeString(
                                 [],
                                 {
                                   hour: "2-digit",
@@ -1269,6 +1294,23 @@ const LoadsPage = () => {
                       type="time"
                       value={pickupAt}
                       onChange={(e) => setPickupAt(e.target.value)}
+                      className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Complete At <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <IoTime className="h-5 w-5 text-slate-400" />
+                    </div>
+                    <input
+                      type="time"
+                      value={completedAt}
+                      onChange={(e) => setCompletedAt(e.target.value)}
                       className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                     />
                   </div>
