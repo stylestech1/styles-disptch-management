@@ -22,6 +22,7 @@ type NominatimResult = {
     country?: string;
     county?: string;
     postcode?: string;
+    road? : string
   };
 };
 
@@ -77,12 +78,13 @@ const LocationAutocomplete = ({
             const state = address.state || "";
             const country = address.country || "";
             const postcode = address.postcode || "";
+            const road = address.road || ''
 
-            if (!city && !state && !postcode) {
+            if (!city && !state && !postcode && !road) {
               return null;
             }
 
-            const formattedDisplayName = [city, state, postcode, country]
+            const formattedDisplayName = [road, city, state, postcode, country]
               .filter(Boolean)
               .join(", ");
 
