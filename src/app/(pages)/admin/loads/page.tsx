@@ -437,8 +437,8 @@ const LoadsPage = () => {
 
     const body = {
       origin: { address: origin.display_name },
-      destination: validDestinations.map((dest) => dest.display_name),
-      dho: dho ? { address: dho.display_name } : null,
+      destination: validDestinations.map((dest) => ({address: dest.display_name})),
+      DHO: dho ? { address: dho.display_name } : null,
       driverId,
       truckId,
       deliveredAt,
