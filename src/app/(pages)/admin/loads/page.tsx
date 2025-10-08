@@ -861,8 +861,8 @@ const LoadsPage = () => {
                     <td className="p-4 text-right text-slate-700">
                       {loadItem.pricePerMile
                         ? `${loadItem.currency} ${loadItem.pricePerMile.toFixed(
-                            2
-                          )}`
+                          2
+                        )}`
                         : "-"}
                     </td>
                     <td className="p-4 text-right font-semibold text-emerald-700">
@@ -1076,9 +1076,8 @@ const LoadsPage = () => {
                             setValue={(place) =>
                               updateDestination(index, place)
                             }
-                            placeholder={`Enter destination ${
-                              index + 1
-                            } address`}
+                            placeholder={`Enter destination ${index + 1
+                              } address`}
                           />
                         </div>
 
@@ -1169,9 +1168,9 @@ const LoadsPage = () => {
                       type="text"
                       value={
                         price &&
-                        distance &&
-                        Number(price) > 0 &&
-                        Number(distance) > 0
+                          distance &&
+                          Number(price) > 0 &&
+                          Number(distance) > 0
                           ? `$${(Number(price) / Number(distance)).toFixed(3)}`
                           : "$0.000"
                       }
@@ -1303,11 +1302,10 @@ const LoadsPage = () => {
                     type="number"
                     value={truckTemp}
                     onChange={(e) => setTruckTemp(Number(e.target.value))}
-                    className={`${
-                      truck.find((t) => t.id === truckId)?.type !== "reefer"
+                    className={`${truck.find((t) => t.id === truckId)?.type !== "reefer"
                         ? "cursor-not-allowed"
                         : ""
-                    } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
+                      } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
                     placeholder="-10"
                     disabled={
                       !truckId ||
@@ -1405,7 +1403,7 @@ const LoadsPage = () => {
               <h3 className="text-xl font-semibold text-slate-800">
                 {noteType === "driver"
                   ? "Add Driver Note"
-                  : "Add Dispatcher Note"}
+                  : "Add Load Note"}
               </h3>
               <button
                 onClick={() => {
@@ -1454,7 +1452,7 @@ const LoadsPage = () => {
                   }
                   required
                 >
-                  <option value="dispatcher">Dispatcher Note</option>
+                  <option value="dispatcher">Load Note</option>
                   <option value="driver">Driver Note</option>
                 </select>
               </div>
@@ -1523,6 +1521,17 @@ const LoadsPage = () => {
                         - {new Date(note.createdAt).toLocaleDateString()}
                       </span>
                     </div>
+                         <div className="mb-3">
+                      <span
+                        className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${note.type === "dispatcher"
+                          ? "bg-blue-100 text-blue-700"
+                          : "bg-amber-100 text-amber-700"
+                          }`}
+                      >
+                        {note.type === "dispatcher" ? "Load Note" : "Driver Note"}
+                      </span>
+                    </div>
+                  
 
                     <div className="my-4 p-4 rounded-lg bg-slate-200">
                       <p className="text-slate-800 whitespace-pre-wrap leading-relaxed">
