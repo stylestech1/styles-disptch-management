@@ -55,6 +55,7 @@ const LoadsPage = () => {
   const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
     null
   );
+  const [averageTime, setAverageTime] = useState<number | null>(null)
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
   const [fees, setFees] = useState<string>("");
@@ -245,6 +246,34 @@ const LoadsPage = () => {
     };
     calculateDhoToOriginDistance();
   }, [dho, origin]);
+
+  // Calc Average time between DHO and Origin
+  useEffect(()=> {
+    const calculateAverageTime = () => {
+      if(dhoToOriginDistance){
+        const timeInHours = dhoToOriginDistance / 55
+        setAverageTime(timeInHours)
+      }else{
+        setAverageTime(null)
+      }
+    }
+    calculateAverageTime()
+  }, [dhoToOriginDistance])
+
+  // Formating Time of (Average time between DHO and Origin)
+  const formatTime = (hours: number): string => {
+  const totalMinutes = hours * 60;
+  const hoursPart = Math.floor(totalMinutes / 60);
+  const minutesPart = Math.round(totalMinutes % 60);
+  
+  if (hoursPart === 0) {
+    return `${minutesPart} minutes`;
+  } else if (minutesPart === 0) {
+    return `${hoursPart} hours`;
+  } else {
+    return `${hoursPart}h ${minutesPart}m`;
+  }
+};
 
   // Get All Distance (Miles)
   useEffect(() => {
@@ -1001,19 +1030,19 @@ const LoadsPage = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-slate-700 mb-2">
-                        DHO to Origin Distance
+                        Average Time To Pickup
                       </label>
                       <div className="relative">
                         <input
                           type="text"
                           value={
-                            dhoToOriginDistance
-                              ? `${dhoToOriginDistance.toFixed(2)} miles`
+                            averageTime
+                              ? `${formatTime(averageTime)}`
                               : ""
                           }
                           className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
                           readOnly
-                          placeholder="Distance will auto-calculate"
+                          placeholder="Time will auto-calculate"
                         />
                       </div>
                     </div>
