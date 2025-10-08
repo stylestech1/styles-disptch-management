@@ -41,13 +41,9 @@ const Login = () => {
       const result = await res.json();
 
       if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
+        toast.error(result.message || "Create user failed", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
         return;
       }
 
