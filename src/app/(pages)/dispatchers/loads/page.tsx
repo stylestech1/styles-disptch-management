@@ -66,7 +66,7 @@ const LoadsPage = () => {
   const [cancelledAt, setCancelledAt] = useState<string>("");
   const [pickupAt, setPickupAt] = useState<string>("");
   const [truckType, setTruckType] = useState<string>("reefer");
-  const [truckTemp, setTruckTemp] = useState<string>('');
+  const [truckTemp, setTruckTemp] = useState<string>("");
   const [selectedLoadId, setSelectedLoadId] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>("pending");
   const [addingNote, setAddingNote] = useState<string>("");
@@ -473,7 +473,7 @@ const LoadsPage = () => {
       setDho(null);
       setOrigin(null);
       setDestinations([]);
-      setPopup(false)
+      setPopup(false);
 
       // Distance and price fields
       setDistance(null);
@@ -487,7 +487,7 @@ const LoadsPage = () => {
       setDriverId("");
       setTruckId("");
       setTruckType("reefer");
-      setTruckTemp('');
+      setTruckTemp("");
 
       // Time fields
       setPickupAt("");
@@ -792,41 +792,35 @@ const LoadsPage = () => {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600">
                   Load ID
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600">
                   Route
                 </th>
-                <th className="text-right p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600">
                   Distance
                 </th>
-                <th className="text-right p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600">
                   Price/Mile
                 </th>
-                <th className="text-right p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600">
                   Total
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
                   Status
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600">
                   Driver
                 </th>
-                <th className="text-left p-4 font-medium text-slate-600">
+                <th className="text-center p-4 font-medium text-slate-600">
                   Truck
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
-                  Pickup Time
+                  Pickup
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
-                  Pickup Date
-                </th>
-                <th className="text-center p-4 font-medium text-slate-600">
-                  Delivered Time
-                </th>
-                <th className="text-center p-4 font-medium text-slate-600">
-                  Delivered Date
+                  Delivered 
                 </th>
                 <th className="text-center p-4 font-medium text-slate-600">
                   Notes
@@ -840,7 +834,7 @@ const LoadsPage = () => {
                     key={i}
                     className="hover:bg-slate-50 transition-colors group"
                   >
-                    <td className="p-4">
+                    <td className="p-4 text-center">
                       <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
                         {loadItem.loadId}
                       </span>
@@ -873,21 +867,21 @@ const LoadsPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-right text-slate-700 font-medium">
+                    <td className="p-4 text-center text-slate-700 font-medium">
                       {loadItem.distanceMiles
                         ? `${loadItem.distanceMiles} mi`
                         : "-"}
                     </td>
-                    <td className="p-4 text-right text-slate-700">
+                    <td className="p-4 text-center text-slate-700">
                       {loadItem.pricePerMile
-                        ? `${loadItem.currency} ${loadItem.pricePerMile.toFixed(
+                        ? `${loadItem.pricePerMile.toFixed(
                             2
-                          )}`
+                          )} $`
                         : "-"}
                     </td>
-                    <td className="p-4 text-right font-semibold text-emerald-700">
+                    <td className="p-4 text-center font-semibold text-emerald-700">
                       {loadItem.totalPrice
-                        ? `${loadItem.currency} ${loadItem.totalPrice}`
+                        ? `${loadItem.totalPrice} $`
                         : "-"}
                     </td>
                     <td className="p-4 text-center">
@@ -908,28 +902,53 @@ const LoadsPage = () => {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-slate-700 text-sm">
+                    <td className="p-4 text-slate-700 text-sm text-center">
                       {loadItem.truckId?.model || "-"}
                     </td>
-                    <td className="p-4 text-center text-slate-600 text-xs">
-                      {loadItem.pickupAt
-                        ? new Date(loadItem.pickupAt).toLocaleTimeString()
-                        : "-"}
+                    <td className="p-4">
+                      <div className="text-center space-y-1">
+                        {loadItem.pickupAt ? (
+                          <>
+                            <div className="text-sm font-medium text-slate-800">
+                              {new Date(loadItem.pickupAt).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-slate-500">
+                              {new Date(loadItem.pickupAt).toLocaleTimeString(
+                                [],
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                }
+                              )}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-sm text-slate-400">-</span>
+                        )}
+                      </div>
                     </td>
-                    <td className="p-4 text-center text-slate-600 text-xs">
-                      {loadItem.pickupAt
-                        ? new Date(loadItem.pickupAt).toLocaleDateString()
-                        : "-"}
-                    </td>
-                    <td className="p-4 text-center text-slate-600 text-xs">
-                      {loadItem.deliveredAt
-                        ? new Date(loadItem.deliveredAt).toLocaleTimeString()
-                        : "-"}
-                    </td>
-                    <td className="p-4 text-center text-slate-600 text-xs">
-                      {loadItem.deliveredAt
-                        ? new Date(loadItem.deliveredAt).toLocaleDateString()
-                        : "-"}
+                    <td className="p-4">
+                      <div className="text-center space-y-1">
+                        {loadItem.deliveredAt ? (
+                          <>
+                            <div className="text-sm font-medium text-green-700">
+                              {new Date(
+                                loadItem.deliveredAt
+                              ).toLocaleDateString()}
+                            </div>
+                            <div className="text-xs text-green-500">
+                              {new Date(
+                                loadItem.deliveredAt
+                              ).toLocaleTimeString([], {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-sm text-slate-400">-</span>
+                        )}
+                      </div>
                     </td>
 
                     <td className="p-4 text-center text-slate-600 text-xs">
@@ -1562,7 +1581,7 @@ const LoadsPage = () => {
                     </div>
 
                     {note.addedBy && (
-                      <div className="mt-3 text-right text-xs text-slate-600">
+                      <div className="mt-3 text-center text-xs text-slate-600">
                         <span className="font-semibold text-slate-700">
                           Added by: {note.addedBy.name}
                         </span>
