@@ -55,7 +55,7 @@ const LoadsPage = () => {
   const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
     null
   );
-  const [averageTime, setAverageTime] = useState<number | null>(null)
+  const [averageTime, setAverageTime] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
   const [fees, setFees] = useState<string>("");
@@ -75,6 +75,9 @@ const LoadsPage = () => {
   const [selectedLoadForNotes, setSelectedLoadForNotes] =
     useState<TLoads | null>(null);
   const [loadIDInp, setLoadIDInp] = useState<string>("");
+  const [noteType, setNoteType] = useState<"dispatcher" | "driver">(
+    "dispatcher"
+  );
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -248,32 +251,32 @@ const LoadsPage = () => {
   }, [dho, origin]);
 
   // Calc Average time between DHO and Origin
-  useEffect(()=> {
+  useEffect(() => {
     const calculateAverageTime = () => {
-      if(dhoToOriginDistance){
-        const timeInHours = dhoToOriginDistance / 55
-        setAverageTime(timeInHours)
-      }else{
-        setAverageTime(null)
+      if (dhoToOriginDistance) {
+        const timeInHours = dhoToOriginDistance / 55;
+        setAverageTime(timeInHours);
+      } else {
+        setAverageTime(null);
       }
-    }
-    calculateAverageTime()
-  }, [dhoToOriginDistance])
+    };
+    calculateAverageTime();
+  }, [dhoToOriginDistance]);
 
   // Formating Time of (Average time between DHO and Origin)
   const formatTime = (hours: number): string => {
-  const totalMinutes = hours * 60;
-  const hoursPart = Math.floor(totalMinutes / 60);
-  const minutesPart = Math.round(totalMinutes % 60);
-  
-  if (hoursPart === 0) {
-    return `${minutesPart} minutes`;
-  } else if (minutesPart === 0) {
-    return `${hoursPart} hours`;
-  } else {
-    return `${hoursPart}h ${minutesPart}m`;
-  }
-};
+    const totalMinutes = hours * 60;
+    const hoursPart = Math.floor(totalMinutes / 60);
+    const minutesPart = Math.round(totalMinutes % 60);
+
+    if (hoursPart === 0) {
+      return `${minutesPart} minutes`;
+    } else if (minutesPart === 0) {
+      return `${hoursPart} hours`;
+    } else {
+      return `${hoursPart}h ${minutesPart}m`;
+    }
+  };
 
   // Get All Distance (Miles)
   useEffect(() => {
@@ -541,15 +544,17 @@ const LoadsPage = () => {
             "content-type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ text: addingNote }),
+
+          body: JSON.stringify({ text: addingNote, type: noteType }),
         }
       );
 
       const result = await res.json();
+
       if (!res.ok) {
         if (Array.isArray(result.errors)) {
           result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
+            toast.error(err.msg || "Add note failed", {
               style: { background: "#dc2626", color: "#fff" },
             });
           });
@@ -1036,9 +1041,7 @@ const LoadsPage = () => {
                         <input
                           type="text"
                           value={
-                            averageTime
-                              ? `${formatTime(averageTime)}`
-                              : ""
+                            averageTime ? `${formatTime(averageTime)}` : ""
                           }
                           className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
                           readOnly
@@ -1326,7 +1329,6 @@ const LoadsPage = () => {
         </div>
       )}
 
-      {/* باقي الـ Popups (Update Load Status, Add Note, All Notes) تبقى كما هي */}
       {/* Popup For Update Load Status */}
       {popupLoadStatus && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
@@ -1398,8 +1400,13 @@ const LoadsPage = () => {
       {popupNote && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
           <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
+            {/* Header */}
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">Add Note</h3>
+              <h3 className="text-xl font-semibold text-slate-800">
+                {noteType === "driver"
+                  ? "Add Driver Note"
+                  : "Add Dispatcher Note"}
+              </h3>
               <button
                 onClick={() => {
                   setPopupNote(false);
@@ -1412,13 +1419,9 @@ const LoadsPage = () => {
               </button>
             </div>
 
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleNotes(e);
-              }}
-              className="space-y-4"
-            >
+            {/* Form */}
+            <form onSubmit={handleNotes} className="space-y-4">
+              {/* Load ID */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Load ID
@@ -1438,6 +1441,25 @@ const LoadsPage = () => {
                 </select>
               </div>
 
+              {/* Note Type */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Note Type
+                </label>
+                <select
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
+                  value={noteType}
+                  onChange={(e) =>
+                    setNoteType(e.target.value as "dispatcher" | "driver")
+                  }
+                  required
+                >
+                  <option value="dispatcher">Dispatcher Note</option>
+                  <option value="driver">Driver Note</option>
+                </select>
+              </div>
+
+              {/* Note Text */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
                   Note
@@ -1453,6 +1475,7 @@ const LoadsPage = () => {
                 ></textarea>
               </div>
 
+              {/* Submit */}
               <button
                 type="submit"
                 className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200"
