@@ -734,7 +734,7 @@ const LoadsPage = () => {
             <div>
               <p className="text-slate-500 text-sm font-medium">Total Loads</p>
               <p className="text-2xl font-bold text-slate-800 mt-1">
-                {pagination?.totalPages || 0}
+                {load.length || 0}
               </p>
             </div>
             <div className="p-2 bg-blue-50 rounded-lg">
