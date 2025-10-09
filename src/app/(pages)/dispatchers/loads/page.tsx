@@ -23,10 +23,9 @@ import {
   TStatusLoad,
   TTruckType,
   TComments,
-  TErrors,
+  TruckApiResponse,
 } from "@/types/globalTypes";
 import { apiClient } from "@/utils/apiClient";
-import { apiFetcher } from "@/utils/APIFetcher";
 import { haversineDistance } from "@/utils/haversineDistance";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -92,8 +91,8 @@ const LoadsPage = () => {
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
-  const {loading, setLoading} = useLoading()
-  const {error, setError} = useError()
+  const { loading, setLoading } = useLoading();
+  const { error, setError } = useError();
 
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -172,14 +171,15 @@ const LoadsPage = () => {
       router.replace("/");
       return;
     }
-    const getDrivers = async () => {
+    const getTrucks = async () => {
       try {
         setLoading(true);
         const result = await apiClient(
           `${apiURL}/api/v1/trucks?status=available`,
           token
         );
-        setTruck(result.data.data as TTruck[]);
+        const truckData = result.data as TruckApiResponse;
+        setTruck(truckData.data as TTruck[]);
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message || "Loading Failed");
@@ -192,7 +192,7 @@ const LoadsPage = () => {
       }
     };
 
-    getDrivers();
+    getTrucks();
   }, [apiURL, token, router]);
 
   // TODO: Multiple Destinations Functions
@@ -552,7 +552,8 @@ const LoadsPage = () => {
         token
       );
 
-      setAllNotes((result.comments as TComments[]) || []);
+      const responseData = result.data as { comments: TComments[] };
+      setAllNotes(responseData.comments || []);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message || "Failed to fetch notes");
