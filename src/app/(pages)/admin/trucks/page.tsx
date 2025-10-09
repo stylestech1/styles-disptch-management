@@ -453,7 +453,7 @@ const TrucksPage = () => {
 
       {error && (
         <div className="mb-6">
-          <Erros message={err} />
+          <Erros message={error} />
         </div>
       )}
 
