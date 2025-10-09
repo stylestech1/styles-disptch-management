@@ -23,6 +23,7 @@ import {
   TStatusLoad,
   TTruckType,
   TComments,
+  TruckApiResponse,
 } from "@/types/globalTypes";
 import { apiClient } from "@/utils/apiClient";
 import { haversineDistance } from "@/utils/haversineDistance";
@@ -170,14 +171,15 @@ const LoadsPage = () => {
       router.replace("/");
       return;
     }
-    const getDrivers = async () => {
+    const getTrucks = async () => {
       try {
         setLoading(true);
         const result = await apiClient(
           `${apiURL}/api/v1/trucks?status=available`,
           token
         );
-        setTruck(result.data.data as TTruck[]);
+        const truckData = result.data as TruckApiResponse;
+        setTruck(truckData.data as TTruck[]);
       } catch (error) {
         if (error instanceof Error) {
           setError(error.message || "Loading Failed");
@@ -190,7 +192,7 @@ const LoadsPage = () => {
       }
     };
 
-    getDrivers();
+    getTrucks();
   }, [apiURL, token, router]);
 
   // TODO: Multiple Destinations Functions

@@ -55,6 +55,12 @@ export type TTruck = {
   assignedDriver: {name: string; driverId: number}
   type: TTruckType
 };
+export interface TruckApiResponse {
+  data: TTruck[];
+  paginationResult?: TPagination;
+  message?: string;
+  status?: string;
+}
 export type TPagination = {
   currentPage: number;
   totalPages: number;
