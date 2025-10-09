@@ -18,11 +18,17 @@ import {
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import { TDispatcher, TErrors, TPagination } from "@/types/globalTypes";
+import useLoading from "@/hook/useLoading";
+import useError from "@/hook/useError";
+import { apiClient } from "@/utils/apiClient";
+import Pagination from "@/components/ui/Pagination";
+import Modal from "@/components/ui/Modals";
+import DataTable from "@/components/ui/DataTable";
+import { dispatcherColumns } from "@/data/dispatcherTables";
+import StatsCard from "@/components/ui/StatsCard";
 
 const Dispatchers = () => {
   const [dispatchers, setDispatchers] = useState<TDispatcher[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
   const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [popupSetting, setPopupSetting] = useState(false);
@@ -45,9 +51,11 @@ const Dispatchers = () => {
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
+  const { loading, setLoading } = useLoading();
+  const { error, setError } = useError();
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
-  // Get all Dispatchers
+  // FIXME: Get all Dispatchers
   useEffect(() => {
     if (!token) {
       router.replace("/");
@@ -57,31 +65,15 @@ const Dispatchers = () => {
     const fetchDispatchers = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${apiURL}/api/v1/adminDashboard`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const result = await res.json();
-        if (!res.ok) {
-          if (Array.isArray(result.errors)) {
-            result.errors.forEach((err: TErrors) => {
-              toast.error(err.msg || "Create user failed", {
-                style: { background: "#dc2626", color: "#fff" },
-              });
-            });
-          }
-          return;
-        }
-
-        setDispatchers(result.data || []);
-        setPagination(result.paginationResult);
+        const result = await apiClient(
+          `${apiURL}/api/v1/adminDashboard?page=${page}`,
+          token
+        );
+        setDispatchers((result.data as TDispatcher[]) || []);
+        setPagination(result.paginationResult as TPagination);
       } catch (error) {
         if (error instanceof Error) {
-          setErr(error.message || "Loading Failed");
+          setError(error.message || "Loading Failed");
           toast.error(error.message || "Loading Failed", {
             style: { background: "#dc2626", color: "#fff" },
           });
@@ -92,45 +84,32 @@ const Dispatchers = () => {
     };
 
     fetchDispatchers();
-  }, [apiURL, token, router]);
+  }, [apiURL, token, router, setError, setLoading, page]);
 
-  // Search Filter
+  // TODO: Search Filter
   const filteredDispatchers = dispatchers.filter(
     (dispatcher) =>
       dispatcher.name.toLowerCase().includes(search.toLowerCase()) ||
       dispatcher.jobId.toString().includes(search)
   );
 
-  // Create User
+  // FIXME: Create User
   const handleCreateUser = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      router.replace("/");
+      return;
+    }
     try {
-      const res = await fetch(`${apiURL}/api/v1/adminDashboard`, {
+      const result = await apiClient(`${apiURL}/api/v1/adminDashboard`, token, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify(newUser),
       });
-
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
-        return;
-      }
-
       toast.success("User created successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
 
-      setDispatchers((prev) => [...prev, result.data]);
+      setDispatchers((prev) => [...prev, result.data] as TDispatcher[]);
       setPopup(false);
       setNewUser({
         name: "",
@@ -150,32 +129,25 @@ const Dispatchers = () => {
     }
   };
 
-  // Update User Role
+  // FIXME: Update User Role
   const handleUpdateRole = async (
     userId: string,
     newRole: "admin" | "employee"
   ) => {
-    try {
-      const res = await fetch(`${apiURL}/api/v1/adminDashboard/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ role: newRole }),
-      });
+    if (!token) {
+      router.replace("/");
+      return;
+    }
 
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
+    try {
+      const result = await apiClient(
+        `${apiURL}/api/v1/adminDashboard/${userId}`,
+        token,
+        {
+          method: "PUT",
+          body: JSON.stringify({ role: newRole }),
         }
-        return;
-      }
+      );
 
       toast.success(
         result.message || `Role updated to ${newRole} successfully!`,
@@ -199,31 +171,21 @@ const Dispatchers = () => {
     }
   };
 
-  // Activate User
+  // FIXME: Activate User
   const handleActivateUser = async (userId: string) => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     try {
-      const res = await fetch(
+      const result = await apiClient(
         `${apiURL}/api/v1/adminDashboard/activate/${userId}`,
+        token,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
-
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
-        return;
-      }
 
       toast.success(result.message || "User activated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
@@ -244,32 +206,21 @@ const Dispatchers = () => {
     }
   };
 
-  // Deactivate User
+  // FIXME: Deactivate User
   const handleDeactivateUser = async (userId: string) => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     try {
-      const res = await fetch(
+      const result = await apiClient(
         `${apiURL}/api/v1/adminDashboard/deactivate/${userId}`,
+        token,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
         }
       );
-
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
-        return;
-      }
-
       toast.success(result.message || "User deactivated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
@@ -289,7 +240,7 @@ const Dispatchers = () => {
     }
   };
 
-  // Function to open settings popup
+  // TODO: Function to open settings popup
   const openSettingsPopup = (user: TDispatcher) => {
     setSelectedUser(user);
     setTempUser({
@@ -298,6 +249,80 @@ const Dispatchers = () => {
     });
     setPopupSetting(true);
   };
+
+  // TODO: Table
+  const renderDispatcherRow = (dispatcher: TDispatcher, index: number) => (
+    <tr
+      key={dispatcher.id}
+      className="hover:bg-slate-50 transition-colors group"
+    >
+      {/* # */}
+      <td className="p-4 text-slate-600 font-medium">{index + 1}</td>
+
+      {/* Name */}
+      <td className="p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+            <IoPerson size={14} className="text-slate-600" />
+          </div>
+          <span className="font-medium text-slate-900">{dispatcher.name}</span>
+        </div>
+      </td>
+
+      {/* Email */}
+      <td className="p-4 text-slate-700">{dispatcher.email}</td>
+
+      {/* Phone */}
+      <td className="p-4 text-slate-700">{dispatcher.phone}</td>
+
+      {/* Role */}
+      <td className="p-4">
+        <span
+          className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+            dispatcher.role === "admin"
+              ? "bg-purple-100 text-purple-800 border border-purple-200"
+              : "bg-slate-100 text-slate-800 border border-slate-200"
+          }`}
+        >
+          {dispatcher.role}
+        </span>
+      </td>
+
+      {/* Position */}
+      <td className="p-4 text-slate-700">{dispatcher.position}</td>
+
+      {/* Job ID */}
+      <td className="p-4">
+        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
+          {dispatcher.jobId}
+        </span>
+      </td>
+
+      {/* Status */}
+      <td className="p-4 text-center">
+        {dispatcher.active ? (
+          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+            Active
+          </span>
+        ) : (
+          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+            Inactive
+          </span>
+        )}
+      </td>
+
+      {/* Setting */}
+      <td className="p-4">
+        <button
+          onClick={() => openSettingsPopup(dispatcher)}
+          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-800 hover:text-blue-200 transition-colors"
+        >
+          <IoSettingsOutline />
+          <span>view setting</span>
+        </button>
+      </td>
+    </tr>
+  );
 
   if (loading) return <Loading />;
 
@@ -339,360 +364,230 @@ const Dispatchers = () => {
         </div>
       </div>
 
-      {err && (
+      {error && (
         <div className="mb-6">
-          <Erros message={err} />
+          <Erros message={error} />
         </div>
       )}
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">
-                Total Dispatchers
-              </p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {dispatchers.length}
-              </p>
-            </div>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <IoPerson size={20} className="text-blue-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Total Dispatchers"
+          value={dispatchers.length || 0}
+          icon={IoPerson}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+        />
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Active</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {dispatchers.filter((d) => d.active).length}
-              </p>
-            </div>
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <IoBriefcase size={20} className="text-emerald-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Active"
+          value={dispatchers.filter((d) => d.active).length}
+          icon={IoBriefcase}
+          iconColor="text-amber-600"
+          bgColor="bg-amber-50"
+        />
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Admins</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {dispatchers.filter((d) => d.role === "admin").length}
-              </p>
-            </div>
-            <div className="p-2 bg-amber-50 rounded-lg">
-              <IoKey size={20} className="text-amber-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Admins"
+          value={dispatchers.filter((d) => d.role === "admin").length}
+          icon={IoKey}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+        />
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Employees</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {dispatchers.filter((d) => d.role === "employee").length}
-              </p>
-            </div>
-            <div className="p-2 bg-slate-50 rounded-lg">
-              <IoPerson size={20} className="text-slate-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Employees"
+          value={dispatchers.filter((d) => d.role === "employee").length}
+          icon={IoPerson}
+          iconColor="text-emerald-600"
+          bgColor="bg-emerald-50"
+        />
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="text-left p-4 font-medium text-slate-600">#</th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Name
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Email
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Phone
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Role
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Position
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Job ID
-                </th>
-                <th className="text-center p-4 font-medium text-slate-600">
-                  Status
-                </th>
-                <th className="text-center p-4 font-medium text-slate-600">
-                  Setting
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {filteredDispatchers.length > 0 ? (
-                filteredDispatchers.map((dispatcher, i) => (
-                  <tr
-                    key={dispatcher.id}
-                    className="hover:bg-slate-50 transition-colors group"
-                  >
-                    <td className="p-4 text-slate-600 font-medium">{i + 1}</td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
-                          <IoPerson size={14} className="text-slate-600" />
-                        </div>
-                        <span className="font-medium text-slate-900">
-                          {dispatcher.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="p-4 text-slate-700">{dispatcher.email}</td>
-                    <td className="p-4 text-slate-700">{dispatcher.phone}</td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                          dispatcher.role === "admin"
-                            ? "bg-purple-100 text-purple-800 border border-purple-200"
-                            : "bg-slate-100 text-slate-800 border border-slate-200"
-                        }`}
-                      >
-                        {dispatcher.role}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-700">
-                      {dispatcher.position}
-                    </td>
-                    <td className="p-4">
-                      <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
-                        {dispatcher.jobId}
-                      </span>
-                    </td>
-                    <td className="p-4 text-center">
-                      {dispatcher.active ? (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-                          Inactive
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4">
-                      <button
-                        onClick={() => openSettingsPopup(dispatcher)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-800 hover:text-blue-200 transition-colors"
-                      >
-                        <IoSettingsOutline />
-                        <span>view setting</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={9}
-                    className="px-4 py-12 text-center text-slate-500"
-                  >
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="text-3xl mb-3">👥</div>
-                      <div className="text-slate-600">No dispatchers found</div>
-                      <div className="text-slate-400 text-sm mt-1">
-                        {search
-                          ? "Try adjusting your search terms"
-                          : "Get started by adding your first dispatcher"}
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Popup Form to add new user */}
-      {popup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">
-                Add New User
-              </h3>
-              <button
-                onClick={() => setPopup(false)}
-                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
-              >
-                <IoClose size={24} />
-              </button>
+      {filteredDispatchers.length > 0 ? (
+        <DataTable
+          columns={dispatcherColumns}
+          data={filteredDispatchers}
+          renderRow={renderDispatcherRow}
+          loading={loading}
+        />
+      ) : (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-12 text-center text-slate-500">
+            <div className="flex flex-col items-center justify-center">
+              <div className="text-3xl mb-3">👥</div>
+              <div className="text-slate-600">No dispatchers found</div>
+              <div className="text-slate-400 text-sm mt-1">
+                {search
+                  ? "Try adjusting your search terms"
+                  : "Get started by adding your first dispatcher"}
+              </div>
             </div>
-
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoPerson className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={newUser.name}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, name: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    placeholder="Enter full name"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoMail className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="email"
-                    value={newUser.email}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, email: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    placeholder="Enter email address"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCall className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={newUser.phone}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, phone: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    placeholder="Enter phone number"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Role
-                  </label>
-                  <select
-                    value={newUser.role}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, role: e.target.value })
-                    }
-                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  >
-                    <option value="employee">Employee</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Position
-                  </label>
-                  <input
-                    type="text"
-                    value={newUser.position}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, position: e.target.value })
-                    }
-                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    placeholder="Position"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoKey className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="password"
-                    value={newUser.password}
-                    onChange={(e) =>
-                      setNewUser({ ...newUser, password: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    placeholder="Enter password"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Confirm Password
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoKey className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="password"
-                    value={newUser.passwordConfirmation}
-                    onChange={(e) =>
-                      setNewUser({
-                        ...newUser,
-                        passwordConfirmation: e.target.value,
-                      })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    placeholder="Confirm password"
-                    required
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
-              >
-                <IoAdd size={18} />
-                Create User
-              </button>
-            </form>
           </div>
         </div>
       )}
+
+      {/* Popup Form to add new user */}
+      <Modal
+        isOpen={popup}
+        onClose={() => setPopup(false)}
+        title="Add New User"
+        size="md"
+      >
+        <form onSubmit={handleCreateUser} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Full Name
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoPerson className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                value={newUser.name}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, name: e.target.value })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                placeholder="Enter full name"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Email Address
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoMail className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="email"
+                value={newUser.email}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, email: e.target.value })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                placeholder="Enter email address"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Phone Number
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoCall className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                value={newUser.phone}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, phone: e.target.value })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                placeholder="Enter phone number"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Role
+              </label>
+              <select
+                value={newUser.role}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, role: e.target.value })
+                }
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              >
+                <option value="employee">Employee</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Position
+              </label>
+              <input
+                type="text"
+                value={newUser.position}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, position: e.target.value })
+                }
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                placeholder="Position"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Password
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoKey className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="password"
+                value={newUser.password}
+                onChange={(e) =>
+                  setNewUser({ ...newUser, password: e.target.value })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                placeholder="Enter password"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Confirm Password
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoKey className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="password"
+                value={newUser.passwordConfirmation}
+                onChange={(e) =>
+                  setNewUser({
+                    ...newUser,
+                    passwordConfirmation: e.target.value,
+                  })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                placeholder="Confirm password"
+                required
+              />
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
+          >
+            <IoAdd size={18} />
+            Create User
+          </button>
+        </form>
+      </Modal>
 
       {/* Popup Form to update user role and status */}
       {popupSetting && selectedUser && (
@@ -801,36 +696,13 @@ const Dispatchers = () => {
       )}
 
       {/* Pagination */}
-      {pagination && (
-        <div className="flex justify-between items-center mt-6">
-          <div className="text-sm text-slate-600">
-            Showing {(page - 1) * 10 + 1} to{" "}
-            {Math.min(page * 10, pagination.totalPages)} of{" "}
-            {pagination.totalPages} entries
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Previous
-            </button>
-            <span className="px-3 py-2 text-sm text-slate-700">
-              Page {pagination.currentPage} of {pagination.totalPages}
-            </span>
-            <button
-              disabled={page >= pagination.totalPages}
-              onClick={() =>
-                setPage((p) => Math.min(pagination.totalPages, p + 1))
-              }
-              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-      )}
+      <Pagination
+        pagination={pagination}
+        page={page}
+        setPage={setPage}
+        pageSize={10}
+        showInfo={true}
+      />
     </section>
   );
 };

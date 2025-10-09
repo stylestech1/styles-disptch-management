@@ -57,10 +57,10 @@ export type TTruck = {
 };
 export type TPagination = {
   currentPage: number;
-  limit: number;
   totalPages: number;
-  next?: number;
-  prev?: number;
+  total?: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 };
 export type TComments = {
   id: string

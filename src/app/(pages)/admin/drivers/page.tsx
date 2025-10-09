@@ -19,14 +19,17 @@ import {
   IoCash,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
-import { TDriver, TErrors, TPagination } from "@/types/globalTypes";
+import { TDriver, TPagination } from "@/types/globalTypes";
 import Link from "next/link";
-import { apiFetcher } from "@/utils/APIFetcher";
+import useLoading from "@/hook/useLoading";
+import useError from "@/hook/useError";
+import { apiClient } from "@/utils/apiClient";
+import DataTable from "@/components/ui/DataTable";
+import { driverColumns } from "@/data/driverTables";
+import StatsCard from "@/components/ui/StatsCard";
 
 const DriversPage = () => {
   const [drivers, setDrivers] = useState<TDriver[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
   const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [editPopup, setEditPopup] = useState(false);
@@ -54,9 +57,11 @@ const DriversPage = () => {
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
+  const { loading, setLoading } = useLoading();
+  const { error, setError } = useError();
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
-  // Fetch drivers
+  // FIXME: Fetch drivers
   useEffect(() => {
     if (!token) {
       router.replace("/");
@@ -66,25 +71,12 @@ const DriversPage = () => {
     const fetchDrivers = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${apiURL}/api/v1/drivers`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const result = await res.json();
-        if (!res.ok) {
-          toast.error(result.message || "Create user failed", {
-            style: { background: "#dc2626", color: "#fff" },
-          });
-          return;
-        }
-        setDrivers(result.data);
-        setPagination(result.paginationResult);
+        const result = await apiClient(`${apiURL}/api/v1/drivers`, token);
+        setDrivers(result.data as TDriver[]);
+        setPagination(result.paginationResult as TPagination);
       } catch (error) {
         if (error instanceof Error) {
-          setErr(error.message);
+          setError(error.message);
           toast.error(error.message || "Failed to load drivers");
         }
       } finally {
@@ -95,18 +87,19 @@ const DriversPage = () => {
     fetchDrivers();
   }, [apiURL, token, router]);
 
-  // Filter DriverId & Name & Phone & Email
+  // FIXME: Filter DriverId & Name & Phone & Email
   const fetchAllDrivers = async () => {
+    if (!token) {
+      router.replace("/");
+      return;
+    }
     try {
-      const result = await apiFetcher(`${apiURL}/api/v1/drivers?limit=1000`, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const result = await apiClient(
+        `${apiURL}/api/v1/drivers?limit=1000`,
+        token
+      );
 
-      setAllDrivers(result.data || []);
+      setAllDrivers((result.data as TDriver[]) || []);
     } catch (error) {
       console.error("Error fetching all loads:", error);
     }
@@ -128,30 +121,23 @@ const DriversPage = () => {
       )
     : drivers;
 
-  // Create driver
+  // FIXME: Create driver
   const handleCreateDriver = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     try {
-      const res = await fetch(`${apiURL}/api/v1/drivers`, {
+      const result = await apiClient(`${apiURL}/api/v1/drivers`, token, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({
           ...newDriver,
           pricePerMile: parseFloat(newDriver.pricePerMile),
         }),
       });
-
-      const result = await res.json();
-      if (!res.ok) {
-        toast.error(result.message || "Create user failed", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-        return;
-      }
-      setDrivers((prev) => [...prev, result.data]);
+      setDrivers((prev) => [...prev, result.data] as TDriver[]);
       toast.success("Driver created successfully!");
       setPopup(false);
       setNewDriver({
@@ -167,35 +153,31 @@ const DriversPage = () => {
     }
   };
 
-  // Update driver
+  // FIXME: Update driver
   const handleUpdateDriver = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDriver) return;
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+
     try {
-      const res = await fetch(`${apiURL}/api/v1/drivers/${selectedDriver.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          ...updateDriver,
-          pricePerMile: parseFloat(updateDriver.pricePerMile),
-        }),
-      });
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
+      const result = await apiClient(
+        `${apiURL}/api/v1/drivers/${selectedDriver.id}`,
+        token,
+        {
+          method: "PUT",
+          body: JSON.stringify({
+            ...updateDriver,
+            pricePerMile: parseFloat(updateDriver.pricePerMile),
+          }),
         }
-        return;
-      }
+      );
       setDrivers((prev) =>
-        prev.map((d) => (d.id === selectedDriver.id ? result.data : d))
+        prev.map(
+          (d) => (d.id === selectedDriver.id ? result.data : d) as TDriver
+        )
       );
       toast.success("Driver updated successfully!");
       setEditPopup(false);
@@ -204,32 +186,21 @@ const DriversPage = () => {
     }
   };
 
-  // Delete driver
+  // FIXME: Delete driver
   const handleDeleteDriver = async (id: string) => {
     const confirmDelete = confirm(
       "Are you sure you want to delete this driver?"
     );
     if (!confirmDelete) return;
+    if (!token) {
+      router.replace("/");
+      return;
+    }
 
     try {
-      const res = await fetch(`${apiURL}/api/v1/drivers/${id}`, {
+      const result = await apiClient(`${apiURL}/api/v1/drivers/${id}`, token, {
         method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
-
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
-        return;
-      }
 
       setDrivers((prev) => prev.filter((d) => d.id !== id));
       toast.success("Driver deleted successfully!");
@@ -238,7 +209,7 @@ const DriversPage = () => {
     }
   };
 
-  // Status badge component
+  // TODO: Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
     const statusConfig = {
       available: {
@@ -268,6 +239,110 @@ const DriversPage = () => {
       </span>
     );
   };
+
+  // TODO: Table
+  const renderDriverRow = (driver: TDriver, index: number) => (
+    <tr key={driver.id} className="hover:bg-slate-50 transition-colors group">
+      {/* # */}
+      <td className="p-4 text-slate-600 font-medium">{index + 1}</td>
+
+      {/* Driver Details */}
+      <td className="p-4">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+            <IoPerson size={18} className="text-slate-600" />
+          </div>
+          <div>
+            <div className="font-medium text-slate-900">{driver.name}</div>
+            <div className="text-xs text-slate-500 mt-1">ID: {driver.id}</div>
+          </div>
+        </div>
+      </td>
+
+      {/* Contact Information */}
+      <td className="p-4">
+        <div className="space-y-2">
+          {driver.phone && (
+            <div className="flex items-center gap-2 text-slate-700">
+              <IoCall size={14} className="text-slate-400" />
+              <span className="text-sm">{driver.phone}</span>
+            </div>
+          )}
+          {driver.email && (
+            <div className="flex items-center gap-2 text-slate-700">
+              <IoMail size={14} className="text-slate-400" />
+              <span className="text-sm">{driver.email}</span>
+            </div>
+          )}
+        </div>
+      </td>
+
+      {/* License & Pricing */}
+      <td className="p-4">
+        <div className="space-y-2">
+          {driver.licenseNumber && (
+            <div className="flex items-center gap-2 text-slate-700">
+              <IoCard size={14} className="text-slate-400" />
+              <span className="text-sm">{driver.licenseNumber}</span>
+            </div>
+          )}
+          {driver.pricePerMile && (
+            <div className="flex items-center gap-2 text-slate-700">
+              <IoCash size={14} className="text-slate-400" />
+              <span className="text-sm">
+                ${driver.pricePerMile.toFixed(2)}/mile
+              </span>
+            </div>
+          )}
+        </div>
+      </td>
+
+      {/* Status */}
+      <td className="p-4">
+        <StatusBadge status={driver.status} />
+      </td>
+
+      {/* Actions */}
+      <td className="p-4">
+        <div className="flex gap-2">
+          <Link
+            href={`/admin/driverSummary/${driver.id}`}
+            className="flex items-center gap-1 bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+          >
+            <IoStatsChart size={14} />
+            Stats
+          </Link>
+
+          <button
+            onClick={() => {
+              setSelectedDriver(driver);
+              setUpdateDriver({
+                name: driver.name,
+                phone: driver.phone || "",
+                email: driver.email || "",
+                licenseNumber: driver.licenseNumber || "",
+                pricePerMile: driver.pricePerMile?.toString() || "",
+                status: driver.status || "available",
+              });
+              setEditPopup(true);
+            }}
+            className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+          >
+            <IoPencil size={14} />
+            Edit
+          </button>
+
+          <button
+            onClick={() => handleDeleteDriver(driver.id)}
+            className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
+          >
+            <IoTrash size={14} />
+            Delete
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
 
   if (loading) return <Loading />;
 
@@ -309,227 +384,70 @@ const DriversPage = () => {
         </div>
       </div>
 
-      {err && (
+      {error && (
         <div className="mb-6">
-          <Erros message={err} />
+          <Erros message={error} />
         </div>
       )}
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">
-                Total Drivers
-              </p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {allDrivers.length}
-              </p>
-            </div>
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <IoPerson size={20} className="text-blue-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Total Drivers"
+          value={allDrivers.length || 0}
+          icon={IoPerson}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+        />
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Available</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {drivers.filter((d) => d.status === "available").length}
-              </p>
-            </div>
-            <div className="p-2 bg-emerald-50 rounded-lg">
-              <IoPerson size={20} className="text-emerald-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Available"
+          value={drivers.filter((d) => d.status === "available").length}
+          icon={IoPerson}
+          iconColor="text-amber-600"
+          bgColor="bg-amber-50"
+        />
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Busy</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {drivers.filter((d) => d.status === "busy").length}
-              </p>
-            </div>
-            <div className="p-2 bg-amber-50 rounded-lg">
-              <IoPerson size={20} className="text-amber-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Busy"
+          value={drivers.filter((d) => d.status === "busy").length}
+          icon={IoPerson}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+        />
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-sm font-medium">Inactive</p>
-              <p className="text-2xl font-bold text-slate-800 mt-1">
-                {drivers.filter((d) => d.status === "inactive").length}
-              </p>
-            </div>
-            <div className="p-2 bg-slate-50 rounded-lg">
-              <IoPerson size={20} className="text-slate-600" />
-            </div>
-          </div>
-        </div>
+        <StatsCard
+          title="Inactive"
+          value={drivers.filter((d) => d.status === "inactive").length}
+          icon={IoPerson}
+          iconColor="text-emerald-600"
+          bgColor="bg-emerald-50"
+        />
       </div>
 
-      {/* Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="text-left p-4 font-medium text-slate-600">#</th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Driver Details
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Contact Information
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  License & Pricing
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Status
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {filteredDrivers.length > 0 ? (
-                filteredDrivers.map((driver, i) => (
-                  <tr
-                    key={driver.id}
-                    className="hover:bg-slate-50 transition-colors group"
-                  >
-                    <td className="p-4 text-slate-600 font-medium">{i + 1}</td>
-
-                    <td className="p-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-                          <IoPerson size={18} className="text-slate-600" />
-                        </div>
-                        <div>
-                          <div className="font-medium text-slate-900">
-                            {driver.name}
-                          </div>
-                          <div className="text-xs text-slate-500 mt-1">
-                            ID: {driver.id}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <div className="space-y-2">
-                        {driver.phone && (
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <IoCall size={14} className="text-slate-400" />
-                            <span className="text-sm">{driver.phone}</span>
-                          </div>
-                        )}
-                        {driver.email && (
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <IoMail size={14} className="text-slate-400" />
-                            <span className="text-sm">{driver.email}</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <div className="space-y-2">
-                        {driver.licenseNumber && (
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <IoCard size={14} className="text-slate-400" />
-                            <span className="text-sm">
-                              {driver.licenseNumber}
-                            </span>
-                          </div>
-                        )}
-                        {driver.pricePerMile && (
-                          <div className="flex items-center gap-2 text-slate-700">
-                            <IoCash size={14} className="text-slate-400" />
-                            <span className="text-sm">
-                              ${driver.pricePerMile.toFixed(2)}/mile
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    <td className="p-4">
-                      <StatusBadge status={driver.status} />
-                    </td>
-
-                    <td className="p-4">
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/admin/driverSummary/${driver.id}`}
-                          className="flex items-center gap-1 bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                        >
-                          <IoStatsChart size={14} />
-                          Stats
-                        </Link>
-
-                        <button
-                          onClick={() => {
-                            setSelectedDriver(driver);
-                            setUpdateDriver({
-                              name: driver.name,
-                              phone: driver.phone || "",
-                              email: driver.email || "",
-                              licenseNumber: driver.licenseNumber || "",
-                              pricePerMile:
-                                driver.pricePerMile?.toString() || "",
-                              status: driver.status || "available",
-                            });
-                            setEditPopup(true);
-                          }}
-                          className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                        >
-                          <IoPencil size={14} />
-                          Edit
-                        </button>
-
-                        <button
-                          onClick={() => handleDeleteDriver(driver.id)}
-                          className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-                        >
-                          <IoTrash size={14} />
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td
-                    colSpan={6}
-                    className="px-4 py-12 text-center text-slate-500"
-                  >
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="text-3xl mb-3">👨‍💼</div>
-                      <div className="text-slate-600">No drivers found</div>
-                      <div className="text-slate-400 text-sm mt-1">
-                        {search
-                          ? "Try adjusting your search terms"
-                          : "Get started by adding your first driver"}
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+      {/* Table For Drivers */}
+      {filteredDrivers.length > 0 ? (
+        <DataTable
+          columns={driverColumns}
+          data={filteredDrivers}
+          renderRow={renderDriverRow}
+          loading={loading}
+        />
+      ) : (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="px-4 py-12 text-center text-slate-500">
+            <div className="flex flex-col items-center justify-center">
+              <div className="text-3xl mb-3">👨‍💼</div>
+              <div className="text-slate-600">No drivers found</div>
+              <div className="text-slate-400 text-sm mt-1">
+                {search
+                  ? "Try adjusting your search terms"
+                  : "Get started by adding your first driver"}
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Create Popup */}
       {popup && (
