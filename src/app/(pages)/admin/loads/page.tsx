@@ -42,6 +42,11 @@ import {
   IoNavigate,
   IoCash,
   IoSearch,
+  IoArrowBack,
+  IoArrowForward,
+  IoDocumentText,
+  IoLocationOutline,
+  IoSettings,
 } from "react-icons/io5";
 import { MdEdit } from "react-icons/md";
 
@@ -52,7 +57,7 @@ const LoadsPage = () => {
   const [popupLoadStatus, setPopupLoadStatus] = useState(false);
   const [popupNote, setPopupNote] = useState(false);
   const [popupAllNote, setPopupAllNote] = useState(false);
-
+  const [activeTab, setActiveTab] = useState(1);
   const [load, setLoad] = useState<TLoads[]>([]);
   const [drivers, setDrivers] = useState<TDriver[]>([]);
   const [truck, setTruck] = useState<TTruck[]>([]);
@@ -768,6 +773,29 @@ const LoadsPage = () => {
     </tr>
   );
 
+  // TODO: Checking from unempty data in (LOAD POPUP)
+  const isTab1Valid = () => {
+    return (
+      dho &&
+      origin &&
+      destinations.length > 0 &&
+      destinations.every((dest) => dest !== null && dest !== undefined)
+    );
+  };
+  const isTab2Valid = () => {
+    return (
+      price &&
+      loadIDInp &&
+      pickupTime &&
+      pickupDate &&
+      completedTime &&
+      completedDate
+    );
+  };
+  const isTab3Valid = () => {
+    return driverId && truckType && truckId;
+  };
+
   return (
     <section className="relative p-6">
       {/* Header */}
@@ -890,380 +918,524 @@ const LoadsPage = () => {
         title="Create New Load"
         size="xl"
       >
-        <form onSubmit={handleCreateLoad} className="space-y-6">
-          {/* Inputs */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {/* Direction */}
-            <div className="space-y-6">
-              <LocationAutocomplete
-                label="DHO (Driver Home Origin)"
-                value={dho}
-                setValue={setDho}
-                placeholder="Enter driver's starting location"
-              />
+        <div className="flex flex-col h-full">
+          {/* Tabs Navigation */}
+          <div className="border-b border-slate-200">
+            <nav className="flex space-x-8">
+              <button
+                type="button"
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 1
+                    ? "border-emerald-500 text-emerald-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                }`}
+                onClick={() => setActiveTab(1)}
+              >
+                <span className="flex items-center">
+                  <IoLocationOutline className="mr-2" />
+                  Locations
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 2
+                    ? "border-emerald-500 text-emerald-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                }`}
+                onClick={() => setActiveTab(2)}
+              >
+                <span className="flex items-center">
+                  <IoDocumentText className="mr-2" />
+                  Load Details
+                </span>
+              </button>
+              <button
+                type="button"
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 3
+                    ? "border-emerald-500 text-emerald-600"
+                    : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+                }`}
+                onClick={() => setActiveTab(3)}
+              >
+                <span className="flex items-center">
+                  <IoCar className="mr-2" />
+                  Ride
+                </span>
+              </button>
+            </nav>
+          </div>
 
-              <LocationAutocomplete
-                label="Pick Up (Origin)"
-                value={origin}
-                setValue={setOrigin}
-                placeholder="Enter origin address"
-              />
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    DHO to Origin Distance
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={
-                        dhoToOriginDistance
-                          ? `${dhoToOriginDistance.toFixed(2)} miles`
-                          : ""
-                      }
-                      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                      readOnly
-                      placeholder="Distance will auto-calculate"
+          <form
+            onSubmit={handleCreateLoad}
+            className="flex-1 overflow-auto p-4"
+          >
+            {/* Tab 1: Locations */}
+            {activeTab === 1 && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {/* Direction */}
+                  <div className="space-y-6">
+                    <LocationAutocomplete
+                      label="DHO (Driver Home Origin)"
+                      value={dho}
+                      setValue={setDho}
+                      placeholder="Enter driver's starting location"
                     />
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Average Time To Pickup
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      value={averageTime ? `${formatTime(averageTime)}` : ""}
-                      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                      readOnly
-                      placeholder="Time will auto-calculate"
+                    <LocationAutocomplete
+                      label="Pick Up (Origin)"
+                      value={origin}
+                      setValue={setOrigin}
+                      placeholder="Enter origin address"
                     />
-                  </div>
-                </div>
-              </div>
 
-              {/* Destinations Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <label className="block text-sm font-medium text-slate-700">
-                    Destinations
-                  </label>
-                  <button
-                    type="button"
-                    onClick={addDestination}
-                    className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-                  >
-                    <IoAdd size={16} />
-                    Add Destination
-                  </button>
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          DHO to Origin Distance
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={
+                              dhoToOriginDistance
+                                ? `${dhoToOriginDistance.toFixed(2)} miles`
+                                : ""
+                            }
+                            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                            readOnly
+                            placeholder="Distance will auto-calculate"
+                          />
+                        </div>
+                      </div>
 
-                {destinations.map((destination, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <div className="flex-1">
-                      <LocationAutocomplete
-                        label={`Destination ${index + 1}`}
-                        value={destination}
-                        setValue={(place) => updateDestination(index, place)}
-                        placeholder={`Enter destination ${index + 1} address`}
-                      />
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-2">
+                          Average Time To Pickup
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="text"
+                            value={
+                              averageTime ? `${formatTime(averageTime)}` : ""
+                            }
+                            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                            readOnly
+                            placeholder="Time will auto-calculate"
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    {destinations.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeDestination(index)}
-                        className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <IoClose size={20} />
-                      </button>
-                    )}
+                    {/* Destinations Section */}
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-sm font-medium text-slate-700">
+                          Destinations <span className="text-red-500">*</span>
+                        </label>
+                        <button
+                          type="button"
+                          onClick={addDestination}
+                          className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        >
+                          <IoAdd size={16} />
+                          Add Destination
+                        </button>
+                      </div>
+
+                      {destinations.map((destination, index) => (
+                        <div key={index} className="flex items-center gap-3">
+                          <div className="flex-1">
+                            <LocationAutocomplete
+                              label={`Destination ${index + 1}`}
+                              value={destination}
+                              setValue={(place) =>
+                                updateDestination(index, place)
+                              }
+                              placeholder={`Enter destination ${
+                                index + 1
+                              } address`}
+                            />
+                          </div>
+
+                          {destinations.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => removeDestination(index)}
+                              className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            >
+                              <IoClose size={20} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+
+                      {destinations.length === 0 && (
+                        <div className="text-center py-6 border-2 border-dashed border-slate-300 rounded-lg bg-gray-50">
+                          <p className="text-gray-500 font-medium">
+                            No destinations added yet
+                          </p>
+                          <p className="text-gray-400 text-sm mt-1">
+                            You must add at least one destination to continue
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                ))}
 
-                {destinations.length === 0 && (
-                  <div className="text-center py-6 border-2 border-dashed border-slate-300 rounded-lg">
-                    <p className="text-slate-500">No destinations added yet</p>
-                    <p className="text-slate-400 text-sm mt-1">
-                      {'Click "Add Destination" to start adding stops'}
-                    </p>
+                  {/* Maps */}
+                  <div className="grid grid-cols-1 gap-6">
+                    <MapView
+                      origin={origin}
+                      destinations={destinations}
+                      dho={dho}
+                    />
                   </div>
-                )}
-              </div>
-            </div>
-
-            {/* Maps */}
-            <div className="grid grid-cols-1 gap-6">
-              <MapView origin={origin} destinations={destinations} dho={dho} />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Calculated All Distance
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={distance ? `${distance.toFixed(2)} miles` : ""}
-                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                  readOnly
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Total Price <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoCash className="h-5 w-5 text-slate-400" />
                 </div>
-                <input
-                  type="text"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    setPrice(value);
-                    if (distance && Number(distance) > 0) {
-                      const perMile = Number(value) / Number(distance);
-                      setPricePerMile(perMile);
-                    } else {
-                      setPricePerMile(null);
-                    }
-                  }}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Price Per Mile
-              </label>
-              <div>
-                <input
-                  type="text"
-                  value={
-                    price &&
-                    distance &&
-                    Number(price) > 0 &&
-                    Number(distance) > 0
-                      ? `$${(Number(price) / Number(distance)).toFixed(3)}`
-                      : "$0.000"
-                  }
-                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                  readOnly
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Fees Number
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoCash className="h-5 w-5 text-slate-400" />
+                <div className="flex justify-end pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab(2)}
+                    disabled={!isTab1Valid()}
+                    className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+                      isTab1Valid()
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                        : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                    }`}
+                  >
+                    Next
+                    <IoArrowForward size={16} />
+                  </button>
                 </div>
-                <input
-                  type="text"
-                  step="0.01"
-                  value={fees}
-                  onChange={(e) => setFees(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  placeholder="115"
-                />
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Load Id <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoMdKey className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  value={loadIDInp}
-                  onChange={(e) => setLoadIDInp(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  placeholder="A101"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Pickup At <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoTime className="h-5 w-5 text-slate-400" />
+            {/* Tab 2: Load Details */}
+            {activeTab === 2 && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Calculated All Distance
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={distance ? `${distance.toFixed(2)} miles` : ""}
+                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                        readOnly
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="time"
-                    value={pickupTime}
-                    onChange={(e) => setPickupTime(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Pickup Date <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoTime className="h-5 w-5 text-slate-400" />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Total Price <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <IoCash className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        step="0.01"
+                        value={price}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setPrice(value);
+                          if (distance && Number(distance) > 0) {
+                            const perMile = Number(value) / Number(distance);
+                            setPricePerMile(perMile);
+                          } else {
+                            setPricePerMile(null);
+                          }
+                        }}
+                        className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="date"
-                    value={pickupDate}
-                    onChange={(e) => setPickupDate(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Complete At <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoTime className="h-5 w-5 text-slate-400" />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Price Per Mile
+                    </label>
+                    <div>
+                      <input
+                        type="text"
+                        value={
+                          price &&
+                          distance &&
+                          Number(price) > 0 &&
+                          Number(distance) > 0
+                            ? `$${(Number(price) / Number(distance)).toFixed(
+                                3
+                              )}`
+                            : "$0.000"
+                        }
+                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                        readOnly
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="time"
-                    value={completedTime}
-                    onChange={(e) => setCompletedTime(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Complete Date <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoTime className="h-5 w-5 text-slate-400" />
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Fees Number
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <IoCash className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        step="0.01"
+                        value={fees}
+                        onChange={(e) => setFees(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        placeholder="115"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="date"
-                    value={completedDate}
-                    onChange={(e) => setCompletedDate(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Load Id <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <IoMdKey className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={loadIDInp}
+                        onChange={(e) => setLoadIDInp(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        placeholder="A101"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Pickup At <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <IoTime className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                          type="time"
+                          value={pickupTime}
+                          onChange={(e) => setPickupTime(e.target.value)}
+                          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Pickup Date <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <IoTime className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                          type="date"
+                          value={pickupDate}
+                          onChange={(e) => setPickupDate(e.target.value)}
+                          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Complete At <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <IoTime className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                          type="time"
+                          value={completedTime}
+                          onChange={(e) => setCompletedTime(e.target.value)}
+                          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Complete Date <span className="text-red-500">*</span>
+                      </label>
+                      <div className="relative">
+                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                          <IoTime className="h-5 w-5 text-slate-400" />
+                        </div>
+                        <input
+                          type="date"
+                          value={completedDate}
+                          onChange={(e) => setCompletedDate(e.target.value)}
+                          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab(1)}
+                    className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+                  >
+                    <IoArrowBack size={16} />
+                    Back
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab(3)}
+                    disabled={!isTab2Valid()}
+                    className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+                      isTab2Valid()
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                        : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                    }`}
+                  >
+                    Next
+                    <IoArrowForward size={16} />
+                  </button>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Driver <span className="text-red-500">*</span>
-              </label>
-              <select
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                value={driverId}
-                onChange={(e) => setDriverId(e.target.value)}
-                required
-              >
-                <option value="">Select Driver</option>
-                {drivers.map((d, i) => (
-                  <option key={i} value={d.id}>
-                    {d.name} ({d.driverId})
-                  </option>
-                ))}
-              </select>
-            </div>
+            {/* Tab 3: Assignment */}
+            {activeTab === 3 && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Driver <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                      value={driverId}
+                      onChange={(e) => setDriverId(e.target.value)}
+                      required
+                    >
+                      <option value="">Select Driver</option>
+                      {drivers.map((d, i) => (
+                        <option key={i} value={d.id}>
+                          {d.name} ({d.driverId})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Truck Type <span className="text-red-500">*</span>
-              </label>
-              <select
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                value={truckType}
-                onChange={(e) => {
-                  setTruckType(e.target.value as TTruckType);
-                  setTruckId("");
-                }}
-                required
-              >
-                <option value="">Select Type</option>
-                <option value="reefer">Reefer</option>
-                <option value="van">Van</option>
-              </select>
-            </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Truck Type <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                      value={truckType}
+                      onChange={(e) => {
+                        setTruckType(e.target.value as TTruckType);
+                        setTruckId("");
+                      }}
+                      required
+                    >
+                      <option value="">Select Type</option>
+                      <option value="reefer">Reefer</option>
+                      <option value="van">Van</option>
+                    </select>
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Truck
-              </label>
-              <select
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                value={truckId}
-                onChange={(e) => setTruckId(e.target.value)}
-                required
-                disabled={!truckType}
-              >
-                <option value="">Select Truck</option>
-                {truck
-                  .filter((t) => !truckType || t.type === truckType)
-                  .map((t, i) => (
-                    <option key={i} value={t.id}>
-                      {t.model} ({t.truckId}) ({t.type})
-                    </option>
-                  ))}
-              </select>
-            </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Truck <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                      value={truckId}
+                      onChange={(e) => setTruckId(e.target.value)}
+                      required
+                      disabled={!truckType}
+                    >
+                      <option value="">Select Truck</option>
+                      {truck
+                        .filter((t) => !truckType || t.type === truckType)
+                        .map((t, i) => (
+                          <option key={i} value={t.id}>
+                            {t.model} ({t.truckId}) ({t.type})
+                          </option>
+                        ))}
+                    </select>
+                  </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Temperature
-              </label>
-              <input
-                type="number"
-                value={truckTemp}
-                onChange={(e) => setTruckTemp(e.target.value)}
-                className={`${
-                  truck.find((t) => t.id === truckId)?.type !== "reefer"
-                    ? "cursor-not-allowed"
-                    : ""
-                } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
-                placeholder="-10"
-                disabled={
-                  !truckId ||
-                  truck.find((t) => t.id === truckId)?.type !== "reefer"
-                }
-              />
-            </div>
-          </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Temperature {truckType === 'Reefer' && (<span className="text-red-500">*</span>)}
+                    </label>
+                    <input
+                      type="number"
+                      value={truckTemp}
+                      onChange={(e) => setTruckTemp(e.target.value)}
+                      className={`${
+                        truck.find((t) => t.id === truckId)?.type !== "reefer"
+                          ? "cursor-not-allowed"
+                          : ""
+                      } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
+                      placeholder="-10"
+                      disabled={
+                        !truckId ||
+                        truck.find((t) => t.id === truckId)?.type !== "reefer"
+                      }
+                    />
+                  </div>
+                </div>
 
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
-          >
-            <IoAdd size={18} />
-            Create Load
-          </button>
-        </form>
+                <div className="flex justify-between pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab(2)}
+                    className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+                  >
+                    <IoArrowBack size={16} />
+                    Back
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!isTab3Valid()}
+                    className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+                      isTab3Valid()
+                        ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                        : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                    }`}
+                  >
+                    <IoAdd size={18} />
+                    Create Load
+                  </button>
+                </div>
+              </div>
+            )}
+          </form>
+        </div>
       </Modal>
 
       {/* Popup For Update Load Status */}

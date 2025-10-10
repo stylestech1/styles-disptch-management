@@ -50,15 +50,20 @@ const LocationAutocomplete = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSelecting, setIsSelecting] = useState(false);
+  const [shouldSearch, setShouldSearch] = useState(true); 
 
   useEffect(() => {
-    if (input.length < 2) {
+    if (value?.display_name && value.display_name !== input) {
+      setInput(value.display_name);
+    }
+  }, [value, input]);
+
+  useEffect(() => {
+    if (isSelecting || !shouldSearch || input.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
-
-    if (isSelecting) return;
 
     const timeout = setTimeout(async () => {
       setLoading(true);
@@ -140,7 +145,7 @@ const LocationAutocomplete = ({
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [input, isSelecting]);
+  }, [input, isSelecting, shouldSearch]); 
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -164,10 +169,12 @@ const LocationAutocomplete = ({
     setSuggestions([]);
     setShowSuggestions(false);
     setIsSelecting(false);
+    setShouldSearch(true); 
   };
 
   const handleSelectPlace = (place: TPlace) => {
     setIsSelecting(true);
+    setShouldSearch(false); 
 
     setValue(place);
     setInput(place.display_name);
@@ -184,14 +191,22 @@ const LocationAutocomplete = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInput(e.target.value);
-    if (e.target.value.length >= 2) {
+    const newValue = e.target.value;
+    setInput(newValue);
+    setShouldSearch(true); 
+    
+    if (newValue.length >= 2) {
       setShowSuggestions(true);
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
     }
   };
 
   const handleInputFocus = () => {
     if (suggestions.length > 0 && input.length >= 2 && !isSelecting) {
+      setShowSuggestions(true);
+    } else if (input.length >= 2 && shouldSearch) {
       setShowSuggestions(true);
     }
   };
@@ -204,13 +219,19 @@ const LocationAutocomplete = ({
     }, 200);
   };
 
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Escape' || e.key === 'Tab') {
+      setShowSuggestions(false);
+    }
+  };
+
   const formatSuggestionDisplay = (place: TPlace) => {
     return place.display_name;
   };
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <label className="block mb-1 font-medium">{label}</label>
+      <label className="block mb-1 font-medium">{label} <span className="text-red-500">*</span></label>
       <div className="relative">
         <input
           ref={inputRef}
@@ -219,6 +240,7 @@ const LocationAutocomplete = ({
           onChange={handleInputChange}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
           placeholder={placeholder || "Enter address, city, state or ZIP"}
           className="border p-2 rounded w-full pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         />
