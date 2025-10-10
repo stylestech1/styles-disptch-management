@@ -80,6 +80,11 @@ export type TComments = {
   updatedAt: string
   type: 'dispatcher' | 'driver'
 }
+export type CommentsResponse = {
+  message: string;
+  loadId: string;
+  comments: TComments[];
+};
 export type TErrors = {
   type: 'field'
   value: string

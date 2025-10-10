@@ -550,10 +550,9 @@ const LoadsPage = () => {
       const result = await apiClient(
         `${apiURL}/api/v1/loads/${loadId}/comments`,
         token
-      );
+      ) as { comments: TComments[] };
 
-      const responseData = result.data as { comments: TComments[] };
-      setAllNotes(responseData.comments || []);
+      setAllNotes(result.comments || []);
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message || "Failed to fetch notes");
