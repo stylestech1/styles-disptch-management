@@ -17,7 +17,7 @@ import {
   IoSettingsOutline,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
-import { TDispatcher, TErrors, TPagination } from "@/types/globalTypes";
+import { TDispatcher, TPagination } from "@/types/globalTypes";
 import useLoading from "@/hook/useLoading";
 import useError from "@/hook/useError";
 import { apiClient } from "@/utils/apiClient";
@@ -26,6 +26,7 @@ import Modal from "@/components/ui/Modals";
 import DataTable from "@/components/ui/DataTable";
 import { dispatcherColumns } from "@/data/dispatcherTables";
 import StatsCard from "@/components/ui/StatsCard";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const Dispatchers = () => {
   const [dispatchers, setDispatchers] = useState<TDispatcher[]>([]);
@@ -34,6 +35,8 @@ const Dispatchers = () => {
   const [popupSetting, setPopupSetting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<TDispatcher | null>(null);
   const [pagination, setPagination] = useState<TPagination | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [page, setPage] = useState(1);
   const [tempUser, setTempUser] = useState({
     role: "employee" as "admin" | "employee",
@@ -543,7 +546,7 @@ const Dispatchers = () => {
                 <IoKey className="h-5 w-5 text-slate-400" />
               </div>
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 value={newUser.password}
                 onChange={(e) =>
                   setNewUser({ ...newUser, password: e.target.value })
@@ -552,6 +555,13 @@ const Dispatchers = () => {
                 placeholder="Enter password"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute cursor-pointer inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
+              </button>
             </div>
           </div>
 
@@ -564,7 +574,7 @@ const Dispatchers = () => {
                 <IoKey className="h-5 w-5 text-slate-400" />
               </div>
               <input
-                type="password"
+                type={showPasswordConfirm ? "text" : "password"}
                 value={newUser.passwordConfirmation}
                 onChange={(e) =>
                   setNewUser({
@@ -576,6 +586,17 @@ const Dispatchers = () => {
                 placeholder="Confirm password"
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPasswordConfirm((prev) => !prev)}
+                className="absolute cursor-pointer inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                {showPasswordConfirm ? (
+                  <FaEyeSlash size={18} />
+                ) : (
+                  <FaEye size={18} />
+                )}
+              </button>
             </div>
           </div>
 
