@@ -71,8 +71,10 @@ const LoadsPage = () => {
   const [truckId, setTruckId] = useState<string>("");
   const [deliveredAt, setDeliveredAt] = useState<string>("");
   const [cancelledAt, setCancelledAt] = useState<string>("");
-  const [pickupAt, setPickupAt] = useState<string>("");
-  const [completedAt, setCompletedAt] = useState<string>("");
+  const [pickupDate, setPickupDate] = useState("");
+  const [pickupTime, setPickupTime] = useState("");
+  const [completedDate, setCompletedDate] = useState("");
+  const [completedTime, setCompletedTime] = useState("");
   const [truckType, setTruckType] = useState<string>("reefer");
   const [truckTemp, setTruckTemp] = useState<string>("");
   const [selectedLoadId, setSelectedLoadId] = useState("");
@@ -337,17 +339,19 @@ const LoadsPage = () => {
     calculateTotalDistance();
   }, [origin, destinations, dho]);
 
-  // TODO: Send PickupAt as Date formate to Backend
-  const formatPickupAt = (timeString: string): string | null => {
-    if (!timeString) return null;
+  // TODO: CompletedAt and PickupAt
+  const formatDateTimeToISO = (
+    dateString: string,
+    timeString: string
+  ): string | null => {
+    if (!dateString || !timeString) return null;
     const [hours, minutes] = timeString.split(":");
-    const pickupDate = new Date();
-    pickupDate.setHours(Number(hours), Number(minutes), 0, 0);
-
-    return pickupDate.toISOString();
+    const date = new Date(dateString);
+    date.setHours(Number(hours), Number(minutes), 0, 0);
+    return date.toISOString();
   };
-  const pickupAtISO = formatPickupAt(pickupAt);
-  const completedAtISO = formatPickupAt(completedAt);
+  const pickupAtISO = formatDateTimeToISO(pickupDate, pickupTime);
+  const completedAtISO = formatDateTimeToISO(completedDate, completedTime);
 
   // FIXME: Create Load
   const handleCreateLoad = async (e: React.FormEvent) => {
@@ -431,8 +435,10 @@ const LoadsPage = () => {
       setTruckTemp("");
 
       // Time fields
-      setPickupAt("");
-      setCompletedAt("");
+      setPickupTime("");
+      setPickupDate("");
+      setCompletedTime("");
+      setCompletedDate("");
       setDeliveredAt("");
       setCancelledAt("");
 
@@ -547,10 +553,10 @@ const LoadsPage = () => {
     try {
       setLoading(true);
 
-      const result = await apiClient(
+      const result = (await apiClient(
         `${apiURL}/api/v1/loads/${loadId}/comments`,
         token
-      ) as { comments: TComments[] };
+      )) as { comments: TComments[] };
 
       setAllNotes(result.comments || []);
     } catch (error) {
@@ -1096,37 +1102,75 @@ const LoadsPage = () => {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Pickup At <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoTime className="h-5 w-5 text-slate-400" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Pickup At <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <IoTime className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="time"
+                    value={pickupTime}
+                    onChange={(e) => setPickupTime(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  />
                 </div>
-                <input
-                  type="time"
-                  value={pickupAt}
-                  onChange={(e) => setPickupAt(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Pickup Date <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <IoTime className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="date"
+                    value={pickupDate}
+                    onChange={(e) => setPickupDate(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  />
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Complete At <span className="text-red-500">*</span>
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoTime className="h-5 w-5 text-slate-400" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Complete At <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <IoTime className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="time"
+                    value={completedTime}
+                    onChange={(e) => setCompletedTime(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  />
                 </div>
-                <input
-                  type="time"
-                  value={completedAt}
-                  onChange={(e) => setCompletedAt(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Complete Date <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <IoTime className="h-5 w-5 text-slate-400" />
+                  </div>
+                  <input
+                    type="date"
+                    value={completedDate}
+                    onChange={(e) => setCompletedDate(e.target.value)}
+                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  />
+                </div>
               </div>
             </div>
 
