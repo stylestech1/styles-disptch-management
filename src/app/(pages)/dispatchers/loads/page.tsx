@@ -78,6 +78,7 @@ const LoadsPage = () => {
   const [noteType, setNoteType] = useState<"dispatcher" | "driver">(
     "dispatcher"
   );
+    const [search, setSearch] = useState("");
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);

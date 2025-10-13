@@ -29,7 +29,7 @@ const DriversPage = () => {
   const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [editPopup, setEditPopup] = useState(false);
-  const [selectedDriver, setSelectedDriver] = useState<TDriver | null>(null);
+  const [selectedDriver, setSelectedDriver] = useState<TDriver | null>(null); 
   const [pagination, setPagination] = useState<TPagination | null>(null);
   const [page, setPage] = useState(1);
 
