@@ -347,12 +347,6 @@ const LoadsPage = () => {
     calculateTotalDistance();
   }, [origin, destinations, dho]);
 
-  // TODO: CompletedAt and PickupAt
-  const pickupAtISO = pickupAt ? pickupAt.toISOString() : null;
-  const completedAtISO = completedAt ? completedAt.toISOString() : null;
-  console.log('Picktime:', pickupAtISO)
-  console.log('Completetime:', completedAtISO)
-
   // FIXME: Create Load
   const handleCreateLoad = async (e: React.FormEvent) => {
     e.preventDefault();
