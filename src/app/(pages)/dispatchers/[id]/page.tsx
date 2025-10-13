@@ -6,6 +6,7 @@ import { TErrors, TUserRole } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
+import { IoKeyOutline } from "react-icons/io5";
 import {
   IoPersonCircleOutline,
   IoMailOutline,
@@ -16,8 +17,8 @@ import {
   IoRefresh,
   IoClose,
   IoPersonOutline,
-  IoKeyOutline,
 } from "react-icons/io5";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 type TUser = {
   id: string;
@@ -36,12 +37,10 @@ const AdminProfile = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
-
-  // State for form data
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    phone: "",
+  const [showPassword, setShowPassword] = useState({
+    currentPassword: false,
+    newPassword: false,
+    newPasswordConfirm: false,
   });
   const [changePasswordPopup, setChangePasswordPopup] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -49,6 +48,14 @@ const AdminProfile = () => {
     newPassword: "",
     newPasswordConfirm: "",
   });
+
+  // State for form data
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+  });
+
   const token = useAppSelector((state: RootState) => state.auth.token);
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -163,7 +170,9 @@ const AdminProfile = () => {
     }
     setPopup(true);
   };
-   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+
+  // Change Password
+  const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     try {
@@ -178,7 +187,16 @@ const AdminProfile = () => {
 
       const result = await res.json();
 
-      if (!res.ok) throw new Error(result.message || "Password update failed");
+      if (!res.ok) {
+        if (Array.isArray(result.errors)) {
+          result.errors.forEach((err: TErrors) => {
+            toast.error(err.msg || "Create user failed", {
+              style: { background: "#dc2626", color: "#fff" },
+            });
+          });
+        }
+        return;
+      }
 
       toast.success(result.message || "Password updated successfully!");
 
@@ -207,23 +225,23 @@ const AdminProfile = () => {
             You can Update or View your information
           </p>
         </div>
-         <div className="flex flex-wrap gap-4">
-        <button
-          onClick={openUpdatePopup}
-          className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
-        >
-          <IoRefresh size={18} />
-          Update Profile
-        </button>
-      
-        <button
-          onClick={() => setChangePasswordPopup(true)}
-          className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
-        >
-          <IoKeyOutline size={18} />
-          Change Password
-        </button>
-      </div>
+        <div className="flex flex-wrap gap-4">
+          <button
+            onClick={openUpdatePopup}
+            className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
+          >
+            <IoRefresh size={18} />
+            Update Profile
+          </button>
+
+          <button
+            onClick={() => setChangePasswordPopup(true)}
+            className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
+          >
+            <IoKeyOutline size={18} />
+            Change Password
+          </button>
+        </div>
       </div>
 
       {/* Errors */}
@@ -428,11 +446,15 @@ const AdminProfile = () => {
           </div>
         </div>
       )}
-        {changePasswordPopup && (
+
+      {/* Update Password Popup */}
+      {changePasswordPopup && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
           <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">Change Password</h3>
+              <h3 className="text-xl font-semibold text-slate-800">
+                Change Password
+              </h3>
               <button
                 onClick={() => setChangePasswordPopup(false)}
                 className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
@@ -442,25 +464,49 @@ const AdminProfile = () => {
             </div>
 
             <form onSubmit={handleChangePassword} className="space-y-4">
-              {["currentPassword", "newPassword", "newPasswordConfirm"].map((key) => (
-                <div key={key}>
-                  <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                    {key.replace(/([A-Z])/g, " $1")}
-                  </label>
-                  <input
-                    type="password"
-                    value={passwordData[key as keyof typeof passwordData]}
-                    onChange={(e) =>
-                      setPasswordData({
-                        ...passwordData,
-                        [key]: e.target.value,
-                      })
-                    }
-                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    required
-                  />
-                </div>
-              ))}
+              {["currentPassword", "newPassword", "newPasswordConfirm"].map(
+                (key) => (
+                  <div key={key} className="relative">
+                    <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
+                      {key.replace(/([A-Z])/g, " $1")}
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={
+                          showPassword[key as keyof typeof showPassword]
+                            ? "text"
+                            : "password"
+                        }
+                        value={passwordData[key as keyof typeof passwordData]}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            [key]: e.target.value,
+                          })
+                        }
+                        className="block w-full px-3 py-3 pr-10 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPassword((prev) => ({
+                            ...prev,
+                            [key]: !prev[key as keyof typeof showPassword],
+                          }))
+                        }
+                        className="cursor-pointer absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showPassword[key as keyof typeof showPassword] ? (
+                          <FaEyeSlash size={18} />
+                        ) : (
+                          <FaEye size={18} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )
+              )}
 
               <button
                 type="submit"

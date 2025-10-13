@@ -18,6 +18,7 @@ import {
   IoClose,
   IoPersonOutline,
 } from "react-icons/io5";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 type TUser = {
   id: string;
@@ -36,6 +37,11 @@ const AdminProfile = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState({
+    currentPassword: false,
+    newPassword: false,
+    newPasswordConfirm: false,
+  });
   const [changePasswordPopup, setChangePasswordPopup] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -460,22 +466,44 @@ const AdminProfile = () => {
             <form onSubmit={handleChangePassword} className="space-y-4">
               {["currentPassword", "newPassword", "newPasswordConfirm"].map(
                 (key) => (
-                  <div key={key}>
+                  <div key={key} className="relative">
                     <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
                       {key.replace(/([A-Z])/g, " $1")}
                     </label>
-                    <input
-                      type="password"
-                      value={passwordData[key as keyof typeof passwordData]}
-                      onChange={(e) =>
-                        setPasswordData({
-                          ...passwordData,
-                          [key]: e.target.value,
-                        })
-                      }
-                      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={
+                          showPassword[key as keyof typeof showPassword]
+                            ? "text"
+                            : "password"
+                        }
+                        value={passwordData[key as keyof typeof passwordData]}
+                        onChange={(e) =>
+                          setPasswordData({
+                            ...passwordData,
+                            [key]: e.target.value,
+                          })
+                        }
+                        className="block w-full px-3 py-3 pr-10 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowPassword((prev) => ({
+                            ...prev,
+                            [key]: !prev[key as keyof typeof showPassword],
+                          }))
+                        }
+                        className="cursor-pointer absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showPassword[key as keyof typeof showPassword] ? (
+                          <FaEyeSlash size={18} />
+                        ) : (
+                          <FaEye size={18} />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 )
               )}

@@ -6,7 +6,7 @@ import { TDriver, TErrors, TLoads, TStatusLoad } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   IoPersonCircleOutline,
   IoMailOutline,
@@ -20,6 +20,11 @@ import {
   IoTimeOutline,
 } from "react-icons/io5";
 import { FaMoneyBillWave } from "react-icons/fa";
+import useLoading from "@/hook/useLoading";
+import useError from "@/hook/useError";
+import { apiClient } from "@/utils/apiClient";
+import DataTable from "@/components/ui/DataTable";
+import { driverSummaryColumns } from "@/data/driverSummaryTable";
 
 type TPeriod = {
   from: string;
@@ -40,76 +45,47 @@ const LoadSummary = () => {
   const [loadSummary, setLoadSummary] = useState<TLoadSummary[]>([]);
   const [drivers, setDrivers] = useState<TDriver[]>([]);
   const [profile, setProfile] = useState<TDriver | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
 
   const { id } = useParams();
   const token = useAppSelector((state: RootState) => state.auth.token);
+  const router = useRouter();
+  const { loading, setLoading } = useLoading();
+  const { error, setError } = useError();
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
-  // Get All Drivers
+  // FIXME: Get All Drivers
   useEffect(() => {
     const fetchDrivers = async () => {
+      if (!token) {
+        console.log("No token found, redirecting to login");
+        router.replace("/");
+        return;
+      }
       try {
-        const res = await fetch(`${apiURL}/api/v1/drivers`, {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const result = await res.json();
-        if (!res.ok) {
-          if (Array.isArray(result.errors)) {
-            result.errors.forEach((err: TErrors) => {
-              toast.error(err.msg || "Create user failed", {
-                style: { background: "#dc2626", color: "#fff" },
-              });
-            });
-          }
-          return;
-        }
-        setDrivers(result.data);
+        const result = await apiClient(`${apiURL}/api/v1/drivers`, token);
+        setDrivers(result.data as TDriver[]);
       } catch (error) {
         if (error instanceof Error) {
-          setErr(error.message || "Drivers Failed");
+          setError(error.message || "Drivers Failed");
         }
       }
     };
     fetchDrivers();
-  }, [apiURL, token]);
+  }, [apiURL, token, router, setError]);
 
-  // Get Profile of Driver
+  // FIXME: Get Profile of Driver
   useEffect(() => {
     if (!id) return;
-
-    setLoading(true);
-
+    if (!token) {
+      console.log("No token found, redirecting to login");
+      router.replace("/");
+      return;
+    }
     const getProfile = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`${apiURL}/api/v1/drivers/${id}`, {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const result = await res.json();
-        console.log("Profile Result= ", result);
-        if (!res.ok) {
-          if (Array.isArray(result.errors)) {
-            result.errors.forEach((err: TErrors) => {
-              toast.error(err.msg || "Create user failed", {
-                style: { background: "#dc2626", color: "#fff" },
-              });
-            });
-          }
-          return;
-        }
-
-        setProfile(result.data);
+        const result = await apiClient(`${apiURL}/api/v1/drivers/${id}`, token);
+        setProfile(result.data as TDriver);
       } catch (error) {
         if (error instanceof Error) {
           toast.error(error.message, {
@@ -121,50 +97,39 @@ const LoadSummary = () => {
       }
     };
     getProfile();
-  }, [apiURL, drivers, token, id]);
+  }, [apiURL, drivers, token, id, router, setLoading]);
 
-  // Get Loads Summary
+  // FIXME: Get Loads Summary
   useEffect(() => {
     if (!id) return;
+    if (!token) {
+      console.log("No token found, redirecting to login");
+      router.replace("/");
+      return;
+    }
 
-    setLoading(true);
     const fetchLoadSummary = async () => {
+      setLoading(true);
       try {
-        const res = await fetch(`${apiURL}/api/v1/loads/summary/${id}`, {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const result = await res.json();
-        if (!res.ok) {
-          if (Array.isArray(result.errors)) {
-            result.errors.forEach((err: TErrors) => {
-              toast.error(err.msg || "Create user failed", {
-                style: { background: "#dc2626", color: "#fff" },
-              });
-            });
-          }
-          return;
-        }
-        console.log(result.data);
+        const result = await apiClient(
+          `${apiURL}/api/v1/loads/summary/${id}`,
+          token
+        );
         if (!Array.isArray(result.data)) {
-          setLoadSummary([result.data]);
+          setLoadSummary([result.data] as TLoadSummary[]);
         } else {
           setLoadSummary(result.data);
         }
       } catch (error) {
         if (error instanceof Error) {
-          setErr(error.message || "Loading Failed");
+          setError(error.message || "Loading Failed");
         }
       } finally {
         setLoading(false);
       }
     };
     fetchLoadSummary();
-  }, [apiURL, token, drivers, id]);
+  }, [apiURL, token, drivers, id, router, setError, setLoading]);
 
   // Status badge component
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {
@@ -199,6 +164,63 @@ const LoadSummary = () => {
     );
   };
 
+  // TODO: Table
+  const renderDriverSummaryRow = (load: TLoads, index: number) => (
+    <tr key={index} className="hover:bg-slate-50 transition-colors group">
+      {/* Load ID */}
+      <td className="p-4 font-medium text-slate-900">
+        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+          {load.loadId}
+        </span>
+      </td>
+
+      {/* Origin */}
+      <td className="p-4 text-slate-700 max-w-[140px]">
+        <div className="truncate" title={load.origin}>
+          {load.origin}
+        </div>
+      </td>
+
+      {/* Destination */}
+      <td className="p-4 text-slate-700 max-w-[140px]">
+        <div className="truncate" title={load.destination}>
+          {load.destination}
+        </div>
+      </td>
+
+      {/* Miles */}
+      <td className="p-4 text-right text-slate-700 font-medium">
+        {load.distanceMiles?.toLocaleString()}
+      </td>
+
+      {/* Price/Mile */}
+      <td className="p-4 text-right text-slate-700">
+        {load.currency} {load.pricePerMile?.toFixed(2)}
+      </td>
+
+      {/* Total */}
+      <td className="p-4 text-right font-semibold text-emerald-700">
+        {load.currency} {load.totalPrice?.toLocaleString()}
+      </td>
+
+      {/* Status */}
+      <td className="p-4 text-center">
+        <StatusBadge status={load.status} />
+      </td>
+
+      {/* Truck */}
+      <td className="p-4 text-slate-700 font-mono text-xs">
+        {load.truckId?.truckId || "-"}
+      </td>
+
+      {/* Delivered */}
+      <td className="p-4 text-center text-slate-600 text-xs">
+        {load.deliveredAt ? load.deliveredAt.split("T")[0] : "-"}
+      </td>
+    </tr>
+  );
+  const flattenedLoads = loadSummary.flatMap((sum) => sum.loads);
+
   if (loading) return <Loading />;
 
   return (
@@ -212,9 +234,9 @@ const LoadSummary = () => {
       </div>
 
       {/* Errors */}
-      {err && (
+      {error && (
         <div className="mb-6">
-          <Erros message={err} />
+          <Erros message={error} />
         </div>
       )}
 
@@ -397,106 +419,27 @@ const LoadSummary = () => {
           </p>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-white border-b border-slate-200">
-              <tr>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Load ID
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Origin
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Destination
-                </th>
-                <th className="text-right p-4 font-medium text-slate-600">
-                  Miles
-                </th>
-                <th className="text-right p-4 font-medium text-slate-600">
-                  Price/Mile
-                </th>
-                <th className="text-right p-4 font-medium text-slate-600">
-                  Total
-                </th>
-                <th className="text-center p-4 font-medium text-slate-600">
-                  Status
-                </th>
-                <th className="text-left p-4 font-medium text-slate-600">
-                  Truck
-                </th>
-                <th className="text-center p-4 font-medium text-slate-600">
-                  Delivered
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
-              {loadSummary.length > 0 ? (
-                loadSummary.map((sum) =>
-                  sum.loads.map((load, i) => (
-                    <tr
-                      key={i}
-                      className="hover:bg-slate-50 transition-colors group"
-                    >
-                      <td className="p-4 font-medium text-slate-900">
-                        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
-                          {load.loadId}
-                        </span>
-                      </td>
-                      <td className="p-4 text-slate-700 max-w-[140px]">
-                        <div className="truncate" title={load.origin}>
-                          {load.origin.split(",")[0]}
-                        </div>
-                      </td>
-                      <td className="p-4 text-slate-700 max-w-[140px]">
-                        <div className="truncate" title={load.destination}>
-                          {load.destination.split(",")[0]}
-                        </div>
-                      </td>
-                      <td className="p-4 text-right text-slate-700 font-medium">
-                        {load.distanceMiles?.toLocaleString()}
-                      </td>
-                      <td className="p-4 text-right text-slate-700">
-                        {load.currency} {load.pricePerMile?.toFixed(2)}
-                      </td>
-                      <td className="p-4 text-right font-semibold text-emerald-700">
-                        {load.currency} {load.totalPrice?.toLocaleString()}
-                      </td>
-                      <td className="p-4 text-center">
-                        <StatusBadge status={load.status} />
-                      </td>
-                      <td className="p-4 text-slate-700 font-mono text-xs">
-                        {load.truckId?.truckId || "-"}
-                      </td>
-                      <td className="p-4 text-center text-slate-600 text-xs">
-                        {load.deliveredAt
-                          ? load.deliveredAt.split("T")[0]
-                          : "-"}
-                      </td>
-                    </tr>
-                  ))
-                )
-              ) : (
-                <tr>
-                  <td
-                    colSpan={9}
-                    className="px-4 py-12 text-center text-slate-500"
-                  >
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="text-3xl mb-3">📦</div>
-                      <div className="text-slate-600">
-                        No load records found for this period
-                      </div>
-                      <div className="text-slate-400 text-sm mt-1">
-                        Please check the selected time range
-                      </div>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* Table For Driver Summary */}
+        {flattenedLoads.length > 0 ? (
+          <DataTable
+            columns={driverSummaryColumns}
+            data={flattenedLoads}
+            renderRow={renderDriverSummaryRow}
+            loading={loading}
+          />
+        ) : (
+          <div className="px-4 py-12 text-center text-slate-500">
+            <div className="flex flex-col items-center justify-center">
+              <div className="text-3xl mb-3">📦</div>
+              <div className="text-slate-600">
+                No load records found for this period
+              </div>
+              <div className="text-slate-400 text-sm mt-1">
+                Please check the selected time range
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Summary Footer */}

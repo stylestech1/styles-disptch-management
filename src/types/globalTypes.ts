@@ -28,6 +28,7 @@ export type TLoads = {
   truckTemp: number
   comments: TComments[]
   feesNumber: string
+  completedAt: string
 };
 export type TDriver = {
   id: string;
@@ -54,12 +55,18 @@ export type TTruck = {
   assignedDriver: {name: string; driverId: number}
   type: TTruckType
 };
+export interface TruckApiResponse {
+  data: TTruck[];
+  paginationResult?: TPagination;
+  message?: string;
+  status?: string;
+}
 export type TPagination = {
   currentPage: number;
-  limit: number;
   totalPages: number;
-  next?: number;
-  prev?: number;
+  total?: number;
+  hasNext?: boolean;
+  hasPrev?: boolean;
 };
 export type TComments = {
   id: string
@@ -73,6 +80,11 @@ export type TComments = {
   updatedAt: string
   type: 'dispatcher' | 'driver'
 }
+export type CommentsResponse = {
+  message: string;
+  loadId: string;
+  comments: TComments[];
+};
 export type TErrors = {
   type: 'field'
   value: string
