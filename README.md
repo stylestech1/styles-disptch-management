@@ -1,4 +1,4 @@
-# Styles Dispatch EG System — README
+# Styles Dispatch EG System (Dev version) — README
 
 > A detailed technical documentation describing every feature, tool, and structure inside **Styles Dispatch EG System**.
 
@@ -131,7 +131,7 @@ styles-disptch-management/
 ## 4) Running the Project
 
 You can view the live project directly here:
-👉 **[https://styles-dispatch-sys.vercel.app/](https://styles-dispatch-sys.vercel.app/)**
+👉 **[https://styles-disptch-management-dev.vercel.app/](https://styles-disptch-management-dev.vercel.app/)**
 
 ---
 
