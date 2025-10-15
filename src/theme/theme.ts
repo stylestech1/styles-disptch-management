@@ -1,6 +1,11 @@
 import { createTheme } from "@mui/material/styles";
 
 export const muiTheme = createTheme({
+ palette: {
+    primary: {
+      main: '#1d293d', 
+    },
+  },
   components: {
     MuiTableContainer: {
       styleOverrides: {
@@ -14,7 +19,7 @@ export const muiTheme = createTheme({
     MuiTableHead: {
       styleOverrides: {
         root: ({ theme }) => ({
-          backgroundColor: theme.palette.background.default,
+          backgroundColor: theme.palette.primary.main,
         }),
       },
     },
@@ -22,8 +27,13 @@ export const muiTheme = createTheme({
       styleOverrides: {
         head: ({ theme }) => ({
           fontWeight: 600,
-          color: theme.palette.text.primary,
+          color: theme.palette.common.white,
           borderBottom: `2px solid ${theme.palette.divider}`,
+          backgroundColor: theme.palette.primary.main,
+        }),
+        body: ({ theme }) => ({
+          color: theme.palette.text.secondary,
+          borderBottom: `1px solid ${theme.palette.divider}`,
         }),
       },
     },

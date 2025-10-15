@@ -11,13 +11,13 @@ import {
   IoCar,
   IoCalendar,
   IoScale,
+  IoConstruct,
+  IoPencil,
+  IoTrash,
   IoCheckmark,
   IoTime,
   IoStop,
   IoStatsChart,
-  IoFlash,
-  IoShieldCheckmark,
-  IoBuild,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import { TErrors, TPagination, TTruck } from "@/types/globalTypes";
@@ -25,56 +25,29 @@ import { apiFetcher } from "@/utils/APIFetcher";
 import StatsCard from "@/components/ui/StatsCard";
 import Pagination from "@/components/ui/Pagination";
 import Modal from "@/components/ui/Modals";
+import DataTable from "@/components/ui/DataTable";
+import { truckColumns } from "@/data/truckTables";
 import useLoading from "@/hook/useLoading";
 import useError from "@/hook/useError";
 import { apiClient } from "@/utils/apiClient";
-
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell, { tableCellClasses } from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
-import { Box, styled, Typography } from '@mui/material';
-
-
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: theme.palette.common.black,
-    color: theme.palette.common.white,
-  },
-  [`&.${tableCellClasses.body}`]: {
-    fontSize: 14,
-  },
-}));
-
-
-
-interface TTruckSummary {
-  truckId: number;
-  summary: {
-    totalLoads: number;
-    totalMiles: number;
-    totalRevenue: number;
-    fuelCost: number;
-    repairCost: number;
-    insuranceCost: number;
-    driverPay: number;
-    netProfit: number;
-    avgRevenuePerMile: number;
-    avgExpensePerMile: number;
-    currency: string;
-  };
-}
+import Link from "next/link";
 
 const TrucksPage = () => {
   const [trucks, setTrucks] = useState<TTruck[]>([]);
-  const [truckSummaries, setTruckSummaries] = useState<{ [key: string]: TTruckSummary }>({});
   const [popup, setPopup] = useState(false);
+  const [editPopup, setEditPopup] = useState(false);
   const [search, setSearch] = useState("");
+  const [selectedTruck, setSelectedTruck] = useState<TTruck | null>(null);
   const [allTrucks, setAllTrucks] = useState<TTruck[]>([]);
-
+  const [deleteAlert, setDeleteAlert] = useState<{
+    show: boolean;
+    truckId: string | null;
+    truckName: string;
+  }>({
+    show: false,
+    truckId: null,
+    truckName: "",
+  });
   const [pagination, setPagination] = useState<TPagination | null>(null);
   const [page, setPage] = useState(1);
   const [newTruck, setNewTruck] = useState({
@@ -84,9 +57,15 @@ const TrucksPage = () => {
     capacity: "",
     status: "available",
     type: "",
-    fuelPerMile: "",
-    insuranceCost: "",
-    repairCost: "",
+  });
+
+  const [updateTruck, setUpdateTruck] = useState({
+    plateNumber: "",
+    model: "",
+    year: "",
+    capacity: "",
+    status: "available",
+    type: "",
   });
 
   const router = useRouter();
@@ -142,44 +121,6 @@ const TrucksPage = () => {
     fetchTrucks();
   }, [apiURL, token, router]);
 
-  // Fetch truck summaries
-  const fetchTruckSummaries = async (trucks: TTruck[]) => {
-    if (!token) return;
-
-    try {
-      const summaries: { [key: string]: TTruckSummary } = {};
-      
-      for (const { id } of trucks) {
-        try {
-          const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${id}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-
-          if (res.ok) {
-            const result = await res.json();
-            summaries[id] = result.data;
-          }
-        } catch (error) {
-          console.error(`Error fetching summary for truck ${id}:`, error);
-        }
-      }
-
-      setTruckSummaries(summaries);
-    } catch (error) {
-      console.error("Error fetching truck summaries:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (trucks.length > 0) {
-      fetchTruckSummaries(trucks);
-    }
-  }, [trucks, token, apiURL]);
-
   // Filter TruckId & Model & PlateNumber
   const fetchAllTrucks = async () => {
     try {
@@ -196,7 +137,6 @@ const TrucksPage = () => {
       console.error("Error fetching all loads:", error);
     }
   };
-  
   useEffect(() => {
     if (!token) {
       router.replace("/");
@@ -204,7 +144,6 @@ const TrucksPage = () => {
     }
     fetchAllTrucks();
   }, [apiURL, token, router, page]);
-
   const filteredTrucks = search
     ? allTrucks.filter(
         (t) =>
@@ -233,9 +172,6 @@ const TrucksPage = () => {
           capacity: Number(newTruck.capacity),
           status: newTruck.status.toLowerCase(),
           type: newTruck.type,
-          fuelPerMile: newTruck.fuelPerMile ? Number(newTruck.fuelPerMile) : undefined,
-          insuranceCost: newTruck.insuranceCost ? Number(newTruck.insuranceCost) : undefined,
-          repairCost: newTruck.repairCost ? Number(newTruck.repairCost) : undefined,
         }),
       });
 
@@ -249,9 +185,6 @@ const TrucksPage = () => {
         capacity: "",
         status: "available",
         type: "",
-        fuelPerMile: "",
-        insuranceCost: "",
-        repairCost: "",
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -259,6 +192,225 @@ const TrucksPage = () => {
       }
     }
   };
+
+  // FIXME: Update Truck
+  const handleUpdateTruck = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token) {
+      console.log("No token found, redirecting to login");
+      router.replace("/");
+      return;
+    }
+    if (!selectedTruck) return;
+
+    try {
+      const truckId = selectedTruck.id;
+
+      const result = await apiClient(`${apiURL}/api/v1/trucks/${truckId}`, token, {
+        method: "PUT",
+        body: JSON.stringify({
+          plateNumber: updateTruck.plateNumber,
+          model: updateTruck.model,
+          year: Number(updateTruck.year),
+          capacity: Number(updateTruck.capacity),
+          status: updateTruck.status.toLowerCase(),
+          type: updateTruck.type,
+        }),
+      })
+
+      toast.success("Truck updated successfully!");
+      setTrucks((prev) =>
+        prev.map((t) => (t.id === truckId ? result.data : t)) as TTruck[]
+      );
+      setEditPopup(false);
+      setSelectedTruck(null);
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message);
+      }
+    }
+  };
+
+  // TODO: Show Delete Alert
+  const showDeleteAlert = (truckId: string, truckName: string) => {
+    setDeleteAlert({
+      show: true,
+      truckId,
+      truckName,
+    });
+  };
+
+  // TODO: Hide Delete Alert
+  const hideDeleteAlert = () => {
+    setDeleteAlert({
+      show: false,
+      truckId: null,
+      truckName: "",
+    });
+  };
+
+  // FIXME: Delete Truck
+  const handleDeleteTruck = async () => {
+    if (!deleteAlert.truckId) return;
+
+    if (!token) {
+      console.log("No token found, redirecting to login");
+      router.replace("/");
+      return;
+    }
+
+    try {
+      const result = await apiClient(`${apiURL}/api/v1/trucks/${deleteAlert.truckId}`, token, {
+        method: "DELETE"
+      })
+
+      toast.success("Truck deleted successfully!");
+      setTrucks((prev) => prev.filter((t) => t.id !== deleteAlert.truckId));
+      hideDeleteAlert();
+    } catch (error) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Delete failed");
+      }
+    }
+  };
+
+  // Status badge component
+  const StatusBadge = ({ status }: { status: string }) => {
+    const statusConfig = {
+      available: {
+        color: "bg-emerald-100 text-emerald-800 border-emerald-300",
+        icon: <IoCar size={14} className="mr-1" />,
+      },
+      busy: {
+        color: "bg-blue-100 text-blue-800 border-blue-300",
+        icon: <IoCar size={14} className="mr-1" />,
+      },
+      maintenance: {
+        color: "bg-amber-100 text-amber-800 border-amber-300",
+        icon: <IoConstruct size={14} className="mr-1" />,
+      },
+      inactive: {
+        color: "bg-slate-100 text-slate-800 border-slate-300",
+        icon: <IoCar size={14} className="mr-1" />,
+      },
+    };
+
+    const config =
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.inactive;
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}
+      >
+        {config.icon}
+        {status}
+      </span>
+    );
+  };
+
+  // Type badge component
+  const TypeBadge = ({ type }: { type: string }) => {
+    const typeConfig = {
+      reefer: { color: "bg-blue-100 text-blue-800 border-blue-300" },
+      van: { color: "bg-slate-100 text-slate-800 border-slate-300" },
+    };
+
+    const config = typeConfig[type as keyof typeof typeConfig] || {
+      color: "bg-slate-100 text-slate-800 border-slate-300",
+    };
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}
+      >
+        {type || "Not specified"}
+      </span>
+    );
+  };
+
+  // TODO: Table
+  const renderTruckRow = (truck: TTruck, index: number) => (
+    <tr key={truck.id} className="hover:bg-slate-50 transition-colors group">
+      {/* # */}
+      <td className="p-4 text-slate-600 font-medium">{index + 1}</td>
+
+      {/* Truck Details */}
+      <td className="p-4">
+        <span className="flex items-center gap-3">
+          <span className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+            <IoCar size={18} className="text-slate-600" />
+          </span>
+          <span>
+            <span className="font-medium text-slate-900">{truck.model}</span>
+            <span className="flex items-center gap-2 mt-1">
+              <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
+                {truck.plateNumber}
+              </span>
+              <span className="text-xs text-slate-500">
+                ID: {truck.truckId}
+              </span>
+            </span>
+          </span>
+        </span>
+      </td>
+
+      {/* Specifications */}
+      <td className="p-4">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-slate-700">
+            <IoCalendar size={14} className="text-slate-400" />
+            <span className="text-sm">Year: {truck.year}</span>
+          </div>
+          <div className="flex items-center gap-2 text-slate-700">
+            <IoScale size={14} className="text-slate-400" />
+            <span className="text-sm">Capacity: {truck.capacity} kg</span>
+          </div>
+        </div>
+      </td>
+
+      {/* Type */}
+      <td className="p-4">
+        <TypeBadge type={truck.type} />
+      </td>
+
+      {/* Status */}
+      <td className="p-4">
+        <StatusBadge status={truck.status} />
+      </td>
+      <td className="p-4">
+  <div className="flex items-center justify-center gap-2">
+    <button
+      onClick={() => {
+        setSelectedTruck(truck);
+        setUpdateTruck({
+          plateNumber: truck.plateNumber,
+          model: truck.model,
+          year: String(truck.year),
+          capacity: String(truck.capacity),
+          status: truck.status,
+          type: truck.type || "",
+        });
+        setEditPopup(true);
+      }}
+      className="flex items-center gap-1 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium transition-colors"
+    >
+      <IoPencil size={14} />
+      Edit
+    </button>
+
+   
+    <button
+      onClick={() => showDeleteAlert(truck.id, truck.model)}
+      className="flex items-center gap-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-medium transition-colors"
+    >
+      <IoTrash size={14} />
+      Delete
+    </button>
+  </div>
+</td>
+    </tr>
+  );
 
   if (loading) return <Loading />;
 
@@ -271,17 +423,26 @@ const TrucksPage = () => {
         <div className="mb-4 lg:mb-0">
           <Titles>Truck Management</Titles>
           <p className="text-slate-600 mt-2 text-sm">
-            Manage your truck fleet and financial performance
+            Manage your truck fleet and assignments
           </p>
         </div>
 
-        <button
-          onClick={() => setPopup(true)}
-          className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
-        >
-          <IoAdd size={20} />
-          Add New Truck
-        </button>
+      <div className="flex items-center gap-3">
+  <button
+    onClick={() => setPopup(true)}
+    className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
+  >
+    <IoAdd size={20} />
+    Add New Truck
+  </button>
+ <Link 
+    href="/admin/truckDashboard"
+    className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
+  >
+    <IoStatsChart size={20} />
+    Truck's Dashboard
+  </Link>
+</div>
       </div>
 
       {/* Search */}
@@ -341,207 +502,117 @@ const TrucksPage = () => {
         />
       </div>
 
-      {/* MUI Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-        <Table sx={{ minWidth: 700 }} aria-label="trucks financial table">
-          <TableHead sx={{ backgroundColor: '#f8fafc' }}>
-            <TableRow>
-              <StyledTableCell >#</StyledTableCell>
-              <StyledTableCell >Truck ID</StyledTableCell>
-              <StyledTableCell  align="right">Total Loads</StyledTableCell>
-              <StyledTableCell  align="right">Total Miles</StyledTableCell>
-              <StyledTableCell  align="right">Gross($)</StyledTableCell>
-              <StyledTableCell  align="right">Fuel Cost ($)</StyledTableCell>
-              <StyledTableCell  align="right">Driver Pay ($)</StyledTableCell>
-              <StyledTableCell  align="right">Insurance ($)</StyledTableCell>
-              <StyledTableCell  align="right">Repair ($)</StyledTableCell>
-              <StyledTableCell  align="right">Net Profit ($)</StyledTableCell>
-              <StyledTableCell  align="center">Actions</StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredTrucks.map((truck, index) => {
-              const summary = truckSummaries[truck.id]?.summary;
-              
-              return (
-                <TableRow 
-                  key={truck.id} 
-                  sx={{ 
-                    '&:hover': { backgroundColor: '#f8fafc' },
-                    transition: 'background-color 0.2s ease',
-                    '&:last-child td, &:last-child th': { border: 0 }
-                  }}
-                >
-                  <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>
-                    {index + 1}
-                  </TableCell>
+      {/* Table */}
+      <DataTable
+        columns={truckColumns}
+        data={filteredTrucks}
+        renderRow={renderTruckRow}
+        loading={loading}
+        emptyState={
+          <tr className="flex flex-col items-center justify-center px-4 py-12">
+            <td className="text-3xl mb-3">🚛</td>
+            <td className="text-slate-600">No trucks found</td>
+            <td className="text-slate-400 text-sm mt-1">
+              {search
+                ? "Try adjusting your search terms"
+                : "Get started by adding your first truck"}
+            </td>
+          </tr>
+        }
+      />
 
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: '50%',
-                          backgroundColor: 'grey.100',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <IoCar size={18} color="#64748b" />
-                      </Box>
-                      <Box>
-                        <Typography variant="subtitle2" fontWeight={600}>
-                          {truck.truckId}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {truck.plateNumber}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </TableCell>
+      {/* Delete Alert */}
+      <Modal
+        isOpen={deleteAlert.show}
+        onClose={hideDeleteAlert}
+        title="Delete Truck"
+        size="md"
+        showCloseButton={false}
+      >
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+            <IoTrash size={32} className="text-red-600" />
+          </div>
 
-                  <TableCell align="right" sx={{ color: 'text.secondary' }}>
-                    {summary?.totalLoads || 0}
-                  </TableCell>
+          <h3 className="text-lg font-semibold text-slate-800 mb-2">
+            Delete Truck
+          </h3>
 
-                  <TableCell align="right" sx={{ color: 'text.secondary' }}>
-                    {summary?.totalMiles?.toLocaleString() || 0}
-                  </TableCell>
+          <p className="text-slate-600 mb-6">
+            Are you sure you want to delete{" "}
+            <strong>{`"${deleteAlert.truckName}"`}</strong>? This action cannot
+            be undone.
+          </p>
 
-                  <TableCell align="right" sx={{ fontWeight: 600, color: 'success.main' }}>
-                    ${summary?.totalRevenue?.toLocaleString() || 0}
-                  </TableCell>
+          <div className="flex gap-3 w-full">
+            <button
+              onClick={hideDeleteAlert}
+              className="flex-1 py-3 px-4 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors"
+            >
+              Cancel
+            </button>
 
-                  <TableCell align="right" sx={{ color: 'warning.main' }}>
-                    ${summary?.fuelCost?.toLocaleString() || 0}
-                  </TableCell>
+            <button
+              onClick={handleDeleteTruck}
+              className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Delete
+            </button>
+          </div>
+        </div>
+      </Modal>
 
-                  <TableCell align="right" sx={{ color: 'info.main' }}>
-                    ${summary?.driverPay?.toLocaleString() || 0}
-                  </TableCell>
-
-                  <TableCell align="right" sx={{ color: 'primary.main' }}>
-                    ${summary?.insuranceCost?.toLocaleString() || 0}
-                  </TableCell>
-
-                  <TableCell align="right" sx={{ color: 'error.main' }}>
-                    ${summary?.repairCost?.toLocaleString() || 0}
-                  </TableCell>
-
-                  <TableCell align="right" sx={{ fontWeight: 600, color: (summary?.netProfit || 0) >= 0 ? 'success.main' : 'error.main' }}>
-                    ${summary?.netProfit?.toLocaleString() || 0}
-                  </TableCell>
-
-                  {/* Actions */}
-                  <TableCell align="center">
-                    <div className="flex items-center justify-center gap-2">
-                      {/* Stats Button */}
-                      <button
-                        onClick={() => router.push(`/admin/truckSummary/${truck.id}`)}
-                        className="flex items-center gap-1 px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors"
-                      >
-                        <IoStatsChart size={14} />
-                        Stats
-                      </button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-
-            {/* Summary Row */}
-            {filteredTrucks.length > 0 && (
-              <TableRow sx={{ backgroundColor: '#f8fafc' }}>
-                <TableCell colSpan={2} sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  Total
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  {filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.totalLoads || 0), 0)}
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  {filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.totalMiles || 0), 0).toLocaleString()}
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  ${filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.totalRevenue || 0), 0).toLocaleString()}
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  ${filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.fuelCost || 0), 0).toLocaleString()}
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  ${filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.driverPay || 0), 0).toLocaleString()}
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  ${filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.insuranceCost || 0), 0).toLocaleString()}
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0' }}>
-                  ${filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.repairCost || 0), 0).toLocaleString()}
-                </TableCell>
-                <TableCell align="right" sx={{ fontWeight: 600, borderTop: '2px solid #e2e8f0', color: 'success.main' }}>
-                  ${filteredTrucks.reduce((sum, t) => sum + (truckSummaries[t.id]?.summary?.netProfit || 0), 0).toLocaleString()}
-                </TableCell>
-                <TableCell sx={{ borderTop: '2px solid #e2e8f0' }}></TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
-
-      {/* Create Popup Modal */}
+      {/* Create Popup */}
       <Modal
         isOpen={popup}
         onClose={() => setPopup(false)}
         title="Add New Truck"
-        size="lg"
+        size="md"
       >
         <form onSubmit={handleCreateTruck} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Plate Number */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Plate Number
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoCar className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="ABC-1234"
-                  value={newTruck.plateNumber}
-                  onChange={(e) =>
-                    setNewTruck({ ...newTruck, plateNumber: e.target.value })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  required
-                />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Plate Number
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoCar className="h-5 w-5 text-slate-400" />
               </div>
+              <input
+                type="text"
+                placeholder="ABC-1234"
+                value={newTruck.plateNumber}
+                onChange={(e) =>
+                  setNewTruck({ ...newTruck, plateNumber: e.target.value })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                required
+              />
             </div>
+          </div>
 
-            {/* Model */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Model
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoCar className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Volvo FH16"
-                  value={newTruck.model}
-                  onChange={(e) =>
-                    setNewTruck({ ...newTruck, model: e.target.value })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  required
-                />
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Model
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoCar className="h-5 w-5 text-slate-400" />
               </div>
+              <input
+                type="text"
+                placeholder="Volvo FH16"
+                value={newTruck.model}
+                onChange={(e) =>
+                  setNewTruck({ ...newTruck, model: e.target.value })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                required
+              />
             </div>
+          </div>
 
-            {/* Year */}
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Year
@@ -563,7 +634,6 @@ const TrucksPage = () => {
               </div>
             </div>
 
-            {/* Capacity */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Capacity (kg)
@@ -584,107 +654,41 @@ const TrucksPage = () => {
                 />
               </div>
             </div>
+          </div>
 
-            {/* Fuel Per Mile */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Fuel Cost Per Mile ($)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoFlash className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="0.25"
-                  value={newTruck.fuelPerMile}
-                  onChange={(e) =>
-                    setNewTruck({ ...newTruck, fuelPerMile: e.target.value })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                />
-              </div>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Type
+            </label>
+            <select
+              value={newTruck.type}
+              onChange={(e) =>
+                setNewTruck({ ...newTruck, type: e.target.value })
+              }
+              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              required
+            >
+              <option value="">Select Type</option>
+              <option value="reefer">Reefer</option>
+              <option value="van">Van</option>
+            </select>
+          </div>
 
-            {/* Insurance Cost */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Monthly Insurance Cost ($)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoShieldCheckmark className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="number"
-                  placeholder="500"
-                  value={newTruck.insuranceCost}
-                  onChange={(e) =>
-                    setNewTruck({ ...newTruck, insuranceCost: e.target.value })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Repair Cost */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Monthly Repair Cost ($)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoBuild className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="number"
-                  placeholder="300"
-                  value={newTruck.repairCost}
-                  onChange={(e) =>
-                    setNewTruck({ ...newTruck, repairCost: e.target.value })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                />
-              </div>
-            </div>
-
-            {/* Type */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Type
-              </label>
-              <select
-                value={newTruck.type}
-                onChange={(e) =>
-                  setNewTruck({ ...newTruck, type: e.target.value })
-                }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                required
-              >
-                <option value="">Select Type</option>
-                <option value="reefer">Reefer</option>
-                <option value="van">Van</option>
-              </select>
-            </div>
-
-            {/* Status */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Status
-              </label>
-              <select
-                value={newTruck.status}
-                onChange={(e) =>
-                  setNewTruck({ ...newTruck, status: e.target.value })
-                }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              >
-                <option value="available">Available</option>
-                <option value="busy">Busy</option>
-                <option value="inactive">Inactive</option>
-              </select>
-            </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Status
+            </label>
+            <select
+              value={newTruck.status}
+              onChange={(e) =>
+                setNewTruck({ ...newTruck, status: e.target.value })
+              }
+              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            >
+              <option value="available">Available</option>
+              <option value="busy">Busy</option>
+              <option value="inactive">Inactive</option>
+            </select>
           </div>
 
           <button
@@ -693,6 +697,151 @@ const TrucksPage = () => {
           >
             <IoAdd size={18} />
             Create Truck
+          </button>
+        </form>
+      </Modal>
+
+      {/* Edit Popup */}
+      <Modal
+        isOpen={editPopup}
+        onClose={() => setEditPopup(false)}
+        title="Edit Truck"
+        size="md"
+      >
+        <form onSubmit={handleUpdateTruck} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Plate Number
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoCar className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="ABC-1234"
+                value={updateTruck.plateNumber}
+                onChange={(e) =>
+                  setUpdateTruck({
+                    ...updateTruck,
+                    plateNumber: e.target.value,
+                  })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Model
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoCar className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Volvo FH16"
+                value={updateTruck.model}
+                onChange={(e) =>
+                  setUpdateTruck({ ...updateTruck, model: e.target.value })
+                }
+                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Year
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <IoCalendar className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="number"
+                  placeholder="2010"
+                  value={updateTruck.year}
+                  onChange={(e) =>
+                    setUpdateTruck({ ...updateTruck, year: e.target.value })
+                  }
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  required
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Capacity (kg)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <IoScale className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="number"
+                  placeholder="25000"
+                  value={updateTruck.capacity}
+                  onChange={(e) =>
+                    setUpdateTruck({
+                      ...updateTruck,
+                      capacity: e.target.value,
+                    })
+                  }
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Type
+            </label>
+            <select
+              value={updateTruck.type}
+              onChange={(e) =>
+                setUpdateTruck({ ...updateTruck, type: e.target.value })
+              }
+              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              required
+            >
+              <option value="">Select Type</option>
+              <option value="reefer">Reefer</option>
+              <option value="van">Van</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Status
+            </label>
+            <select
+              value={updateTruck.status}
+              onChange={(e) =>
+                setUpdateTruck({ ...updateTruck, status: e.target.value })
+              }
+              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            >
+              <option value="available">Available</option>
+              <option value="busy">Busy</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 mt-4"
+          >
+            <IoPencil size={18} />
+            Update Truck
           </button>
         </form>
       </Modal>
