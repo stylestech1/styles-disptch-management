@@ -1,7 +1,7 @@
 export type TUserRole = "admin" | "employee";
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
-export type TTruckType = 'reefer' | 'van'
+export type TTruckType = "reefer" | "van";
 export type TTruckId = {
   model: string;
   truckId: number;
@@ -11,6 +11,7 @@ export type TLoads = {
   id?: string;
   loadId: string;
   origin: string;
+  DHO: string;
   destination: string;
   distanceMiles: number;
   pricePerMile: number;
@@ -18,17 +19,21 @@ export type TLoads = {
   status: TStatusLoad;
   driverId: TDriver;
   truckId: TTruckId;
-  deliveredAt?: string;
-  pickupAt: string
   currency: string;
-  createdBy: string
-  updatedBy?: string
-  cancelledAt?: string
-  truckType: TTruckType
-  truckTemp: number
-  comments: TComments[]
-  feesNumber: string
-  completedAt: string
+  createdBy: string;
+  updatedBy?: string;
+  cancelledAt?: string;
+  truckType: TTruckType;
+  truckTemp: number;
+  comments: TComments[];
+  feesNumber: string;
+  pickupAt: string;
+  completedAt: string;
+  arrivalAtShipper?: string; // new
+  arrivalAtReceiver?: string; // new
+  leftShipper?: string; // new
+  leftReceiver?: string; // new
+  deliveredAt?: string;
 };
 export type TDriver = {
   id: string;
@@ -40,7 +45,7 @@ export type TDriver = {
   status: TStatusDriver;
   hireDate: string;
   createdBy: string;
-  pricePerMile: number
+  pricePerMile: number;
 };
 export type TTruck = {
   id: string;
@@ -52,8 +57,8 @@ export type TTruck = {
   status: TStatusDriver;
   createdBy: string;
   updatedBy: string;
-  assignedDriver: {name: string; driverId: number}
-  type: TTruckType
+  assignedDriver: { name: string; driverId: number };
+  type: TTruckType;
 };
 export interface TruckApiResponse {
   data: TTruck[];
@@ -69,30 +74,30 @@ export type TPagination = {
   hasPrev?: boolean;
 };
 export type TComments = {
-  id: string
-  load: TLoads
-  driver: TDriver
-  truck: TTruck
-  text: string
-  addedBy: {_id: string; name: string; jobId: number}
-  _id: string
-  createdAt: string
-  updatedAt: string
-  type: 'dispatcher' | 'driver'
-}
+  id: string;
+  load: TLoads;
+  driver: TDriver;
+  truck: TTruck;
+  text: string;
+  addedBy: { _id: string; name: string; jobId: number };
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+  type: "dispatcher" | "driver";
+};
 export type CommentsResponse = {
   message: string;
   loadId: string;
   comments: TComments[];
 };
 export type TErrors = {
-  type: 'field'
-  value: string
-  msg: string
-  path: string
-  location: string
-  message?: string
-}
+  type: "field";
+  value: string;
+  msg: string;
+  path: string;
+  location: string;
+  message?: string;
+};
 export type TDispatcher = {
   id: string;
   name: string;
