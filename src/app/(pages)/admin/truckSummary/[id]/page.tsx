@@ -589,7 +589,7 @@ const TruckSummary = () => {
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
           <div className="text-4xl mb-4">🚛</div>
           <h3 className="text-xl font-semibold text-slate-800 mb-2">Truck Not Found</h3>
-          <p className="text-slate-600 mb-4">The truck you're looking for doesn't exist or you don't have access to it.</p>
+          <p className="text-slate-600 mb-4">{"The truck you're looking for doesn't exist or you don't have access to it."}</p>
           <button
             onClick={() => router.push('/admin/trucks')}
             className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
