@@ -76,6 +76,7 @@ const LoadsPage = () => {
   const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
     null
   );
+  const [allDistance, setAllDistance] = useState<string>('');
   const [averageTime, setAverageTime] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
@@ -407,7 +408,8 @@ const LoadsPage = () => {
       completedAt: completedAt ? completedAt.toISOString() : null,
       truckTemp,
       truckType,
-      distanceMiles: Math.round(distance),
+      // distanceMiles: Math.round(distance),
+      distanceMiles: allDistance,
       totalPrice: total,
       pricePerMile: total / distance,
       feesNumber: fees,
@@ -436,7 +438,8 @@ const LoadsPage = () => {
       }),
       truckTemp,
       truckType,
-      distanceMiles: Math.round(distance),
+      // distanceMiles: Math.round(distance),
+      distanceMiles: allDistance,
       totalPrice: total,
       pricePerMile: total / distance,
       feesNumber: fees,
@@ -1791,9 +1794,11 @@ const LoadsPage = () => {
                     <div className="relative">
                       <input
                         type="text"
-                        value={distance ? `${distance.toFixed(2)} miles` : ""}
-                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                        readOnly
+                        // value={distance ? `${distance.toFixed(2)} miles` : ""}
+                        value={allDistance}
+                        onChange={e => setAllDistance(e.target.value)}
+                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg text-slate-700 font-medium"
+                        // readOnly
                       />
                     </div>
                   </div>
@@ -1834,12 +1839,22 @@ const LoadsPage = () => {
                     <div>
                       <input
                         type="text"
+                        // value={
+                        //   price &&
+                        //   distance &&
+                        //   Number(price) > 0 &&
+                        //   Number(distance) > 0
+                        //     ? `$${(Number(price) / Number(distance)).toFixed(
+                        //         3
+                        //       )}`
+                        //     : "$0.000"
+                        // }
                         value={
                           price &&
                           distance &&
                           Number(price) > 0 &&
-                          Number(distance) > 0
-                            ? `$${(Number(price) / Number(distance)).toFixed(
+                          Number(allDistance) > 0
+                            ? `$${(Number(price) / Number(allDistance)).toFixed(
                                 3
                               )}`
                             : "$0.000"
