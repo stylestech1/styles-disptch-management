@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import {
   IoPersonCircleOutline,
-  IoMailOutline,
+  IoMailOutline, 
   IoCallOutline,
   IoIdCardOutline,
   IoCalendarOutline,
