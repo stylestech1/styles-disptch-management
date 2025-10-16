@@ -543,7 +543,7 @@ interface TTruckSummary {
     className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
   >
     <IoStatsChart size={20} />
-    Truck's Dashboard
+    {"Truck's Dashboard"}
   </Link>
 </div>
       </div>

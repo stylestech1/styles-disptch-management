@@ -61,7 +61,7 @@ interface TTruckSummary {
   };
 }
 
-const truckDashboard = () => {
+const TruckDashboard = () => {
   const [trucks, setTrucks] = useState<TTruck[]>([]);
   const [truckSummaries, setTruckSummaries] = useState<{ [key: string]: TTruckSummary }>({});
   const [popup, setPopup] = useState(false);
@@ -441,4 +441,4 @@ const truckDashboard = () => {
   );
 };
 
-export default truckDashboard ;
+export default TruckDashboard ;
