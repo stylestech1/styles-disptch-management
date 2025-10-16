@@ -1549,7 +1549,7 @@ const LoadsPage = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <IoCheckmark className="text-emerald-600" size={18} />
                   <h4 className="font-semibold text-emerald-800">
-                    Delivered At
+                    Completed By Dispatcher At
                   </h4>
                 </div>
                 <p className="text-emerald-700">
