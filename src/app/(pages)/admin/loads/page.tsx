@@ -1,3 +1,4 @@
+// app/admin/loads/page.tsx
 "use client";
 import LocationAutocomplete, {
   TPlace,
@@ -7,7 +8,6 @@ import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
-import MapView from "@/components/sections/MapView";
 import DataTable from "@/components/ui/DataTable";
 import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
@@ -31,7 +31,6 @@ import {
   TruckApiResponse,
 } from "@/types/globalTypes";
 import { apiClient } from "@/utils/apiClient";
-import { haversineDistance } from "@/utils/haversineDistance";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -58,6 +57,13 @@ import { LiaShippingFastSolid } from "react-icons/lia";
 import { RxUpdate } from "react-icons/rx";
 import { MdEdit } from "react-icons/md";
 import { geocodeAddress } from "@/utils/geocoding";
+import GoogleMapsLoader from "@/components/ui/GoogleMapsLoader";
+import MapWithRoute from "@/components/ui/MapWithRoute";
+import {
+  calculateRouteDistance,
+  calculateDhoToOriginDistance,
+  calculateFullRouteDistance,
+} from "@/utils/googleDistanceCalculator";
 
 const LoadsPage = () => {
   const [pagination, setPagination] = useState<TPagination | null>(null);
@@ -77,7 +83,6 @@ const LoadsPage = () => {
     null
   );
   const [allDistance, setAllDistance] = useState<string>("");
-  const [editingDistance, setEditingDistance] = useState<string>("");
   const [averageTime, setAverageTime] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
@@ -123,6 +128,8 @@ const LoadsPage = () => {
   const { error, setError } = useError();
 
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
+  const GOOGLE_MAPS_API_KEY =
+    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "your-api-key-here";
 
   // FIXME: Fetching All Loads
   const fetchLoads = async () => {
@@ -237,34 +244,105 @@ const LoadsPage = () => {
     setDestinations(newDestinations);
   };
 
-  // TODO: Get Distance between DHO and Origin (Miles)
+  // TODO: Get Distance between DHO and Origin (Miles) - باستخدام Google Maps
   useEffect(() => {
-    const calculateDhoToOriginDistance = () => {
-      if (dho && origin) {
-        const distance = haversineDistance(
-          { lat: parseFloat(dho.lat), lon: parseFloat(dho.lon) },
-          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) }
-        );
-        setDhoToOriginDistance(distance);
-      } else {
+    const calculateDhoToOrigin = async () => {
+      if (!dho || !origin) {
         setDhoToOriginDistance(null);
+        setAverageTime(null);
+        return;
       }
-    };
-    calculateDhoToOriginDistance();
-  }, [dho, origin]);
 
-  // TODO: Calc Average time between DHO and Origin
-  useEffect(() => {
-    const calculateAverageTime = () => {
-      if (dhoToOriginDistance) {
-        const timeInHours = dhoToOriginDistance / 55;
-        setAverageTime(timeInHours);
-      } else {
+      try {
+        const result = await calculateDhoToOriginDistance(
+          { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) },
+          { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }
+        );
+        setDhoToOriginDistance(result.distance);
+        setAverageTime(result.duration);
+      } catch (error) {
+        console.error("Error calculating DHO to Origin distance:", error);
+        setDhoToOriginDistance(null);
         setAverageTime(null);
       }
     };
-    calculateAverageTime();
-  }, [dhoToOriginDistance]);
+
+    calculateDhoToOrigin();
+  }, [dho, origin]);
+
+  // في LoadsPage - استبدال useEffect الخاص بالمسافة الكاملة
+  // TODO: Get All Distance (Miles) - باستخدام Google Maps
+  useEffect(() => {
+    const calculateTotalDistance = async () => {
+      // Type guard function
+      const isValidPlace = (place: TPlace | null): place is TPlace => {
+        return place !== null;
+      };
+
+      // Filter out null destinations
+      const validDestinations = destinations.filter(isValidPlace);
+
+      if (
+        (dho && origin && validDestinations.length > 0) ||
+        (origin && validDestinations.length > 0)
+      ) {
+        try {
+          const destinationsCoords = validDestinations.map((dest) => ({
+            lat: parseFloat(dest.lat),
+            lng: parseFloat(dest.lon),
+          }));
+
+          const result = await calculateFullRouteDistance(
+            dho ? { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) } : null,
+            origin
+              ? { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }
+              : null,
+            destinationsCoords
+          );
+
+          setDistance(result.distance);
+          setAllDistance(result.distance.toFixed(2));
+
+          if (price && Number(price) > 0) {
+            const perMile = Number(price) / result.distance;
+            setPricePerMile(perMile);
+          }
+        } catch (error) {
+          console.error("Error calculating total distance:", error);
+          setDistance(null);
+          setAllDistance("");
+        }
+      } else {
+        setDistance(null);
+        setAllDistance("");
+      }
+    };
+
+    calculateTotalDistance();
+  }, [origin, destinations, dho, price]);
+
+  // TODO: Handle Price Change - حساب تلقائي لـ Price Per Mile
+  const handlePriceChange = (value: string) => {
+    setPrice(value);
+
+    if (allDistance && Number(allDistance) > 0 && Number(value) > 0) {
+      const perMile = Number(value) / Number(allDistance);
+      setPricePerMile(perMile);
+    } else {
+      setPricePerMile(null);
+    }
+  };
+
+  // TODO: Handle All Distance Change - إذا احتجت لتعديلها يدوياً (لكن ستكون readOnly)
+  const handleAllDistanceChange = (value: string) => {
+    const numericValue = value.replace(/[^0-9.]/g, "");
+    setAllDistance(numericValue);
+
+    if (price && Number(price) > 0 && Number(numericValue) > 0) {
+      const perMile = Number(price) / Number(numericValue);
+      setPricePerMile(perMile);
+    }
+  };
 
   // TODO: Formating Time of (Average time between DHO and Origin)
   const formatTime = (hours: number): string => {
@@ -280,90 +358,6 @@ const LoadsPage = () => {
       return `${hoursPart}h ${minutesPart}m`;
     }
   };
-
-  // TODO: Get All Distance (Miles)
-  useEffect(() => {
-    const calculateTotalDistance = () => {
-      // Type guard function
-      const isValidPlace = (place: TPlace | null): place is TPlace => {
-        return place !== null;
-      };
-
-      // Filter out null destinations
-      const validDestinations = destinations.filter(isValidPlace);
-
-      if (dho && origin && validDestinations.length > 0) {
-        let totalDistance = 0;
-
-        // DHO to Origin
-        const dhoToOrigin = haversineDistance(
-          { lat: parseFloat(dho.lat), lon: parseFloat(dho.lon) },
-          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) }
-        );
-        totalDistance += dhoToOrigin;
-
-        // Origin to first destination
-        const originToFirstDest = haversineDistance(
-          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) },
-          {
-            lat: parseFloat(validDestinations[0].lat),
-            lon: parseFloat(validDestinations[0].lon),
-          }
-        );
-        totalDistance += originToFirstDest;
-
-        // Between destinations
-        for (let i = 0; i < validDestinations.length - 1; i++) {
-          const segmentDistance = haversineDistance(
-            {
-              lat: parseFloat(validDestinations[i].lat),
-              lon: parseFloat(validDestinations[i].lon),
-            },
-            {
-              lat: parseFloat(validDestinations[i + 1].lat),
-              lon: parseFloat(validDestinations[i + 1].lon),
-            }
-          );
-          totalDistance += segmentDistance;
-        }
-
-        setDistance(totalDistance);
-      } else if (origin && validDestinations.length > 0) {
-        let totalDistance = 0;
-
-        // Origin to first destination
-        const originToFirstDest = haversineDistance(
-          { lat: parseFloat(origin.lat), lon: parseFloat(origin.lon) },
-          {
-            lat: parseFloat(validDestinations[0].lat),
-            lon: parseFloat(validDestinations[0].lon),
-          }
-        );
-        totalDistance += originToFirstDest;
-
-        // Between destinations
-        for (let i = 0; i < validDestinations.length - 1; i++) {
-          const segmentDistance = haversineDistance(
-            {
-              lat: parseFloat(validDestinations[i].lat),
-              lon: parseFloat(validDestinations[i].lon),
-            },
-            {
-              lat: parseFloat(validDestinations[i + 1].lat),
-              lon: parseFloat(validDestinations[i + 1].lon),
-            }
-          );
-          totalDistance += segmentDistance;
-        }
-
-        setDistance(totalDistance);
-      } else {
-        setDistance(null);
-      }
-    };
-
-    calculateTotalDistance();
-  }, [origin, destinations, dho]);
 
   // TODO: Open Edit Load
   const openEditLoadPopup = async (loadItem: TLoads) => {
@@ -468,12 +462,10 @@ const LoadsPage = () => {
       }
     }
 
-    // Load Details - هنا أهم جزء
+    // Load Details
     setLoadIDInp(loadItem.loadId || "");
     setPrice(loadItem.totalPrice?.toString() || "");
     setFees(loadItem.feesNumber?.toString() || "");
-
-    // تعيين المسافة الأصلية
     setAllDistance(loadItem.distanceMiles?.toString() || "");
 
     // Dates
@@ -526,7 +518,7 @@ const LoadsPage = () => {
     setDistance(null);
     setDhoToOriginDistance(null);
     setAverageTime(null);
-    setAllDistance(""); // مسح المسافة
+    setAllDistance("");
     setPrice("");
     setPricePerMile(null);
     setFees("");
@@ -600,9 +592,9 @@ const LoadsPage = () => {
       completedAt: completedAt ? completedAt.toISOString() : null,
       truckTemp,
       truckType,
-      distanceMiles: finalDistance, // استخدم finalDistance
+      distanceMiles: finalDistance,
       totalPrice: total,
-      pricePerMile: total / finalDistance, // استخدم finalDistance
+      pricePerMile: total / finalDistance,
       feesNumber: fees,
       loadId: loadIDInp,
     };
@@ -629,9 +621,9 @@ const LoadsPage = () => {
       }),
       truckTemp,
       truckType,
-      distanceMiles: finalDistance, // استخدم finalDistance
+      distanceMiles: finalDistance,
       totalPrice: total,
-      pricePerMile: total / finalDistance, // استخدم finalDistance
+      pricePerMile: total / finalDistance,
       feesNumber: fees,
       loadId: loadIDInp,
     };
@@ -1768,11 +1760,13 @@ const LoadsPage = () => {
 
                   {/* Maps */}
                   <div className="grid grid-cols-1 gap-6">
-                    <MapView
-                      origin={origin}
-                      destinations={destinations}
-                      dho={dho}
-                    />
+                    <GoogleMapsLoader apiKey={GOOGLE_MAPS_API_KEY}>
+                      <MapWithRoute
+                        dho={dho}
+                        origin={origin}
+                        destinations={destinations}
+                      />
+                    </GoogleMapsLoader>
                   </div>
                 </div>
 
@@ -1791,6 +1785,38 @@ const LoadsPage = () => {
                     <IoArrowForward size={16} />
                   </button>
                 </div>
+                
+                {/* إضافة رسالة معلومات تحت Calculated All Distance */}
+                {allDistance && (
+                  <div className="mt-5 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <IoInformationCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <h4 className="text-sm font-medium text-blue-800">
+                          Route Distance Information
+                        </h4>
+                        <p className="text-xs text-blue-700 mt-1">
+                          Total distance calculated from{" "}
+                          {dho ? "DHO" : "Origin"} through all destinations:{" "}
+                          <strong>{allDistance} miles</strong>
+                        </p>
+                        {dho && origin && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            • DHO to Origin:{" "}
+                            {dhoToOriginDistance?.toFixed(2) || "0"} miles
+                          </p>
+                        )}
+                        {destinations.filter((d) => d !== null).length > 0 && (
+                          <p className="text-xs text-blue-600">
+                            • Including{" "}
+                            {destinations.filter((d) => d !== null).length}{" "}
+                            destination(s)
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1798,6 +1824,7 @@ const LoadsPage = () => {
             {activeTab === 2 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Calculated All Distance - Read Only */}
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Calculated All Distance
@@ -1805,16 +1832,26 @@ const LoadsPage = () => {
                     <div className="relative">
                       <input
                         type="text"
-                        // value={distance ? `${distance.toFixed(2)} miles` : ""}
-                        value={allDistance}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9.]/g, "");
-                          setAllDistance(value);
-                        }}
-                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg text-slate-700 font-medium"
-                        // readOnly
+                        value={
+                          allDistance
+                            ? `${allDistance} miles`
+                            : "Calculating..."
+                        }
+                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+                        readOnly
+                        placeholder="Auto-calculating total distance..."
                       />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <IoCheckmark className="h-5 w-5 text-green-600" />
+                      </div>
                     </div>
+                    {allDistance && (
+                      <p className="text-xs text-slate-500 mt-1">
+                        Total route: DHO → Origin →{" "}
+                        {destinations.filter((d) => d !== null).length}{" "}
+                        destination(s)
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -1829,16 +1866,7 @@ const LoadsPage = () => {
                         type="text"
                         step="0.01"
                         value={price}
-                        onChange={(e) => {
-                          const value = e.target.value;
-                          setPrice(value);
-                          if (distance && Number(distance) > 0) {
-                            const perMile = Number(value) / Number(distance);
-                            setPricePerMile(perMile);
-                          } else {
-                            setPricePerMile(null);
-                          }
-                        }}
+                        onChange={(e) => handlePriceChange(e.target.value)}
                         className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                         placeholder="0.00"
                         required
@@ -1850,33 +1878,31 @@ const LoadsPage = () => {
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Price Per Mile
                     </label>
-                    <div>
+                    <div className="relative">
                       <input
                         type="text"
-                        // value={
-                        //   price &&
-                        //   distance &&
-                        //   Number(price) > 0 &&
-                        //   Number(distance) > 0
-                        //     ? `$${(Number(price) / Number(distance)).toFixed(
-                        //         3
-                        //       )}`
-                        //     : "$0.000"
-                        // }
                         value={
-                          price &&
-                          allDistance &&
-                          Number(price) > 0 &&
-                          Number(allDistance) > 0
-                            ? `$${(Number(price) / Number(allDistance)).toFixed(
-                                3
-                              )}`
+                          pricePerMile !== null &&
+                          !isNaN(pricePerMile) &&
+                          isFinite(pricePerMile)
+                            ? `$${pricePerMile.toFixed(3)}`
                             : "$0.000"
                         }
-                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
                         readOnly
                       />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <IoCash className="h-5 w-5 text-slate-400" />
+                      </div>
                     </div>
+                    {pricePerMile !== null &&
+                      !isNaN(pricePerMile) &&
+                      isFinite(pricePerMile) && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          Calculated automatically: ${price} ÷ {allDistance}{" "}
+                          miles
+                        </p>
+                      )}
                   </div>
 
                   <div>

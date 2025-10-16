@@ -13,7 +13,7 @@ import {
 } from "react-icons/io5";
 import { useState, useEffect } from "react";
 
-export default function AdminLayout({
+export default function DispatchersLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -24,6 +24,7 @@ export default function AdminLayout({
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   // Detect screen size
   useEffect(() => {
@@ -42,10 +43,44 @@ export default function AdminLayout({
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
+  // Load Google Maps once
+  useEffect(() => {
+    // تحقق إذا المكتبة متحملة بالفعل
+    if (window.google && window.google.maps) {
+      setIsGoogleMapsLoaded(true);
+      return;
+    }
+
+    // تحقق إذا الـ script موجود بالفعل
+    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
+    if (existingScript) {
+      setIsGoogleMapsLoaded(true);
+      return;
+    }
+
+    // حمل المكتبة مرة واحدة فقط
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places,geometry`;
+    script.async = true;
+    script.defer = true;
+    
+    script.onload = () => {
+      console.log("Google Maps loaded successfully");
+      setIsGoogleMapsLoaded(true);
+    };
+    
+    script.onerror = () => {
+      console.error("Failed to load Google Maps");
+      setIsGoogleMapsLoaded(true); // علشان ما يوقفش التطبيق كله
+    };
+
+    document.head.appendChild(script);
+  }, []);
+
   if (!user) return null;
 
   const tabs = TABS_CONFIG[user.role];
-  const base = user.role === "admin" ? "/admin" : "/dispatchers";
+  const base = "/dispatchers"; // علشان dispatchers فقط
 
   const handleLogout = () => {
     dispatch(logout());
@@ -80,7 +115,7 @@ export default function AdminLayout({
         {/* Header */}
         <div className="p-6 border-b border-slate-600">
           <div>
-            <Link href={user.id} className="flex items-center gap-3">
+            <Link href={`${base}/${user.id}`} className="flex items-center gap-3">
               <div className="p-2 bg-slate-700 rounded-xl">
                 <IoPersonCircleOutline size={24} className="text-slate-300" />
               </div>
@@ -181,7 +216,16 @@ export default function AdminLayout({
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 bg-slate-50">
-          <div className="max-w-7xl mx-auto">{children}</div>
+          <div className="max-w-7xl mx-auto">
+            {isGoogleMapsLoaded ? children : (
+              <div className="flex items-center justify-center h-64">
+                <div className="text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
+                  <p className="mt-4 text-slate-600">Loading Map...</p>
+                </div>
+              </div>
+            )}
+          </div>
         </main>
       </div>
     </section>
