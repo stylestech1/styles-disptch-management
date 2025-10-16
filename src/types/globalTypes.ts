@@ -61,6 +61,13 @@ export type TTruck = {
   updatedBy: string;
   assignedDriver: { name: string; driverId: number };
   type: TTruckType;
+  fuelPerMile:number;
+  insuranceCost:number;
+  repairCost: number;
+
+  
+
+
 };
 export interface TruckApiResponse {
   data: TTruck[];

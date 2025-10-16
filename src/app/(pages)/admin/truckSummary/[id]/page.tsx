@@ -32,7 +32,6 @@ import Modal from "@/components/ui/Modals";
 
 const TruckSummary = () => {
   const [profile, setProfile] = useState<TTruck | null>(null);
-  const [editPopup, setEditPopup] = useState(false);
   const [deleteAlert, setDeleteAlert] = useState<{
     show: boolean;
     truckId: string | null;
@@ -94,82 +93,7 @@ const TruckSummary = () => {
     getProfile();
   }, [apiURL, token, id, router]);
 
-  //  Update Truck
-  const handleUpdateTruck = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) {
-      console.log("No token found, redirecting to login");
-      router.replace("/");
-      return;
-    }
-    if (!profile) return;
 
-    try {
-      const result = await apiClient(`${apiURL}/api/v1/trucks/${profile.id}`, token, {
-        method: "PUT",
-        body: JSON.stringify({
-          plateNumber: updateTruck.plateNumber,
-          model: updateTruck.model,
-          year: Number(updateTruck.year),
-          capacity: Number(updateTruck.capacity),
-          status: updateTruck.status.toLowerCase(),
-          type: updateTruck.type,
-        }),
-      })
-
-      toast.success("Truck updated successfully!");
-      setProfile(result.data as TTruck);
-      setEditPopup(false);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      }
-    }
-  };
-
-  //  Show Delete Alert
-  const showDeleteAlert = () => {
-    if (!profile) return;
-    setDeleteAlert({
-      show: true,
-      truckId: profile.id,
-      truckName: profile.model,
-    });
-  };
-
-  //  Hide Delete Alert
-  const hideDeleteAlert = () => {
-    setDeleteAlert({
-      show: false,
-      truckId: null,
-      truckName: "",
-    });
-  };
-
-  //  Delete Truck
-  const handleDeleteTruck = async () => {
-    if (!deleteAlert.truckId) return;
-
-    if (!token) {
-      console.log("No token found, redirecting to login");
-      router.replace("/");
-      return;
-    }
-
-    try {
-      await apiClient(`${apiURL}/api/v1/trucks/${deleteAlert.truckId}`, token, {
-        method: "DELETE"
-      })
-
-      toast.success("Truck deleted successfully!");
-      hideDeleteAlert();
-      router.push('/admin/trucks'); 
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message || "Delete failed");
-      }
-    }
-  };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -251,7 +175,7 @@ const TruckSummary = () => {
         </div>
 
         {/* Edit &Delete */}
-        {profile && (
+        {/* {profile && (
           <div className="flex items-center gap-2">
             <button
               onClick={() => setEditPopup(true)}
@@ -268,7 +192,7 @@ const TruckSummary = () => {
               Delete Truck
             </button>
           </div>
-        )}
+        )} */}
       </div>
 
       {/* Errors */}
@@ -399,191 +323,6 @@ const TruckSummary = () => {
         </div>
       )}
 
-      {/* Edit Popup Modal */}
-      <Modal
-        isOpen={editPopup}
-        onClose={() => setEditPopup(false)}
-        title="Edit Truck"
-        size="md"
-      >
-        <form onSubmit={handleUpdateTruck} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Plate Number
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoCar className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="ABC-1234"
-                value={updateTruck.plateNumber}
-                onChange={(e) =>
-                  setUpdateTruck({
-                    ...updateTruck,
-                    plateNumber: e.target.value,
-                  })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Model
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoCar className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Volvo FH16"
-                value={updateTruck.model}
-                onChange={(e) =>
-                  setUpdateTruck({ ...updateTruck, model: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Year
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoCalendar className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="number"
-                  placeholder="2010"
-                  value={updateTruck.year}
-                  onChange={(e) =>
-                    setUpdateTruck({ ...updateTruck, year: e.target.value })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Capacity (kg)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoScale className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="number"
-                  placeholder="25000"
-                  value={updateTruck.capacity}
-                  onChange={(e) =>
-                    setUpdateTruck({
-                      ...updateTruck,
-                      capacity: e.target.value,
-                    })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Type
-            </label>
-            <select
-              value={updateTruck.type}
-              onChange={(e) =>
-                setUpdateTruck({ ...updateTruck, type: e.target.value })
-              }
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              required
-            >
-              <option value="">Select Type</option>
-              <option value="reefer">Reefer</option>
-              <option value="van">Van</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Status
-            </label>
-            <select
-              value={updateTruck.status}
-              onChange={(e) =>
-                setUpdateTruck({ ...updateTruck, status: e.target.value })
-              }
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              <option value="available">Available</option>
-              <option value="busy">Busy</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 mt-4"
-          >
-            <IoPencil size={18} />
-            Update Truck
-          </button>
-        </form>
-      </Modal>
-
-      {/* Delete Alert Modal */}
-      <Modal
-        isOpen={deleteAlert.show}
-        onClose={hideDeleteAlert}
-        title="Delete Truck"
-        size="md"
-        showCloseButton={false}
-      >
-        <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
-            <IoTrash size={32} className="text-red-600" />
-          </div>
-
-          <h3 className="text-lg font-semibold text-slate-800 mb-2">
-            Delete Truck
-          </h3>
-
-          <p className="text-slate-600 mb-6">
-            Are you sure you want to delete{" "}
-            <strong>{`"${deleteAlert.truckName}"`}</strong>? This action cannot
-            be undone.
-          </p>
-
-          <div className="flex gap-3 w-full">
-            <button
-              onClick={hideDeleteAlert}
-              className="flex-1 py-3 px-4 border border-slate-300 text-slate-700 rounded-lg font-medium hover:bg-slate-50 transition-colors"
-            >
-              Cancel
-            </button>
-
-            <button
-              onClick={handleDeleteTruck}
-              className="flex-1 py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </Modal>
 
       {!profile && !loading && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">

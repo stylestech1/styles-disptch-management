@@ -18,6 +18,9 @@ import {
   IoTime,
   IoStop,
   IoStatsChart,
+  IoShieldCheckmark,
+  IoBuild,
+  IoFlash,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import { TErrors, TPagination, TTruck } from "@/types/globalTypes";
@@ -39,6 +42,8 @@ const TrucksPage = () => {
   const [search, setSearch] = useState("");
   const [selectedTruck, setSelectedTruck] = useState<TTruck | null>(null);
   const [allTrucks, setAllTrucks] = useState<TTruck[]>([]);
+    const [truckSummaries, setTruckSummaries] = useState<{ [key: string]: TTruckSummary }>({});
+
   const [deleteAlert, setDeleteAlert] = useState<{
     show: boolean;
     truckId: string | null;
@@ -57,6 +62,9 @@ const TrucksPage = () => {
     capacity: "",
     status: "available",
     type: "",
+    fuelPerMile: 0,
+    insuranceCost: 0,
+    repairCost: 0,
   });
 
   const [updateTruck, setUpdateTruck] = useState({
@@ -66,6 +74,9 @@ const TrucksPage = () => {
     capacity: "",
     status: "available",
     type: "",
+    fuelPerMile: 0,
+  insuranceCost: 0,
+  repairCost: 0,
   });
 
   const router = useRouter();
@@ -73,7 +84,22 @@ const TrucksPage = () => {
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
-
+interface TTruckSummary {
+  truckId: number;
+  summary: {
+    totalLoads: number;
+    totalMiles: number;
+    totalRevenue: number;
+    fuelCost: number;
+    repairCost: number;
+    insuranceCost: number;
+    driverPay: number;
+    netProfit: number;
+    avgRevenuePerMile: number;
+    avgExpensePerMile: number;
+    currency: string;
+  };
+}
   // Get all Trucks
   useEffect(() => {
     if (!token) {
@@ -120,6 +146,43 @@ const TrucksPage = () => {
 
     fetchTrucks();
   }, [apiURL, token, router]);
+    // Fetch truck summaries
+  const fetchTruckSummaries = async (trucks: TTruck[]) => {
+    if (!token) return;
+
+    try {
+      const summaries: { [key: string]: TTruckSummary } = {};
+      
+      for (const { id } of trucks) {
+        try {
+          const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${id}`, {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          });
+
+          if (res.ok) {
+            const result = await res.json();
+            summaries[id] = result.data;
+          }
+        } catch (error) {
+          console.error(`Error fetching summary for truck ${id}:`, error);
+        }
+      }
+
+      setTruckSummaries(summaries);
+    } catch (error) {
+      console.error("Error fetching truck summaries:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (trucks.length > 0) {
+      fetchTruckSummaries(trucks);
+    }
+  }, [trucks, token, apiURL]);
 
   // Filter TruckId & Model & PlateNumber
   const fetchAllTrucks = async () => {
@@ -154,7 +217,7 @@ const TrucksPage = () => {
     : trucks;
 
   // FIXME: Create Truck
-  const handleCreateTruck = async (e: React.FormEvent) => {
+ const handleCreateTruck = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!token) {
       console.log("No token found, redirecting to login");
@@ -172,6 +235,9 @@ const TrucksPage = () => {
           capacity: Number(newTruck.capacity),
           status: newTruck.status.toLowerCase(),
           type: newTruck.type,
+          fuelPerMile: newTruck.fuelPerMile ? Number(newTruck.fuelPerMile) : undefined,
+          insuranceCost: newTruck.insuranceCost ? Number(newTruck.insuranceCost) : undefined,
+          repairCost: newTruck.repairCost ? Number(newTruck.repairCost) : undefined,
         }),
       });
 
@@ -185,6 +251,9 @@ const TrucksPage = () => {
         capacity: "",
         status: "available",
         type: "",
+        fuelPerMile: 0,
+        insuranceCost: 0,
+        repairCost: 0,
       });
     } catch (error) {
       if (error instanceof Error) {
@@ -193,43 +262,44 @@ const TrucksPage = () => {
     }
   };
 
+  if (loading) return <Loading />;
+
+
   // FIXME: Update Truck
-  const handleUpdateTruck = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) {
-      console.log("No token found, redirecting to login");
-      router.replace("/");
-      return;
+ const handleUpdateTruck = async (e: React.FormEvent) => {
+  e.preventDefault();
+  if (!token || !selectedTruck) return;
+
+  try {
+    const truckId = selectedTruck.id;
+
+    const result = await apiClient(`${apiURL}/api/v1/trucks/${truckId}`, token, {
+      method: "PUT",
+      body: JSON.stringify({
+        plateNumber: updateTruck.plateNumber,
+        model: updateTruck.model,
+        year: Number(updateTruck.year),
+        capacity: Number(updateTruck.capacity),
+        status: updateTruck.status.toLowerCase(),
+        type: updateTruck.type,
+        fuelPerMile: updateTruck.fuelPerMile ? Number(updateTruck.fuelPerMile) : undefined,
+        insuranceCost: updateTruck.insuranceCost ? Number(updateTruck.insuranceCost) : undefined,
+        repairCost: updateTruck.repairCost ? Number(updateTruck.repairCost) : undefined,
+      }),
+    });
+
+    toast.success("Truck updated successfully!");
+    setTrucks((prev) =>
+      prev.map((t) => (t.id === truckId ? result.data : t)) as TTruck[]
+    );
+    setEditPopup(false);
+    setSelectedTruck(null);
+  } catch (error) {
+    if (error instanceof Error) {
+      toast.error(error.message);
     }
-    if (!selectedTruck) return;
-
-    try {
-      const truckId = selectedTruck.id;
-
-      const result = await apiClient(`${apiURL}/api/v1/trucks/${truckId}`, token, {
-        method: "PUT",
-        body: JSON.stringify({
-          plateNumber: updateTruck.plateNumber,
-          model: updateTruck.model,
-          year: Number(updateTruck.year),
-          capacity: Number(updateTruck.capacity),
-          status: updateTruck.status.toLowerCase(),
-          type: updateTruck.type,
-        }),
-      })
-
-      toast.success("Truck updated successfully!");
-      setTrucks((prev) =>
-        prev.map((t) => (t.id === truckId ? result.data : t)) as TTruck[]
-      );
-      setEditPopup(false);
-      setSelectedTruck(null);
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      }
-    }
-  };
+  }
+};
 
   // TODO: Show Delete Alert
   const showDeleteAlert = (truckId: string, truckName: string) => {
@@ -380,24 +450,57 @@ const TrucksPage = () => {
       </td>
       <td className="p-4">
   <div className="flex items-center justify-center gap-2">
-    <button
-      onClick={() => {
-        setSelectedTruck(truck);
-        setUpdateTruck({
-          plateNumber: truck.plateNumber,
-          model: truck.model,
-          year: String(truck.year),
-          capacity: String(truck.capacity),
-          status: truck.status,
-          type: truck.type || "",
-        });
-        setEditPopup(true);
-      }}
-      className="flex items-center gap-1 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium transition-colors"
-    >
-      <IoPencil size={14} />
-      Edit
-    </button>
+ <button
+  onClick={async () => {
+    setSelectedTruck(truck);
+    setLoading(true);
+
+    try {
+      // Fetch truck summary to get insurance & repair cost
+      const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${truck.id}`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      let insurance = 0;
+      let repair = 0;
+
+      if (res.ok) {
+        const result = await res.json();
+        insurance = result.data.summary.insuranceCost || 0;
+        repair = result.data.summary.repairCost || 0;
+      }
+
+      // Now update form data
+      setUpdateTruck({
+        plateNumber: truck.plateNumber,
+        model: truck.model,
+        year: String(truck.year),
+        capacity: String(truck.capacity),
+        status: truck.status,
+        type: truck.type || "",
+        fuelPerMile: truck.fuelPerMile || 0,
+        insuranceCost: insurance,
+        repairCost: repair,
+      });
+
+      setEditPopup(true);
+    } catch (error) {
+      console.error("Error fetching truck summary:", error);
+      toast.error("Failed to load truck summary");
+    } finally {
+      setLoading(false);
+    }
+  }}
+  className="flex items-center gap-1 px-3 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-medium transition-colors"
+>
+  <IoPencil size={14} />
+  Edit
+</button>
+
 
    
     <button
@@ -563,56 +666,59 @@ const TrucksPage = () => {
       </Modal>
 
       {/* Create Popup */}
-      <Modal
+        <Modal
         isOpen={popup}
         onClose={() => setPopup(false)}
         title="Add New Truck"
-        size="md"
+        size="lg"
       >
         <form onSubmit={handleCreateTruck} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Plate Number
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoCar className="h-5 w-5 text-slate-400" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Plate Number */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Plate Number
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <IoCar className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="ABC-1234"
+                  value={newTruck.plateNumber}
+                  onChange={(e) =>
+                    setNewTruck({ ...newTruck, plateNumber: e.target.value })
+                  }
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  required
+                />
               </div>
-              <input
-                type="text"
-                placeholder="ABC-1234"
-                value={newTruck.plateNumber}
-                onChange={(e) =>
-                  setNewTruck({ ...newTruck, plateNumber: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                required
-              />
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Model
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoCar className="h-5 w-5 text-slate-400" />
+            {/* Model */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Model
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <IoCar className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Volvo FH16"
+                  value={newTruck.model}
+                  onChange={(e) =>
+                    setNewTruck({ ...newTruck, model: e.target.value })
+                  }
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  required
+                />
               </div>
-              <input
-                type="text"
-                placeholder="Volvo FH16"
-                value={newTruck.model}
-                onChange={(e) =>
-                  setNewTruck({ ...newTruck, model: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                required
-              />
             </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
+            {/* Year */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Year
@@ -634,6 +740,7 @@ const TrucksPage = () => {
               </div>
             </div>
 
+            {/* Capacity */}
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Capacity (kg)
@@ -654,41 +761,108 @@ const TrucksPage = () => {
                 />
               </div>
             </div>
-          </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Type
-            </label>
-            <select
-              value={newTruck.type}
-              onChange={(e) =>
-                setNewTruck({ ...newTruck, type: e.target.value })
-              }
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              required
-            >
-              <option value="">Select Type</option>
-              <option value="reefer">Reefer</option>
-              <option value="van">Van</option>
-            </select>
-          </div>
+            {/* Fuel Per Mile */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Fuel Cost Per Mile ($)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <IoFlash className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="0.25"
+                  value={newTruck.fuelPerMile}
+                  onChange={(e) =>
+                    setNewTruck({ ...newTruck, fuelPerMile: Number(e.target.value) })
+                  }
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                />
+              </div>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Status
-            </label>
-            <select
-              value={newTruck.status}
-              onChange={(e) =>
-                setNewTruck({ ...newTruck, status: e.target.value })
-              }
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              <option value="available">Available</option>
-              <option value="busy">Busy</option>
-              <option value="inactive">Inactive</option>
-            </select>
+            {/* Insurance Cost */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                 Insurance Cost ($)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <IoShieldCheckmark className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="number"
+                  placeholder="500"
+                  value={newTruck.insuranceCost}
+                  onChange={(e) =>
+                    
+                    setNewTruck({ ...newTruck, insuranceCost: Number(e.target.value)})
+                  }
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Repair Cost */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                 Repair Cost ($)
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <IoBuild className="h-5 w-5 text-slate-400" />
+                </div>
+                <input
+                  type="number"
+                  placeholder="300"
+                  value={newTruck.repairCost}
+                  onChange={(e) =>
+                    setNewTruck({ ...newTruck, repairCost:Number(e.target.value) })
+                  }
+                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Type */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Type
+              </label>
+              <select
+                value={newTruck.type}
+                onChange={(e) =>
+                  setNewTruck({ ...newTruck, type: e.target.value })
+                }
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                required
+              >
+                <option value="">Select Type</option>
+                <option value="reefer">Reefer</option>
+                <option value="van">Van</option>
+              </select>
+            </div>
+
+            {/* Status */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Status
+              </label>
+              <select
+                value={newTruck.status}
+                onChange={(e) =>
+                  setNewTruck({ ...newTruck, status: e.target.value })
+                }
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              >
+                <option value="available">Available</option>
+                <option value="busy">Busy</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
           </div>
 
           <button
@@ -701,151 +875,6 @@ const TrucksPage = () => {
         </form>
       </Modal>
 
-      {/* Edit Popup */}
-      <Modal
-        isOpen={editPopup}
-        onClose={() => setEditPopup(false)}
-        title="Edit Truck"
-        size="md"
-      >
-        <form onSubmit={handleUpdateTruck} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Plate Number
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoCar className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="ABC-1234"
-                value={updateTruck.plateNumber}
-                onChange={(e) =>
-                  setUpdateTruck({
-                    ...updateTruck,
-                    plateNumber: e.target.value,
-                  })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Model
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoCar className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Volvo FH16"
-                value={updateTruck.model}
-                onChange={(e) =>
-                  setUpdateTruck({ ...updateTruck, model: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Year
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoCalendar className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="number"
-                  placeholder="2010"
-                  value={updateTruck.year}
-                  onChange={(e) =>
-                    setUpdateTruck({ ...updateTruck, year: e.target.value })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  required
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Capacity (kg)
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <IoScale className="h-5 w-5 text-slate-400" />
-                </div>
-                <input
-                  type="number"
-                  placeholder="25000"
-                  value={updateTruck.capacity}
-                  onChange={(e) =>
-                    setUpdateTruck({
-                      ...updateTruck,
-                      capacity: e.target.value,
-                    })
-                  }
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  required
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Type
-            </label>
-            <select
-              value={updateTruck.type}
-              onChange={(e) =>
-                setUpdateTruck({ ...updateTruck, type: e.target.value })
-              }
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              required
-            >
-              <option value="">Select Type</option>
-              <option value="reefer">Reefer</option>
-              <option value="van">Van</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Status
-            </label>
-            <select
-              value={updateTruck.status}
-              onChange={(e) =>
-                setUpdateTruck({ ...updateTruck, status: e.target.value })
-              }
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            >
-              <option value="available">Available</option>
-              <option value="busy">Busy</option>
-              <option value="inactive">Inactive</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 mt-4"
-          >
-            <IoPencil size={18} />
-            Update Truck
-          </button>
-        </form>
-      </Modal>
-
       {/* Pagination */}
       <Pagination
         pagination={pagination}
@@ -854,8 +883,240 @@ const TrucksPage = () => {
         pageSize={10}
         showInfo={true}
       />
+
+      {/* Edit Popup */}
+      <Modal
+        isOpen={editPopup}
+        onClose={() => setEditPopup(false)}
+        title="Edit Truck"
+        size="md"
+      >
+       <form onSubmit={handleUpdateTruck} className="space-y-4">
+  <div>
+    <label className="block text-sm font-medium text-slate-700 mb-2">
+      Plate Number
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <IoCar className="h-5 w-5 text-slate-400" />
+      </div>
+      <input
+        type="text"
+        placeholder="ABC-1234"
+        value={updateTruck.plateNumber}
+        onChange={(e) =>
+          setUpdateTruck({
+            ...updateTruck,
+            plateNumber: e.target.value,
+          })
+        }
+        className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+        required
+      />
+    </div>
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-slate-700 mb-2">
+      Model
+    </label>
+    <div className="relative">
+      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+        <IoCar className="h-5 w-5 text-slate-400" />
+      </div>
+      <input
+        type="text"
+        placeholder="Volvo FH16"
+        value={updateTruck.model}
+        onChange={(e) =>
+          setUpdateTruck({ ...updateTruck, model: e.target.value })
+        }
+        className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+        required
+      />
+    </div>
+  </div>
+
+  <div className="grid grid-cols-2 gap-4">
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">
+        Year
+      </label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <IoCalendar className="h-5 w-5 text-slate-400" />
+        </div>
+        <input
+          type="number"
+          placeholder="2010"
+          value={updateTruck.year}
+          onChange={(e) =>
+            setUpdateTruck({ ...updateTruck, year: e.target.value })
+          }
+          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+          required
+        />
+      </div>
+    </div>
+
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">
+        Capacity (kg)
+      </label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <IoScale className="h-5 w-5 text-slate-400" />
+        </div>
+        <input
+          type="number"
+          placeholder="25000"
+          value={updateTruck.capacity}
+          onChange={(e) =>
+            setUpdateTruck({
+              ...updateTruck,
+              capacity: e.target.value,
+            })
+          }
+          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+          required
+        />
+      </div>
+    </div>
+  </div>
+
+
+  <div className="grid grid-cols-3 gap-4">
+    {/* Fuel Per Mile */}
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">
+        Fuel Cost/Mile ($)
+      </label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <IoFlash className="h-5 w-5 text-slate-400" />
+        </div>
+        <input
+          type="number"
+          step="0.01"
+          placeholder="0.25"
+          value={updateTruck.fuelPerMile}
+          onChange={(e) =>
+            setUpdateTruck({ 
+              ...updateTruck, 
+              fuelPerMile: Number(e.target.value) 
+            })
+          }
+          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+        />
+      </div>
+    </div>
+
+    {/* Insurance Cost */}
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">
+        Insurance Cost ($)
+      </label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <IoShieldCheckmark className="h-5 w-5 text-slate-400" />
+        </div>
+        <input
+          type="number"
+          placeholder="500"
+          value={updateTruck.insuranceCost}
+          onChange={(e) =>
+            setUpdateTruck({ 
+              ...updateTruck, 
+              insuranceCost: Number(e.target.value) 
+            })
+          }
+          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+        />
+      </div>
+    </div>
+
+    {/* Repair Cost */}
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-2">
+        Repair Cost ($)
+      </label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <IoBuild className="h-5 w-5 text-slate-400" />
+        </div>
+        <input
+          type="number"
+          placeholder="300"
+          value={updateTruck.repairCost}
+          onChange={(e) =>
+            setUpdateTruck({ 
+              ...updateTruck, 
+              repairCost: Number(e.target.value) 
+            })
+          }
+          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+        />
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-slate-700 mb-2">
+      Type
+    </label>
+    <select
+      value={updateTruck.type}
+      onChange={(e) =>
+        setUpdateTruck({ ...updateTruck, type: e.target.value })
+      }
+      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+      required
+    >
+      <option value="">Select Type</option>
+      <option value="reefer">Reefer</option>
+      <option value="van">Van</option>
+    </select>
+  </div>
+
+  <div>
+    <label className="block text-sm font-medium text-slate-700 mb-2">
+      Status
+    </label>
+    <select
+      value={updateTruck.status}
+      onChange={(e) =>
+        setUpdateTruck({ ...updateTruck, status: e.target.value })
+      }
+      className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+    >
+      <option value="available">Available</option>
+      <option value="busy">Busy</option>
+      <option value="inactive">Inactive</option>
+    </select>
+  </div>
+
+  <button
+    type="submit"
+    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 mt-4"
+  >
+    <IoPencil size={18} />
+    Update Truck
+  </button>
+</form>
+      </Modal>
+
+    
     </section>
   );
 };
 
 export default TrucksPage;
+
+
+
+
+
+
+
+
+
