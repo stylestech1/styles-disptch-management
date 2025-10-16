@@ -8,6 +8,6 @@ export const driverSummaryColumns: Column[] = [
   { key: "pricePerMile", header: "Price/Mile", align: "right" },
   { key: "total", header: "Total", align: "right" },
   { key: "status", header: "Status", align: "center" },
-  { key: "truck", header: "Truck", align: "left" },
+  { key: "truck", header: "Truck Number", align: "left" },
   { key: "delivered", header: "Delivered", align: "center" },
 ];

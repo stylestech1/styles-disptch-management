@@ -34,6 +34,8 @@ export type TLoads = {
   leftShipper?: string; // new
   leftReceiver?: string; // new
   deliveredAt?: string;
+  createdAt?: string; 
+
 };
 export type TDriver = {
   id: string;
@@ -107,4 +109,20 @@ export type TDispatcher = {
   role: string;
   position: string;
   jobId: number;
+};
+
+export type TPeriod = {
+  from: string;
+  to: string;
+};
+
+export type TLoadSummary = {
+  id: string;
+  totalLoads: number;
+  totalMiles: number;
+  totalEarnings: number;
+  pricePerMile: number;
+  currency: string;
+  period: TPeriod;
+  loads: TLoads[];
 };
