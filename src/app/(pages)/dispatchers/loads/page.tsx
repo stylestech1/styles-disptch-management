@@ -76,7 +76,8 @@ const LoadsPage = () => {
   const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
     null
   );
-  const [allDistance, setAllDistance] = useState<string>('');
+  const [allDistance, setAllDistance] = useState<string>("");
+  const [editingDistance, setEditingDistance] = useState<string>("");
   const [averageTime, setAverageTime] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [price, setPrice] = useState<string>("");
@@ -90,7 +91,9 @@ const LoadsPage = () => {
   const [pickupAt, setPickupAt] = useState<Dayjs | null>(null);
   const [completedAt, setCompletedAt] = useState<Dayjs | null>(null);
   const [arrivalAtShipper, setArrivalAtShipper] = useState<Dayjs | null>(null);
-  const [arrivalAtReceiver, setarrivalAtReceiver] = useState<Dayjs | null>(null);
+  const [arrivalAtReceiver, setarrivalAtReceiver] = useState<Dayjs | null>(
+    null
+  );
   const [leftShipper, setLeftShipper] = useState<Dayjs | null>(null);
   const [leftReceiver, setleftReceiver] = useState<Dayjs | null>(null);
   const [truckType, setTruckType] = useState<string>("reefer");
@@ -362,7 +365,190 @@ const LoadsPage = () => {
     calculateTotalDistance();
   }, [origin, destinations, dho]);
 
-  // FIXME: Create or Update Load
+  // TODO: Open Edit Load
+  const openEditLoadPopup = async (loadItem: TLoads) => {
+    if (!loadItem?.id) return;
+    setLoading(true);
+    setEditingLoad(loadItem);
+    setIsEditing(true);
+
+    try {
+      // DHO
+      if (loadItem.DHO) {
+        const dhoCoords = await geocodeAddress(loadItem.DHO);
+        setDho(
+          dhoCoords ||
+            ({
+              display_name: loadItem.DHO,
+              lat: "0",
+              lon: "0",
+            } as TPlace)
+        );
+      } else {
+        setDho(null);
+      }
+
+      // Origin
+      if (loadItem.origin) {
+        const originCoords = await geocodeAddress(loadItem.origin);
+        setOrigin(
+          originCoords ||
+            ({
+              display_name: loadItem.origin,
+              lat: "0",
+              lon: "0",
+            } as TPlace)
+        );
+      } else {
+        setOrigin(null);
+      }
+
+      // Destinations
+      if (loadItem.destination) {
+        const destArray = Array.isArray(loadItem.destination)
+          ? loadItem.destination
+          : [loadItem.destination];
+
+        const destinationPlaces = await Promise.all(
+          destArray.map(async (dest) => {
+            const coords = await geocodeAddress(dest);
+            return (
+              coords ||
+              ({
+                display_name: dest,
+                lat: "0",
+                lon: "0",
+              } as TPlace)
+            );
+          })
+        );
+
+        setDestinations(destinationPlaces);
+      } else {
+        setDestinations([]);
+      }
+    } catch (error) {
+      console.error("Error geocoding addresses:", error);
+      setDho(
+        loadItem.DHO
+          ? ({
+              display_name: loadItem.DHO,
+              lat: "0",
+              lon: "0",
+            } as TPlace)
+          : null
+      );
+
+      setOrigin(
+        loadItem.origin
+          ? ({
+              display_name: loadItem.origin,
+              lat: "0",
+              lon: "0",
+            } as TPlace)
+          : null
+      );
+
+      if (loadItem.destination) {
+        const destArray = Array.isArray(loadItem.destination)
+          ? loadItem.destination
+          : [loadItem.destination];
+
+        const destinationPlaces = destArray.map(
+          (dest) =>
+            ({
+              display_name: dest,
+              lat: "0",
+              lon: "0",
+            } as TPlace)
+        );
+        setDestinations(destinationPlaces);
+      } else {
+        setDestinations([]);
+      }
+    }
+
+    // Load Details - هنا أهم جزء
+    setLoadIDInp(loadItem.loadId || "");
+    setPrice(loadItem.totalPrice?.toString() || "");
+    setFees(loadItem.feesNumber?.toString() || "");
+
+    // تعيين المسافة الأصلية
+    setAllDistance(loadItem.distanceMiles?.toString() || "");
+
+    // Dates
+    if (loadItem.pickupAt) {
+      setPickupAt(dayjs(loadItem.pickupAt));
+    } else {
+      setPickupAt(null);
+    }
+    if (loadItem.completedAt) {
+      setCompletedAt(dayjs(loadItem.completedAt));
+    } else {
+      setCompletedAt(null);
+    }
+    if (loadItem.arrivalAtShipper) {
+      setArrivalAtShipper(dayjs(loadItem.arrivalAtShipper));
+    } else {
+      setArrivalAtShipper(null);
+    }
+    if (loadItem.arrivalAtReceiver) {
+      setarrivalAtReceiver(dayjs(loadItem.arrivalAtReceiver));
+    } else {
+      setarrivalAtReceiver(null);
+    }
+    if (loadItem.leftShipper) {
+      setLeftShipper(dayjs(loadItem.leftShipper));
+    } else {
+      setLeftShipper(null);
+    }
+    if (loadItem.leftReceiver) {
+      setleftReceiver(dayjs(loadItem.leftReceiver));
+    } else {
+      setleftReceiver(null);
+    }
+
+    setDriverId(loadItem.driverId?.id || "");
+    setTruckType(loadItem.truckType || "reefer");
+    setTruckId(loadItem.truckId?.truckId?.toString() || "");
+    setTruckTemp(loadItem.truckTemp?.toString() || "");
+
+    // Open the popup
+    setPopup(true);
+    setLoading(false);
+  };
+
+  // TODO: Reset Load Form
+  const resetForm = () => {
+    setDho(null);
+    setOrigin(null);
+    setDestinations([]);
+    setDistance(null);
+    setDhoToOriginDistance(null);
+    setAverageTime(null);
+    setAllDistance(""); // مسح المسافة
+    setPrice("");
+    setPricePerMile(null);
+    setFees("");
+    setDriverId("");
+    setTruckId("");
+    setTruckType("reefer");
+    setTruckTemp("");
+    setPickupAt(null);
+    setCompletedAt(null);
+    setArrivalAtShipper(null);
+    setarrivalAtReceiver(null);
+    setLeftShipper(null);
+    setleftReceiver(null);
+    setDeliveredAt("");
+    setCancelledAt("");
+    setLoadIDInp("");
+    setActiveTab(1);
+    setIsEditing(false);
+    setEditingLoad(null);
+  };
+
+  // FIXME: Create Or Update Load
   const handleCreateLoad = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -389,7 +575,13 @@ const LoadsPage = () => {
       return toast.error("Please enter a valid total price", {
         style: { background: "#dc2626", color: "#fff" },
       });
-    if (!distance || distance <= 0)
+
+    // استخدم allDistance سواء كانت فارغة أو فيها قيمة
+    const finalDistance = allDistance
+      ? parseInt(allDistance)
+      : Math.round(distance || 0);
+
+    if (!finalDistance || finalDistance <= 0)
       return toast.error("Invalid distance calculated", {
         style: { background: "#dc2626", color: "#fff" },
       });
@@ -408,10 +600,9 @@ const LoadsPage = () => {
       completedAt: completedAt ? completedAt.toISOString() : null,
       truckTemp,
       truckType,
-      // distanceMiles: Math.round(distance),
-      distanceMiles: allDistance,
+      distanceMiles: finalDistance, // استخدم finalDistance
       totalPrice: total,
-      pricePerMile: total / distance,
+      pricePerMile: total / finalDistance, // استخدم finalDistance
       feesNumber: fees,
       loadId: loadIDInp,
     };
@@ -431,17 +622,16 @@ const LoadsPage = () => {
         arrivalAtReceiver: arrivalAtReceiver.toISOString(),
       }),
       ...(leftShipper && {
-        leftShipper: leftShipper.toISOString()
+        leftShipper: leftShipper.toISOString(),
       }),
       ...(leftReceiver && {
-        leftReceiver: leftReceiver.toISOString()
+        leftReceiver: leftReceiver.toISOString(),
       }),
       truckTemp,
       truckType,
-      // distanceMiles: Math.round(distance),
-      distanceMiles: allDistance,
+      distanceMiles: finalDistance, // استخدم finalDistance
       totalPrice: total,
-      pricePerMile: total / distance,
+      pricePerMile: total / finalDistance, // استخدم finalDistance
       feesNumber: fees,
       loadId: loadIDInp,
     };
@@ -488,35 +678,6 @@ const LoadsPage = () => {
         );
       }
     }
-  };
-
-  // TODO: Rest New Load Form
-  const resetForm = () => {
-    setDho(null);
-    setOrigin(null);
-    setDestinations([]);
-    setDistance(null);
-    setDhoToOriginDistance(null);
-    setAverageTime(null);
-    setPrice("");
-    setPricePerMile(null);
-    setFees("");
-    setDriverId("");
-    setTruckId("");
-    setTruckType("reefer");
-    setTruckTemp("");
-    setPickupAt(null);
-    setCompletedAt(null);
-    setArrivalAtShipper(null);
-    setarrivalAtReceiver(null);
-    setLeftShipper(null);
-    setleftReceiver(null);
-    setDeliveredAt("");
-    setCancelledAt("");
-    setLoadIDInp("");
-    setActiveTab(1);
-    setIsEditing(false);
-    setEditingLoad(null);
   };
 
   // FIXME: Update Load Status
@@ -682,156 +843,6 @@ const LoadsPage = () => {
     if (!loadItem?.id) return;
     setSelectedLoadForAppointments(loadItem);
     setPopupAllAppointments(true);
-  };
-
-  // TODO: Open Edit Load Modal
-  const openEditLoadPopup = async (loadItem: TLoads) => {
-    if (!loadItem?.id) return;
-    setLoading(true)
-    setEditingLoad(loadItem);
-    setIsEditing(true);
-
-    try {
-      // DHO
-      if (loadItem.DHO) {
-        const dhoCoords = await geocodeAddress(loadItem.DHO);
-        setDho(
-          dhoCoords ||
-            ({
-              display_name: loadItem.DHO,
-              lat: "0",
-              lon: "0",
-            } as TPlace)
-        );
-      } else {
-        setDho(null);
-      }
-
-      // Origin
-      if (loadItem.origin) {
-        const originCoords = await geocodeAddress(loadItem.origin);
-        setOrigin(
-          originCoords ||
-            ({
-              display_name: loadItem.origin,
-              lat: "0",
-              lon: "0",
-            } as TPlace)
-        );
-      } else {
-        setOrigin(null);
-      }
-
-      // Destinations
-      if (loadItem.destination) {
-        const destArray = Array.isArray(loadItem.destination)
-          ? loadItem.destination
-          : [loadItem.destination];
-
-        const destinationPlaces = await Promise.all(
-          destArray.map(async (dest) => {
-            const coords = await geocodeAddress(dest);
-            return (
-              coords ||
-              ({
-                display_name: dest,
-                lat: "0",
-                lon: "0",
-              } as TPlace)
-            );
-          })
-        );
-
-        setDestinations(destinationPlaces);
-      } else {
-        setDestinations([]);
-      }
-    } catch (error) {
-      console.error("Error geocoding addresses:", error);
-      setDho(
-        loadItem.DHO
-          ? ({
-              display_name: loadItem.DHO,
-              lat: "0",
-              lon: "0",
-            } as TPlace)
-          : null
-      );
-
-      setOrigin(
-        loadItem.origin
-          ? ({
-              display_name: loadItem.origin,
-              lat: "0",
-              lon: "0",
-            } as TPlace)
-          : null
-      );
-
-      if (loadItem.destination) {
-        const destArray = Array.isArray(loadItem.destination)
-          ? loadItem.destination
-          : [loadItem.destination];
-
-        const destinationPlaces = destArray.map(
-          (dest) =>
-            ({
-              display_name: dest,
-              lat: "0",
-              lon: "0",
-            } as TPlace)
-        );
-        setDestinations(destinationPlaces);
-      } else {
-        setDestinations([]);
-      }
-    }
-
-    // Load Details
-    setLoadIDInp(loadItem.loadId || "");
-    setPrice(loadItem.totalPrice?.toString() || "");
-    setFees(loadItem.feesNumber?.toString() || "");
-
-    // Dates
-    if (loadItem.pickupAt) {
-      setPickupAt(dayjs(loadItem.pickupAt));
-    } else {
-      setPickupAt(null);
-    }
-    if (loadItem.completedAt) {
-      setCompletedAt(dayjs(loadItem.completedAt));
-    } else {
-      setCompletedAt(null);
-    }
-    if (loadItem.arrivalAtShipper) {
-      setArrivalAtShipper(dayjs(loadItem.arrivalAtShipper));
-    } else {
-      setArrivalAtShipper(null);
-    }
-    if (loadItem.arrivalAtReceiver) {
-      setarrivalAtReceiver(dayjs(loadItem.arrivalAtReceiver));
-    } else {
-      setarrivalAtReceiver(null);
-    }
-    if (loadItem.leftShipper) {
-      setLeftShipper(dayjs(loadItem.leftShipper));
-    } else {
-      setLeftShipper(null);
-    }
-    if (loadItem.leftReceiver) {
-      setleftReceiver(dayjs(loadItem.leftReceiver));
-    } else {
-      setleftReceiver(null);
-    }
-
-    setDriverId(loadItem.driverId?.id || "");
-    setTruckType(loadItem.truckType || "reefer");
-    setTruckId(loadItem.truckId?.truckId?.toString() || "");
-    setTruckTemp(loadItem.truckTemp?.toString() || "");
-
-    // Open the popup
-    setPopup(true);
-    setLoading(false)
   };
 
   // FIXME: Filter loadId
@@ -1796,7 +1807,10 @@ const LoadsPage = () => {
                         type="text"
                         // value={distance ? `${distance.toFixed(2)} miles` : ""}
                         value={allDistance}
-                        onChange={e => setAllDistance(e.target.value)}
+                        onChange={(e) => {
+                          const value = e.target.value.replace(/[^0-9.]/g, "");
+                          setAllDistance(value);
+                        }}
                         className="block w-full px-3 py-3 border border-slate-300 rounded-lg text-slate-700 font-medium"
                         // readOnly
                       />
@@ -1851,7 +1865,7 @@ const LoadsPage = () => {
                         // }
                         value={
                           price &&
-                          distance &&
+                          allDistance &&
                           Number(price) > 0 &&
                           Number(allDistance) > 0
                             ? `$${(Number(price) / Number(allDistance)).toFixed(
