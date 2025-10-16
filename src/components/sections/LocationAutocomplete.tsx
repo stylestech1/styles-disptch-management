@@ -7,6 +7,9 @@ export type TPlace = {
   lon: string;
   place_id: string;
   postcode?: string;
+  address?: {
+    [key: string]: string;
+  };
 };
 
 type NominatimResult = {

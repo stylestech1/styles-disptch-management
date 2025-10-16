@@ -112,7 +112,7 @@ const LoadSummary = () => {
       setLoading(true);
       try {
         const result = await apiClient(
-          `${apiURL}/api/v1/loads/summary/${id}`,
+          `${apiURL}/api/v1/loads/driver-summary/${id}`,
           token
         );
         if (!Array.isArray(result.data)) {
