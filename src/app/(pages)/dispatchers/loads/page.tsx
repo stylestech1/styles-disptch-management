@@ -990,7 +990,7 @@ const LoadsPage = () => {
           className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-800 hover:text-yellow-200 transition-colors"
         >
           <RxUpdate />
-          <span>Edit</span>
+          <span>Update</span>
         </button>
       </td>
     </tr>
