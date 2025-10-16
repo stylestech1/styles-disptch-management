@@ -29,7 +29,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
-import { Box, styled, Typography } from '@mui/material';
+import { Box, CircularProgress, styled, Typography } from '@mui/material';
 import { muiTheme } from "@/theme/theme";
 
 const StyledTableCell = styled(TableCell)(() => ({
@@ -86,6 +86,8 @@ const truckDashboard = () => {
   const token = useAppSelector((state: RootState) => state.auth.token);
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
   const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
   // Get all Trucks
@@ -137,35 +139,40 @@ const truckDashboard = () => {
 
   // Fetch truck summaries
   const fetchTruckSummaries = async (trucks: TTruck[]) => {
-    if (!token) return;
+  if (!token) return;
 
-    try {
-      const summaries: { [key: string]: TTruckSummary } = {};
-      
-      for (const { id } of trucks) {
-        try {
-          const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${id}`, {
-            method: "GET",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
+  try {
+    setSummaryLoading(true); // ✅ بدأ التحميل
 
-          if (res.ok) {
-            const result = await res.json();
-            summaries[id] = result.data;
-          }
-        } catch (error) {
-          console.error(`Error fetching summary for truck ${id}:`, error);
+    const summaries: { [key: string]: TTruckSummary } = {};
+
+    for (const { id } of trucks) {
+      try {
+        const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${id}`, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const result = await res.json();
+          summaries[id] = result.data;
         }
+      } catch (error) {
+        console.error(`Error fetching summary for truck ${id}:`, error);
       }
-
-      setTruckSummaries(summaries);
-    } catch (error) {
-      console.error("Error fetching truck summaries:", error);
     }
-  };
+
+    setTruckSummaries(summaries);
+  } catch (error) {
+    console.error("Error fetching truck summaries:", error);
+  } finally {
+    setSummaryLoading(false); // ✅ خلص التحميل
+  }
+};
+
 
   useEffect(() => {
     if (trucks.length > 0) {
@@ -207,7 +214,24 @@ const truckDashboard = () => {
       )
     : trucks;
 
-  if (loading) return <Loading />;
+if (loading)
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        height: "80vh",
+        gap: 2,
+      }}
+    >
+      <CircularProgress color="primary" size={60} />
+      <Typography variant="h6" color="text.secondary">
+        Loading trucks data...
+      </Typography>
+    </Box>
+  );
 
   return (
     <section className="relative p-6">
@@ -281,9 +305,12 @@ const truckDashboard = () => {
           bgColor="bg-red-50"
         />
       </div>
-
-      {/* MUI Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+{summaryLoading ? (
+  <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+    <CircularProgress />
+  </Box>
+) : (
+   <TableContainer component={Paper} sx={{ borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <Table sx={{ minWidth: 700 }} aria-label="trucks financial table">
           <TableHead sx={{ backgroundColor: '#f8fafc' }}>
             <TableRow>
@@ -428,6 +455,8 @@ const truckDashboard = () => {
           </TableBody>
         </Table>
       </TableContainer>
+)}
+    
 
       {/* Pagination */}
       <Pagination
