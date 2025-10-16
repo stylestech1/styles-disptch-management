@@ -60,7 +60,7 @@ export default function DispatchersLayout({
 
     // حمل المكتبة مرة واحدة فقط
     const script = document.createElement('script');
-    script.src = `https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&libraries=places,geometry`;
+    script.src = 'AIzaSyCko4VU8o8PFAZmkdj7FcQO8h4vU60BL6c';
     script.async = true;
     script.defer = true;
     
