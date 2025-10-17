@@ -1554,9 +1554,9 @@ const LoadsPage = () => {
                 </div>
                 <p className="text-emerald-700">
                   {selectedLoadForAppointments.deliveredAt
-                    ? new Date(
+                    ? `${new Date(
                         selectedLoadForAppointments.deliveredAt
-                      ).toLocaleString()
+                      ).toLocaleString()} ---> (${selectedLoadForAppointments.updatedBy})`
                     : "Not delivered"}
                 </p>
               </div>
