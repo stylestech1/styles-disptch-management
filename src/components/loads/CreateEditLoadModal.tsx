@@ -1,0 +1,1692 @@
+import { useState, useEffect, useCallback, lazy, Suspense } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import dayjs, { Dayjs } from "dayjs";
+import LocationAutocomplete, {
+  TPlace,
+} from "@/components/sections/LocationAutocomplete";
+import Modal from "@/components/ui/Modals";
+import {
+  IoLocationOutline,
+  IoDocumentText,
+  IoCar,
+  IoArrowBack,
+  IoArrowForward,
+  IoClose,
+  IoAdd,
+  IoCheckmark,
+  IoCash,
+  IoKey,
+  IoInformationCircle,
+} from "react-icons/io5";
+import { RxUpdate } from "react-icons/rx";
+import {
+  calculateDhoToOriginDistance,
+  calculateFullRouteDistance,
+} from "@/utils/googleDistanceCalculator";
+import { geocodeAddress } from "@/utils/geocoding";
+import {
+  setDho,
+  setOrigin,
+  setDestinations,
+  addDestination,
+  updateDestination,
+  removeDestination,
+  setPrice,
+  setFees,
+  setLoadIDInp,
+  setPickupAt,
+  setCompletedAt,
+  setArrivalAtShipper,
+  setArrivalAtReceiver,
+  setLeftShipper,
+  setLeftReceiver,
+  setDriverId,
+  setTruckId,
+  setTruckType,
+  setTruckTemp,
+  setActiveTab,
+  setIsEditing,
+  setEditingLoad,
+  resetForm,
+} from "@/redux/slices/loadsFormSlice";
+import {
+  useCreateLoadsMutation,
+  useGetDriversQuery,
+  useGetTrucksQuery,
+  useUpdateLoadsMutation,
+} from "@/redux/slices/apiSlice";
+import { RootState } from "@/redux/store";
+import { TDriver, TLoads, TTruck, TTruckType } from "@/types/globalTypes";
+import toast from "react-hot-toast";
+import GoogleMapsLoader from "@/components/ui/GoogleMapsLoader";
+import MapWithRoute from "@/components/ui/MapWithRoute";
+
+// Lazy load the map components
+const LazyGoogleMapsLoader = lazy(
+  () => import("@/components/ui/GoogleMapsLoader")
+);
+const LazyMapWithRoute = lazy(() => import("@/components/ui/MapWithRoute"));
+
+interface CreateEditLoadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  editingLoad?: TLoads | null;
+}
+
+const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
+  isOpen,
+  onClose,
+  editingLoad = null,
+}) => {
+  const dispatch = useDispatch();
+  const {
+    dho,
+    origin,
+    destinations,
+    price,
+    fees,
+    loadIDInp,
+    pickupAt,
+    completedAt,
+    arrivalAtShipper,
+    arrivalAtReceiver,
+    leftShipper,
+    leftReceiver,
+    driverId,
+    truckId,
+    truckType,
+    truckTemp,
+    activeTab,
+    isEditing,
+  } = useSelector((state: RootState) => state.loadsForm);
+
+  // تحويل التواريخ من strings إلى Dayjs objects للاستخدام في UI
+  const pickupAtDayjs = pickupAt ? dayjs(pickupAt) : null;
+  const completedAtDayjs = completedAt ? dayjs(completedAt) : null;
+  const arrivalAtShipperDayjs = arrivalAtShipper
+    ? dayjs(arrivalAtShipper)
+    : null;
+  const arrivalAtReceiverDayjs = arrivalAtReceiver
+    ? dayjs(arrivalAtReceiver)
+    : null;
+  const leftShipperDayjs = leftShipper ? dayjs(leftShipper) : null;
+  const leftReceiverDayjs = leftReceiver ? dayjs(leftReceiver) : null;
+
+  const [createLoad, { isLoading: creatingLoad }] = useCreateLoadsMutation();
+  const [updateLoad, { isLoading: updatingLoad }] = useUpdateLoadsMutation();
+
+  const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
+    null
+  );
+  const [averageTime, setAverageTime] = useState<number | null>(null);
+  const [distance, setDistance] = useState<number | null>(null);
+  const [allDistance, setAllDistance] = useState<string>("");
+  const [pricePerMile, setPricePerMile] = useState<number | null>(null);
+  const [showMaps, setShowMaps] = useState(false);
+
+  const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+
+  // تحميل بيانات التحميل عند فتح المودال للتعديل
+  useEffect(() => {
+    if (isOpen && editingLoad) {
+      loadEditData(editingLoad);
+    }
+  }, [isOpen, editingLoad]);
+
+  // تحميل الخرائط فقط عند فتح التبويب الأول
+  useEffect(() => {
+    if (isOpen && activeTab === 1) {
+      setShowMaps(true);
+    } else {
+      setShowMaps(false);
+    }
+  }, [isOpen, activeTab]);
+
+  // دالة لتحميل بيانات التحميل للتعديل
+  const loadEditData = async (loadItem: TLoads) => {
+    if (!loadItem?.id) return;
+
+    // تحديث حالة التحرير
+    dispatch(setIsEditing(true));
+    dispatch(setEditingLoad(loadItem));
+
+    try {
+      // DHO
+      if (loadItem.DHO) {
+        const dhoCoords = await geocodeAddress(loadItem.DHO);
+        dispatch(
+          setDho(
+            dhoCoords ||
+              ({
+                display_name: loadItem.DHO,
+                lat: "0",
+                lon: "0",
+              } as TPlace)
+          )
+        );
+      } else {
+        dispatch(setDho(null));
+      }
+
+      // Origin
+      if (loadItem.origin) {
+        const originCoords = await geocodeAddress(loadItem.origin);
+        dispatch(
+          setOrigin(
+            originCoords ||
+              ({
+                display_name: loadItem.origin,
+                lat: "0",
+                lon: "0",
+              } as TPlace)
+          )
+        );
+      } else {
+        dispatch(setOrigin(null));
+      }
+
+      // Destinations
+      if (loadItem.destination) {
+        const destArray = Array.isArray(loadItem.destination)
+          ? loadItem.destination
+          : [loadItem.destination];
+
+        const destinationPlaces = await Promise.all(
+          destArray.map(async (dest) => {
+            const coords = await geocodeAddress(dest);
+            return (
+              coords ||
+              ({
+                display_name: dest,
+                lat: "0",
+                lon: "0",
+              } as TPlace)
+            );
+          })
+        );
+
+        dispatch(setDestinations(destinationPlaces));
+      } else {
+        dispatch(setDestinations([]));
+      }
+    } catch (error) {
+      console.error("Error geocoding addresses:", error);
+      // التعامل مع الأخطاء هنا
+    }
+
+    // Load Details
+    dispatch(setLoadIDInp(loadItem.loadId || ""));
+    dispatch(setPrice(loadItem.totalPrice?.toString() || ""));
+    dispatch(setFees(loadItem.feesNumber?.toString() || ""));
+
+    // Dates
+    dispatch(setPickupAt(loadItem.pickupAt || null));
+    dispatch(setCompletedAt(loadItem.completedAt || null));
+    dispatch(setArrivalAtShipper(loadItem.arrivalAtShipper || null));
+    dispatch(setArrivalAtReceiver(loadItem.arrivalAtReceiver || null));
+    dispatch(setLeftShipper(loadItem.leftShipper || null));
+    dispatch(setLeftReceiver(loadItem.leftReceiver || null));
+
+    dispatch(setDriverId(loadItem.driverId?.id || ""));
+    dispatch(setTruckType((loadItem.truckType as TTruckType) || "reefer"));
+    dispatch(setTruckId(loadItem.truckId?.truckId?.toString() || ""));
+    dispatch(setTruckTemp(loadItem.truckTemp?.toString() || ""));
+
+    // حساب المسافة
+    if (loadItem.distanceMiles) {
+      setAllDistance(loadItem.distanceMiles.toString());
+    }
+  };
+
+  // Calculate distances
+  useEffect(() => {
+    const calculateDhoToOrigin = async () => {
+      if (!dho || !origin) {
+        setDhoToOriginDistance(null);
+        setAverageTime(null);
+        return;
+      }
+
+      try {
+        const result = await calculateDhoToOriginDistance(
+          { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) },
+          { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }
+        );
+        setDhoToOriginDistance(result.distance);
+        setAverageTime(result.duration);
+      } catch (error) {
+        console.error("Error calculating DHO to Origin distance:", error);
+        setDhoToOriginDistance(null);
+        setAverageTime(null);
+      }
+    };
+
+    calculateDhoToOrigin();
+  }, [dho, origin]);
+
+  useEffect(() => {
+    const calculateTotalDistance = async () => {
+      const isValidPlace = (place: TPlace | null): place is TPlace => {
+        return place !== null;
+      };
+
+      const validDestinations = destinations.filter(isValidPlace);
+
+      if (
+        (dho && origin && validDestinations.length > 0) ||
+        (origin && validDestinations.length > 0)
+      ) {
+        try {
+          const destinationsCoords = validDestinations.map((dest) => ({
+            lat: parseFloat(dest.lat),
+            lng: parseFloat(dest.lon),
+          }));
+
+          const result = await calculateFullRouteDistance(
+            dho ? { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) } : null,
+            origin
+              ? { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }
+              : null,
+            destinationsCoords
+          );
+
+          setDistance(result.distance);
+          setAllDistance(result.distance.toFixed(2));
+
+          if (price && Number(price) > 0) {
+            const perMile = Number(price) / result.distance;
+            setPricePerMile(perMile);
+          }
+        } catch (error) {
+          console.error("Error calculating total distance:", error);
+          setDistance(null);
+          setAllDistance("");
+        }
+      } else {
+        setDistance(null);
+        setAllDistance("");
+      }
+    };
+
+    calculateTotalDistance();
+  }, [origin, destinations, dho, price]);
+
+  // Handle form submission
+  const handleCreateLoad = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const total = Number(price);
+    const validDestinations = destinations.filter((dest) => dest !== null);
+
+    if (!origin || validDestinations.length === 0) {
+      toast.error("Please select origin and at least one destination");
+      return;
+    }
+
+    if (!isEditing && (!driverId || !truckId)) {
+      toast.error("Please select driver and truck");
+      return;
+    }
+
+    if (!total || total <= 0) {
+      toast.error("Please enter a valid total price");
+      return;
+    }
+
+    const finalDistance = allDistance
+      ? parseInt(allDistance)
+      : Math.round(distance || 0);
+
+    if (!finalDistance || finalDistance <= 0) {
+      toast.error("Invalid distance calculated");
+      return;
+    }
+
+    const bodyData = {
+      origin: { address: origin.display_name },
+      destination: validDestinations.map((dest) => ({
+        address: dest!.display_name,
+      })),
+      DHO: dho ? { address: dho.display_name } : null,
+      driverId: isEditing ? editingLoad?.driverId?.id : driverId,
+      truckId: isEditing ? editingLoad?.truckId?.truckId?.toString() : truckId,
+      pickupAt: pickupAt,
+      completedAt: completedAt,
+      truckTemp,
+      truckType,
+      distanceMiles: finalDistance,
+      totalPrice: total,
+      pricePerMile: total / finalDistance,
+      feesNumber: fees,
+      loadId: loadIDInp,
+    };
+
+    const updateBody = {
+      origin: { address: origin.display_name },
+      destination: validDestinations.map((dest) => ({
+        address: dest!.display_name,
+      })),
+      DHO: dho ? { address: dho.display_name } : null,
+      pickupAt: pickupAt,
+      completedAt: completedAt,
+      ...(arrivalAtShipper && { arrivalAtShipper }),
+      ...(arrivalAtReceiver && { arrivalAtReceiver }),
+      ...(leftShipper && { leftShipper }),
+      ...(leftReceiver && { leftReceiver }),
+      truckTemp,
+      truckType,
+      distanceMiles: finalDistance,
+      totalPrice: total,
+      pricePerMile: total / finalDistance,
+      feesNumber: fees,
+      loadId: loadIDInp,
+    };
+
+    try {
+      if (isEditing && editingLoad) {
+        await updateLoad({ id: editingLoad.id, ...updateBody }).unwrap();
+        toast.success("Load updated ✅");
+      } else {
+        await createLoad(bodyData).unwrap();
+        toast.success("Load created ✅");
+      }
+
+      handleClose();
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(
+        errorMessage || `Load ${isEditing ? "update" : "creation"} failed ❌`
+      );
+    }
+  };
+
+  const getErrorMessage = (error: unknown): string => {
+    if (typeof error === "string") {
+      return error;
+    }
+
+    if (error instanceof Error) {
+      return error.message;
+    }
+
+    if (typeof error === "object" && error !== null && "data" in error) {
+      const rtkError = error as { data?: { message?: string } };
+      if (rtkError.data?.message) {
+        return rtkError.data.message;
+      }
+    }
+
+    if (typeof error === "object" && error !== null && "message" in error) {
+      return (error as { message: string }).message;
+    }
+
+    return "An unknown error occurred";
+  };
+
+  const handleClose = () => {
+    dispatch(resetForm());
+    setShowMaps(false);
+    onClose();
+  };
+
+  const handlePriceChange = (value: string) => {
+    dispatch(setPrice(value));
+
+    if (allDistance && Number(allDistance) > 0 && Number(value) > 0) {
+      const perMile = Number(value) / Number(allDistance);
+      setPricePerMile(perMile);
+    } else {
+      setPricePerMile(null);
+    }
+  };
+
+  const formatTime = (hours: number): string => {
+    const totalMinutes = hours * 60;
+    const hoursPart = Math.floor(totalMinutes / 60);
+    const minutesPart = Math.round(totalMinutes % 60);
+
+    if (hoursPart === 0) {
+      return `${minutesPart} minutes`;
+    } else if (minutesPart === 0) {
+      return `${hoursPart} hours`;
+    } else {
+      return `${hoursPart}h ${minutesPart}m`;
+    }
+  };
+
+  const isTab1Valid = (): boolean => {
+    const hasValidDho = dho !== null && dho !== undefined;
+    const hasValidOrigin = origin !== null && origin !== undefined;
+    const hasValidDestinations =
+      destinations.length > 0 &&
+      destinations.every((dest) => dest !== null && dest !== undefined);
+
+    return hasValidDho && hasValidOrigin && hasValidDestinations;
+  };
+
+  const isTab2Valid = (): boolean => {
+    const hasValidPrice = price.trim() !== "";
+    const hasValidLoadID = loadIDInp.trim() !== "";
+    const hasValidPickupAt = pickupAt !== null;
+    const hasValidCompletedAt = completedAt !== null;
+
+    return (
+      hasValidPrice && hasValidLoadID && hasValidPickupAt && hasValidCompletedAt
+    );
+  };
+
+  const isTab3Valid = (): boolean => {
+    if (isEditing) {
+      return !!(
+        editingLoad?.driverId &&
+        editingLoad?.truckId &&
+        editingLoad?.truckType
+      );
+    } else {
+      const hasValidDriverId = driverId.trim() !== "";
+      const hasValidTruckType = truckType.trim() !== "";
+      const hasValidTruckId = truckId.trim() !== "";
+
+      return hasValidDriverId && hasValidTruckType && hasValidTruckId;
+    }
+  };
+
+  const handleAddDestination = () => {
+    dispatch(addDestination());
+  };
+
+  const handleUpdateDestination = (index: number, place: TPlace | null) => {
+    dispatch(updateDestination({ index, place }));
+  };
+
+  const handleRemoveDestination = (index: number) => {
+    dispatch(removeDestination(index));
+  };
+
+  // Map fallback component
+  const MapFallback = () => (
+    <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg border border-gray-200">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+        <p className="text-gray-600">Loading Maps...</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={handleClose}
+      title={
+        isEditing && editingLoad
+          ? `Edit Load - ${editingLoad.loadId}`
+          : "Create New Load"
+      }
+      size="xl"
+    >
+      <div className="flex flex-col h-full">
+        {/* Tabs Navigation */}
+        <div className="border-b border-slate-200">
+          <nav className="flex space-x-8">
+            <button
+              type="button"
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 1
+                  ? "border-emerald-500 text-emerald-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              }`}
+              onClick={() => dispatch(setActiveTab(1))}
+            >
+              <span className="flex items-center">
+                <IoLocationOutline className="mr-2" />
+                Locations
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 2
+                  ? "border-emerald-500 text-emerald-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              }`}
+              onClick={() => dispatch(setActiveTab(2))}
+            >
+              <span className="flex items-center">
+                <IoDocumentText className="mr-2" />
+                Load Details
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 3
+                  ? "border-emerald-500 text-emerald-600"
+                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
+              }`}
+              onClick={() => dispatch(setActiveTab(3))}
+            >
+              <span className="flex items-center">
+                <IoCar className="mr-2" />
+                Ride
+              </span>
+            </button>
+          </nav>
+        </div>
+
+        <form onSubmit={handleCreateLoad} className="flex-1 overflow-auto p-4">
+          {/* Tab 1: Locations */}
+          {activeTab === 1 && (
+            <div>
+              {/* Information Message */}
+              {allDistance && (
+                <div className="mb-5 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <IoInformationCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <h4 className="text-md font-medium text-blue-800">
+                        Route Distance Information
+                      </h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Total distance calculated from {dho ? "DHO" : "Origin"}{" "}
+                        through all destinations:{" "}
+                        <strong>{allDistance} miles</strong>
+                      </p>
+                      {dho && origin && (
+                        <p className="text-sm text-blue-600 mt-1">
+                          • DHO to Origin:{" "}
+                          {dhoToOriginDistance?.toFixed(2) || "0"} miles
+                        </p>
+                      )}
+                      {destinations.filter((d) => d !== null).length > 0 && (
+                        <p className="text-sm text-blue-600">
+                          • Including{" "}
+                          {destinations.filter((d) => d !== null).length}{" "}
+                          destination(s)
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Direction */}
+                <div className="space-y-6">
+                  <LocationAutocomplete
+                    label="DHO (Driver Home Origin)"
+                    value={dho}
+                    setValue={(place) => dispatch(setDho(place))}
+                    placeholder="Enter driver's starting location"
+                  />
+
+                  <LocationAutocomplete
+                    label="Pick Up (Origin)"
+                    value={origin}
+                    setValue={(place) => dispatch(setOrigin(place))}
+                    placeholder="Enter origin address"
+                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        DHO to Origin Distance
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={
+                            dhoToOriginDistance
+                              ? `${dhoToOriginDistance.toFixed(2)} miles`
+                              : ""
+                          }
+                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                          readOnly
+                          placeholder="Distance will auto-calculate"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                        Average Time To Pickup
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={
+                            averageTime ? `${formatTime(averageTime)}` : ""
+                          }
+                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                          readOnly
+                          placeholder="Time will auto-calculate"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Destinations Section */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-slate-700">
+                        Destinations <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={handleAddDestination}
+                        className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                      >
+                        <IoAdd size={16} />
+                        Add Destination
+                      </button>
+                    </div>
+
+                    {destinations.map((destination, index) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <div className="flex-1">
+                          <LocationAutocomplete
+                            label={`Destination ${index + 1}`}
+                            value={destination}
+                            setValue={(place) =>
+                              handleUpdateDestination(index, place)
+                            }
+                            placeholder={`Enter destination ${
+                              index + 1
+                            } address`}
+                          />
+                        </div>
+
+                        {destinations.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveDestination(index)}
+                            className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          >
+                            <IoClose size={20} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+
+                    {destinations.length === 0 && (
+                      <div className="text-center py-6 border-2 border-dashed border-slate-300 rounded-lg bg-gray-50">
+                        <p className="text-gray-500 font-medium">
+                          No destinations added yet
+                        </p>
+                        <p className="text-gray-400 text-sm mt-1">
+                          You must add at least one destination to continue
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Maps - Load only when needed */}
+                <div className="grid grid-cols-1 gap-6">
+                  {showMaps ? (
+                    <Suspense fallback={<MapFallback />}>
+                      <LazyGoogleMapsLoader
+                        apiKey={GOOGLE_MAPS_API_KEY}
+                        onLoad={() => console.log("Maps loaded successfully")}
+                        onError={(error) =>
+                          console.error("Failed to load maps:", error)
+                        }
+                      >
+                        <LazyMapWithRoute
+                          dho={dho}
+                          origin={origin}
+                          destinations={destinations}
+                          height="350px"
+                        />
+                      </LazyGoogleMapsLoader>
+                    </Suspense>
+                  ) : (
+                    <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg border border-gray-200">
+                      <div className="text-center text-gray-500">
+                        <p>Map will load when needed</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-4">
+                <button
+                  type="button"
+                  onClick={() => dispatch(setActiveTab(2))}
+                  disabled={!isTab1Valid()}
+                  className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+                    isTab1Valid()
+                      ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                      : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                  }`}
+                >
+                  Next
+                  <IoArrowForward size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Tab 2: Load Details */}
+          {activeTab === 2 && (
+            <LoadDetailsTab
+              allDistance={allDistance}
+              price={price}
+              fees={fees}
+              loadIDInp={loadIDInp}
+              pickupAt={pickupAtDayjs}
+              completedAt={completedAtDayjs}
+              arrivalAtShipper={arrivalAtShipperDayjs}
+              arrivalAtReceiver={arrivalAtReceiverDayjs}
+              leftShipper={leftShipperDayjs}
+              leftReceiver={leftReceiverDayjs}
+              pricePerMile={pricePerMile}
+              isEditing={isEditing}
+              destinations={destinations}
+              onPriceChange={handlePriceChange}
+              onFeesChange={(value) => dispatch(setFees(value))}
+              onLoadIDChange={(value) => dispatch(setLoadIDInp(value))}
+              onPickupAtChange={(value) =>
+                dispatch(setPickupAt(value ? value.toISOString() : null))
+              }
+              onCompletedAtChange={(value) =>
+                dispatch(setCompletedAt(value ? value.toISOString() : null))
+              }
+              onArrivalAtShipperChange={(value) =>
+                dispatch(
+                  setArrivalAtShipper(value ? value.toISOString() : null)
+                )
+              }
+              onArrivalAtReceiverChange={(value) =>
+                dispatch(
+                  setArrivalAtReceiver(value ? value.toISOString() : null)
+                )
+              }
+              onLeftShipperChange={(value) =>
+                dispatch(setLeftShipper(value ? value.toISOString() : null))
+              }
+              onLeftReceiverChange={(value) =>
+                dispatch(setLeftReceiver(value ? value.toISOString() : null))
+              }
+              isTabValid={isTab2Valid()}
+              onPrevTab={() => dispatch(setActiveTab(1))}
+              onNextTab={() => dispatch(setActiveTab(3))}
+            />
+          )}
+
+          {/* Tab 3: Assignment */}
+          {activeTab === 3 && (
+            <AssignmentTab
+              isEditing={isEditing}
+              editingLoad={editingLoad}
+              driverId={driverId}
+              truckId={truckId}
+              truckType={truckType}
+              truckTemp={truckTemp}
+              onDriverIdChange={(value) => dispatch(setDriverId(value))}
+              onTruckIdChange={(value) => dispatch(setTruckId(value))}
+              onTruckTypeChange={(value) =>
+                dispatch(setTruckType(value as TTruckType))
+              }
+              onTruckTempChange={(value) => dispatch(setTruckTemp(value))}
+              isTabValid={isTab3Valid()}
+              onPrevTab={() => dispatch(setActiveTab(2))}
+              onSubmit={handleCreateLoad}
+              isLoading={creatingLoad || updatingLoad}
+            />
+          )}
+        </form>
+      </div>
+    </Modal>
+  );
+};
+
+export default CreateEditLoadModal;
+
+// Location Tab Component
+interface LocationTabProps {
+  dho: TPlace | null;
+  origin: TPlace | null;
+  destinations: (TPlace | null)[];
+  dhoToOriginDistance: number | null;
+  averageTime: number | null;
+  allDistance: string;
+  onDhoChange: (place: TPlace | null) => void;
+  onOriginChange: (place: TPlace | null) => void;
+  onAddDestination: () => void;
+  onUpdateDestination: (index: number, place: TPlace | null) => void;
+  onRemoveDestination: (index: number) => void;
+  formatTime: (hours: number) => string;
+  isTabValid: boolean;
+  onNextTab: () => void;
+  googleMapsApiKey: string;
+}
+
+const LocationTab: React.FC<LocationTabProps> = ({
+  dho,
+  origin,
+  destinations,
+  dhoToOriginDistance,
+  averageTime,
+  allDistance,
+  onDhoChange,
+  onOriginChange,
+  onAddDestination,
+  onUpdateDestination,
+  onRemoveDestination,
+  formatTime,
+  isTabValid,
+  onNextTab,
+  googleMapsApiKey,
+}) => {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Direction */}
+        <div className="space-y-6">
+          <LocationAutocomplete
+            label="DHO (Driver Home Origin)"
+            value={dho}
+            setValue={onDhoChange}
+            placeholder="Enter driver's starting location"
+          />
+
+          <LocationAutocomplete
+            label="Pick Up (Origin)"
+            value={origin}
+            setValue={onOriginChange}
+            placeholder="Enter origin address"
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                DHO to Origin Distance
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={
+                    dhoToOriginDistance
+                      ? `${dhoToOriginDistance.toFixed(2)} miles`
+                      : ""
+                  }
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                  readOnly
+                  placeholder="Distance will auto-calculate"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2">
+                Average Time To Pickup
+              </label>
+              <div className="relative">
+                <input
+                  type="text"
+                  value={averageTime ? `${formatTime(averageTime)}` : ""}
+                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                  readOnly
+                  placeholder="Time will auto-calculate"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Destinations Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-slate-700">
+                Destinations <span className="text-red-500">*</span>
+              </label>
+              <button
+                type="button"
+                onClick={onAddDestination}
+                className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                <IoAdd size={16} />
+                Add Destination
+              </button>
+            </div>
+
+            {destinations.map((destination, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div className="flex-1">
+                  <LocationAutocomplete
+                    label={`Destination ${index + 1}`}
+                    value={destination}
+                    setValue={(place) => onUpdateDestination(index, place)}
+                    placeholder={`Enter destination ${index + 1} address`}
+                  />
+                </div>
+
+                {destinations.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => onRemoveDestination(index)}
+                    className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  >
+                    <IoClose size={20} />
+                  </button>
+                )}
+              </div>
+            ))}
+
+            {destinations.length === 0 && (
+              <div className="text-center py-6 border-2 border-dashed border-slate-300 rounded-lg bg-gray-50">
+                <p className="text-gray-500 font-medium">
+                  No destinations added yet
+                </p>
+                <p className="text-gray-400 text-sm mt-1">
+                  You must add at least one destination to continue
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Maps */}
+        <div className="grid grid-cols-1 gap-6">
+          <GoogleMapsLoader
+            apiKey={googleMapsApiKey}
+            onLoad={() => console.log("Google Maps loaded successfully")}
+            onError={(error) =>
+              console.error("Failed to load Google Maps:", error)
+            }
+          >
+            <MapWithRoute
+              dho={dho}
+              origin={origin}
+              destinations={destinations}
+            />
+          </GoogleMapsLoader>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-4">
+        <button
+          type="button"
+          onClick={onNextTab}
+          disabled={!isTabValid}
+          className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+            isTabValid
+              ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed"
+          }`}
+        >
+          Next
+          <IoArrowForward size={16} />
+        </button>
+      </div>
+
+      {/* Information Message */}
+      {allDistance && (
+        <div className="mt-5 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-2">
+            <IoInformationCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-medium text-blue-800">
+                Route Distance Information
+              </h4>
+              <p className="text-xs text-blue-700 mt-1">
+                Total distance calculated from {dho ? "DHO" : "Origin"} through
+                all destinations: <strong>{allDistance} miles</strong>
+              </p>
+              {dho && origin && (
+                <p className="text-xs text-blue-600 mt-1">
+                  • DHO to Origin: {dhoToOriginDistance?.toFixed(2) || "0"}{" "}
+                  miles
+                </p>
+              )}
+              {destinations.filter((d) => d !== null).length > 0 && (
+                <p className="text-xs text-blue-600">
+                  • Including {destinations.filter((d) => d !== null).length}{" "}
+                  destination(s)
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Load Details Tab Component
+interface LoadDetailsTabProps {
+  allDistance: string;
+  price: string;
+  fees: string;
+  loadIDInp: string;
+  pickupAt: Dayjs | null;
+  completedAt: Dayjs | null;
+  arrivalAtShipper: Dayjs | null;
+  arrivalAtReceiver: Dayjs | null;
+  leftShipper: Dayjs | null;
+  leftReceiver: Dayjs | null;
+  pricePerMile: number | null;
+  isEditing: boolean;
+  destinations: (TPlace | null)[];
+  onPriceChange: (value: string) => void;
+  onFeesChange: (value: string) => void;
+  onLoadIDChange: (value: string) => void;
+  onPickupAtChange: (value: Dayjs | null) => void;
+  onCompletedAtChange: (value: Dayjs | null) => void;
+  onArrivalAtShipperChange: (value: Dayjs | null) => void;
+  onArrivalAtReceiverChange: (value: Dayjs | null) => void;
+  onLeftShipperChange: (value: Dayjs | null) => void;
+  onLeftReceiverChange: (value: Dayjs | null) => void;
+  isTabValid: boolean;
+  onPrevTab: () => void;
+  onNextTab: () => void;
+}
+
+const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
+  allDistance,
+  price,
+  fees,
+  loadIDInp,
+  pickupAt,
+  completedAt,
+  arrivalAtShipper,
+  arrivalAtReceiver,
+  leftShipper,
+  leftReceiver,
+  pricePerMile,
+  isEditing,
+  destinations,
+  onPriceChange,
+  onFeesChange,
+  onLoadIDChange,
+  onPickupAtChange,
+  onCompletedAtChange,
+  onArrivalAtShipperChange,
+  onArrivalAtReceiverChange,
+  onLeftShipperChange,
+  onLeftReceiverChange,
+  isTabValid,
+  onPrevTab,
+  onNextTab,
+}) => {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Calculated All Distance - Read Only */}
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Calculated All Distance
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={allDistance ? `${allDistance} miles` : "Calculating..."}
+              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+              readOnly
+              placeholder="Auto-calculating total distance..."
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <IoCheckmark className="h-5 w-5 text-green-600" />
+            </div>
+          </div>
+          {allDistance && (
+            <p className="text-xs text-slate-500 mt-1">
+              Total route: → {destinations.filter((d) => d !== null).length}{" "}
+              destination(s)
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Total Price <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <IoCash className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              value={price}
+              onChange={(e) => onPriceChange(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              placeholder="0.00"
+              required
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Price Per Mile
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={
+                pricePerMile !== null &&
+                !isNaN(pricePerMile) &&
+                isFinite(pricePerMile)
+                  ? `$${pricePerMile.toFixed(3)}`
+                  : "$0.000"
+              }
+              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+              readOnly
+            />
+            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+              <IoCash className="h-5 w-5 text-slate-400" />
+            </div>
+          </div>
+          {pricePerMile !== null &&
+            !isNaN(pricePerMile) &&
+            isFinite(pricePerMile) && (
+              <p className="text-xs text-slate-500 mt-1">
+                Calculated automatically: ${price} ÷ {allDistance} miles
+              </p>
+            )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Fees Number
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <IoCash className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              value={fees}
+              onChange={(e) => onFeesChange(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              placeholder="115"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Load Id <span className="text-red-500">*</span>
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <IoKey className="h-5 w-5 text-slate-400" />
+            </div>
+            <input
+              type="text"
+              value={loadIDInp}
+              onChange={(e) => onLoadIDChange(e.target.value)}
+              className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              placeholder="A101"
+              required
+            />
+          </div>
+        </div>
+
+        <div className="md:col-span-2">
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Pickup DateTime */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Pickup <span className="text-red-500">*</span>
+                </label>
+                <DateTimePicker
+                  value={pickupAt}
+                  onChange={onPickupAtChange}
+                  disablePast
+                  views={["year", "month", "day", "hours", "minutes"]}
+                  slotProps={{
+                    textField: {
+                      required: true,
+                      fullWidth: true,
+                      className: "bg-white",
+                    },
+                  }}
+                />
+              </div>
+
+              {/* Completed DateTime */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Delivery <span className="text-red-500">*</span>
+                </label>
+                <DateTimePicker
+                  value={completedAt}
+                  onChange={onCompletedAtChange}
+                  disablePast
+                  views={["year", "month", "day", "hours", "minutes"]}
+                  slotProps={{
+                    textField: {
+                      required: true,
+                      fullWidth: true,
+                      className: "bg-white",
+                    },
+                  }}
+                />
+              </div>
+
+              {isEditing && (
+                <>
+                  {/* ArrivalAtShipper */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Arrival At Shipper
+                    </label>
+                    <DateTimePicker
+                      value={arrivalAtShipper}
+                      onChange={onArrivalAtShipperChange}
+                      views={["year", "month", "day", "hours", "minutes"]}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          className: "bg-white",
+                        },
+                      }}
+                    />
+                  </div>
+
+                  {/* arrivalAtReceiver */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Arrival At Receiver
+                    </label>
+                    <DateTimePicker
+                      value={arrivalAtReceiver}
+                      onChange={onArrivalAtReceiverChange}
+                      views={["year", "month", "day", "hours", "minutes"]}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          className: "bg-white",
+                        },
+                      }}
+                    />
+                  </div>
+
+                  {/* leftShipper */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Left Shipper
+                    </label>
+                    <DateTimePicker
+                      value={leftShipper}
+                      onChange={onLeftShipperChange}
+                      views={["year", "month", "day", "hours", "minutes"]}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          className: "bg-white",
+                        },
+                      }}
+                    />
+                  </div>
+
+                  {/* leftReceiver */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Left Receiver
+                    </label>
+                    <DateTimePicker
+                      value={leftReceiver}
+                      onChange={onLeftReceiverChange}
+                      views={["year", "month", "day", "hours", "minutes"]}
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          className: "bg-white",
+                        },
+                      }}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+          </LocalizationProvider>
+        </div>
+      </div>
+
+      <div className="flex justify-between pt-4">
+        <button
+          type="button"
+          onClick={onPrevTab}
+          className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+        >
+          <IoArrowBack size={16} />
+          Back
+        </button>
+        <button
+          type="button"
+          onClick={onNextTab}
+          disabled={!isTabValid}
+          className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+            isTabValid
+              ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed"
+          }`}
+        >
+          Next
+          <IoArrowForward size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// Assignment Tab Component
+interface AssignmentTabProps {
+  isEditing: boolean;
+  editingLoad: TLoads | null;
+  driverId: string;
+  truckId: string;
+  truckType: string;
+  truckTemp: string;
+  onDriverIdChange: (value: string) => void;
+  onTruckIdChange: (value: string) => void;
+  onTruckTypeChange: (value: string) => void;
+  onTruckTempChange: (value: string) => void;
+  isTabValid: boolean;
+  onPrevTab: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+  isLoading: boolean;
+}
+
+const AssignmentTab: React.FC<AssignmentTabProps> = ({
+  isEditing,
+  editingLoad,
+  driverId,
+  truckId,
+  truckType,
+  truckTemp,
+  onDriverIdChange,
+  onTruckIdChange,
+  onTruckTypeChange,
+  onTruckTempChange,
+  isTabValid,
+  onPrevTab,
+  onSubmit,
+  isLoading,
+}) => {
+  const { data: driversData } = useGetDriversQuery();
+  const { data: trucksData } = useGetTrucksQuery();
+
+  const drivers = driversData?.data || [];
+  const trucks = trucksData?.data || [];
+
+  if (isEditing) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Driver - Display Only */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Driver <span className="text-green-600">✓ Assigned</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={editingLoad?.driverId?.name || "No driver assigned"}
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
+                readOnly
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <IoCheckmark className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+            {editingLoad?.driverId?.phone && (
+              <p className="text-xs text-slate-500 mt-1">
+                Phone: {editingLoad.driverId.phone}
+              </p>
+            )}
+          </div>
+
+          {/* Truck Type - Display Only */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Truck Type <span className="text-green-600">✓ Assigned</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={
+                  editingLoad?.truckType
+                    ? `${
+                        editingLoad.truckType.charAt(0).toUpperCase() +
+                        editingLoad.truckType.slice(1)
+                      }`
+                    : "No type assigned"
+                }
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
+                readOnly
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <IoCheckmark className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          {/* Truck - Display Only */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Truck <span className="text-green-600">✓ Assigned</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={
+                  editingLoad?.truckId
+                    ? `${editingLoad.truckId.model} (${editingLoad.truckId.plateNumber})`
+                    : "No truck assigned"
+                }
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
+                readOnly
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <IoCheckmark className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+            {editingLoad?.truckId && (
+              <p className="text-xs text-slate-500 mt-1">
+                Truck ID: {editingLoad.truckId.truckId}
+              </p>
+            )}
+          </div>
+
+          {/* Temperature - Display Only */}
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Temperature <span className="text-green-600">✓ Set</span>
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={
+                  editingLoad?.truckTemp
+                    ? `${editingLoad.truckTemp}°C`
+                    : "Not set"
+                }
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
+                readOnly
+              />
+              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                <IoCheckmark className="h-5 w-5 text-green-600" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Information Message */}
+        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="flex items-start gap-3">
+            <IoInformationCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+            <div>
+              <h4 className="text-sm font-medium text-blue-800">
+                Driver & Truck Information
+              </h4>
+              <p className="text-sm text-blue-700 mt-1">
+                Driver and truck assignments cannot be modified for existing
+                loads. This ensures consistency in load tracking and driver
+                assignments.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-between pt-4">
+          <button
+            type="button"
+            onClick={onPrevTab}
+            className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+          >
+            <IoArrowBack size={16} />
+            Back
+          </button>
+          <button
+            type="submit"
+            disabled={!isTabValid || isLoading}
+            className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+              isTabValid && !isLoading
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                : "bg-slate-300 text-slate-500 cursor-not-allowed"
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                {isEditing ? "Updating..." : "Creating..."}
+              </>
+            ) : (
+              <>
+                <RxUpdate size={18} />
+                Update Load
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Driver <span className="text-red-500">*</span>
+          </label>
+          <select
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            value={driverId}
+            onChange={(e) => onDriverIdChange(e.target.value)}
+            required
+          >
+            <option value="">Select Driver</option>
+            {drivers.map((d: TDriver, i: number) => (
+              <option key={i} value={d.id}>
+                {d.name} ({d.driverId})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Truck Type <span className="text-red-500">*</span>
+          </label>
+          <select
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            value={truckType}
+            onChange={(e) => onTruckTypeChange(e.target.value as TTruckType)}
+            required
+          >
+            <option value="">Select Type</option>
+            <option value="reefer">Reefer</option>
+            <option value="van">Van</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Truck <span className="text-red-500">*</span>
+          </label>
+          <select
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            value={truckId}
+            onChange={(e) => onTruckIdChange(e.target.value)}
+            required
+            disabled={!truckType}
+          >
+            <option value="">Select Truck</option>
+            {Array.isArray(trucks) &&
+              trucks
+                .filter((t: TTruck) => !truckType || t.type === truckType)
+                .map((t: TTruck, i: number) => (
+                  <option key={i} value={t.id}>
+                    {t.model} ({t.truckId}) ({t.type})
+                  </option>
+                ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Temperature{" "}
+            {truckType === "reefer" && <span className="text-red-500">*</span>}
+          </label>
+          <input
+            type="number"
+            value={truckTemp}
+            onChange={(e) => onTruckTempChange(e.target.value)}
+            className={`${
+              Array.isArray(trucks) &&
+              trucks.find((t: TTruck) => t.id === truckId)?.type !== "reefer"
+                ? "cursor-not-allowed"
+                : ""
+            } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
+            placeholder="-10"
+            disabled={
+              !truckId ||
+              (Array.isArray(trucks) &&
+                trucks.find((t: TTruck) => t.id === truckId)?.type !== "reefer")
+            }
+          />
+        </div>
+      </div>
+
+      <div className="flex justify-between pt-4">
+        <button
+          type="button"
+          onClick={onPrevTab}
+          className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+        >
+          <IoArrowBack size={16} />
+          Back
+        </button>
+        <button
+          type="submit"
+          disabled={!isTabValid || isLoading}
+          className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+            isTabValid && !isLoading
+              ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+              : "bg-slate-300 text-slate-500 cursor-not-allowed"
+          }`}
+        >
+          {isLoading ? (
+            <>
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              Creating...
+            </>
+          ) : (
+            <>
+              <IoAdd size={18} />
+              Create Load
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  );
+};

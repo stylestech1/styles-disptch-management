@@ -1,290 +1,255 @@
 // components/ui/MapWithRoute.tsx
-"use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TPlace } from "@/components/sections/LocationAutocomplete";
 
-type Props = {
-  dho?: TPlace | null;
-  origin?: TPlace | null;
-  destinations?: (TPlace | null)[];
-};
+interface MapWithRouteProps {
+  dho: TPlace | null;
+  origin: TPlace | null;
+  destinations: (TPlace | null)[];
+  height?: string;
+}
 
-export default function MapWithRoute({ dho, origin, destinations = [] }: Props) {
+const MapWithRoute: React.FC<MapWithRouteProps> = ({
+  dho,
+  origin,
+  destinations,
+  height = "400px",
+}) => {
   const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<google.maps.Map | null>(null);
-  const directionsRenderer = useRef<google.maps.DirectionsRenderer | null>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [directionsService] = useState(
+    () => new google.maps.DirectionsService()
+  );
+  const [directionsRenderer] = useState(
+    () => new google.maps.DirectionsRenderer()
+  );
+  const [markers, setMarkers] = useState<google.maps.Marker[]>([]);
 
+  // Initialize map
   useEffect(() => {
     if (!mapRef.current || !window.google) return;
 
-    mapInstance.current = new google.maps.Map(mapRef.current, {
+    const googleMap = new google.maps.Map(mapRef.current, {
       zoom: 5,
-      center: dho ? { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) } : { lat: 39.8283, lng: -98.5795 },
-      styles: [
-          // الخلفية العامة
-          {
-            featureType: "all",
-            elementType: "geometry",
-            stylers: [{ color: "#f8fafc" }], // خلفية فاتحة
-          },
-          {
-            featureType: "all",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#64748b" }], // لون النصوص العام
-          },
-
-          // المحيطات والمياه
-          {
-            featureType: "water",
-            elementType: "geometry",
-            stylers: [{ color: "#e0f2fe" }], // لون المياه
-          },
-          {
-            featureType: "water",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#0ea5e9" }], // لون تسميات المياه
-          },
-
-          // الطرق السريعة
-          {
-            featureType: "road.highway",
-            elementType: "geometry",
-            stylers: [{ color: "#fecaca" }, { weight: 1.5 }], // طرق سريعة بلون وردي فاتح
-          },
-          {
-            featureType: "road.highway",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#dc2626" }], // تسميات الطرق السريعة
-          },
-
-          // الطرق الرئيسية
-          {
-            featureType: "road.arterial",
-            elementType: "geometry",
-            stylers: [{ color: "#fed7aa" }, { weight: 1.2 }], // طرق رئيسية بلون برتقالي فاتح
-          },
-          {
-            featureType: "road.arterial",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#ea580c" }], // تسميات الطرق الرئيسية
-          },
-
-          // الطرق المحلية
-          {
-            featureType: "road.local",
-            elementType: "geometry",
-            stylers: [{ color: "#ffffff" }, { weight: 0.8 }], // طرق محلية بيضاء
-          },
-          {
-            featureType: "road.local",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#475569" }], // تسميات الطرق المحلية
-          },
-
-          // المناطق السكنية
-          {
-            featureType: "landscape.man_made",
-            elementType: "geometry",
-            stylers: [{ color: "#f1f5f9" }], // مناطق سكنية
-          },
-
-          // الحدائق والمساحات الخضراء
-          {
-            featureType: "poi.park",
-            elementType: "geometry",
-            stylers: [{ color: "#dcfce7" }], // حدائق خضراء
-          },
-          {
-            featureType: "poi.park",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#16a34a" }], // تسميات الحدائق
-          },
-
-          // المناطق التجارية
-          {
-            featureType: "poi.business",
-            elementType: "geometry",
-            stylers: [{ color: "#fef3c7" }], // مناطق تجارية
-          },
-
-          // الحدود الإدارية
-          {
-            featureType: "administrative.locality",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#7c3aed" }], // أسماء المدن
-          },
-          {
-            featureType: "administrative.neighborhood",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#475569" }], // أسماء الأحياء
-          },
-
-          // النقاط المهمة (POI)
-          {
-            featureType: "poi",
-            elementType: "labels.text.fill",
-            stylers: [{ color: "#6b7280" }], // تسميات النقاط المهمة
-          },
-          {
-            featureType: "poi",
-            elementType: "labels.icon",
-            stylers: [{ visibility: "simplified" }], // تبسيط الأيقونات
-          },
-
-          // المناطق الطبيعية
-          {
-            featureType: "landscape.natural",
-            elementType: "geometry",
-            stylers: [{ color: "#ecfccb" }], // مناطق طبيعية
-          },
-
-          // الخطوط العريضة
-          {
-            featureType: "administrative",
-            elementType: "geometry.stroke",
-            stylers: [{ color: "#cbd5e1" }, { weight: 0.5 }], // حدود إدارية
-          },
-        ],
+      center: { lat: 39.8283, lng: -98.5795 }, // Center of US
+      mapTypeControl: false,
+      streetViewControl: false,
     });
 
-    // Initialize directions renderer
-    directionsRenderer.current = new google.maps.DirectionsRenderer({
-      map: mapInstance.current,
-      suppressMarkers: false,
-      polylineOptions: {
-        strokeColor: "#3b82f6",
-        strokeWeight: 4,
-        strokeOpacity: 0.8,
-      },
-    });
-  }, []);
+    setMap(googleMap);
+    directionsRenderer.setMap(googleMap);
+  }, [directionsRenderer]);
 
+  // Clear previous markers and routes
+  const clearMarkers = () => {
+    markers.forEach((marker) => marker.setMap(null));
+    setMarkers([]);
+  };
+
+  const clearRoutes = () => {
+    directionsRenderer.setDirections({
+      routes: [],
+      request: {
+        travelMode: google.maps.TravelMode.DRIVING,
+      } as google.maps.DirectionsRequest,
+    } as google.maps.DirectionsResult);
+  };
+
+  // Add markers and calculate route
   useEffect(() => {
-    if (!window.google || !mapInstance.current || !directionsRenderer.current) return;
+    if (!map) return;
 
-    const validDestinations = destinations.filter((dest): dest is TPlace => dest !== null);
-    
-    if (!origin && validDestinations.length === 0 && !dho) {
-      // التعديل هنا: استخدم setMap(null) بدل setDirections
-      directionsRenderer.current.setMap(null);
+    clearMarkers();
+    clearRoutes();
+
+    const validDestinations = destinations.filter(
+      (dest): dest is TPlace => dest !== null
+    );
+    const allLocations: TPlace[] = [];
+
+    if (dho) allLocations.push(dho);
+    if (origin) allLocations.push(origin);
+    allLocations.push(...validDestinations);
+
+    if (allLocations.length === 0) return;
+
+    // Add markers
+    const newMarkers = allLocations.map((location, index) => {
+      const position = {
+        lat: parseFloat(location.lat),
+        lng: parseFloat(location.lon),
+      };
+
+      let icon: google.maps.Icon | undefined;
+      let label: string | undefined;
+
+      if (location === dho) {
+        icon = {
+          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDNy41ODYgMiA0IDUuNTg2IDQgMTBDNCAxNC40MTQgNy41ODYgMTggMTIgMThDMTYuNDE0IDE4IDIwIDE0LjQxNCAyMCAxMEMyMCA1LjU4NiAxNi40MTQgMiAxMiAyWk0xMiAxMkMxMC44OTcgMTIgMTAgMTEuMTAzIDEwIDEwQzEwIDguODk3IDEwLjg5NyA4IDEyIDhDMTMuMTAzIDggMTQgOC44OTcgMTQgMTBDMTQgMTEuMTAzIDEzLjEwMyAxMiAxMiAxMloiIGZpbGw9IiMzMzgwRkYiLz4KPC9zdmc+",
+          scaledSize: new google.maps.Size(24, 24),
+          anchor: new google.maps.Point(12, 12),
+        };
+        label = "DHO";
+      } else if (location === origin) {
+        icon = {
+          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDNy41ODYgMiA0IDUuNTg2IDQgMTBDNCAxNC40MTQgNy41ODYgMTggMTIgMThDMTYuNDE0IDE4IDIwIDE0LjQxNCAyMCAxMEMyMCA1LjU4NiAxNi40MTQgMiAxMiAyWk0xMiAxMkMxMC44OTcgMTIgMTAgMTEuMTAzIDEwIDEwQzEwIDguODk3IDEwLjg5NyA4IDEyIDhDMTMuMTAzIDggMTQgOC44OTcgMTQgMTBDMTQgMTEuMTAzIDEzLjEwMyAxMiAxMiAxMloiIGZpbGw9IiMxNjlFNzYiLz4KPC9zdmc+",
+          scaledSize: new google.maps.Size(24, 24),
+          anchor: new google.maps.Point(12, 12),
+        };
+        label = "Origin";
+      } else {
+        icon = {
+          url: "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJDNy41ODYgMiA0IDUuNTg2IDQgMTBDNCAxNC40MTQgNy41ODYgMTggMTIgMThDMTYuNDE0IDE4IDIwIDE0LjQxNCAyMCAxMEMyMCA1LjU4NiAxNi40MTQgMiAxMiAyWk0xMiAxMkMxMC44OTcgMTIgMTAgMTEuMTAzIDEwIDEwQzEwIDguODk3IDEwLjg5NyA4IDEyIDhDMTMuMTAzIDggMTQgOC44OTcgMTQgMTBDMTQgMTEuMTA3IDEzLjEwMyAxMiAxMiAxMloiIGZpbGw9IiNERjQ0MzYiLz4KPC9zdmc+",
+          scaledSize: new google.maps.Size(24, 24),
+          anchor: new google.maps.Point(12, 12),
+        };
+        label = `Dest ${validDestinations.indexOf(location) + 1}`;
+      }
+
+      const marker = new google.maps.Marker({
+        position,
+        map,
+        icon,
+        label: {
+          text: label,
+          color: "#fff",
+          fontSize: "10px",
+          fontWeight: "bold",
+        },
+        title: location.display_name,
+      });
+
+      // Add info window
+      const infoWindow = new google.maps.InfoWindow({
+        content: `
+          <div class="p-2">
+            <div class="font-semibold">${label}</div>
+            <div class="text-sm text-gray-600">${location.display_name}</div>
+          </div>
+        `,
+      });
+
+      marker.addListener("click", () => {
+        infoWindow.open(map, marker);
+      });
+
+      return marker;
+    });
+
+    setMarkers(newMarkers);
+
+    // Calculate and display route if we have enough points
+    if ((dho && origin) || (origin && validDestinations.length > 0)) {
+      calculateAndDisplayRoute();
+    }
+
+    // Fit map to bounds
+    const bounds = new google.maps.LatLngBounds();
+    allLocations.forEach((location) => {
+      bounds.extend({
+        lat: parseFloat(location.lat),
+        lng: parseFloat(location.lon),
+      });
+    });
+
+    // تأكد من وجود نقاط قبل fitBounds
+    if (!bounds.isEmpty()) {
+      map.fitBounds(bounds);
+
+      // حد أدنى للـ zoom إذا كانت النقاط قريبة جداً
+      const listener = google.maps.event.addListener(map, "idle", () => {
+        const currentZoom = map.getZoom();
+        if (currentZoom && currentZoom > 15) {
+          map.setZoom(15);
+        }
+        google.maps.event.removeListener(listener);
+      });
+    }
+  }, [map, dho, origin, destinations, directionsService, directionsRenderer]);
+
+  const calculateAndDisplayRoute = () => {
+    if (!map || (!dho && !origin)) return;
+
+    const validDestinations = destinations.filter(
+      (dest): dest is TPlace => dest !== null
+    );
+
+    let waypoints: google.maps.DirectionsWaypoint[] = [];
+    let routeOrigin: google.maps.LatLngLiteral;
+    let routeDestination: google.maps.LatLngLiteral;
+
+    if (dho && origin && validDestinations.length > 0) {
+      // DHO → Origin → Destinations
+      routeOrigin = { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) };
+      routeDestination = {
+        lat: parseFloat(validDestinations[validDestinations.length - 1].lat),
+        lng: parseFloat(validDestinations[validDestinations.length - 1].lon),
+      };
+
+      waypoints = [
+        {
+          location: {
+            lat: parseFloat(origin.lat),
+            lng: parseFloat(origin.lon),
+          },
+          stopover: true,
+        },
+        ...validDestinations.slice(0, -1).map((dest) => ({
+          location: { lat: parseFloat(dest.lat), lng: parseFloat(dest.lon) },
+          stopover: true,
+        })),
+      ];
+    } else if (origin && validDestinations.length > 0) {
+      // Origin → Destinations
+      routeOrigin = {
+        lat: parseFloat(origin.lat),
+        lng: parseFloat(origin.lon),
+      };
+      routeDestination = {
+        lat: parseFloat(validDestinations[validDestinations.length - 1].lat),
+        lng: parseFloat(validDestinations[validDestinations.length - 1].lon),
+      };
+
+      waypoints = validDestinations.slice(0, -1).map((dest) => ({
+        location: { lat: parseFloat(dest.lat), lng: parseFloat(dest.lon) },
+        stopover: true,
+      }));
+    } else if (dho && origin) {
+      // DHO → Origin فقط
+      routeOrigin = { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) };
+      routeDestination = {
+        lat: parseFloat(origin.lat),
+        lng: parseFloat(origin.lon),
+      };
+    } else {
       return;
     }
 
-    const directionsService = new google.maps.DirectionsService();
-
-    // إعادة تفعيل الـ directions renderer إذا كان معطل
-    if (!directionsRenderer.current.getMap()) {
-      directionsRenderer.current.setMap(mapInstance.current);
-    }
-
-    // إذا كان هناك DHO و Origin و Destinations
-    if (dho && origin && validDestinations.length > 0) {
-      const waypoints = validDestinations.slice(0, -1).map(dest => ({
-        location: { lat: parseFloat(dest.lat), lng: parseFloat(dest.lon) },
-        stopover: true,
-      }));
-
-      const lastDestination = validDestinations[validDestinations.length - 1];
-
-      directionsService.route(
-        {
-          origin: { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) },
-          destination: { lat: parseFloat(lastDestination.lat), lng: parseFloat(lastDestination.lon) },
-          waypoints: [
-            { location: { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }, stopover: true },
-            ...waypoints
-          ],
-          travelMode: google.maps.TravelMode.DRIVING,
-          optimizeWaypoints: false,
-        },
-        (result, status) => {
-          if (status === "OK" && result) {
-            directionsRenderer.current?.setDirections(result);
-          }
+    directionsService.route(
+      {
+        origin: routeOrigin,
+        destination: routeDestination,
+        waypoints: waypoints,
+        travelMode: google.maps.TravelMode.DRIVING,
+        optimizeWaypoints: false,
+      },
+      (result, status) => {
+        if (status === google.maps.DirectionsStatus.OK && result) {
+          directionsRenderer.setDirections(result);
+        } else {
+          console.warn("Directions request failed due to", status);
         }
-      );
-    }
-    // إذا كان هناك Origin و Destinations فقط
-    else if (origin && validDestinations.length > 0) {
-      const waypoints = validDestinations.slice(0, -1).map(dest => ({
-        location: { lat: parseFloat(dest.lat), lng: parseFloat(dest.lon) },
-        stopover: true,
-      }));
-
-      const lastDestination = validDestinations[validDestinations.length - 1];
-
-      directionsService.route(
-        {
-          origin: { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) },
-          destination: { lat: parseFloat(lastDestination.lat), lng: parseFloat(lastDestination.lon) },
-          waypoints: waypoints,
-          travelMode: google.maps.TravelMode.DRIVING,
-          optimizeWaypoints: false,
-        },
-        (result, status) => {
-          if (status === "OK" && result) {
-            directionsRenderer.current?.setDirections(result);
-          }
-        }
-      );
-    }
-    // إذا كان هناك DHO و Origin فقط
-    else if (dho && origin) {
-      directionsService.route(
-        {
-          origin: { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) },
-          destination: { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) },
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === "OK" && result) {
-            directionsRenderer.current?.setDirections(result);
-          }
-        }
-      );
-    }
-    // إذا كان هناك Origin فقط
-    else if (origin) {
-      // إخفاء الـ directions renderer أولاً
-      directionsRenderer.current.setMap(null);
-      
-      const marker = new google.maps.Marker({
-        position: { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) },
-        map: mapInstance.current,
-        title: "Origin",
-      });
-
-      mapInstance.current.setCenter({ lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) });
-      mapInstance.current.setZoom(12);
-
-      return () => {
-        marker.setMap(null);
-      };
-    }
-    // إذا كان هناك DHO فقط
-    else if (dho) {
-      // إخفاء الـ directions renderer أولاً
-      directionsRenderer.current.setMap(null);
-      
-      const marker = new google.maps.Marker({
-        position: { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) },
-        map: mapInstance.current,
-        title: "DHO",
-      });
-
-      mapInstance.current.setCenter({ lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) });
-      mapInstance.current.setZoom(12);
-
-      return () => {
-        marker.setMap(null);
-      };
-    }
-  }, [dho, origin, destinations]);
+      }
+    );
+  };
 
   return (
-    <div 
-      ref={mapRef} 
-      className="w-full h-[350px] rounded-xl overflow-hidden border border-slate-200 shadow-sm"
+    <div
+      ref={mapRef}
+      style={{ height }}
+      className="w-full rounded-lg border border-gray-200"
     />
   );
-}
+};
+
+export default MapWithRoute;

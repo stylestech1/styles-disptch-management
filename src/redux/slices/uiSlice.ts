@@ -1,85 +1,60 @@
+// redux/slices/uiSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TLoads } from '@/types/globalTypes';
 
-interface UiState {
-  popups: {
-    load: boolean;
-    loadStatus: boolean;
-    note: boolean;
-    allNotes: boolean;
-    allAppointments: boolean;
-  };
-  activeTab: number;
-  selectedLoadId: string;
-  selectedLoadForNotes: TLoads | null;
-  selectedLoadForAppointments: TLoads | null;
-  editingLoad: TLoads | null;
-  isEditing: boolean;
+interface UIState {
+  search: string;
+  page: number;
+  loading: boolean;
+  error: string | null;
 }
 
-const initialState: UiState = {
-  popups: {
-    load: false,
-    loadStatus: false,
-    note: false,
-    allNotes: false,
-    allAppointments: false,
-  },
-  activeTab: 1,
-  selectedLoadId: '',
-  selectedLoadForNotes: null,
-  selectedLoadForAppointments: null,
-  editingLoad: null,
-  isEditing: false,
+const initialState: UIState = {
+  search: '',
+  page: 1,
+  loading: false,
+  error: null,
 };
 
 const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    setPopup: (state, action: PayloadAction<{ popup: keyof UiState['popups']; value: boolean }>) => {
-      state.popups[action.payload.popup] = action.payload.value;
+    setSearch: (state, action: PayloadAction<string>) => {
+      state.search = action.payload;
     },
-    setActiveTab: (state, action: PayloadAction<number>) => {
-      state.activeTab = action.payload;
+    
+    setPage: (state, action: PayloadAction<number>) => {
+      state.page = action.payload;
     },
-    setSelectedLoadId: (state, action: PayloadAction<string>) => {
-      state.selectedLoadId = action.payload;
+    
+    setLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
     },
-    setSelectedLoadForNotes: (state, action: PayloadAction<TLoads | null>) => {
-      state.selectedLoadForNotes = action.payload;
+    
+    setError: (state, action: PayloadAction<string | null>) => {
+      state.error = action.payload;
     },
-    setSelectedLoadForAppointments: (state, action: PayloadAction<TLoads | null>) => {
-      state.selectedLoadForAppointments = action.payload;
+    
+    clearError: (state) => {
+      state.error = null;
     },
-    setEditingLoad: (state, action: PayloadAction<{ load: TLoads | null; isEditing: boolean }>) => {
-      state.editingLoad = action.payload.load;
-      state.isEditing = action.payload.isEditing;
+    
+    resetUI: (state) => {
+      state.search = '';
+      state.page = 1;
+      state.loading = false;
+      state.error = null;
     },
-    closeAllPopups: (state) => {
-      Object.keys(state.popups).forEach(key => {
-        state.popups[key as keyof UiState['popups']] = false;
-      });
-      state.activeTab = 1;
-      state.selectedLoadId = '';
-      state.selectedLoadForNotes = null;
-      state.selectedLoadForAppointments = null;
-      state.editingLoad = null;
-      state.isEditing = false;
-    },
-    resetUiState: () => initialState,
   },
 });
 
 export const {
-  setPopup,
-  setActiveTab,
-  setSelectedLoadId,
-  setSelectedLoadForNotes,
-  setSelectedLoadForAppointments,
-  setEditingLoad,
-  closeAllPopups,
-  resetUiState,
+  setSearch,
+  setPage,
+  setLoading,
+  setError,
+  clearError,
+  resetUI,
 } = uiSlice.actions;
 
 export default uiSlice.reducer;

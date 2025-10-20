@@ -1,41 +1,74 @@
-"use client";
-import { useEffect, useState } from "react";
+// components/ui/GoogleMapsLoader.tsx
+import { useEffect, useState } from 'react';
+import { useLoadGoogleMapsQuery } from '@/redux/slices/googleMapsSlice';
 
-declare global {
-  interface Window {
-    google?: typeof google;
-  }
-}
-
-type Props = {
+interface GoogleMapsLoaderProps {
   apiKey: string;
   children: React.ReactNode;
-};
+  onLoad?: () => void;
+  onError?: (error: string) => void;
+}
 
-export default function GoogleMapsLoader({ apiKey, children }: Props) {
-  const [loaded, setLoaded] = useState(false);
+const GoogleMapsLoader: React.FC<GoogleMapsLoaderProps> = ({
+  apiKey,
+  children,
+  onLoad,
+  onError,
+}) => {
+  const [isMapsReady, setIsMapsReady] = useState(false);
+  
+  const {
+    data: mapsLoaded,
+    isLoading,
+    error,
+  } = useLoadGoogleMapsQuery(apiKey, {
+    skip: !apiKey || isMapsReady,
+  });
 
   useEffect(() => {
-    if (window.google) {
-      setLoaded(true);
-      return;
+    if (mapsLoaded) {
+      setIsMapsReady(true);
+      onLoad?.();
     }
+  }, [mapsLoaded, onLoad]);
 
-    const script = document.createElement("script");
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,geometry`;
-    script.async = true;
-    script.defer = true;
+  useEffect(() => {
+    if (error) {
+      onError?.(typeof error === 'string' ? error : 'Failed to load Google Maps');
+    }
+  }, [error, onError]);
 
-    script.onload = () => setLoaded(true);
-    document.head.appendChild(script);
-  }, [apiKey]);
+  // إذا كان Google Maps محمل مسبقاً
+  useEffect(() => {
+    if (window.google && window.google.maps) {
+      setIsMapsReady(true);
+      onLoad?.();
+    }
+  }, [onLoad]);
 
-  if (!loaded)
+  if (isLoading) {
     return (
-      <div className="text-center text-gray-500 p-4">
-        Loading Google Maps...
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-2 text-gray-600">Loading Maps...</span>
       </div>
     );
+  }
+
+  if (error || !isMapsReady) {
+    return (
+      <div className="flex items-center justify-center p-8 bg-red-50 rounded-lg">
+        <div className="text-red-600 text-center">
+          <div className="text-lg font-semibold">Maps Loading Failed</div>
+          <div className="text-sm mt-1">
+            {typeof error === 'string' ? error : 'Unable to load Google Maps'}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return <>{children}</>;
-}
+};
+
+export default GoogleMapsLoader;

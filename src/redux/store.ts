@@ -1,14 +1,14 @@
 // redux/store.ts
-'use client'
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
+import { persistReducer, persistStore } from "redux-persist";
 import { useDispatch, useSelector } from "react-redux";
 import storage from "redux-persist/lib/storage";
-import { persistReducer, persistStore } from "redux-persist";
 import authSlice from "./slices/authSlice";
-import loadsReducer from './slices/loadsSlice';
-import driversReducer from './slices/driversSlice';
-import trucksReducer from './slices/trucksSlice';
-import uiReducer from './slices/uiSlice';
+import loadsFormSlice from "./slices/loadsFormSlice";
+import modalsSlice from "./slices/modalsSlice";
+import uiSlice from "./slices/uiSlice";
+import { apiSlice } from "./slices/apiSlice";
+import { googleMapsApi } from "./slices/googleMapsSlice";
 
 const authPersistConfig = {
   key: "auth",
@@ -17,10 +17,11 @@ const authPersistConfig = {
 
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authSlice),
-  loads: loadsReducer,
-  drivers: driversReducer,
-  trucks: trucksReducer,
-  ui: uiReducer,
+  loadsForm: loadsFormSlice,
+  modals: modalsSlice,
+  ui: uiSlice,
+  [apiSlice.reducerPath]: apiSlice.reducer,
+  [googleMapsApi.reducerPath]: googleMapsApi.reducer,
 });
 
 export const store = configureStore({
@@ -28,15 +29,14 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        ignoredActions: ['persist/PERSIST', 'persist/REHYDRATE'],
+        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
-    })
+    }).concat(apiSlice.middleware, googleMapsApi.middleware),
 });
- 
+
 export const persistor = persistStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
-
-export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
 export const useAppSelector = useSelector.withTypes<RootState>();
+export const useAppDispatch = useDispatch.withTypes<AppDispatch>();
