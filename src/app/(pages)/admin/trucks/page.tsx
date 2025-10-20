@@ -155,7 +155,7 @@ interface TTruckSummary {
       
       for (const { id } of trucks) {
         try {
-          const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${id}`, {
+          const res = await fetch(`${apiURL}/api/v1/truck-summary/${id}`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",
@@ -457,7 +457,7 @@ interface TTruckSummary {
 
     try {
       // Fetch truck summary to get insurance & repair cost
-      const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${truck.id}`, {
+      const res = await fetch(`${apiURL}/api/v1/summary/truck/${truck.id}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

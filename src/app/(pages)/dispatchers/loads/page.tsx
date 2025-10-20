@@ -767,7 +767,7 @@ const LoadsPage = () => {
 
     try {
       const result = await apiClient(
-        `${apiURL}/api/v1/loads/${selectedLoadIdForNote}/comments`,
+        `${apiURL}/api/v1/comments/${selectedLoadIdForNote}`,
         token,
         {
           method: "POST",
@@ -805,7 +805,7 @@ const LoadsPage = () => {
       setLoading(true);
 
       const result = (await apiClient(
-        `${apiURL}/api/v1/loads/${loadId}/comments`,
+        `${apiURL}/api/v1/comments/${loadId}`,
         token
       )) as { comments: TComments[] };
 

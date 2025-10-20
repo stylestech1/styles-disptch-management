@@ -767,7 +767,7 @@ const LoadsPage = () => {
 
     try {
       const result = await apiClient(
-        `${apiURL}/api/v1/loads/${selectedLoadIdForNote}/comments`,
+        `${apiURL}/api/v1/comments/${selectedLoadIdForNote}`,
         token,
         {
           method: "POST",
@@ -805,7 +805,7 @@ const LoadsPage = () => {
       setLoading(true);
 
       const result = (await apiClient(
-        `${apiURL}/api/v1/loads/${loadId}/comments`,
+        `${apiURL}/api/v1/comments/${loadId}`,
         token
       )) as { comments: TComments[] };
 
@@ -1767,87 +1767,6 @@ const LoadsPage = () => {
                         destinations={destinations}
                       />
                     </GoogleMapsLoader>
-
-                    {/* Calculated All Distance - Read Only */}
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Total Price <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <IoCash className="h-5 w-5 text-slate-400" />
-                        </div>
-                        <input
-                          type="text"
-                          step="0.01"
-                          value={price}
-                          onChange={(e) => handlePriceChange(e.target.value)}
-                          className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                          placeholder="0.00"
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Calculated All Distance
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={
-                            allDistance
-                              ? `${allDistance} miles`
-                              : "Calculating..."
-                          }
-                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-                          readOnly
-                          placeholder="Auto-calculating total distance..."
-                        />
-                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <IoCheckmark className="h-5 w-5 text-green-600" />
-                        </div>
-                      </div>
-                      {allDistance && (
-                        <p className="text-xs text-slate-500 mt-1">
-                          Total route: DHO → Origin →{" "}
-                          {destinations.filter((d) => d !== null).length}{" "}
-                          destination(s)
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
-                        Price Per Mile
-                      </label>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          value={
-                            pricePerMile !== null &&
-                            !isNaN(pricePerMile) &&
-                            isFinite(pricePerMile)
-                              ? `$${pricePerMile.toFixed(3)}`
-                              : "$0.000"
-                          }
-                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-                          readOnly
-                        />
-                        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                          <IoCash className="h-5 w-5 text-slate-400" />
-                        </div>
-                      </div>
-                      {pricePerMile !== null &&
-                        !isNaN(pricePerMile) &&
-                        isFinite(pricePerMile) && (
-                          <p className="text-xs text-slate-500 mt-1">
-                            Calculated automatically: ${price} ÷ {allDistance}{" "}
-                            miles
-                          </p>
-                        )}
-                    </div>
                   </div>
                 </div>
 
@@ -1905,6 +1824,87 @@ const LoadsPage = () => {
             {activeTab === 2 && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Calculated All Distance - Read Only */}
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Calculated All Distance
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={
+                          allDistance
+                            ? `${allDistance} miles`
+                            : "Calculating..."
+                        }
+                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+                        readOnly
+                        placeholder="Auto-calculating total distance..."
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <IoCheckmark className="h-5 w-5 text-green-600" />
+                      </div>
+                    </div>
+                    {allDistance && (
+                      <p className="text-xs text-slate-500 mt-1">
+                        Total route: DHO → Origin →{" "}
+                        {destinations.filter((d) => d !== null).length}{" "}
+                        destination(s)
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Total Price <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <IoCash className="h-5 w-5 text-slate-400" />
+                      </div>
+                      <input
+                        type="text"
+                        step="0.01"
+                        value={price}
+                        onChange={(e) => handlePriceChange(e.target.value)}
+                        className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                        placeholder="0.00"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                      Price Per Mile
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={
+                          pricePerMile !== null &&
+                          !isNaN(pricePerMile) &&
+                          isFinite(pricePerMile)
+                            ? `$${pricePerMile.toFixed(3)}`
+                            : "$0.000"
+                        }
+                        className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+                        readOnly
+                      />
+                      <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                        <IoCash className="h-5 w-5 text-slate-400" />
+                      </div>
+                    </div>
+                    {pricePerMile !== null &&
+                      !isNaN(pricePerMile) &&
+                      isFinite(pricePerMile) && (
+                        <p className="text-xs text-slate-500 mt-1">
+                          Calculated automatically: ${price} ÷ {allDistance}{" "}
+                          miles
+                        </p>
+                      )}
+                  </div>
+
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-2">
                       Fees Number

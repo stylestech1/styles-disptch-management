@@ -159,7 +159,7 @@ const TruckDashboard = () => {
 
       for (const { id } of trucks) {
         try {
-          const res = await fetch(`${apiURL}/api/v1/loads/truck-summary/${id}`, {
+          const res = await fetch(`${apiURL}/api/v1/summary/truck/${id}`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",

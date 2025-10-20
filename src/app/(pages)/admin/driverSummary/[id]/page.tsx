@@ -181,7 +181,7 @@ const LoadSummary = () => {
       setLoading(true);
       try {
         const result = await apiClient(
-          `${apiURL}/api/v1/loads/driver-summary/${id}`,
+          `${apiURL}/api/v1/summary/driver/${id}`,
           token
         );
 
