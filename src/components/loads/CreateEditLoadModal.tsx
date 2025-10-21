@@ -728,7 +728,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                   {showMaps ? (
                     <Suspense fallback={<MapFallback />}>
                       <LazyGoogleMapsLoader
-                        apiKey={GOOGLE_MAPS_API_KEY}
                         onLoad={() => console.log("Maps loaded successfully")}
                         onError={(error) =>
                           console.error("Failed to load maps:", error)
@@ -992,7 +991,6 @@ const LocationTab: React.FC<LocationTabProps> = ({
         {/* Maps */}
         <div className="grid grid-cols-1 gap-6">
           <GoogleMapsLoader
-            apiKey={googleMapsApiKey}
             onLoad={() => console.log("Google Maps loaded successfully")}
             onError={(error) =>
               console.error("Failed to load Google Maps:", error)
