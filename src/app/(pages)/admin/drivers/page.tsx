@@ -1,803 +1,754 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import Erros from "@/components/ui/Erros";
-import Loading from "@/components/ui/Loading";
-import Titles from "@/components/ui/Titles";
-import { RootState, useAppSelector } from "@/redux/store";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useAppSelector } from "@/redux/store";
 import {
-  IoClose,
+  useGetDriversQuery,
+  useGetAllDriversQuery,
+  useCreateDriverMutation,
+  useUpdateDriverMutation,
+  useDeleteDriverMutation,
+} from "@/redux/slices/driverApi";
+import { TDriver } from "@/types/globalTypes";
+import Titles from "@/components/ui/Titles";
+import Loading from "@/components/ui/Loading";
+import toast, { Toaster } from "react-hot-toast";
+import {
   IoAdd,
-  IoSearch,
-  IoStatsChart,
   IoPencil,
   IoTrash,
+  IoSearch,
+  IoClose,
+  IoAnalytics,
   IoPerson,
   IoCall,
   IoMail,
   IoCard,
   IoCash,
+  IoCalendar,
+  IoStatsChart,
 } from "react-icons/io5";
-import toast, { Toaster } from "react-hot-toast";
-import { TDriver, TPagination } from "@/types/globalTypes";
-import Link from "next/link";
-import useLoading from "@/hook/useLoading";
-import useError from "@/hook/useError";
-import { apiClient } from "@/utils/apiClient";
-import DataTable from "@/components/ui/DataTable";
-import { driverColumns } from "@/data/driverTables";
-import StatsCard from "@/components/ui/StatsCard";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Box,
+  IconButton,
+  Tooltip,
+  Chip,
+  InputAdornment,
+  TablePagination,
+  styled,
+  Typography,
+  CircularProgress,
+  Divider,
+  Alert,
+} from "@mui/material";
+import { muiTheme } from "@/theme/theme";
 
-const DriversPage = () => {
-  const [drivers, setDrivers] = useState<TDriver[]>([]);
-  const [search, setSearch] = useState("");
-  const [popup, setPopup] = useState(false);
-  const [editPopup, setEditPopup] = useState(false);
-  const [selectedDriver, setSelectedDriver] = useState<TDriver | null>(null); 
-  const [pagination, setPagination] = useState<TPagination | null>(null);
-  const [page, setPage] = useState(1);
-  const [allDrivers, setAllDrivers] = useState<TDriver[]>([]);
-  const [newDriver, setNewDriver] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    licenseNumber: "",
-    pricePerMile: "",
-    status: "available",
-  });
+// ✅ Styled Table Components
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${theme.components?.MuiTableCell?.styleOverrides?.root}`]: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
+  },
+  '&[class*="MuiTableCell-head"]': {
+    backgroundColor: muiTheme.palette.primary.main,
+    color: theme.palette.common.white,
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  '&[class*="MuiTableCell-body"]': {
+    fontSize: 14,
+  },
+}));
 
-  const [updateDriver, setUpdateDriver] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    licenseNumber: "",
-    pricePerMile: "",
-    status: "available",
-  });
+const StyledTableRow = styled(TableRow)(({ theme }) => ({
+  '&:nth-of-type(even)': {
+    backgroundColor: theme.palette.action.hover,
+  },
+  '&:last-child td, &:last-child th': {
+    border: 0,
+  },
+  '&:hover': {
+    backgroundColor: theme.palette.action.selected,
+  },
+}));
 
-  const router = useRouter();
-  const token = useAppSelector((state: RootState) => state.auth.token);
-  const { loading, setLoading } = useLoading();
-  const { error, setError } = useError();
-  const apiURL = process.env.NEXT_PUBLIC_API_URL;
-
-  // FIXME: Fetch drivers
-  useEffect(() => {
-    if (!token) {
-      router.replace("/");
-      return;
-    }
-
-    const fetchDrivers = async () => {
-      try {
-        setLoading(true);
-        const result = await apiClient(`${apiURL}/api/v1/drivers`, token);
-        setDrivers(result.data as TDriver[]);
-        setPagination(result.paginationResult as TPagination);
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message);
-          toast.error(error.message || "Failed to load drivers");
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDrivers();
-  }, [apiURL, token, router]);
-
-  // FIXME: Filter DriverId & Name & Phone & Email
-  const fetchAllDrivers = async () => {
-    if (!token) {
-      router.replace("/");
-      return;
-    }
-    try {
-      const result = await apiClient(
-        `${apiURL}/api/v1/drivers?limit=1000`,
-        token
-      );
-
-      setAllDrivers((result.data as TDriver[]) || []);
-    } catch (error) {
-      console.error("Error fetching all loads:", error);
+const StatusChip = ({ status }: { status: string }) => {
+  const getColor = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case "available":
+        return "success";
+      case "busy":
+        return "error";
+      case "inactive":
+        return "default";
+      default:
+        return "default";
     }
   };
-  useEffect(() => {
-    if (!token) {
-      router.replace("/");
-      return;
-    }
-    fetchAllDrivers();
-  }, [apiURL, token, router, page]);
+
+  return <Chip label={status} color={getColor(status)} size="small" />;
+};
+
+// ✅ Driver Form Component - Vertical Layout
+const DriverForm = ({
+  open,
+  onClose,
+  formData,
+  onChange,
+  onSubmit,
+  editMode,
+  isLoading,
+}: {
+  open: boolean;
+  onClose: () => void;
+  formData: Partial<TDriver>;
+  onChange: (field: string, value: any) => void;
+  onSubmit: () => void;
+  editMode: boolean;
+  isLoading: boolean;
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{
+        sx: {
+          borderRadius: 3,
+          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
+          maxHeight: '90vh',
+        }
+      }}
+    >
+      {/* Header */}
+      <DialogTitle
+        sx={{
+          pb: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
+          color: 'white',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1
+        }}
+      >
+        <Typography variant="h5" fontWeight="bold">
+          {editMode ? "Edit Driver" : "Add New Driver"}
+        </Typography>
+        <IconButton onClick={onClose} sx={{ color: 'white' }} size="small">
+          <IoClose />
+        </IconButton>
+      </DialogTitle>
+
+      <DialogContent sx={{ py: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Personal Information Section */}
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+              Personal Information
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Full Name *"
+                name="name"
+                value={formData.name || ""}
+                onChange={(e) => onChange("name", e.target.value)}
+                size="medium"
+                placeholder="e.g., John Doe"
+              />
+
+              <TextField
+                fullWidth
+                label="Email *"
+                name="email"
+                type="email"
+                value={formData.email || ""}
+                onChange={(e) => onChange("email", e.target.value)}
+                size="medium"
+                placeholder="e.g., john.doe@example.com"
+              />
+
+              <TextField
+                fullWidth
+                label="Phone *"
+                name="phone"
+                value={formData.phone || ""}
+                onChange={(e) => onChange("phone", e.target.value)}
+                size="medium"
+                placeholder="e.g., +1234567890"
+              />
+            </Box>
+          </Box>
+
+          {/* Professional Information Section */}
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+              Professional Information
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                fullWidth
+                label="License Number *"
+                name="licenseNumber"
+                value={formData.licenseNumber || ""}
+                onChange={(e) => onChange("licenseNumber", e.target.value)}
+                size="medium"
+                placeholder="e.g., DL123456789"
+              />
+
+              <TextField
+                fullWidth
+                label="Price Per Mile *"
+                name="pricePerMile"
+                type="number"
+                value={formData.pricePerMile || ""}
+                onChange={(e) => onChange("pricePerMile", parseFloat(e.target.value) || "")}
+                size="medium"
+                inputProps={{ min: 0, step: 0.1 }}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>,
+                }}
+              />
+
+              <TextField
+                fullWidth
+                label="Hire Date"
+                name="hireDate"
+                type="date"
+                value={formData.hireDate || ""}
+                onChange={(e) => onChange("hireDate", e.target.value)}
+                size="medium"
+                InputLabelProps={{ shrink: true }}
+              />
+            </Box>
+          </Box>
+
+          {/* Status Section */}
+          <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+              Status
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            <FormControl fullWidth size="medium">
+              <InputLabel>Status *</InputLabel>
+              <Select
+                label="Status *"
+                name="status"
+                value={formData.status || ""}
+                onChange={(e) => onChange("status", e.target.value)}
+              >
+                <MenuItem value="available">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip label="Available" color="success" size="small" />
+                    <Typography>Available</Typography>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="busy">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip label="Busy" color="error" size="small" />
+                    <Typography>Busy</Typography>
+                  </Box>
+                </MenuItem>
+                <MenuItem value="inactive">
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip label="Inactive" color="default" size="small" />
+                    <Typography>Inactive</Typography>
+                  </Box>
+                </MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
+
+          {/* Helper Text */}
+          <Alert severity="info">
+            Fields marked with * are required
+          </Alert>
+        </Box>
+      </DialogContent>
+
+      <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
+        <Button
+          onClick={onClose}
+          color="inherit"
+          variant="outlined"
+          disabled={isLoading}
+          sx={{ borderRadius: 2, minWidth: 100 }}
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={onSubmit}
+          variant="contained"
+          disabled={isLoading}
+          startIcon={isLoading ? <CircularProgress size={16} /> : null}
+          sx={{
+            borderRadius: 2,
+            px: 4,
+            minWidth: 140,
+            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`
+          }}
+        >
+          {isLoading ? (
+            editMode ? "Saving..." : "Creating..."
+          ) : (
+            editMode ? "Save Changes" : "Create Driver"
+          )}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+const DriversPage = () => {
+  const router = useRouter();
+  const user = useAppSelector((state) => state.auth.user);
+
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [search, setSearch] = useState("");
+  const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
+
+  // 🔹 API Queries
+  const { data: driversData, isLoading, refetch } = useGetDriversQuery(page + 1);
+  const { data: allDriversData } = useGetAllDriversQuery();
+
+  // 🔹 API Mutations
+  const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
+  const [updateDriver, { isLoading: isUpdating }] = useUpdateDriverMutation();
+  const [deleteDriver, { isLoading: isDeleting }] = useDeleteDriverMutation();
+
+  const drivers = driversData?.data || [];
+  const allDrivers = allDriversData?.data || [];
+
   const filteredDrivers = search
-    ? allDrivers.filter(
-        (d) =>
-          d.name.toLowerCase().includes(search.toLowerCase()) ||
-          d.phone.toLowerCase().includes(search.toLowerCase()) ||
-          d.email.toLowerCase().includes(search.toLowerCase()) ||
-          d.driverId.toString().toLowerCase().includes(search.toLowerCase())
+    ? allDrivers.filter((driver: TDriver) =>
+        driver.name?.toLowerCase().includes(search.toLowerCase()) ||
+        driver.email?.toLowerCase().includes(search.toLowerCase()) ||
+        driver.phone?.toLowerCase().includes(search.toLowerCase()) ||
+        driver.licenseNumber?.toLowerCase().includes(search.toLowerCase()) ||
+        driver.driverId?.toString().includes(search.toLowerCase())
       )
     : drivers;
 
-  // FIXME: Create driver
-  const handleCreateDriver = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token) {
-      router.replace("/");
+  // ✅ Modal States
+  const [open, setOpen] = useState(false);
+  const [formData, setFormData] = useState<Partial<TDriver>>({});
+  const [editMode, setEditMode] = useState(false);
+
+  // ✅ Handle Open (Add / Edit)
+  const handleOpenAdd = () => {
+    setFormData({});
+    setEditMode(false);
+    setOpen(true);
+  };
+
+  const handleEditClick = (driver: TDriver) => {
+    setFormData({
+      id: driver.id,
+      driverId: driver.driverId,
+      name: driver.name,
+      email: driver.email,
+      phone: driver.phone,
+      licenseNumber: driver.licenseNumber,
+      status: driver.status,
+      hireDate: driver.hireDate,
+      pricePerMile: driver.pricePerMile,
+      createdBy: driver.createdBy,
+    });
+    setEditMode(true);
+    setOpen(true);
+  };
+
+  // ✅ Handle Form Change
+  const handleFormChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // ✅ Function to display API errors in toast
+  const showApiErrors = (error: any) => {
+    if (error?.data?.errors && Array.isArray(error.data.errors)) {
+      // Display all error messages
+      error.data.errors.forEach((err: any) => {
+        toast.error(`${err.path}: ${err.msg}`, {
+          duration: 5000,
+          style: {
+            background: '#dc2626',
+            color: '#fff',
+          },
+        });
+      });
+    } else if (error?.data?.message) {
+      toast.error(error.data.message);
+    } else {
+      toast.error("An unexpected error occurred");
+    }
+  };
+
+  // ✅ Navigate to Driver Summary
+  const handleViewStats = (id: string) => {
+    router.push(`/admin/driverSummary/${id}`);
+  };
+
+  // ✅ Create Driver
+  const handleCreate = async () => {
+    if (!user?.id) {
+      toast.error("User not found!");
       return;
     }
 
     try {
-      const result = await apiClient(`${apiURL}/api/v1/drivers`, token, {
-        method: "POST",
-        body: JSON.stringify({
-          ...newDriver,
-          pricePerMile: parseFloat(newDriver.pricePerMile),
-        }),
-      });
-      setDrivers((prev) => [...prev, result.data] as TDriver[]);
-      toast.success("Driver created successfully!");
-      setPopup(false);
-      setNewDriver({
-        name: "",
-        phone: "",
-        email: "",
-        licenseNumber: "",
-        pricePerMile: "",
-        status: "available",
-      });
-    } catch (error) {
-      if (error instanceof Error) toast.error(error.message);
+      await createDriver({
+        ...formData,
+        createdBy: user.id,
+      }).unwrap();
+      toast.success("✅ Driver created successfully!");
+      setOpen(false);
+      refetch();
+    } catch (err: any) {
+      showApiErrors(err);
     }
   };
 
-  // FIXME: Update driver
-  const handleUpdateDriver = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!selectedDriver) return;
-    if (!token) {
-      router.replace("/");
+  // ✅ Update Driver
+  const handleUpdate = async () => {
+    if (!formData?.id) {
+      toast.error("Missing driver ID");
       return;
     }
 
     try {
-      const result = await apiClient(
-        `${apiURL}/api/v1/drivers/${selectedDriver.id}`,
-        token,
-        {
-          method: "PUT",
-          body: JSON.stringify({
-            ...updateDriver,
-            pricePerMile: parseFloat(updateDriver.pricePerMile),
-          }),
-        }
-      );
-      setDrivers((prev) =>
-        prev.map(
-          (d) => (d.id === selectedDriver.id ? result.data : d) as TDriver
-        )
-      );
-      toast.success("Driver updated successfully!");
-      setEditPopup(false);
-    } catch (error) {
-      if (error instanceof Error) toast.error(error.message);
+      await updateDriver({
+        id: formData.id,
+        body: formData,
+      }).unwrap();
+      toast.success("✅ Driver updated successfully!");
+      setOpen(false);
+      refetch();
+    } catch (err: any) {
+      showApiErrors(err);
     }
   };
 
-  // FIXME: Delete driver
-  const handleDeleteDriver = async (id: string) => {
-    const confirmDelete = confirm(
-      "Are you sure you want to delete this driver?"
-    );
-    if (!confirmDelete) return;
-    if (!token) {
-      router.replace("/");
-      return;
-    }
+  // ✅ Delete Driver with MUI Toast
+  const [driverToDelete, setDriverToDelete] = useState<{ id: string; driverId?: number } | null>(null);
+
+  const handleDelete = async (id: string, driverId?: number) => {
+    setDeleteToast({
+      open: true,
+      message: `Are you sure you want to delete driver #${driverId}?`
+    });
+    setDriverToDelete({ id, driverId });
+  };
+
+  // ✅ Confirm Delete
+  const confirmDelete = async () => {
+    if (!driverToDelete) return;
 
     try {
-      const result = await apiClient(`${apiURL}/api/v1/drivers/${id}`, token, {
-        method: "DELETE",
-      });
-
-      setDrivers((prev) => prev.filter((d) => d.id !== id));
-      toast.success("Driver deleted successfully!");
-    } catch (error) {
-      if (error instanceof Error) toast.error(error.message);
+      await deleteDriver(driverToDelete.id).unwrap();
+      toast.success(`✅ Driver #${driverToDelete.driverId} deleted successfully!`);
+      refetch();
+    } catch (err: any) {
+      showApiErrors(err);
+    } finally {
+      setDeleteToast({ open: false, message: "" });
+      setDriverToDelete(null);
     }
   };
 
-  // TODO: Status badge component
-  const StatusBadge = ({ status }: { status: string }) => {
-    const statusConfig = {
-      available: {
-        color: "bg-emerald-100 text-emerald-800 border-emerald-300",
-        icon: <IoPerson size={14} className="mr-1" />,
-      },
-      busy: {
-        color: "bg-blue-100 text-blue-800 border-blue-300",
-        icon: <IoPerson size={14} className="mr-1" />,
-      },
-      inactive: {
-        color: "bg-slate-100 text-slate-800 border-slate-300",
-        icon: <IoPerson size={14} className="mr-1" />,
-      },
-    };
-
-    const config =
-      statusConfig[status as keyof typeof statusConfig] ||
-      statusConfig.available;
-
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}
-      >
-        {config.icon}
-        {status}
-      </span>
-    );
+  const cancelDelete = () => {
+    setDeleteToast({ open: false, message: "" });
+    setDriverToDelete(null);
   };
 
-  // TODO: Table
-  const renderDriverRow = (driver: TDriver, index: number) => (
-    <tr key={driver.id} className="hover:bg-slate-50 transition-colors group">
-      {/* # */}
-      <td className="p-4 text-slate-600 font-medium">{index + 1}</td>
+  // ✅ Handle Pagination
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
 
-      {/* Driver Details */}
-      <td className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-            <IoPerson size={18} className="text-slate-600" />
-          </div>
-          <div>
-            <div className="font-medium text-slate-900">{driver.name}</div>
-            <div className="text-xs text-slate-500 mt-1">ID: {driver.id}</div>
-          </div>
-        </div>
-      </td>
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
-      {/* Contact Information */}
-      <td className="p-4">
-        <div className="space-y-2">
-          {driver.phone && (
-            <div className="flex items-center gap-2 text-slate-700">
-              <IoCall size={14} className="text-slate-400" />
-              <span className="text-sm">{driver.phone}</span>
-            </div>
-          )}
-          {driver.email && (
-            <div className="flex items-center gap-2 text-slate-700">
-              <IoMail size={14} className="text-slate-400" />
-              <span className="text-sm">{driver.email}</span>
-            </div>
-          )}
-        </div>
-      </td>
-
-      {/* License & Pricing */}
-      <td className="p-4">
-        <div className="space-y-2">
-          {driver.licenseNumber && (
-            <div className="flex items-center gap-2 text-slate-700">
-              <IoCard size={14} className="text-slate-400" />
-              <span className="text-sm">{driver.licenseNumber}</span>
-            </div>
-          )}
-          {driver.pricePerMile && (
-            <div className="flex items-center gap-2 text-slate-700">
-              <IoCash size={14} className="text-slate-400" />
-              <span className="text-sm">
-                ${driver.pricePerMile.toFixed(2)}/mile
-              </span>
-            </div>
-          )}
-        </div>
-      </td>
-
-      {/* Status */}
-      <td className="p-4">
-        <StatusBadge status={driver.status} />
-      </td>
-
-      {/* Actions */}
-      <td className="p-4">
-        <div className="flex gap-2">
-          <Link
-            href={`/admin/driverSummary/${driver.id}`}
-            className="flex items-center gap-1 bg-slate-600 hover:bg-slate-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-          >
-            <IoStatsChart size={14} />
-            Stats
-          </Link>
-
-          <button
-            onClick={() => {
-              setSelectedDriver(driver);
-              setUpdateDriver({
-                name: driver.name,
-                phone: driver.phone || "",
-                email: driver.email || "",
-                licenseNumber: driver.licenseNumber || "",
-                pricePerMile: driver.pricePerMile?.toString() || "",
-                status: driver.status || "available",
-              });
-              setEditPopup(true);
-            }}
-            className="flex items-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-          >
-            <IoPencil size={14} />
-            Edit
-          </button>
-
-          <button
-            onClick={() => handleDeleteDriver(driver.id)}
-            className="flex items-center gap-1 bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors"
-          >
-            <IoTrash size={14} />
-            Delete
-          </button>
-        </div>
-      </td>
-    </tr>
-  );
-
-  if (loading) return <Loading />;
+  if (isLoading) return <Loading />;
 
   return (
-    <section className="relative p-6">
+    <Box sx={{ p: 3 }}>
       <Toaster position="top-right" />
 
       {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-        <div className="mb-4 lg:mb-0">
-          <Titles>Driver Management</Titles>
-          <p className="text-slate-600 mt-2 text-sm">
-            Manage your drivers and their information
-          </p>
-        </div>
-
-        <button
-          onClick={() => setPopup(true)}
-          className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+        <Titles>Driver Management</Titles>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<IoAdd />}
+          onClick={handleOpenAdd}
+          sx={{
+            borderRadius: 2,
+            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`
+          }}
         >
-          <IoAdd size={20} />
-          Add New Driver
-        </button>
-      </div>
+          Add Driver
+        </Button>
+      </Box>
 
       {/* Search */}
-      <div className="mb-8">
-        <div className="relative max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <IoSearch className="h-5 w-5 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search drivers by name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-          />
-        </div>
-      </div>
+      <TextField
+        placeholder="Search by name"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <IoSearch />
+            </InputAdornment>
+          ),
+        }}
+        sx={{
+          mb: 3,
+          borderRadius: 2,
+          backgroundColor: 'white',
+          '& .MuiOutlinedInput-root': {
+            borderRadius: 2,
+            backgroundColor: 'white',
+            '& fieldset': {
+              borderColor: muiTheme.palette.primary.light,
+            },
+            '&:hover fieldset': {
+              borderColor: muiTheme.palette.primary.main,
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: muiTheme.palette.primary.main,
+            },
+          }
+        }}
+      />
 
-      {error && (
-        <div className="mb-6">
-          <Erros message={error} />
-        </div>
-      )}
+      {/* Table */}
+      <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Table sx={{ minWidth: 650 }} aria-label="drivers table">
+          <TableHead>
+            <TableRow>
+              <StyledTableCell>Driver ID</StyledTableCell>
+              <StyledTableCell>Name</StyledTableCell>
+              <StyledTableCell>Email</StyledTableCell>
+              <StyledTableCell>Phone</StyledTableCell>
+              <StyledTableCell>License Number</StyledTableCell>
+              <StyledTableCell>Price/Mile</StyledTableCell>
+              <StyledTableCell>Hire Date</StyledTableCell>
+              <StyledTableCell>Status</StyledTableCell>
+              <StyledTableCell align="center">Actions</StyledTableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredDrivers.length === 0 ? (
+              <TableRow>
+                <StyledTableCell colSpan={9} align="center" sx={{ py: 4 }}>
+                  No drivers found
+                </StyledTableCell>
+              </TableRow>
+            ) : (
+              filteredDrivers
+                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                .map((driver: TDriver) => (
+                  <StyledTableRow key={driver.id}>
+                    <StyledTableCell component="th" scope="row">
+                      {driver.driverId}
+                    </StyledTableCell>
+                    <StyledTableCell>{driver.name}</StyledTableCell>
+                    <StyledTableCell>{driver.email}</StyledTableCell>
+                    <StyledTableCell>{driver.phone}</StyledTableCell>
+                    <StyledTableCell>{driver.licenseNumber}</StyledTableCell>
+                    <StyledTableCell>
+                      ${driver.pricePerMile?.toFixed(2)}
+                    </StyledTableCell>
+                    <StyledTableCell>
+                      {driver.hireDate ? new Date(driver.hireDate).toLocaleDateString() : 'N/A'}
+                    </StyledTableCell>
+                    <StyledTableCell>
+                      <StatusChip status={driver.status} />
+                    </StyledTableCell>
+                    <StyledTableCell align="center">
+                      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                        {/* Statistics Button */}
+                        <Tooltip title="View Statistics">
+                          <IconButton
+                            size="small"
+                            color="info"
+                            onClick={() => handleViewStats(driver.id)}
+                            sx={{ 
+                              color: muiTheme.palette.info.main,
+                              '&:hover': {
+                                backgroundColor: muiTheme.palette.info.light,
+                                color: 'white'
+                              }
+                            }}
+                          >
+                            <IoStatsChart />
+                          </IconButton>
+                        </Tooltip>
 
-      {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-        <StatsCard
-          title="Total Drivers"
-          value={allDrivers.length || 0}
-          icon={IoPerson}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
-        />
+                        {/* Edit Button */}
+                        <Tooltip title="Edit Driver">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditClick(driver)}
+                            disabled={isUpdating}
+                          >
+                            <IoPencil />
+                          </IconButton>
+                        </Tooltip>
 
-        <StatsCard
-          title="Available"
-          value={drivers.filter((d) => d.status === "available").length}
-          icon={IoPerson}
-          iconColor="text-amber-600"
-          bgColor="bg-amber-50"
-        />
-
-        <StatsCard
-          title="Busy"
-          value={drivers.filter((d) => d.status === "busy").length}
-          icon={IoPerson}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
-        />
-
-        <StatsCard
-          title="Inactive"
-          value={drivers.filter((d) => d.status === "inactive").length}
-          icon={IoPerson}
-          iconColor="text-emerald-600"
-          bgColor="bg-emerald-50"
-        />
-      </div>
-
-      {/* Table For Drivers */}
-      {filteredDrivers.length > 0 ? (
-        <DataTable
-          columns={driverColumns}
-          data={filteredDrivers}
-          renderRow={renderDriverRow}
-          loading={loading}
-        />
-      ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-12 text-center text-slate-500">
-            <div className="flex flex-col items-center justify-center">
-              <div className="text-3xl mb-3">👨‍💼</div>
-              <div className="text-slate-600">No drivers found</div>
-              <div className="text-slate-400 text-sm mt-1">
-                {search
-                  ? "Try adjusting your search terms"
-                  : "Get started by adding your first driver"}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Popup */}
-      {popup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">
-                Add New Driver
-              </h3>
-              <button
-                onClick={() => setPopup(false)}
-                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
-              >
-                <IoClose size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreateDriver} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Full Name <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoPerson className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Driver Name"
-                    value={newDriver.name}
-                    onChange={(e) =>
-                      setNewDriver({ ...newDriver, name: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Email <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoMail className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="email"
-                    placeholder="Email Address"
-                    value={newDriver.email}
-                    onChange={(e) =>
-                      setNewDriver({ ...newDriver, email: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Phone Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCall className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Contact Number"
-                    value={newDriver.phone}
-                    onChange={(e) =>
-                      setNewDriver({ ...newDriver, phone: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  License Number <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCard className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="License Number"
-                    value={newDriver.licenseNumber}
-                    onChange={(e) =>
-                      setNewDriver({
-                        ...newDriver,
-                        licenseNumber: e.target.value,
-                      })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Price per Mile (USD) <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCash className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={newDriver.pricePerMile}
-                    onChange={(e) =>
-                      setNewDriver({
-                        ...newDriver,
-                        pricePerMile: e.target.value,
-                      })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={newDriver.status}
-                  onChange={(e) =>
-                    setNewDriver({ ...newDriver, status: e.target.value })
-                  }
-                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                >
-                  <option value="available">Available</option>
-                  <option value="busy">Busy</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
-              >
-                <IoAdd size={18} />
-                Create Driver
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Edit Popup */}
-      {editPopup && selectedDriver && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">
-                Edit Driver
-              </h3>
-              <button
-                onClick={() => setEditPopup(false)}
-                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
-              >
-                <IoClose size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateDriver} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoPerson className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Driver Name"
-                    value={updateDriver.name}
-                    onChange={(e) =>
-                      setUpdateDriver({ ...updateDriver, name: e.target.value })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Email
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoMail className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="email"
-                    placeholder="Email Address"
-                    value={updateDriver.email}
-                    onChange={(e) =>
-                      setUpdateDriver({
-                        ...updateDriver,
-                        email: e.target.value,
-                      })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCall className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Contact Number"
-                    value={updateDriver.phone}
-                    onChange={(e) =>
-                      setUpdateDriver({
-                        ...updateDriver,
-                        phone: e.target.value,
-                      })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  License Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCard className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="License Number"
-                    value={updateDriver.licenseNumber}
-                    onChange={(e) =>
-                      setUpdateDriver({
-                        ...updateDriver,
-                        licenseNumber: e.target.value,
-                      })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Price per Mile (USD)
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCash className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="0.00"
-                    value={updateDriver.pricePerMile}
-                    onChange={(e) =>
-                      setUpdateDriver({
-                        ...updateDriver,
-                        pricePerMile: e.target.value,
-                      })
-                    }
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Status
-                </label>
-                <select
-                  value={updateDriver.status}
-                  onChange={(e) =>
-                    setUpdateDriver({ ...updateDriver, status: e.target.value })
-                  }
-                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                >
-                  <option value="available">Available</option>
-                  <option value="busy">Busy</option>
-                  <option value="inactive">Inactive</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 mt-4"
-              >
-                <IoPencil size={18} />
-                Update Driver
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+                        {/* Delete Button */}
+                        <Tooltip title="Delete Driver">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDelete(driver.id, driver.driverId)}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? <CircularProgress size={16} /> : <IoTrash />}
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
+                    </StyledTableCell>
+                  </StyledTableRow>
+                ))
+            )}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {/* Pagination */}
-      {pagination && (
-        <div className="flex justify-between items-center mt-6">
-          <div className="text-sm text-slate-600">
-            Showing {(page - 1) * 10 + 1} to{" "}
-            {Math.min(page * 10, pagination.totalPages)} of{" "}
-            {pagination.totalPages} entries
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Previous
-            </button>
-            <span className="px-3 py-2 text-sm text-slate-700">
-              Page {pagination.currentPage} of {pagination.totalPages}
-            </span>
-            <button
-              disabled={page >= pagination.totalPages}
-              onClick={() =>
-                setPage((p) => Math.min(pagination.totalPages, p + 1))
-              }
-              className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={filteredDrivers.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        sx={{ mt: 2 }}
+      />
+
+      {/* Driver Form Modal */}
+      <DriverForm
+        open={open}
+        onClose={() => setOpen(false)}
+        formData={formData}
+        onChange={handleFormChange}
+        onSubmit={editMode ? handleUpdate : handleCreate}
+        editMode={editMode}
+        isLoading={isCreating || isUpdating}
+      />
+
+      {/* MUI Delete Confirmation Toast */}
+      {/* Blur Background Overlay */}
+      {deleteToast.open && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 1299,
+          }}
+        />
       )}
-    </section>
+
+      {/* Delete Confirmation Dialog - Centered */}
+      <Dialog
+        open={deleteToast.open}
+        onClose={cancelDelete}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            minWidth: 300,
+            maxWidth: 400,
+            margin: 2,
+          }
+        }}
+        sx={{
+          zIndex: 1300,
+          '& .MuiDialog-container': {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }
+        }}
+      >
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+            Confirm Delete
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+            {deleteToast.message}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={cancelDelete}
+              sx={{
+                borderRadius: 1,
+                minWidth: 80,
+                borderColor: 'grey.400',
+                '&:hover': {
+                  borderColor: 'grey.600',
+                  backgroundColor: 'grey.50'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmDelete}
+              sx={{
+                borderRadius: 1,
+                minWidth: 80,
+                backgroundColor: 'error.main',
+                '&:hover': {
+                  backgroundColor: 'error.dark'
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
+    </Box>
   );
 };
 
