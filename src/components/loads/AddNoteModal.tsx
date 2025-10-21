@@ -3,7 +3,6 @@ import { useState } from "react";
 import Modal from "@/components/ui/Modals";
 import { useAddNoteMutation, useGetLoadsQuery } from "@/redux/slices/apiSlice";
 import { TLoads } from "@/types/globalTypes";
-import { MdEdit } from "react-icons/md";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
@@ -20,7 +19,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose }) => {
   );
 
   // استخدام useGetLoadsQuery بدلاً من useSelector
-  const { data: loadsData } = useGetLoadsQuery({ page: 1, limit: 1000 }); // جلب كل ال loads
+  const { data: loadsData } = useGetLoadsQuery({ page: 1, limit: 10 });
   const [addNote, { isLoading: addingNoteLoading }] = useAddNoteMutation();
 
   const loads = loadsData?.data || [];

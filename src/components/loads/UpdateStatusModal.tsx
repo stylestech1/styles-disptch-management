@@ -24,7 +24,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose }
   const [deliveredAt, setDeliveredAt] = useState<string>('');
   const [showDeliveredAt, setShowDeliveredAt] = useState(false);
 
-  const {data: loadsData} = useGetLoadsQuery({page: 1, limit: 1000})
+  const {data: loadsData} = useGetLoadsQuery({page: 1, limit: 10})
   const [updateLoadStatus, { isLoading: updatingStatus }] = useUpdateLoadsStatusMutation();
 
   const loads = loadsData?.data || []

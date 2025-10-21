@@ -1620,14 +1620,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
             disabled={!truckType}
           >
             <option value="">Select Truck</option>
-            {Array.isArray(trucks) &&
-              trucks
+            {Array.isArray(trucks?.data) ? (
+              trucks.data
                 .filter((t: TTruck) => !truckType || t.type === truckType)
                 .map((t: TTruck, i: number) => (
                   <option key={i} value={t.id}>
-                    {t.model} ({t.truckId}) ({t.type})
+                    {t.model} ({t.plateNumber}) - {t.type}
                   </option>
-                ))}
+                ))
+            ) : (
+              <option disabled>No trucks available</option>
+            )}
           </select>
         </div>
 

@@ -1,4 +1,3 @@
-// components/ui/MapWithRoute.tsx
 import { useEffect, useRef, useState } from "react";
 import { TPlace } from "@/components/sections/LocationAutocomplete";
 
@@ -74,7 +73,7 @@ const MapWithRoute: React.FC<MapWithRouteProps> = ({
     if (allLocations.length === 0) return;
 
     // Add markers
-    const newMarkers = allLocations.map((location, index) => {
+    const newMarkers = allLocations.map((location) => {
       const position = {
         lat: parseFloat(location.lat),
         lng: parseFloat(location.lon),

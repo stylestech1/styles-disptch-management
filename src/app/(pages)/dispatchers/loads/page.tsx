@@ -1,17 +1,7 @@
-// app/admin/loads/page.tsx
 "use client";
-import LocationAutocomplete, {
-  TPlace,
-} from "@/components/sections/LocationAutocomplete";
-import { DemoItem } from "@mui/x-date-pickers/internals/demo";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { Dayjs } from "dayjs";
 import DataTable from "@/components/ui/DataTable";
 import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
-import Modal from "@/components/ui/Modals";
 import Pagination from "@/components/ui/Pagination";
 import StatsCard from "@/components/ui/StatsCard";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -19,60 +9,30 @@ import Titles from "@/components/ui/Titles";
 import { loadColumns } from "@/data/loadTables";
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
-import { RootState, useAppSelector } from "@/redux/store";
 import {
-  TDriver,
   TLoads,
-  TPagination,
-  TTruck,
-  TStatusLoad,
-  TTruckType,
-  TComments,
-  TruckApiResponse,
 } from "@/types/globalTypes";
-import { apiClient } from "@/utils/apiClient";
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { CiStickyNote } from "react-icons/ci";
-import { IoMdKey } from "react-icons/io";
 import {
-  IoClose,
   IoAdd,
   IoRefresh,
   IoCheckmark,
   IoTime,
   IoCar,
   IoNavigate,
-  IoCash,
   IoSearch,
-  IoArrowBack,
-  IoArrowForward,
-  IoDocumentText,
-  IoLocationOutline,
-  IoInformationCircle,
   IoLocationSharp,
 } from "react-icons/io5";
 import { LiaShippingFastSolid } from "react-icons/lia";
 import { RxUpdate } from "react-icons/rx";
 import { MdEdit } from "react-icons/md";
-import { geocodeAddress } from "@/utils/geocoding";
-import GoogleMapsLoader from "@/components/ui/GoogleMapsLoader";
-import MapWithRoute from "@/components/ui/MapWithRoute";
-import {
-  calculateRouteDistance,
-  calculateDhoToOriginDistance,
-  calculateFullRouteDistance,
-} from "@/utils/googleDistanceCalculator";
 import {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
   useGetDriversQuery,
   useGetTrucksQuery,
-  useCreateLoadsMutation,
-  useUpdateLoadsMutation,
-  useUpdateLoadsStatusMutation,
-  useAddNoteMutation,
   useGetNotesQuery,
 } from "@/redux/slices/apiSlice";
 
@@ -98,17 +58,10 @@ const LoadsPage = () => {
   const [selectedLoadForNotes, setSelectedLoadForNotes] = useState<TLoads | null>(null);
   const [selectedLoadForAppointments, setSelectedLoadForAppointments] = useState<TLoads | null>(null);
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
-
-  const router = useRouter();
-  const token = useAppSelector((state: RootState) => state.auth.token);
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
 
-  const apiURL = process.env.NEXT_PUBLIC_API_URL;
-  const GOOGLE_MAPS_API_KEY =
-    process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "your-api-key-here";
-
-  // استخدام RTK Query بدلاً من useEffect
+  // RTK Query
   const {
     data: loadsData,
     isLoading: loadsLoading,
@@ -119,43 +72,28 @@ const LoadsPage = () => {
   const {
     data: allLoadsData,
     isLoading: allLoadsLoading,
-    isError: allLoadsError,
   } = useGetAllLoadsQuery();
 
   const {
-    data: driversData,
     isLoading: driversLoading,
     isError: driversError,
   } = useGetDriversQuery();
 
   const {
-    data: trucksData,
     isLoading: trucksLoading,
     isError: trucksError,
   } = useGetTrucksQuery();
 
-  const [createLoad, { isLoading: creatingLoad }] = useCreateLoadsMutation();
-  const [updateLoad, { isLoading: updatingLoad }] = useUpdateLoadsMutation();
-  const [updateLoadStatus, { isLoading: updatingStatus }] =
-    useUpdateLoadsStatusMutation();
-  const [addNote, { isLoading: addingNoteLoading }] = useAddNoteMutation();
-
   const {
-    data: notesData,
     isLoading: notesLoading,
-    isError: notesError,
-    refetch: refetchNotes,
   } = useGetNotesQuery(selectedLoadForNotes?.id || "", {
     skip: !selectedLoadForNotes?.id,
   });
 
-  // استخراج البيانات من ال responses
+  // responses
   const load = loadsData?.data || [];
   const pagination = loadsData?.paginationResult || null;
   const allLoads = allLoadsData?.data || [];
-  const drivers = driversData?.data || [];
-  const truck = trucksData?.data || [];
-  const notes = notesData?.comments || [];
 
   // إدارة حالة ال loading بناءً على جميع ال queries
   useEffect(() => {
@@ -200,7 +138,7 @@ const LoadsPage = () => {
     }
   }, [loadsError, driversError, trucksError, setError]);
 
-  // دالة مساعدة للحصول على رسالة الخطأ
+  // Error Handling
   interface RTKError {
     data?: {
       message?: string;

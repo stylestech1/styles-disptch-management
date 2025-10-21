@@ -12,6 +12,7 @@ import {
   IoClose,
 } from "react-icons/io5";
 import { useState, useEffect } from "react";
+import { useGoogleMaps } from "@/hook/useGoogleMaps";
 
 export default function AdminLayout({
   children,
@@ -24,7 +25,9 @@ export default function AdminLayout({
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
+
+  // استخدام الـ hook الجديد
+    const isGoogleMapsLoaded = useGoogleMaps();
 
   // Detect screen size
   useEffect(() => {
@@ -41,40 +44,6 @@ export default function AdminLayout({
     window.addEventListener("resize", checkScreenSize);
 
     return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
-
-  // Load Google Maps once
-  useEffect(() => {
-    // تحقق إذا المكتبة متحملة بالفعل
-    if (window.google && window.google.maps) {
-      setIsGoogleMapsLoaded(true);
-      return;
-    }
-
-    // تحقق إذا الـ script موجود بالفعل
-    const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
-    if (existingScript) {
-      setIsGoogleMapsLoaded(true);
-      return;
-    }
-
-    // حمل المكتبة مرة واحدة فقط
-    const script = document.createElement('script');
-    script.src = 'AIzaSyCko4VU8o8PFAZmkdj7FcQO8h4vU60BL6c';
-    script.async = true;
-    script.defer = true;
-    
-    script.onload = () => {
-      console.log("Google Maps loaded successfully");
-      setIsGoogleMapsLoaded(true);
-    };
-    
-    script.onerror = () => {
-      console.error("Failed to load Google Maps");
-      setIsGoogleMapsLoaded(true); // علشان ما يوقفش التطبيق كله
-    };
-
-    document.head.appendChild(script);
   }, []);
 
   if (!user) return null;
@@ -217,11 +186,16 @@ export default function AdminLayout({
         {/* Page Content */}
         <main className="flex-1 overflow-auto p-4 md:p-6 bg-slate-50">
           <div className="max-w-7xl mx-auto">
-            {isGoogleMapsLoaded ? children : (
+            {isGoogleMapsLoaded ? (
+              children
+            ) : (
               <div className="flex items-center justify-center h-64">
                 <div className="text-center">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
-                  <p className="mt-4 text-slate-600">Loading Map...</p>
+                  <p className="mt-4 text-slate-600">Loading Google Maps...</p>
+                  <p className="text-sm text-slate-500 mt-2">
+                    Please wait while we load the maps
+                  </p>
                 </div>
               </div>
             )}
