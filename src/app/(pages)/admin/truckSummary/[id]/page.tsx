@@ -90,7 +90,6 @@ const TruckSummary = () => {
     skip: !id,
   });
 
-  // ✅ استخدام lazy query للفلترة
   const [fetchTruckSummary, { 
     data: truckSummaryData, 
     isLoading: summaryLoading, 
@@ -107,7 +106,6 @@ const TruckSummary = () => {
     }
   }, [id, fetchTruckSummary]);
 
-  // ✅ معالجة الأخطاء
   useEffect(() => {
     if (profileError || summaryError) {
       const errorMessage = (profileError || summaryError) as any;
@@ -115,51 +113,51 @@ const TruckSummary = () => {
     }
   }, [profileError, summaryError, setError]);
 
-  const handleApplyFilter = async () => {
-    if (!fromDate && !toDate) {
-      toast.error("Please select at least one date", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-      return;
-    }
+  // const handleApplyFilter = async () => {
+  //   if (!fromDate && !toDate) {
+  //     toast.error("Please select at least one date", {
+  //       style: { background: "#dc2626", color: "#fff" },
+  //     });
+  //     return;
+  //   }
 
-    if (!id) return;
+  //   if (!id) return;
 
-    try {
-      const params: any = {};
-      if (fromDate) params.from = `${fromDate}T00:00:00Z`;
-      if (toDate) params.to = `${toDate}T23:59:59Z`;
+  //   try {
+  //     const params: any = {};
+  //     if (fromDate) params.from = `${fromDate}T00:00:00Z`;
+  //     if (toDate) params.to = `${toDate}T23:59:59Z`;
 
-      await fetchTruckSummary({
-        id: id as string,
-        ...params
-      }).unwrap();
+  //     await fetchTruckSummary({
+  //       id: id as string,
+  //       ...params
+  //     }).unwrap();
 
-      toast.success("Filter applied successfully", {
-        style: { background: "#10b981", color: "#fff" },
-      });
-    } catch (error) {
-      const err = error as any;
-      setError(err?.data?.message || "Filter failed");
-    }
-  }; 
+  //     toast.success("Filter applied successfully", {
+  //       style: { background: "#10b981", color: "#fff" },
+  //     });
+  //   } catch (error) {
+  //     const err = error as any;
+  //     setError(err?.data?.message || "Filter failed");
+  //   }
+  // }; 
 
-  const handleReset = async () => {
-    setFromDate("");
-    setToDate("");
+  // const handleReset = async () => {
+  //   setFromDate("");
+  //   setToDate("");
 
-    if (!id) return;
+  //   if (!id) return;
     
-    try {
-      await fetchTruckSummary(id as string).unwrap();
-      toast.success("Reset successfully", {
-        style: { background: "#3b82f6", color: "#fff" },
-      });
-    } catch (error) {
-      const err = error as any;
-      setError(err?.data?.message || "Reset failed");
-    }
-  };
+  //   try {
+  //     await fetchTruckSummary(id as string).unwrap();
+  //     toast.success("Reset successfully", {
+  //       style: { background: "#3b82f6", color: "#fff" },
+  //     });
+  //   } catch (error) {
+  //     const err = error as any;
+  //     setError(err?.data?.message || "Reset failed");
+  //   }
+  // };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -563,14 +561,14 @@ const TruckSummary = () => {
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">
                   Load Details
                 </h3>
-                <p className="text-slate-500 text-sm">
+                {/* <p className="text-slate-500 text-sm">
                   Detailed breakdown of all loads assigned to this truck
                   {(fromDate || toDate) && " (filtered)"}
-                </p>
+                </p> */}
               </div>
 
               {/* ✅ Date Filters */}
-             <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
+             {/* <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
         <div className="flex flex-col">
           <label className="text-sm font-medium text-slate-700 mb-1">From</label>
           <input
@@ -609,11 +607,11 @@ const TruckSummary = () => {
             Reset
           </button>
         </div>
-      </div>
+      </div> */}
             </div>
 
             {/* ✅ Active Filter Message */}
-            {(fromDate || toDate) && (
+            {/* {(fromDate || toDate) && (
               <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-slate-700 border border-slate-200 rounded-lg px-4 py-3 bg-blue-50 border-blue-200">
                 <div className="flex items-center gap-3 mb-2 sm:mb-0">
                   <IoFilterOutline className="text-blue-600" size={18} />
@@ -628,7 +626,7 @@ const TruckSummary = () => {
                   </div>
                 </div>
               </div>
-            )}
+            )} */}
           </div>
 
           {/* Table For Truck Loads Summary */}

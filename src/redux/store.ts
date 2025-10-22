@@ -13,15 +13,15 @@ import { googleMapsApi } from "./slices/googleMapsSlice";
 import { truckApi } from "./slices/truckApi";
 import { driverApi } from "./slices/driverApi";
 
-const authPersistConfig = {
-  key: "auth",
+const persistConfig = {
+  key: "root",
   storage,
   whitelist: ["auth"], 
 };
 
 // دمج الـ reducers
 const rootReducer = combineReducers({
-  auth: persistReducer(authPersistConfig, authSlice),
+  auth: authSlice,
   loadsForm: loadsFormSlice,
   modals: modalsSlice,
   ui: uiSlice,
@@ -31,8 +31,10 @@ const rootReducer = combineReducers({
   [driverApi.reducerPath]: driverApi.reducer, 
 });
 
+const persistedReducer = persistReducer(persistConfig, rootReducer);
+
 export const store = configureStore({
-  reducer: rootReducer,
+  reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {

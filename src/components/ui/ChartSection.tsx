@@ -68,7 +68,7 @@ const ChartSection: React.FC<TruckChartsProps> = ({ chartData }) => {
           Total Miles
         </Typography>
         <div style={{ height: "400px", width: "100%", position: "relative" }}>
-          <Pie data={chartData.milesChart} options={chartOptions} />
+          <Pie data={chartData.milesChart} options={chartOptions}redraw={false} />
         </div>
       </div>
 
@@ -82,7 +82,7 @@ const ChartSection: React.FC<TruckChartsProps> = ({ chartData }) => {
           Net Profit
         </Typography>
         <div style={{ height: "400px", width: "100%", position: "relative" }}>
-          <Pie data={chartData.profitChart} options={chartOptions} />
+          <Pie data={chartData.profitChart} options={chartOptions} redraw={false}/>
         </div>
       </div>
     </div>
