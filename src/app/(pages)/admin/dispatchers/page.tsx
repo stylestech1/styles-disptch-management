@@ -6,129 +6,139 @@ import { RootState, useAppSelector } from "@/redux/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  IoClose,
   IoAdd,
   IoSearch,
   IoPerson,
-  IoMail,
-  IoCall,
-  IoKey,
   IoBriefcase,
+  IoKey,
   IoSettingsOutline,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import { TDispatcher, TPagination } from "@/types/globalTypes";
-import useLoading from "@/hook/useLoading";
 import useError from "@/hook/useError";
-import { apiClient } from "@/utils/apiClient";
 import Pagination from "@/components/ui/Pagination";
-import Modal from "@/components/ui/Modals";
 import DataTable from "@/components/ui/DataTable";
 import { dispatcherColumns } from "@/data/dispatcherTables";
 import StatsCard from "@/components/ui/StatsCard";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import {
+  useGetAllDispatchersQuery,
+  useCreateUserMutation,
+  useUpdateUserRoleMutation,
+  useActivateUserMutation,
+  useDeactivateUserMutation,
+} from "@/redux/slices/apiSlice";
+import { getErrorMessage } from "@/utils/getErrorMessage";
+import UserSettingsModal from "@/components/users/UserSettingsModal";
+import CreateUserModal from "@/components/users/CreateUserModal";
 
 const Dispatchers = () => {
-  const [dispatchers, setDispatchers] = useState<TDispatcher[]>([]);
   const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [popupSetting, setPopupSetting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<TDispatcher | null>(null);
-  const [pagination, setPagination] = useState<TPagination | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [page, setPage] = useState(1);
-  const [tempUser, setTempUser] = useState({
-    role: "employee" as "admin" | "employee",
-    status: "active" as "active" | "deactive",
-  });
-  const [newUser, setNewUser] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    role: "employee",
-    position: "",
-    password: "",
-    passwordConfirmation: "",
-  });
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
-  const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
-  const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
-  // FIXME: Get all Dispatchers
+  // RTK Querys - إضافة pollingInterval للتأكد من تحديث البيانات
+  const {
+    data: dispatchersData,
+    isError: dispatchersError,
+    isLoading: loading,
+    isFetching,
+    refetch,
+  } = useGetAllDispatchersQuery(
+    { page, limit: 10 },
+    {
+      skip: !token,
+      pollingInterval: 30000, // إعادة جلب البيانات كل 30 ثانية
+      refetchOnMountOrArgChange: true,
+    }
+  );
+
+  // RTK Mutation
+  const [createUser, { isLoading: creatingUser }] = useCreateUserMutation();
+  const [updateUserRole, { isLoading: updatingRole }] = useUpdateUserRoleMutation();
+  const [activateUser, { isLoading: activating }] = useActivateUserMutation();
+  const [deactivateUser, { isLoading: deactivating }] = useDeactivateUserMutation();
+
+  // Export Data - تحسين التعامل مع البيانات
+  const dispatchers = dispatchersData?.data || [];
+  const pagination = dispatchersData?.paginationResult || null;
+
+  // Token Checking وتحسين الـ redirect
   useEffect(() => {
     if (!token) {
       router.replace("/");
       return;
     }
+  }, [token, router]);
 
-    const fetchDispatchers = async () => {
-      try {
-        setLoading(true);
-        const result = await apiClient(
-          `${apiURL}/api/v1/adminDashboard?page=${page}`,
-          token
-        );
-        setDispatchers((result.data as TDispatcher[]) || []);
-        setPagination(result.paginationResult as TPagination);
-      } catch (error) {
-        if (error instanceof Error) {
-          setError(error.message || "Loading Failed");
-          toast.error(error.message || "Loading Failed", {
-            style: { background: "#dc2626", color: "#fff" },
-          });
-        }
-      } finally {
-        setLoading(false);
+  // Handling Errors - تحسين معالجة الأخطاء
+  useEffect(() => {
+    if (dispatchersError) {
+      const errorMessage = getErrorMessage(dispatchersError);
+      setError(errorMessage);
+      console.error("Dispatchers Error:", dispatchersError);
+      
+      if (errorMessage.includes("401") || errorMessage.includes("unauthorized")) {
+        toast.error("Session expired. Please login again.", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+        router.replace("/");
+        return;
       }
-    };
+      
+      toast.error(errorMessage || "Loading dispatchers failed ❌", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+    }
+  }, [dispatchersError, setError, router]);
 
-    fetchDispatchers();
-  }, [apiURL, token, router, setError, setLoading, page]);
+  // إضافة useEffect لمراقبة تغيير الصفحة
+  useEffect(() => {
+    if (token) {
+      refetch();
+    }
+  }, [page, token, refetch]);
 
   // TODO: Search Filter
   const filteredDispatchers = dispatchers.filter(
-    (dispatcher) =>
+    (dispatcher: TDispatcher) =>
       dispatcher.name.toLowerCase().includes(search.toLowerCase()) ||
       dispatcher.jobId.toString().includes(search)
   );
 
   // FIXME: Create User
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateUser = async (userData: {
+    name: string;
+    email: string;
+    phone: string;
+    role: string;
+    position: string;
+    password: string;
+    passwordConfirmation: string;
+  }) => {
     if (!token) {
       router.replace("/");
       return;
     }
     try {
-      const result = await apiClient(`${apiURL}/api/v1/adminDashboard`, token, {
-        method: "POST",
-        body: JSON.stringify(newUser),
-      });
+      await createUser(userData).unwrap();
       toast.success("User created successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-
-      setDispatchers((prev) => [...prev, result.data] as TDispatcher[]);
       setPopup(false);
-      setNewUser({
-        name: "",
-        email: "",
-        phone: "",
-        role: "employee",
-        position: "",
-        password: "",
-        passwordConfirmation: "",
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message, {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
+      // إعادة تحميل البيانات فوراً
+      setTimeout(() => {
+        refetch();
+      }, 500);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Creating user failed ❌");
+      throw err;
     }
   };
 
@@ -143,34 +153,18 @@ const Dispatchers = () => {
     }
 
     try {
-      const result = await apiClient(
-        `${apiURL}/api/v1/adminDashboard/${userId}`,
-        token,
-        {
-          method: "PUT",
-          body: JSON.stringify({ role: newRole }),
-        }
-      );
-
-      toast.success(
-        result.message || `Role updated to ${newRole} successfully!`,
-        {
-          style: { background: "#16a34a", color: "#fff" },
-        }
-      );
-
-      // Update the user in the state
-      setDispatchers((prev) =>
-        prev.map((user) =>
-          user.id === userId ? { ...user, role: newRole } : user
-        )
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message, {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
+      await updateUserRole({ id: userId, role: newRole }).unwrap();
+      toast.success(`Role updated to ${newRole} successfully!`, {
+        style: { background: "#16a34a", color: "#fff" },
+      });
+      // إعادة تحميل البيانات فوراً
+      setTimeout(() => {
+        refetch();
+      }, 500);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Updating role failed ❌");
+      throw err;
     }
   };
 
@@ -182,30 +176,18 @@ const Dispatchers = () => {
     }
 
     try {
-      const result = await apiClient(
-        `${apiURL}/api/v1/adminDashboard/activate/${userId}`,
-        token,
-        {
-          method: "PUT",
-        }
-      );
-
-      toast.success(result.message || "User activated successfully!", {
+      await activateUser({ id: userId }).unwrap();
+      toast.success("User activated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-
-      // Update the user status in the state
-      setDispatchers((prev) =>
-        prev.map((user) =>
-          user.id === userId ? { ...user, active: true } : user
-        )
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message, {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
+      // إعادة تحميل البيانات فوراً
+      setTimeout(() => {
+        refetch();
+      }, 500);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Activating user failed ❌");
+      throw err;
     }
   };
 
@@ -217,40 +199,36 @@ const Dispatchers = () => {
     }
 
     try {
-      const result = await apiClient(
-        `${apiURL}/api/v1/adminDashboard/deactivate/${userId}`,
-        token,
-        {
-          method: "PUT",
-        }
-      );
-      toast.success(result.message || "User deactivated successfully!", {
+      await deactivateUser({ id: userId }).unwrap();
+      toast.success("User deactivated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-
-      // Update the user status in the state
-      setDispatchers((prev) =>
-        prev.map((user) =>
-          user.id === userId ? { ...user, active: false } : user
-        )
-      );
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message, {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
+      // إعادة تحميل البيانات فوراً
+      setTimeout(() => {
+        refetch();
+      }, 500);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Deactivating user failed ❌");
+      throw err;
     }
   };
 
   // TODO: Function to open settings popup
   const openSettingsPopup = (user: TDispatcher) => {
     setSelectedUser(user);
-    setTempUser({
-      role: user.role as "admin" | "employee",
-      status: user.active ? "active" : "deactive",
-    });
     setPopupSetting(true);
+  };
+
+  // TODO: Close settings popup
+  const closeSettingsPopup = () => {
+    setPopupSetting(false);
+    setSelectedUser(null);
+  };
+
+  // TODO: Close create user popup
+  const closeCreateUserPopup = () => {
+    setPopup(false);
   };
 
   // TODO: Table
@@ -327,7 +305,8 @@ const Dispatchers = () => {
     </tr>
   );
 
-  if (loading) return <Loading />;
+  // تحسين عرض الـ loading
+  if (loading && dispatchers.length === 0) return <Loading />;
 
   return (
     <section className="relative p-6">
@@ -342,10 +321,11 @@ const Dispatchers = () => {
 
         <button
           onClick={() => setPopup(true)}
-          className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
+          disabled={loading}
+          className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors rounded-lg shadow-sm font-medium"
         >
           <IoAdd size={20} />
-          Add New User
+          {loading ? "Loading..." : "Add New User"}
         </button>
       </div>
 
@@ -363,6 +343,7 @@ const Dispatchers = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+            disabled={loading}
           />
         </div>
       </div>
@@ -381,35 +362,41 @@ const Dispatchers = () => {
           icon={IoPerson}
           iconColor="text-blue-600"
           bgColor="bg-blue-50"
+          loading={loading}
         />
 
         <StatsCard
           title="Active"
-          value={dispatchers.filter((d) => d.active).length}
+          value={dispatchers.filter((d: TDispatcher) => d.active).length}
           icon={IoBriefcase}
           iconColor="text-amber-600"
           bgColor="bg-amber-50"
+          loading={loading}
         />
 
         <StatsCard
           title="Admins"
-          value={dispatchers.filter((d) => d.role === "admin").length}
+          value={dispatchers.filter((d: TDispatcher) => d.role === "admin").length}
           icon={IoKey}
           iconColor="text-blue-600"
           bgColor="bg-blue-50"
+          loading={loading}
         />
 
         <StatsCard
           title="Employees"
-          value={dispatchers.filter((d) => d.role === "employee").length}
+          value={dispatchers.filter((d: TDispatcher) => d.role === "employee").length}
           icon={IoPerson}
           iconColor="text-emerald-600"
           bgColor="bg-emerald-50"
+          loading={loading}
         />
       </div>
 
       {/* Table */}
-      {filteredDispatchers.length > 0 ? (
+      {(loading || isFetching) && dispatchers.length === 0 ? (
+        <Loading />
+      ) : filteredDispatchers.length > 0 ? (
         <DataTable
           columns={dispatcherColumns}
           data={filteredDispatchers}
@@ -421,309 +408,56 @@ const Dispatchers = () => {
           <div className="px-4 py-12 text-center text-slate-500">
             <div className="flex flex-col items-center justify-center">
               <div className="text-3xl mb-3">👥</div>
-              <div className="text-slate-600">No dispatchers found</div>
+              <div className="text-slate-600">
+                {loading ? "Loading dispatchers..." : "No dispatchers found"}
+              </div>
               <div className="text-slate-400 text-sm mt-1">
                 {search
                   ? "Try adjusting your search terms"
                   : "Get started by adding your first dispatcher"}
               </div>
+              {!loading && (
+                <button
+                  onClick={() => refetch()}
+                  className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
+                >
+                  Retry Loading
+                </button>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Popup Form to add new user */}
-      <Modal
+      {/* Create User Modal */}
+      <CreateUserModal
         isOpen={popup}
-        onClose={() => setPopup(false)}
-        title="Add New User"
-        size="md"
-      >
-        <form onSubmit={handleCreateUser} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Full Name
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoPerson className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                value={newUser.name}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, name: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                placeholder="Enter full name"
-                required
-              />
-            </div>
-          </div>
+        onClose={closeCreateUserPopup}
+        onSubmit={handleCreateUser}
+        isLoading={creatingUser}
+      />
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Email Address
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoMail className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="email"
-                value={newUser.email}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, email: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                placeholder="Enter email address"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Phone Number
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoCall className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                value={newUser.phone}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, phone: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                placeholder="Enter phone number"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Role
-              </label>
-              <select
-                value={newUser.role}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, role: e.target.value })
-                }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              >
-                <option value="employee">Employee</option>
-                <option value="admin">Admin</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Position
-              </label>
-              <input
-                type="text"
-                value={newUser.position}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, position: e.target.value })
-                }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                placeholder="Position"
-                required
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoKey className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type={showPassword ? "text" : "password"}
-                value={newUser.password}
-                onChange={(e) =>
-                  setNewUser({ ...newUser, password: e.target.value })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                placeholder="Enter password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="absolute cursor-pointer inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Confirm Password
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoKey className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type={showPasswordConfirm ? "text" : "password"}
-                value={newUser.passwordConfirmation}
-                onChange={(e) =>
-                  setNewUser({
-                    ...newUser,
-                    passwordConfirmation: e.target.value,
-                  })
-                }
-                className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                placeholder="Confirm password"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPasswordConfirm((prev) => !prev)}
-                className="absolute cursor-pointer inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                {showPasswordConfirm ? (
-                  <FaEyeSlash size={18} />
-                ) : (
-                  <FaEye size={18} />
-                )}
-              </button>
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
-          >
-            <IoAdd size={18} />
-            Create User
-          </button>
-        </form>
-      </Modal>
-
-      {/* Popup Form to update user role and status */}
-      {popupSetting && selectedUser && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800 flex items-center gap-1">
-                <IoSettingsOutline size={20} />
-                <span>User Settings</span>
-              </h3>
-              <button
-                onClick={() => {
-                  setPopupSetting(false);
-                  setSelectedUser(null);
-                }}
-                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
-              >
-                <IoClose size={24} />
-              </button>
-            </div>
-
-            {/* User Info */}
-            <div className="mb-6 p-4 bg-slate-50 rounded-lg">
-              <h4 className="font-medium text-slate-800">
-                {selectedUser.name}
-              </h4>
-              <p className="text-sm text-slate-600">{selectedUser.email}</p>
-              <p className="text-sm text-slate-600">{selectedUser.phone}</p>
-            </div>
-
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                // Handle both role change and status update
-                if (selectedUser) {
-                  // Update role if changed
-                  if (selectedUser.role !== tempUser.role) {
-                    handleUpdateRole(selectedUser.id, tempUser.role);
-                  }
-
-                  // Update status if changed
-                  if (selectedUser.active !== (tempUser.status === "active")) {
-                    if (tempUser.status === "active") {
-                      handleActivateUser(selectedUser.id);
-                    } else {
-                      handleDeactivateUser(selectedUser.id);
-                    }
-                  }
-
-                  setPopupSetting(false);
-                  setSelectedUser(null);
-                }
-              }}
-              className="space-y-4"
-            >
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Role
-                  </label>
-                  <select
-                    value={tempUser.role}
-                    onChange={(e) =>
-                      setTempUser({
-                        ...tempUser,
-                        role: e.target.value as "admin" | "employee",
-                      })
-                    }
-                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  >
-                    <option value="employee">Employee</option>
-                    <option value="admin">Admin</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Status
-                  </label>
-                  <select
-                    value={tempUser.status}
-                    onChange={(e) =>
-                      setTempUser({
-                        ...tempUser,
-                        status: e.target.value as "active" | "deactive",
-                      })
-                    }
-                    className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                  >
-                    <option value="active">Active</option>
-                    <option value="deactive">Deactive</option>
-                  </select>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
-              >
-                <IoSettingsOutline size={18} />
-                <span>Update User</span>
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* User Settings Modal */}
+      <UserSettingsModal
+        isOpen={popupSetting}
+        onClose={closeSettingsPopup}
+        user={selectedUser}
+        onUpdateRole={handleUpdateRole}
+        onActivateUser={handleActivateUser}
+        onDeactivateUser={handleDeactivateUser}
+        isLoading={updatingRole || activating || deactivating}
+      />
 
       {/* Pagination */}
-      <Pagination
-        pagination={pagination}
-        page={page}
-        setPage={setPage}
-        pageSize={10}
-        showInfo={true}
-      />
+      {pagination && dispatchers.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+          pageSize={10}
+          showInfo={true}
+        />
+      )}
     </section>
   );
 };

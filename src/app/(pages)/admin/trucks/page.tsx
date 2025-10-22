@@ -9,7 +9,7 @@ import {
   useUpdateTruckMutation,
   useDeleteTruckMutation,
 } from "@/redux/slices/truckApi";
-import { TTruck } from "@/types/globalTypes";
+import { TDriver, TTruck } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
@@ -533,7 +533,7 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
         createdBy: user.id,
         assignedDriver:
           typeof formData.assignedDriver === "object"
-            ? (formData.assignedDriver as any)?._id
+            ? (formData.assignedDriver)?.driverId
             : formData.assignedDriver,
       }).unwrap();
 

@@ -1,12 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { TDriver, TLoadSummary, TPagination } from "@/types/globalTypes";
+import { RootState } from "../store";
 
 export const driverApi = createApi({
   reducerPath: "driverApi",
   baseQuery: fetchBaseQuery({
     baseUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/v1`,
-    prepareHeaders: (headers, { getState }: any) => {
-      const token = getState().auth.token;
+    prepareHeaders: (headers, { getState }) => {
+      const token = (getState() as RootState).auth.token;
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
       }
