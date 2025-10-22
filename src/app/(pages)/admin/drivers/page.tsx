@@ -152,7 +152,7 @@ const DriverForm = ({
           zIndex: 1,
         }}
       >
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant="h5" component='span' fontWeight="bold">
           {editMode ? "Edit Driver" : "Add New Driver"}
         </Typography>
         <IconButton onClick={onClose} sx={{ color: "white" }} size="small">

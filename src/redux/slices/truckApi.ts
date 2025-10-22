@@ -38,7 +38,7 @@ export const truckApi = createApi({
             { type: "Truck", id: "LIST" },
           ]
           : [{ type: "Truck", id: "LIST" }],
-      keepUnusedDataFor:300,
+      keepUnusedDataFor: 60 * 60,
     }),
 
     // ✅ Get all trucks (for search/filter across all)
@@ -65,24 +65,7 @@ export const truckApi = createApi({
       ],
       keepUnusedDataFor: 60 * 60,
     }),
-    // ✅ Get truck summary with optional from/to params
-    getTruckSummaryQuery: builder.query<
-      { data: TTruckSummary },
-      { id: string; from?: string; to?: string }
-    >({
-      query: ({ id, from, to }) => {
-        const params = new URLSearchParams();
-        if (from) params.set("from", from);
-        if (to) params.set("to", to);
-
-        const queryString = params.toString();
-        return `/summary/truck/${id}${queryString ? `?${queryString}` : ""}`;
-      },
-      providesTags: (result, error, { id }) => [{ type: "TruckSummary", id }],
-      keepUnusedDataFor: 60 * 60,
-    }),
-
-
+ 
     // ✅ Get single truck by ID
     getTruckById: builder.query<{ data: TTruck }, string>({
       query: (id) => `/trucks/${id}`,

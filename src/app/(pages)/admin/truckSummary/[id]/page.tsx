@@ -1,7 +1,10 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { TTruck, TErrors, TLoads, TStatusLoad, TTruckSummary } from "@/types/globalTypes";
+import {
+  TLoads,
+  TStatusLoad,
+} from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
@@ -19,8 +22,6 @@ import {
   IoIdCardOutline,
   IoPersonOutline,
   IoArrowBack,
-  IoFilterOutline,
-  IoRefreshOutline,
 } from "react-icons/io5";
 import { FaMoneyBillWave } from "react-icons/fa";
 import useError from "@/hook/useError";
@@ -28,74 +29,31 @@ import DataTable from "@/components/ui/DataTable";
 import { truckSummaryColumns } from "@/data/truckSummaryTable";
 
 // ✅ Import RTK Query hooks
-import { 
+import {
   useGetTruckByIdQuery,
-  useGetTrucksQuery, 
-  useGetTruckSummaryQuery,
-  useLazyGetTruckSummaryQuery 
+  useLazyGetTruckSummaryQuery,
 } from "@/redux/slices/truckApi";
-
-type TPeriod = {
-  from: string;
-  to: string;
-};
-
-type TTruckSummaryData = {
-  truckId: number;
-  truckInfo: {
-    model: string;
-    plateNumber: string;
-    type: string;
-    assignedDriver?: {
-      _id: string;
-      name: string;
-      phone: string;
-      pricePerMile: number;
-      driverId: number;
-    };
-    fuelPerMile: number;
-  };
-  summary: {
-    totalLoads: number;
-    totalMiles: number;
-    totalRevenue: number;
-    fuelCost: number;
-    repairCost: number;
-    insuranceCost: number;
-    driverPay: number;
-    totalExpenses: number;
-    netProfit: number;
-    avgRevenuePerMile: number;
-    avgExpensePerMile: number;
-    currency: string;
-  };
-  period: TPeriod;
-  loads: TLoads[];
-};
 
 const TruckSummary = () => {
   const { id } = useParams();
   const [fromDate, setFromDate] = useState<string>("");
   const [toDate, setToDate] = useState<string>("");
-  
+
   const router = useRouter();
   const { error, setError } = useError();
 
   // ✅ استخدام RTK Query hooks
-  const { 
-    data: profileData, 
-    isLoading: profileLoading, 
-    error: profileError 
+  const {
+    data: profileData,
+    isLoading: profileLoading,
   } = useGetTruckByIdQuery(id as string, {
     skip: !id,
   });
 
-  // ✅ استخدام lazy query للفلترة
-  const [fetchTruckSummary, { 
-    data: truckSummaryData, 
-    isLoading: summaryLoading, 
-    error: summaryError 
-  }] = useLazyGetTruckSummaryQuery();
+  const [
+    fetchTruckSummary,
+    { data: truckSummaryData, isLoading: summaryLoading },
+  ] = useLazyGetTruckSummaryQuery();
 
   const profile = profileData?.data;
   const truckSummary = truckSummaryData?.data;
@@ -106,60 +64,6 @@ const TruckSummary = () => {
       fetchTruckSummary(id as string);
     }
   }, [id, fetchTruckSummary]);
-
-  // ✅ معالجة الأخطاء
-  useEffect(() => {
-    if (profileError || summaryError) {
-      const errorMessage = (profileError || summaryError) as any;
-      setError(errorMessage?.data?.message || "Failed to load data");
-    }
-  }, [profileError, summaryError, setError]);
-
-  const handleApplyFilter = async () => {
-    if (!fromDate && !toDate) {
-      toast.error("Please select at least one date", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-      return;
-    }
-
-    if (!id) return;
-
-    try {
-      const params: any = {};
-      if (fromDate) params.from = `${fromDate}T00:00:00Z`;
-      if (toDate) params.to = `${toDate}T23:59:59Z`;
-
-      await fetchTruckSummary({
-        id: id as string,
-        ...params
-      }).unwrap();
-
-      toast.success("Filter applied successfully", {
-        style: { background: "#10b981", color: "#fff" },
-      });
-    } catch (error) {
-      const err = error as any;
-      setError(err?.data?.message || "Filter failed");
-    }
-  }; 
-
-  const handleReset = async () => {
-    setFromDate("");
-    setToDate("");
-
-    if (!id) return;
-    
-    try {
-      await fetchTruckSummary(id as string).unwrap();
-      toast.success("Reset successfully", {
-        style: { background: "#3b82f6", color: "#fff" },
-      });
-    } catch (error) {
-      const err = error as any;
-      setError(err?.data?.message || "Reset failed");
-    }
-  };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -182,7 +86,9 @@ const TruckSummary = () => {
       },
     };
 
-    const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.inactive;
+    const config =
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.inactive;
 
     return (
       <span
@@ -266,8 +172,17 @@ const TruckSummary = () => {
 
       {/* Destination */}
       <td className="p-4 text-slate-700 max-w-[140px]">
-        <div className="truncate" title={Array.isArray(load.destination) ? load.destination.join(', ') : load.destination}>
-          {Array.isArray(load.destination) ? load.destination.join(', ') : load.destination}
+        <div
+          className="truncate"
+          title={
+            Array.isArray(load.destination)
+              ? load.destination.join(", ")
+              : load.destination
+          }
+        >
+          {Array.isArray(load.destination)
+            ? load.destination.join(", ")
+            : load.destination}
         </div>
       </td>
 
@@ -317,14 +232,14 @@ const TruckSummary = () => {
         <div className="mb-4 lg:mb-0">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/admin/truckDashboard')}
+              onClick={() => router.push("/admin/truckDashboard")}
               className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <IoArrowBack size={20} />
               Back
             </button>
             <div>
-              <Titles>Truck Summary - {profile?.truckId }</Titles>
+              <Titles>Truck Summary - {profile?.truckId}</Titles>
               <p className="text-slate-600 mt-2 text-sm">
                 Detailed overview of truck information and performance
               </p>
@@ -383,7 +298,9 @@ const TruckSummary = () => {
                   <IoCalendarOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Year</span>
                 </div>
-                <span className="font-medium text-slate-800">{profile.year}</span>
+                <span className="font-medium text-slate-800">
+                  {profile.year}
+                </span>
               </div>
 
               <div className="flex items-center justify-between py-2 border-b border-slate-100">
@@ -391,12 +308,17 @@ const TruckSummary = () => {
                   <IoScaleOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Capacity</span>
                 </div>
-                <span className="font-medium text-slate-800">{profile.capacity} kg</span>
+                <span className="font-medium text-slate-800">
+                  {profile.capacity} kg
+                </span>
               </div>
 
               <div className="flex items-center justify-between py-2 border-b border-slate-100">
                 <div className="flex items-center gap-3 text-sm">
-                  <IoCheckmarkCircleOutline className="text-slate-400" size={18} />
+                  <IoCheckmarkCircleOutline
+                    className="text-slate-400"
+                    size={18}
+                  />
                   <span className="text-slate-600">Status</span>
                 </div>
                 <StatusBadge status={profile.status} />
@@ -407,7 +329,9 @@ const TruckSummary = () => {
                   <IoPersonOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Created By</span>
                 </div>
-                <span className="font-medium text-slate-800">{profile.createdBy}</span>
+                <span className="font-medium text-slate-800">
+                  {profile.createdBy}
+                </span>
               </div>
             </div>
           </div>
@@ -416,17 +340,23 @@ const TruckSummary = () => {
           <div className="space-y-4">
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
-                <h4 className="text-lg font-semibold text-slate-800">Quick Stats</h4>
+                <h4 className="text-lg font-semibold text-slate-800">
+                  Quick Stats
+                </h4>
                 <IoStatsChart size={24} className="text-blue-500" />
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                   <span className="text-slate-600">Truck ID</span>
-                  <span className="font-mono font-semibold text-slate-800">{profile.truckId}</span>
+                  <span className="font-mono font-semibold text-slate-800">
+                    {profile.truckId}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                   <span className="text-slate-600">Vehicle Age</span>
-                  <span className="font-semibold text-slate-800">{new Date().getFullYear() - profile.year} years</span>
+                  <span className="font-semibold text-slate-800">
+                    {new Date().getFullYear() - profile.year} years
+                  </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                   <span className="text-slate-600">Capacity Category</span>
@@ -439,7 +369,9 @@ const TruckSummary = () => {
 
             {/* Status Overview */}
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <h4 className="text-lg font-semibold text-slate-800 mb-4">Status Overview</h4>
+              <h4 className="text-lg font-semibold text-slate-800 mb-4">
+                Status Overview
+              </h4>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Current Status</span>
@@ -451,8 +383,16 @@ const TruckSummary = () => {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Availability</span>
-                  <span className={`font-medium ${profile.status === 'available' ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {profile.status === 'available' ? 'Available' : 'Not Available'}
+                  <span
+                    className={`font-medium ${
+                      profile.status === "available"
+                        ? "text-emerald-600"
+                        : "text-amber-600"
+                    }`}
+                  >
+                    {profile.status === "available"
+                      ? "Available"
+                      : "Not Available"}
                   </span>
                 </div>
               </div>
@@ -509,7 +449,8 @@ const TruckSummary = () => {
                       Total Revenue
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {truckSummary.summary.currency} {truckSummary.summary.totalRevenue.toLocaleString()}
+                      {truckSummary.summary.currency}{" "}
+                      {truckSummary.summary.totalRevenue.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-2.5 bg-amber-50 rounded-lg">
@@ -526,7 +467,8 @@ const TruckSummary = () => {
                       Net Profit
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {truckSummary.summary.currency} {truckSummary.summary.netProfit.toLocaleString()}
+                      {truckSummary.summary.currency}{" "}
+                      {truckSummary.summary.netProfit.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-2.5 bg-red-50 rounded-lg">
@@ -563,72 +505,8 @@ const TruckSummary = () => {
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">
                   Load Details
                 </h3>
-                <p className="text-slate-500 text-sm">
-                  Detailed breakdown of all loads assigned to this truck
-                  {(fromDate || toDate) && " (filtered)"}
-                </p>
               </div>
-
-              {/* ✅ Date Filters */}
-             <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-slate-700 mb-1">From</label>
-          <input
-            type="date"
-            value={fromDate}
-            onChange={(e) => setFromDate(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg"
-          />
-        </div>
-
-        <div className="flex flex-col">
-          <label className="text-sm font-medium text-slate-700 mb-1">To</label>
-          <input
-            type="date"
-            value={toDate}
-            onChange={(e) => setToDate(e.target.value)}
-            className="px-3 py-2 border border-slate-300 rounded-lg"
-          />
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={handleApplyFilter}
-            disabled={!fromDate && !toDate}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 flex items-center gap-2"
-          >
-            <IoFilterOutline />
-            Apply Filter
-          </button>
-
-          <button
-            onClick={handleReset}
-            className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 flex items-center gap-2"
-          >
-            <IoRefreshOutline />
-            Reset
-          </button>
-        </div>
-      </div>
             </div>
-
-            {/* ✅ Active Filter Message */}
-            {(fromDate || toDate) && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-slate-700 border border-slate-200 rounded-lg px-4 py-3 bg-blue-50 border-blue-200">
-                <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                  <IoFilterOutline className="text-blue-600" size={18} />
-                  <div>
-                    <span className="text-blue-600 font-medium">Active Filter: </span>
-                    <span className="font-semibold text-blue-800">
-                      {fromDate || "Any"} → {toDate || "Any"}
-                    </span>
-                    <span className="text-xs text-blue-500 ml-2">
-                      ({(flattenedLoads as TLoads[]).length} loads)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Table For Truck Loads Summary */}
@@ -644,16 +522,14 @@ const TruckSummary = () => {
               <div className="flex flex-col items-center justify-center">
                 <div className="text-3xl mb-3">📦</div>
                 <div className="text-slate-600">
-                  {fromDate || toDate 
-                    ? "No load records found for the selected date range" 
-                    : "No load records found"
-                  }
+                  {fromDate || toDate
+                    ? "No load records found for the selected date range"
+                    : "No load records found"}
                 </div>
                 <div className="text-slate-400 text-sm mt-1">
-                  {fromDate || toDate 
-                    ? "Please adjust your date filter" 
-                    : "There are no loads available for this truck"
-                  }
+                  {fromDate || toDate
+                    ? "Please adjust your date filter"
+                    : "There are no loads available for this truck"}
                 </div>
               </div>
             </div>
@@ -676,10 +552,16 @@ const TruckSummary = () => {
       {!profile && !loading && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
           <div className="text-4xl mb-4">🚛</div>
-          <h3 className="text-xl font-semibold text-slate-800 mb-2">Truck Not Found</h3>
-          <p className="text-slate-600 mb-4">{"The truck you're looking for doesn't exist or you don't have access to it."}</p>
+          <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            Truck Not Found
+          </h3>
+          <p className="text-slate-600 mb-4">
+            {
+              "The truck you're looking for doesn't exist or you don't have access to it."
+            }
+          </p>
           <button
-            onClick={() => router.push('/admin/trucks')}
+            onClick={() => router.push("/admin/trucks")}
             className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
           >
             Back to Trucks

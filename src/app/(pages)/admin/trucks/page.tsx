@@ -198,7 +198,7 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
         top: 0,
         zIndex: 1
       }}>
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant="h5" component='span' fontWeight="bold">
           {editMode ? "Edit Truck" : "Add New Truck"}
         </Typography>
         <IconButton 
