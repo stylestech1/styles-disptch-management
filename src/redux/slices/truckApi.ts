@@ -1,5 +1,6 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { TTruck, TTruckSummary } from "@/types/globalTypes";
+import { TPagination, TTruck, TTruckSummary } from "@/types/globalTypes";
+import { RootState } from "../store";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -7,8 +8,8 @@ export const truckApi = createApi({
   reducerPath: "trucksApi",
   baseQuery: fetchBaseQuery({
     baseUrl: `${apiURL}/api/v1`,
-    prepareHeaders: (headers, { getState }: any) => {
-      const token = getState().auth?.token;
+    prepareHeaders: (headers, { getState }) => {
+      const token = (getState() as RootState).auth?.token;
       if (token) headers.set("Authorization", `Bearer ${token}`);
       headers.set("Content-Type", "application/json");
       return headers;
@@ -19,7 +20,7 @@ export const truckApi = createApi({
   endpoints: (builder) => ({
     // ✅ Get trucks with pagination + optional search
     getTrucks: builder.query<
-      { data: { data: TTruck[]; paginationResult?: any } },
+      { data: { data: TTruck[]; paginationResult?: TPagination } },
       { page?: number; search?: string }
     >({
       query: ({ page = 1, search } = {}) => {
