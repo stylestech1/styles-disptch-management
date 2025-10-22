@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 // Importing Provider in RTK
-import ProviderRedux from "@/redux/provider";
+import  { Providers } from "@/redux/provider";
 import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
@@ -30,11 +30,11 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ProviderRedux>
+        <Providers>
           {children}
           <Toaster position="top-right" reverseOrder={false} />
 
-        </ProviderRedux>
+        </Providers>
       </body>
     </html>
   );

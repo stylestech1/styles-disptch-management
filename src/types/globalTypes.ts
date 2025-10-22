@@ -64,10 +64,7 @@ export type TTruck = {
   fuelPerMile:number;
   insuranceCost:number;
   repairCost: number;
-
-  
-
-
+  summary?: TTruckSummary
 };
 export interface TruckApiResponse {
   data: TTruck[];
@@ -133,3 +130,23 @@ export type TLoadSummary = {
   period: TPeriod;
   loads: TLoads[];
 };
+ export type TTruckSummary = {
+  truckId: number;
+  summary: {
+    totalLoads: number;
+    totalMiles: number;
+    totalRevenue: number;
+    fuelCost: number;
+    repairCost: number;
+    insuranceCost: number;
+    driverPay: number;
+    netProfit: number;
+    avgRevenuePerMile: number;
+    avgExpensePerMile: number;
+    currency: string;
+  };
+  loads: TLoads,
+  period: TPeriod
+}
+
+

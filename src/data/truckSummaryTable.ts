@@ -1,12 +1,12 @@
 // data/truckSummaryTable.ts
 export const truckSummaryColumns = [
-  { header: "Load ID", accessor: "loadId" },
-  { header: "Origin", accessor: "origin" },
-  { header: "Destination", accessor: "destination" },
-  { header: "Miles", accessor: "distanceMiles" },
-  { header: "Price/Mile", accessor: "pricePerMile" },
-  { header: "Total Price", accessor: "totalPrice" },
-  { header: "Status", accessor: "status" },
-  { header: "Driver", accessor: "driver" },
-  { header: "Delivered", accessor: "deliveredAt" },
+  { key: "loadId", header: "Load ID", accessor: "loadId" },
+  { key: "origin", header: "Origin", accessor: "origin" },
+  { key: "destination", header: "Destination", accessor: "destination" },
+  { key: "distanceMiles", header: "Miles", accessor: "distanceMiles" },
+  { key: "pricePerMile", header: "Price/Mile", accessor: "pricePerMile" },
+  { key: "totalPrice", header: "Total Price", accessor: "totalPrice" },
+  { key: "status", header: "Status", accessor: "status" },
+  { key: "driver", header: "Driver", accessor: "driver" },
+  { key: "deliveredAt", header: "Delivered", accessor: "deliveredAt" },
 ];
