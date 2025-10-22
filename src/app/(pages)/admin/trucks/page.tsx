@@ -103,11 +103,12 @@ const TruckForm = ({
   open: boolean;
   onClose: () => void;
   formData: Partial<TTruck>;
-  onChange: (field: string, value: any) => void;
+  onChange: <K extends keyof TTruck>(field: K, value: TTruck[K]) => void;
   onSubmit: () => void;
   editMode: boolean;
   isLoading: boolean;
 }) => {
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   // ✅ Truck types options
@@ -155,12 +156,14 @@ const TruckForm = ({
   };
 
   // ✅ Clear errors when field changes
-  const handleFieldChange = (field: string, value: any) => {
-    onChange(field, value);
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
-  };
+const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) => {
+  onChange(field, value);
+  if (errors[field]) {
+    setErrors(prev => ({ ...prev, [field]: "" }));
+  }
+};
+
+
 
   // ✅ Reset form when modal closes
   useEffect(() => {
@@ -271,7 +274,7 @@ const TruckForm = ({
                 name="year"
                 type="number"
                 value={formData.year || ""}
-                onChange={(e) => handleFieldChange("year", parseInt(e.target.value) || "")}
+                onChange={(e) => handleFieldChange("year", Number(e.target.value))}
                 error={!!errors.year}
                 helperText={errors.year}
                 size="medium"
@@ -297,7 +300,7 @@ const TruckForm = ({
                 name="capacity"
                 type="number"
                 value={formData.capacity || ""}
-                onChange={(e) => handleFieldChange("capacity", parseInt(e.target.value) || "")}
+                onChange={(e) => handleFieldChange("capacity", Number(e.target.value))}
                 error={!!errors.capacity}
                 helperText={errors.capacity}
                 size="medium"
@@ -313,7 +316,7 @@ const TruckForm = ({
                 name="fuelPerMile"
                 type="number"
                 value={formData.fuelPerMile || ""}
-                onChange={(e) => handleFieldChange("fuelPerMile", parseFloat(e.target.value) || "")}
+                onChange={(e) => handleFieldChange("fuelPerMile", Number(e.target.value))}
                 error={!!errors.fuelPerMile}
                 helperText={errors.fuelPerMile}
                 size="medium"
@@ -423,7 +426,7 @@ const TrucksPage = () => {
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
   // 🔹 API Queries
-  const { data: trucksData, isLoading, refetch } = useGetTrucksQuery(page + 1);
+const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page + 1 });
   const { data: allTrucksData } = useGetAllTrucksQuery();
 
   // 🔹 API Mutations
@@ -482,9 +485,10 @@ const TrucksPage = () => {
   };
 
   // ✅ Handle Form Change
-  const handleFormChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+ const handleFormChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) => {
+  setFormData(prev => ({ ...prev, [field]: value }));
+};
+
 
   // ✅ Create Truck
   const handleCreate = async () => {
@@ -504,9 +508,11 @@ const TrucksPage = () => {
       toast.success("✅ Truck created successfully!");
       setOpen(false);
       refetch();
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Create failed");
-    }
+  } catch (err: unknown) {
+  const error = err as { data?: { message?: string } };
+  toast.error(error?.data?.message || "Create failed");
+}
+
   };
 
   // ✅ Update Truck
@@ -534,23 +540,22 @@ const TrucksPage = () => {
       toast.success("✅ Truck updated successfully!");
       setOpen(false);
       refetch();
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Update failed");
-    }
+  } catch (err: unknown) {
+  const error = err as { data?: { message?: string } };
+  toast.error(error?.data?.message || "Create failed");
+}
+  
   };
 
   // ✅ Delete Truck with MUI Toast
   const handleDelete = async (id: string, truckId?: number) => {
-    // ✅ استخدام MUI Toast بدلاً من confirm
     setDeleteToast({
       open: true,
       message: `Are you sure you want to delete truck #${truckId}?`
     });
 
-    // حفظ ID للاستخدام لاحقاً
     const truckToDelete = { id, truckId };
     
-    // يمكنك استخدام state لحفظ truckToDelete إذا أردت تأكيداً
     setTruckToDelete(truckToDelete);
   };
 
@@ -564,9 +569,11 @@ const TrucksPage = () => {
       await deleteTruck(truckToDelete.id).unwrap();
       toast.success(`✅ Truck #${truckToDelete.truckId} deleted successfully!`);
       refetch();
-    } catch (err: any) {
-      toast.error(err?.data?.message || "Delete failed");
-    } finally {
+   } catch (err: unknown) {
+  const error = err as { data?: { message?: string } };
+  toast.error(error?.data?.message || "Deleted failed");
+}
+ finally {
       setDeleteToast({ open: false, message: "" });
       setTruckToDelete(null);
     }
@@ -646,7 +653,7 @@ const TrucksPage = () => {
         sx={{ 
           mb: 3, 
           borderRadius: 2,
-          backgroundColor: 'white', // ✅ خلفية بيضاء
+          backgroundColor: 'white',
           '& .MuiOutlinedInput-root': {
             borderRadius: 2,
             backgroundColor: 'white',

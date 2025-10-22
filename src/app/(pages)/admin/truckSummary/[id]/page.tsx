@@ -1,7 +1,7 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { TTruck, TErrors, TLoads, TStatusLoad } from "@/types/globalTypes";
+import { TTruck, TErrors, TLoads, TStatusLoad, TTruckSummary } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
@@ -142,9 +142,8 @@ const TruckSummary = () => {
       const err = error as any;
       setError(err?.data?.message || "Filter failed");
     }
-  };
+  }; 
 
-  // ✅ دالة إعادة تعيين الفلتر
   const handleReset = async () => {
     setFromDate("");
     setToDate("");
@@ -624,7 +623,7 @@ const TruckSummary = () => {
                       {fromDate || "Any"} → {toDate || "Any"}
                     </span>
                     <span className="text-xs text-blue-500 ml-2">
-                      ({flattenedLoads.length} loads)
+                      ({(flattenedLoads as TLoads[]).length} loads)
                     </span>
                   </div>
                 </div>
@@ -633,10 +632,10 @@ const TruckSummary = () => {
           </div>
 
           {/* Table For Truck Loads Summary */}
-          {flattenedLoads.length > 0 ? (
+          {(flattenedLoads as TLoads[]).length > 0 ? (
             <DataTable
               columns={truckSummaryColumns}
-              data={flattenedLoads}
+              data={flattenedLoads as TLoads[]}
               renderRow={renderTruckSummaryRow}
               loading={loading}
             />
@@ -667,7 +666,7 @@ const TruckSummary = () => {
         <div className="mt-6 flex justify-end">
           <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
             <p className="text-sm text-slate-600">
-              Showing {flattenedLoads.length} loads
+              Showing {(flattenedLoads as TLoads[]).length} loads
               {(fromDate || toDate) && " (filtered)"}
             </p>
           </div>

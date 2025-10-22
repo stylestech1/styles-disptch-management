@@ -6,7 +6,9 @@ import { TDriver, TErrors, TLoads, TStatusLoad, TLoadSummary } from "@/types/glo
 import { useState, useEffect, useCallback } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation"; 
+import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
+
 import {
   IoPersonCircleOutline,
   IoMailOutline,
@@ -46,7 +48,6 @@ const DriverSummary = () => {
   const [toDate, setToDate] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  // ✅ استخدام RTK Query hooks
   const {
     data: profileData,
     isLoading: profileLoading,
@@ -55,7 +56,6 @@ const DriverSummary = () => {
     skip: !id,
   });
 
-  // ✅ استخدام lazy query للفلترة
   const [
     fetchDriverSummary,
     { 
@@ -68,22 +68,22 @@ const DriverSummary = () => {
   const profile = profileData?.data;
   const driverSummary = driverSummaryData?.data;
 
-  // ✅ جلب البيانات الأولية
   useEffect(() => {
     if (id) {
       fetchDriverSummary({ id: id as string });
     }
   }, [id, fetchDriverSummary]);
 
-  // ✅ معالجة الأخطاء
-  useEffect(() => {
-    if (profileError || summaryError) {
-      const errorMessage = (profileError || summaryError) as any;
-      setError(errorMessage?.data?.message || "Failed to load data");
-    }
-  }, [profileError, summaryError]);
+ useEffect(() => {
+  const errorObj = (profileError || summaryError) as FetchBaseQueryError | undefined;
+  if (errorObj) {
+    const message =
+      (errorObj.data as { message?: string })?.message || "Failed to load data";
+    setError(message);
+  }
+}, [profileError, summaryError]);
 
-  // ✅ تطبيق الفلترة
+
   const handleApplyFilter = async () => {
     if (!fromDate && !toDate) {
       toast.error("Please select at least one date", {
@@ -95,7 +95,7 @@ const DriverSummary = () => {
     if (!id) return;
 
     try {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (fromDate) params.from = `${fromDate}T00:00:00Z`;
       if (toDate) params.to = `${toDate}T23:59:59Z`;
 
@@ -108,16 +108,15 @@ const DriverSummary = () => {
         style: { background: "#10b981", color: "#fff" },
       });
     } catch (error) {
-      const err = error as any;
+      const err = error as { data?: { message?: string } };
       setError(err?.data?.message || "Filter failed");
     }
   };
 
-  // ✅ إعادة تعيين الفلتر
   const handleReset = async () => {
     setFromDate("");
     setToDate("");
-
+ 
     if (!id) return;
     
     try {
@@ -126,7 +125,7 @@ const DriverSummary = () => {
         style: { background: "#3b82f6", color: "#fff" },
       });
     } catch (error) {
-      const err = error as any;
+      const err = error as { data?: { message?: string } };
       setError(err?.data?.message || "Reset failed");
     }
   };

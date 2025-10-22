@@ -16,7 +16,7 @@ import toast, { Toaster } from "react-hot-toast";
 import {
   IoAdd,
   IoPencil,
-  IoTrash,
+  IoTrash, 
   IoSearch,
   IoClose,
   IoAnalytics,
@@ -118,7 +118,7 @@ const DriverForm = ({
   open: boolean;
   onClose: () => void;
   formData: Partial<TDriver>;
-  onChange: (field: string, value: any) => void;
+onChange: (field: keyof TDriver, value: TDriver[keyof TDriver]) => void
   onSubmit: () => void;
   editMode: boolean;
   isLoading: boolean;
@@ -382,29 +382,23 @@ const DriversPage = () => {
   };
 
   // ✅ Handle Form Change
-  const handleFormChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
+  const handleFormChange = <K extends keyof TDriver>(field: K, value: TDriver[K]) => {
+  setFormData(prev => ({ ...prev, [field]: value }));
+};
+
 
   // ✅ Function to display API errors in toast
-  const showApiErrors = (error: any) => {
-    if (error?.data?.errors && Array.isArray(error.data.errors)) {
-      // Display all error messages
-      error.data.errors.forEach((err: any) => {
-        toast.error(`${err.path}: ${err.msg}`, {
-          duration: 5000,
-          style: {
-            background: '#dc2626',
-            color: '#fff',
-          },
-        });
-      });
-    } else if (error?.data?.message) {
-      toast.error(error.data.message);
-    } else {
-      toast.error("An unexpected error occurred");
-    }
-  };
+ const showApiErrors = (error: unknown) => {
+  const err = error as { data?: { errors?: { path: string; msg: string }[]; message?: string } };
+  if (err?.data?.errors && Array.isArray(err.data.errors)) {
+    err.data.errors.forEach(e => toast.error(`${e.path}: ${e.msg}`));
+  } else if (err?.data?.message) {
+    toast.error(err.data.message);
+  } else {
+    toast.error("An unexpected error occurred");
+  }
+};
+
 
   // ✅ Navigate to Driver Summary
   const handleViewStats = (id: string) => {

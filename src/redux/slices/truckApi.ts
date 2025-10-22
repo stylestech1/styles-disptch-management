@@ -14,7 +14,7 @@ export const truckApi = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Truck", "TruckSummary"], 
+  tagTypes: ["Truck", "TruckSummary"],
 
   endpoints: (builder) => ({
     // ✅ Get trucks with pagination + optional search
@@ -31,14 +31,14 @@ export const truckApi = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.data.map((t: TTruck) => ({
-                type: "Truck" as const,
-                id: t.id,
-              })),
-              { type: "Truck", id: "LIST" },
-            ]
+            ...result.data.data.map((t: TTruck) => ({
+              type: "Truck" as const,
+              id: t.id,
+            })),
+            { type: "Truck", id: "LIST" },
+          ]
           : [{ type: "Truck", id: "LIST" }],
-      keepUnusedDataFor: 60 * 60, 
+      keepUnusedDataFor:300,
     }),
 
     // ✅ Get all trucks (for search/filter across all)
@@ -47,30 +47,47 @@ export const truckApi = createApi({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.data.map((t: TTruck) => ({
-                type: "Truck" as const,
-                id: t.id,
-              })),
-              { type: "Truck", id: "ALL_LIST" },
-            ]
+            ...result.data.data.map((t: TTruck) => ({
+              type: "Truck" as const,
+              id: t.id,
+            })),
+            { type: "Truck", id: "ALL_LIST" },
+          ]
           : [{ type: "Truck", id: "ALL_LIST" }],
-      keepUnusedDataFor: 60 * 60, 
+      keepUnusedDataFor: 60 * 60,
     }),
 
     // ✅ Get truck summary 
     getTruckSummary: builder.query<{ data: TTruckSummary }, string>({
       query: (id) => `/summary/truck/${id}`,
       providesTags: (result, error, id) => [
-        { type: "TruckSummary", id }, 
+        { type: "TruckSummary", id },
       ],
-      keepUnusedDataFor: 60 * 60, 
+      keepUnusedDataFor: 60 * 60,
     }),
+    // ✅ Get truck summary with optional from/to params
+    getTruckSummaryQuery: builder.query<
+      { data: TTruckSummary },
+      { id: string; from?: string; to?: string }
+    >({
+      query: ({ id, from, to }) => {
+        const params = new URLSearchParams();
+        if (from) params.set("from", from);
+        if (to) params.set("to", to);
+
+        const queryString = params.toString();
+        return `/summary/truck/${id}${queryString ? `?${queryString}` : ""}`;
+      },
+      providesTags: (result, error, { id }) => [{ type: "TruckSummary", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
 
     // ✅ Get single truck by ID
     getTruckById: builder.query<{ data: TTruck }, string>({
       query: (id) => `/trucks/${id}`,
       providesTags: (result, error, id) => [{ type: "Truck", id }],
-      keepUnusedDataFor: 60 * 60, 
+      keepUnusedDataFor: 60 * 60,
     }),
 
     // ✅ Create / Update / Delete
@@ -78,10 +95,10 @@ export const truckApi = createApi({
       query: (body) => ({ url: "/trucks", method: "POST", body }),
       invalidatesTags: [
         { type: "Truck", id: "LIST" },
-        { type: "Truck", id: "ALL_LIST" }, 
+        { type: "Truck", id: "ALL_LIST" },
       ],
     }),
-    
+
     updateTruck: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/trucks/${id}`,
@@ -91,17 +108,17 @@ export const truckApi = createApi({
       invalidatesTags: (result, error, { id }) => [
         { type: "Truck", id },
         { type: "Truck", id: "LIST" },
-        { type: "Truck", id: "ALL_LIST" }, 
-        { type: "TruckSummary", id }, 
+        { type: "Truck", id: "ALL_LIST" },
+        { type: "TruckSummary", id },
       ],
     }),
-    
+
     deleteTruck: builder.mutation({
       query: (id) => ({ url: `/trucks/${id}`, method: "DELETE" }),
       invalidatesTags: (result, error, id) => [
         { type: "Truck", id },
         { type: "Truck", id: "LIST" },
-        { type: "Truck", id: "ALL_LIST" }, 
+        { type: "Truck", id: "ALL_LIST" },
         { type: "TruckSummary", id },
       ],
     }),

@@ -29,6 +29,22 @@ import {
   useGetTruckSummaryQuery 
 } from "@/redux/slices/truckApi";
 
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend,
+  ChartOptions,
+} from 'chart.js';
+import { Pie } from 'react-chartjs-2';
+import ChartSection from "@/components/ui/ChartSection";
+
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+
+
+
+
 // ✅ Styled cell
 const StyledTableCell = styled(TableCell)(() => ({
   [`&.${tableCellClasses.head}`]: {
@@ -58,7 +74,7 @@ function useDebounce(value: string, delay = 400) {
   }, [value, delay]);
 
   return debounced;
-}
+} 
 
 const TruckRow = React.memo(({ 
   truck, 
@@ -159,6 +175,8 @@ const TruckDashboard = () => {
   const router = useRouter();
   const { setError } = useError();
   const token = useAppSelector((state: RootState) => state.auth.token);
+const [getTruckSummary] = useLazyGetTruckSummaryQuery();
+const [summaries, setSummaries] = useState<Record<string, TTruckSummary>>({});
 
   const { 
     data: allTrucksData, 
@@ -185,7 +203,90 @@ const TruckDashboard = () => {
     });
   }, [allTrucksData, debouncedSearch, hasUserInteracted]);
 
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+
+
+
+ 
+const prepareChartData = () => {
+  const validTrucks = filteredTrucks.filter((truck) => truck.id);
+
+ if (validTrucks.length === 0 || Object.keys(summaries).length === 0) {
+    return null;
+  }
+  const labels = validTrucks.map(
+    (truck) => `Truck ${truck.truckId} (${truck.plateNumber})`
+  );
+
+ const milesData = validTrucks.map((truck) => 
+    summaries[truck.id]?.summary?.totalMiles || 0
+  );
+  const profitData = validTrucks.map((truck) => 
+    summaries[truck.id]?.summary?.netProfit || 0
+  );
+
+  const generateColors = (count: number) => {
+    const baseColors = [
+      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+      '#FF9F40', '#C9CBCF', '#4BC0C0', '#FF6384'
+    ];
+    return Array.from({ length: count }, (_, i) => baseColors[i % baseColors.length]);
+  };
+
+  const colors = generateColors(validTrucks.length);
+
+  return {
+    milesChart: {
+      labels,
+      datasets: [
+        {
+          label: 'Total Miles',
+          data: milesData,
+          backgroundColor: colors,
+          borderColor: colors,
+          borderWidth: 2,
+        },
+      ],
+    },
+    profitChart: {
+      labels,
+      datasets: [
+        {
+          label: 'Net Profit ($)',
+          data: profitData,
+          backgroundColor: colors,
+          borderColor: colors,
+          borderWidth: 2,
+        },
+      ],
+    },
+  };
+};
+
+useEffect(() => {
+  const fetchSummaries = async () => {
+    const results: Record<string, TTruckSummary> = {};
+    
+    for (const truck of filteredTrucks) {
+      if (!truck.id) continue;
+      
+      try {
+        const res = await getTruckSummary(truck.id).unwrap();
+        results[truck.id] = res.data; // تصحيح هنا - res.data تحتوي على الـ summary
+      } catch (err) {
+        console.error(`Error fetching summary for truck ${truck.id}`, err);
+      }
+    }
+    
+    setSummaries(results);
+  };
+
+  if (filteredTrucks.length > 0) {
+    fetchSummaries();
+  }
+}, [filteredTrucks, getTruckSummary]);
+const chartData = useMemo(prepareChartData, [filteredTrucks, summaries]);
+
+const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearch(value);
     
@@ -260,6 +361,8 @@ const TruckDashboard = () => {
           />
         </div>
       </div>
+
+{chartData && <ChartSection chartData={chartData} />}
 
       {/* Table */}
       <TableContainer component={Paper} sx={{ borderRadius: "8px" }}>

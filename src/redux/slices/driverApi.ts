@@ -28,7 +28,7 @@ export const driverApi = createApi({
 
     // 🔹 Get all drivers without pagination
     getAllDrivers: builder.query<{ data: TDriver[] }, void>({
-      query: () => `/drivers?limit=1000`,
+      query: () => `/drivers?limit=50`,
       providesTags: ["Drivers"],
     }),
     getDriverById: builder.query<{ data: TDriver }, string>({
