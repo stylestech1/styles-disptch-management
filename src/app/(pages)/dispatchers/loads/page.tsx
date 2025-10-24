@@ -31,8 +31,6 @@ import { MdEdit } from "react-icons/md";
 import {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
-  useGetDriversQuery,
-  useGetTrucksQuery,
   useGetNotesQuery,
 } from "@/redux/slices/apiSlice";
 
@@ -75,16 +73,6 @@ const LoadsPage = () => {
   } = useGetAllLoadsQuery();
 
   const {
-    isLoading: driversLoading,
-    isError: driversError,
-  } = useGetDriversQuery();
-
-  const {
-    isLoading: trucksLoading,
-    isError: trucksError,
-  } = useGetTrucksQuery();
-
-  const {
     isLoading: notesLoading,
   } = useGetNotesQuery(selectedLoadForNotes?.id || "", {
     skip: !selectedLoadForNotes?.id,
@@ -100,15 +88,11 @@ const LoadsPage = () => {
     const isLoading =
       loadsLoading ||
       allLoadsLoading ||
-      driversLoading ||
-      trucksLoading ||
       notesLoading;
     setLoading(isLoading);
   }, [
     loadsLoading,
     allLoadsLoading,
-    driversLoading,
-    trucksLoading,
     notesLoading,
     setLoading,
   ]);
@@ -122,21 +106,7 @@ const LoadsPage = () => {
         style: { background: "#dc2626", color: "#fff" },
       });
     }
-    if (driversError) {
-      const errorMessage = getErrorMessage(driversError);
-      setError(errorMessage);
-      toast.error(errorMessage || "Loading drivers failed ❌", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-    }
-    if (trucksError) {
-      const errorMessage = getErrorMessage(trucksError);
-      setError(errorMessage);
-      toast.error(errorMessage || "Loading trucks failed ❌", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-    }
-  }, [loadsError, driversError, trucksError, setError]);
+  }, [loadsError, setError]);
 
   // Error Handling
   interface RTKError {

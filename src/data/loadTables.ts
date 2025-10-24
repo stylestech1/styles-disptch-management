@@ -11,4 +11,5 @@ export const loadColumns: Column[] = [
   { key: "appointments", header: "Appointments", align: "center" },
   { key: "notes", header: "Notes", align: "center" },
   { key: "loadEdit", header: "Load Edit", align: "center" },
+  { key: "ViewDocs", header: "View Documents", align: "center" },
 ];

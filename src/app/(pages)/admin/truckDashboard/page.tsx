@@ -321,6 +321,7 @@ const TruckDashboard = () => {
       </TableRow>
     );
   });
+  TruckRow.displayName = 'TruckRow';
 
   if (trucksLoading)
     return (
