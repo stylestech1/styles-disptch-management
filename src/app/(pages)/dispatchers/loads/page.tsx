@@ -9,15 +9,11 @@ import Titles from "@/components/ui/Titles";
 import { loadColumns } from "@/data/loadTables";
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
-import {
-  TLoads,
-} from "@/types/globalTypes";
+import { TLoads } from "@/types/globalTypes";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
-import { CiStickyNote } from "react-icons/ci";
 import {
-  IoAdd,
-  IoRefresh,
+  IoAdd, 
   IoCheckmark,
   IoTime,
   IoCar,
@@ -25,36 +21,28 @@ import {
   IoSearch,
   IoLocationSharp,
 } from "react-icons/io5";
-import { LiaShippingFastSolid } from "react-icons/lia";
-import { RxUpdate } from "react-icons/rx";
-import { MdEdit } from "react-icons/md";
 import {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
   useGetNotesQuery,
+  useUploadDocumentsMutation,
 } from "@/redux/slices/apiSlice";
 
 // Import the new modal components
 import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
-import AddNoteModal from "@/components/loads/AddNoteModal";
-import UpdateStatusModal from "@/components/loads/UpdateStatusModal";
-import ViewAppointmentsModal from "@/components/loads/ViewAppointmentsModal";
-import ViewNotesModal from "@/components/loads/ViewNotesModal";
+import { useRouter } from "next/navigation";
 
 const LoadsPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  
+const router = useRouter();
+
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
-  const [showAddNoteModal, setShowAddNoteModal] = useState(false);
-  const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
-  const [showViewNotesModal, setShowViewNotesModal] = useState(false);
-  const [showViewAppointmentsModal, setShowViewAppointmentsModal] = useState(false);
 
   // Selected items for modals
-  const [selectedLoadForNotes, setSelectedLoadForNotes] = useState<TLoads | null>(null);
-  const [selectedLoadForAppointments, setSelectedLoadForAppointments] = useState<TLoads | null>(null);
+  const [selectedLoadForNotes, setSelectedLoadForNotes] =
+    useState<TLoads | null>(null);
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
@@ -67,16 +55,17 @@ const LoadsPage = () => {
     refetch: refetchLoads,
   } = useGetLoadsQuery({ page, limit: 10 });
 
-  const {
-    data: allLoadsData,
-    isLoading: allLoadsLoading,
-  } = useGetAllLoadsQuery();
+  const { data: allLoadsData, isLoading: allLoadsLoading } =
+    useGetAllLoadsQuery();
 
-  const {
-    isLoading: notesLoading,
-  } = useGetNotesQuery(selectedLoadForNotes?.id || "", {
-    skip: !selectedLoadForNotes?.id,
-  });
+  const { isLoading: notesLoading } = useGetNotesQuery(
+    selectedLoadForNotes?.id || "",
+    {
+      skip: !selectedLoadForNotes?.id,
+    }
+  );
+
+  const [updateLoads] = useUploadDocumentsMutation();
 
   // responses
   const load = loadsData?.data || [];
@@ -85,17 +74,9 @@ const LoadsPage = () => {
 
   // إدارة حالة ال loading بناءً على جميع ال queries
   useEffect(() => {
-    const isLoading =
-      loadsLoading ||
-      allLoadsLoading ||
-      notesLoading;
+    const isLoading = loadsLoading || allLoadsLoading || notesLoading;
     setLoading(isLoading);
-  }, [
-    loadsLoading,
-    allLoadsLoading,
-    notesLoading,
-    setLoading,
-  ]);
+  }, [loadsLoading, allLoadsLoading, notesLoading, setLoading]);
 
   // إدارة الأخطاء
   useEffect(() => {
@@ -134,27 +115,6 @@ const LoadsPage = () => {
     return "An error occurred";
   };
 
-  // TODO: Open Edit Load
-  const openEditLoadPopup = async (loadItem: TLoads) => {
-    if (!loadItem?.id) return;
-    setEditingLoad(loadItem);
-    setShowCreateEditModal(true);
-  };
-
-  // TODO: Open Note for Selected Load
-  const openAllNotesPopup = async (loadItem: TLoads) => {
-    if (!loadItem?.id) return;
-    setSelectedLoadForNotes(loadItem);
-    setShowViewNotesModal(true);
-  };
-
-  // TODO: Open Appointments for Selected Load
-  const openAllAppointmentsPopup = async (loadItem: TLoads) => {
-    if (!loadItem?.id) return;
-    setSelectedLoadForAppointments(loadItem);
-    setShowViewAppointmentsModal(true);
-  };
-
   // Filter loads للبحث
   const filteredLoads = search
     ? allLoads.filter((l: TLoads) =>
@@ -167,7 +127,9 @@ const LoadsPage = () => {
 
   // TODO: Table
   const renderLoadRow = (loadItem: TLoads, index: number) => (
-    <tr key={index} className="hover:bg-slate-50 transition-colors group">
+    <tr key={index} className="hover:bg-slate-50 transition-colors group cursor-pointer"
+        onClick={() => router.push(`/admin/loadDetails/${loadItem.loadId}`)} 
+>
       {/* Load ID */}
       <td className="p-4 text-center">
         <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
@@ -250,39 +212,6 @@ const LoadsPage = () => {
           </div>
         </div>
       </td>
-
-      {/* Appointments */}
-      <td className="p-4 text-center text-slate-600 text-xs">
-        <button
-          onClick={() => openAllAppointmentsPopup(loadItem)}
-          className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 border border-purple-200 hover:bg-purple-800 hover:text-purple-200 transition-colors"
-        >
-          <LiaShippingFastSolid />
-          <span>Appointments</span>
-        </button>
-      </td>
-
-      {/* Notes */}
-      <td className="p-4 text-center text-slate-600 text-xs">
-        <button
-          onClick={() => openAllNotesPopup(loadItem)}
-          className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-800 hover:text-blue-200 transition-colors"
-        >
-          <CiStickyNote />
-          <span>view</span>
-        </button>
-      </td>
-
-      {/* LoadEdit */}
-      <td className="p-4 text-center text-slate-600 text-xs">
-        <button
-          onClick={() => openEditLoadPopup(loadItem)}
-          className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-800 hover:text-yellow-200 transition-colors"
-        >
-          <RxUpdate />
-          <span>Update</span>
-        </button>
-      </td>
     </tr>
   );
 
@@ -313,23 +242,7 @@ const LoadsPage = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => setShowAddNoteModal(true)}
-            className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
-          >
-            <MdEdit size={18} />
-            Add Note
-          </button>
-
-          <button
-            onClick={() => setShowUpdateStatusModal(true)}
-            className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
-          >
-            <IoRefresh size={18} />
-            Update Status
-          </button>
-
+        <div>
           <button
             onClick={() => {
               setEditingLoad(null);
@@ -413,44 +326,6 @@ const LoadsPage = () => {
           refetchLoads();
         }}
         editingLoad={editingLoad}
-      />
-
-      <AddNoteModal
-        isOpen={showAddNoteModal}
-        onClose={() => {
-          setShowAddNoteModal(false);
-          refetchLoads();
-        }}
-      />
-
-      <UpdateStatusModal
-        isOpen={showUpdateStatusModal}
-        onClose={() => {
-          setShowUpdateStatusModal(false);
-          refetchLoads();
-        }}
-      />
-
-      <ViewNotesModal
-        isOpen={showViewNotesModal}
-        onClose={() => {
-          setShowViewNotesModal(false);
-          setSelectedLoadForNotes(null);
-        }}
-        selectedLoad={selectedLoadForNotes}
-        onAddNote={() => {
-          setShowViewNotesModal(false);
-          setShowAddNoteModal(true);
-        }}
-      />
-
-      <ViewAppointmentsModal
-        isOpen={showViewAppointmentsModal}
-        onClose={() => {
-          setShowViewAppointmentsModal(false);
-          setSelectedLoadForAppointments(null);
-        }}
-        selectedLoad={selectedLoadForAppointments}
       />
     </section>
   );
