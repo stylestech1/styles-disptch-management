@@ -80,7 +80,7 @@ export const apiSlice = api.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Comments"],
+      invalidatesTags: ["Comments", 'Loads'],
     }),
 
     // Get Notes

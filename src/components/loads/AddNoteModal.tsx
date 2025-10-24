@@ -19,7 +19,9 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
     "dispatcher"
   );
 
+
   // استخدام useGetLoadsQuery بدلاً من useSelector
+  const { refetch } = useGetLoadsQuery({ page: 1, limit: 10 })
   const [addNote, { isLoading: addingNoteLoading }] = useAddNoteMutation();
 
   const handleNotes = async (e: React.FormEvent) => {
@@ -45,6 +47,8 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
       toast.success("Note was Added ✅", {
         style: { background: "#16a34a", color: "#fff" },
       });
+
+      await refetch();
 
       handleClose();
     } catch (err: unknown) {

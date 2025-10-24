@@ -20,6 +20,7 @@ import {
   IoNavigate,
   IoSearch,
   IoLocationSharp,
+  IoChatbubbleEllipses,
 } from "react-icons/io5";
 import {
   useGetLoadsQuery,
@@ -126,7 +127,13 @@ const router = useRouter();
   if (loading) return <Loading />;
 
   // TODO: Table
-  const renderLoadRow = (loadItem: TLoads, index: number) => (
+  const renderLoadRow = (loadItem: TLoads, index: number) => {
+
+
+const hasComments = loadItem.comments && loadItem.comments.length > 0;
+    const commentsCount = loadItem.comments?.length || 0;
+
+    return(
     <tr key={index} className="hover:bg-slate-50 transition-colors group cursor-pointer"
         onClick={() => router.push(`/admin/loadDetails/${loadItem.loadId}`)} 
 >
@@ -212,9 +219,52 @@ const router = useRouter();
           </div>
         </div>
       </td>
-    </tr>
-  );
+    {/* Note */}
+<td className="p-4 text-center">
+          <div className="flex items-center justify-center">
+            {hasComments ? (
+              <div 
+                className="relative cursor-pointer hover:scale-110 transition-transform group/note"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/admin/loadDetails/${loadItem.loadId}?tab=comments`);
+                }}
+                title={`${commentsCount} comment(s) - Click to view`}
+              >
+                <div className="w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-amber-600 transition-colors">
+                  <IoChatbubbleEllipses size={16} className="text-white" />
+                </div>
+                
+                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
+                  <span className="text-xs text-white font-bold">
+                    {commentsCount > 9 ? "9+" : commentsCount}
+                  </span>
+                </div>
 
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-slate-800 text-white text-xs rounded opacity-0 group-hover/note:opacity-100 transition-opacity whitespace-nowrap z-10">
+                  {commentsCount} comment(s)
+                  <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-slate-800"></div>
+                </div>
+              </div>
+            ) : (
+              <div 
+                className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center opacity-50 cursor-pointer hover:opacity-70 transition-opacity"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  router.push(`/admin/loadDetails/${loadItem.loadId}?tab=comments`);
+                }}
+                title="No comments - Click to add"
+              >
+                <IoChatbubbleEllipses size={16} className="text-slate-500" />
+              </div>
+            )}
+          </div>
+        </td>
+  </tr>
+  
+
+  );
+  }
   return (
     <section className="relative p-6">
       {/* Header */}
@@ -327,6 +377,7 @@ const router = useRouter();
         }}
         editingLoad={editingLoad}
       />
+      
     </section>
   );
 };
