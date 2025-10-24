@@ -9,11 +9,11 @@ import {
   useUpdateTruckMutation,
   useDeleteTruckMutation,
 } from "@/redux/slices/truckApi";
-import { TTruck } from "@/types/globalTypes";
+import { TDriver, TTruck } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
-import { IoAdd, IoPencil, IoTrash, IoSearch, IoClose, IoAnalytics } from "react-icons/io5";
+import { IoAdd, IoPencil, IoTrash, IoSearch, IoClose, IoAnalytics, IoPerson } from "react-icons/io5";
 import {
   Dialog,
   DialogTitle,
@@ -22,7 +22,7 @@ import {
   TextField,
   Button,
   MenuItem,
-  Select,
+  Select, 
   InputLabel,
   FormControl,
   Table,
@@ -46,6 +46,7 @@ import {
   Snackbar,
 } from "@mui/material";
 import { muiTheme } from "@/theme/theme";
+import { useGetAllDriversQuery } from "@/redux/slices/driverApi";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -91,6 +92,7 @@ const StatusChip = ({ status }: { status: string }) => {
 };
 
 // ✅ Truck Form Component - Vertical Layout
+// ✅ Truck Form Component - معدل بدون validate
 const TruckForm = ({ 
   open, 
   onClose, 
@@ -109,68 +111,19 @@ const TruckForm = ({
   isLoading: boolean;
 }) => {
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  // ✅ جلب جميع السائقين للاختيار منهم
+  const { data: driversData } = useGetAllDriversQuery();
+  const drivers = driversData?.data || [];
+  const allDrivers = driversData?.data || [];
 
+  const availableDrivers = allDrivers.filter((driver: TDriver) => 
+    driver.status === "available"
+  );
   // ✅ Truck types options
   const truckTypes = [
     "reefer",
     "van",
-
   ];
-
-  // ✅ Validate form
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.model?.trim()) {
-      newErrors.model = "Model is required";
-    }
-    if (!formData.plateNumber?.trim()) {
-      newErrors.plateNumber = "Plate number is required";
-    }
-    if (!formData.type?.trim()) {
-      newErrors.type = "Type is required";
-    }
-    if (!formData.year || formData.year < 1900 || formData.year > new Date().getFullYear() + 1) {
-      newErrors.year = "Please enter a valid year";
-    }
-    if (!formData.capacity || formData.capacity <= 0) {
-      newErrors.capacity = "Capacity must be greater than 0";
-    }
-    if (!formData.fuelPerMile || formData.fuelPerMile <= 0) {
-      newErrors.fuelPerMile = "Fuel per mile must be greater than 0";
-    }
-    if (!formData.status?.trim()) {
-      newErrors.status = "Status is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  // ✅ Handle submit
-  const handleSubmit = () => {
-    if (validateForm()) {
-      onSubmit();
-    }
-  };
-
-  // ✅ Clear errors when field changes
-const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) => {
-  onChange(field, value);
-  if (errors[field]) {
-    setErrors(prev => ({ ...prev, [field]: "" }));
-  }
-};
-
-
-
-  // ✅ Reset form when modal closes
-  useEffect(() => {
-    if (!open) {
-      setErrors({});
-    }
-  }, [open]);
 
   return (
     <Dialog 
@@ -198,7 +151,7 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
         top: 0,
         zIndex: 1
       }}>
-        <Typography variant="h5" fontWeight="bold">
+        <Typography variant="h5" component='span' fontWeight="bold">
           {editMode ? "Edit Truck" : "Add New Truck"}
         </Typography>
         <IconButton 
@@ -226,9 +179,7 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
                 label="Model *"
                 name="model"
                 value={formData.model || ""}
-                onChange={(e) => handleFieldChange("model", e.target.value)}
-                error={!!errors.model}
-                helperText={errors.model}
+                onChange={(e) => onChange("model", e.target.value)}
                 size="medium"
                 placeholder="e.g., Volvo FH16"
               />
@@ -238,21 +189,19 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
                 label="Plate Number *"
                 name="plateNumber"
                 value={formData.plateNumber || ""}
-                onChange={(e) => handleFieldChange("plateNumber", e.target.value)}
-                error={!!errors.plateNumber}
-                helperText={errors.plateNumber}
+                onChange={(e) => onChange("plateNumber", e.target.value)}
                 size="medium"
                 placeholder="e.g., ABC-12345"
               />
               
               {/* Type as Selector */}
-              <FormControl fullWidth size="medium" error={!!errors.type}>
+              <FormControl fullWidth size="medium">
                 <InputLabel>Type *</InputLabel>
                 <Select
                   label="Type *"
                   name="type"
                   value={formData.type || ""}
-                  onChange={(e) => handleFieldChange("type", e.target.value)}
+                  onChange={(e) => onChange("type", e.target.value)}
                 >
                   {truckTypes.map((type) => (
                     <MenuItem key={type} value={type}>
@@ -260,11 +209,6 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
                     </MenuItem>
                   ))}
                 </Select>
-                {errors.type && (
-                  <Typography variant="caption" color="error" sx={{ ml: 2, mt: 0.5 }}>
-                    {errors.type}
-                  </Typography>
-                )}
               </FormControl>
               
               {/* Year as Normal TextField */}
@@ -274,9 +218,7 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
                 name="year"
                 type="number"
                 value={formData.year || ""}
-                onChange={(e) => handleFieldChange("year", Number(e.target.value))}
-                error={!!errors.year}
-                helperText={errors.year}
+                onChange={(e) => onChange("year", Number(e.target.value))}
                 size="medium"
                 inputProps={{ 
                   min: 1900, 
@@ -300,9 +242,7 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
                 name="capacity"
                 type="number"
                 value={formData.capacity || ""}
-                onChange={(e) => handleFieldChange("capacity", Number(e.target.value))}
-                error={!!errors.capacity}
-                helperText={errors.capacity}
+                onChange={(e) => onChange("capacity", Number(e.target.value))}
                 size="medium"
                 inputProps={{ min: 0 }}
                 InputProps={{
@@ -316,9 +256,7 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
                 name="fuelPerMile"
                 type="number"
                 value={formData.fuelPerMile || ""}
-                onChange={(e) => handleFieldChange("fuelPerMile", Number(e.target.value))}
-                error={!!errors.fuelPerMile}
-                helperText={errors.fuelPerMile}
+                onChange={(e) => onChange("fuelPerMile", Number(e.target.value))}
                 size="medium"
                 inputProps={{ min: 0, step: 0.1 }}
                 InputProps={{
@@ -328,6 +266,63 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
             </Box>
           </Box>
 
+          {/* ✅ Driver Assignment Section */}
+     <Box>
+            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+              Driver Assignment
+            </Typography>
+            <Divider sx={{ mb: 2 }} />
+            
+            <FormControl fullWidth size="medium">
+              <InputLabel>Assigned Driver</InputLabel>
+              <Select
+                label="Assigned Driver"
+                name="assignedDriver"
+                value={formData.assignedDriver || ""}
+                onChange={(e) => onChange("assignedDriver", e.target.value)}
+                startAdornment={<IoPerson style={{ marginRight: '8px' }} />}
+              >
+                <MenuItem value="">
+                  <em>Unassigned</em>
+                </MenuItem>
+                
+                {/* ✅ عرض السواقين المتاحين فقط */}
+                {availableDrivers.length > 0 ? (
+                  availableDrivers.map((driver: TDriver) => (
+                    <MenuItem key={driver.id} value={driver.id}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant="body1">{driver.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          ID: {driver.id} • {driver.licenseNumber}
+                        </Typography>
+                        <Chip 
+                          label={driver.status} 
+                          color="success" 
+                          size="small" 
+                          sx={{ mt: 0.5, fontSize: '0.6rem' }}
+                        />
+                      </Box>
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>
+                    <Typography variant="body2" color="text.secondary">
+                      No available drivers found
+                    </Typography>
+                  </MenuItem>
+                )}
+              </Select>
+              
+              {/* ✅ رسالة توضيحية */}
+              {availableDrivers.length === 0 && (
+                <Typography variant="caption" color="warning.main" sx={{ mt: 1, ml: 2 }}>
+                  ⚠️ No available drivers. All drivers are currently busy or inactive.
+                </Typography>
+              )}
+            </FormControl>
+          </Box>
+
+
           {/* Status Section */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
@@ -335,13 +330,13 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
             </Typography>
             <Divider sx={{ mb: 2 }} />
             
-            <FormControl fullWidth size="medium" error={!!errors.status}>
+            <FormControl fullWidth size="medium">
               <InputLabel>Status *</InputLabel>
               <Select
                 label="Status *"
                 name="status"
                 value={formData.status || ""}
-                onChange={(e) => handleFieldChange("status", e.target.value)}
+                onChange={(e) => onChange("status", e.target.value)}
               >
                 <MenuItem value="available">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -368,11 +363,6 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
                   </Box>
                 </MenuItem>
               </Select>
-              {errors.status && (
-                <Typography variant="caption" color="error" sx={{ ml: 2, mt: 0.5 }}>
-                  {errors.status}
-                </Typography>
-              )}
             </FormControl>
           </Box>
 
@@ -394,7 +384,7 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
           Cancel
         </Button>
         <Button
-          onClick={handleSubmit}
+          onClick={onSubmit}
           variant="contained"
           disabled={isLoading}
           startIcon={isLoading ? <CircularProgress size={16} /> : null}
@@ -417,7 +407,6 @@ const handleFieldChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) =
 
 const TrucksPage = () => {
   const router = useRouter();
-  const token = useAppSelector((state) => state.auth.token);
   const user = useAppSelector((state) => state.auth.user);
 
   const [page, setPage] = useState(0);
@@ -426,13 +415,23 @@ const TrucksPage = () => {
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
   // 🔹 API Queries
-const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page + 1 });
+  const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page + 1 });
   const { data: allTrucksData } = useGetAllTrucksQuery();
 
-  // 🔹 API Mutations
-  const [createTruck, { isLoading: isCreating }] = useCreateTruckMutation();
-  const [updateTruck, { isLoading: isUpdating }] = useUpdateTruckMutation();
-  const [deleteTruck, { isLoading: isDeleting }] = useDeleteTruckMutation();
+  const [createTruck, { 
+    isLoading: isCreating, 
+    error: createError 
+  }] = useCreateTruckMutation();
+  
+  const [updateTruck, { 
+    isLoading: isUpdating, 
+    error: updateError 
+  }] = useUpdateTruckMutation();
+  
+  const [deleteTruck, { 
+    isLoading: isDeleting, 
+    error: deleteError 
+  }] = useDeleteTruckMutation();
 
   const trucks = trucksData?.data?.data || [];
   const allTrucks = allTrucksData?.data?.data || [];
@@ -442,8 +441,7 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
         (t) =>
           t.truckId?.toString().includes(search.toLowerCase()) ||
           t.model?.toLowerCase().includes(search.toLowerCase()) ||
-          t.plateNumber?.toLowerCase().includes(search.toLowerCase()) ||
-          t.assignedDriver?.name?.toLowerCase().includes(search.toLowerCase())
+          t.plateNumber?.toLowerCase().includes(search.toLowerCase()) 
       )
     : trucks;
 
@@ -460,20 +458,21 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
   };
 
   const handleEditClick = (truck: TTruck) => {
-    // ✅ إصلاح: تأكد من تعيين جميع القيم بما فيها type
     setFormData({
       id: truck.id,
       truckId: truck.truckId,
       model: truck.model,
       plateNumber: truck.plateNumber,
-      type: truck.type, // ✅ هذه كانت المشكلة
+      type: truck.type, 
       year: truck.year,
       capacity: truck.capacity,
       fuelPerMile: truck.fuelPerMile,
       status: truck.status,
-      assignedDriver: truck.assignedDriver,
-      createdBy: truck.createdBy,
-      updatedBy: truck.updatedBy
+    assignedDriver: typeof truck.assignedDriver === 'object' 
+      ? truck.assignedDriver.driverId.toString() 
+      : truck.assignedDriver,
+      // createdBy: truck.createdBy,
+      // updatedBy: truck.updatedBy
     });
     setEditMode(true);
     setOpen(true);
@@ -485,10 +484,27 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
   };
 
   // ✅ Handle Form Change
- const handleFormChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) => {
-  setFormData(prev => ({ ...prev, [field]: value }));
-};
+  const handleFormChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
+  // ✅ عرض errors من RTK Query
+  useEffect(() => {
+    if (createError) {
+      const error = createError as { data?: { message?: string } };
+      toast.error(error?.data?.message || "Failed to create truck");
+    }
+    
+    if (updateError) {
+      const error = updateError as { data?: { message?: string } };
+      toast.error(error?.data?.message || "Failed to update truck");
+    }
+    
+    if (deleteError) {
+      const error = deleteError as { data?: { message?: string } };
+      toast.error(error?.data?.message || "Failed to delete truck");
+    }
+  }, [createError, updateError, deleteError]);
 
   // ✅ Create Truck
   const handleCreate = async () => {
@@ -497,71 +513,56 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
       return;
     }
 
-    const { assignedDriver, ...truckData } = formData;
-
     try {
       await createTruck({
-        ...truckData,
+        ...formData,
         createdBy: user.id,
       }).unwrap();
 
       toast.success("✅ Truck created successfully!");
       setOpen(false);
       refetch();
-  } catch (err: unknown) {
-  const error = err as { data?: { message?: string } };
-  toast.error(error?.data?.message || "Create failed");
-}
-
+    } catch (err) {
+     
+    }
   };
 
   // ✅ Update Truck
-  const handleUpdate = async () => {
-    if (!formData?.id) {
-      toast.error("Missing truck ID");
-      return;
-    }
-    if (!user?.id) {
-      toast.error("User not found!");
-      return;
-    }
+ const handleUpdate = async () => {
+  if (!formData?.id) {
+    toast.error("Missing truck ID");
+    return;
+  }
+  if (!user?.id) {
+    toast.error("User not found!");
+    return;
+  }
 
-    try {
-      await updateTruck({
-        id: formData.id,
-        ...formData,
-        createdBy: user.id,
-        assignedDriver:
-          typeof formData.assignedDriver === "object"
-            ? (formData.assignedDriver as any)?._id
-            : formData.assignedDriver,
-      }).unwrap();
+  try {
+    await updateTruck({
+      id: formData.id,
+      ...formData,
+      updatedBy: user.id,
+    }).unwrap();
 
-      toast.success("✅ Truck updated successfully!");
-      setOpen(false);
-      refetch();
-  } catch (err: unknown) {
-  const error = err as { data?: { message?: string } };
-  toast.error(error?.data?.message || "Create failed");
-}
-  
-  };
+    toast.success("✅ Truck updated successfully!");
+    setOpen(false);
+    refetch();
+  } catch (err) {}
+};
 
-  // ✅ Delete Truck with MUI Toast
+  // ✅ Delete Truck
+  const [truckToDelete, setTruckToDelete] = useState<{id: string, truckId?: number} | null>(null);
+
   const handleDelete = async (id: string, truckId?: number) => {
     setDeleteToast({
       open: true,
       message: `Are you sure you want to delete truck #${truckId}?`
     });
-
-    const truckToDelete = { id, truckId };
-    
-    setTruckToDelete(truckToDelete);
+    setTruckToDelete({ id, truckId });
   };
 
   // ✅ Confirm Delete
-  const [truckToDelete, setTruckToDelete] = useState<{id: string, truckId?: number} | null>(null);
-
   const confirmDelete = async () => {
     if (!truckToDelete) return;
 
@@ -569,11 +570,8 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
       await deleteTruck(truckToDelete.id).unwrap();
       toast.success(`✅ Truck #${truckToDelete.truckId} deleted successfully!`);
       refetch();
-   } catch (err: unknown) {
-  const error = err as { data?: { message?: string } };
-  toast.error(error?.data?.message || "Deleted failed");
-}
- finally {
+    } catch (err) {
+    } finally {
       setDeleteToast({ open: false, message: "" });
       setTruckToDelete(null);
     }
@@ -604,7 +602,6 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Titles>Truck Management</Titles>
         <Box sx={{ display: "flex", gap: 2 }}>
-          {/* Truck Dashboard Button */}
           <Button
             variant="outlined"
             color="primary"
@@ -622,7 +619,6 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
             Truck Dashboard
           </Button>
           
-          {/* Add Truck Button */}
           <Button
             variant="contained"
             color="primary"
@@ -706,14 +702,17 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
                   <StyledTableCell>{truck.year}</StyledTableCell>
                   <StyledTableCell>{truck.capacity}</StyledTableCell>
                   <StyledTableCell>{truck.fuelPerMile || 'N/A'}</StyledTableCell>
-                  <StyledTableCell>
-                    {truck.assignedDriver?.name || 'Unassigned'}
-                    {truck.assignedDriver?.driverId && (
-                      <Box component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', display: 'block' }}>
-                        ID: {truck.assignedDriver.driverId}
-                      </Box>
-                    )}
-                  </StyledTableCell>
+                <StyledTableCell>
+  {typeof truck.assignedDriver === 'object' 
+    ? truck.assignedDriver.name 
+    : truck.assignedDriver || 'Unassigned'
+  }
+  {typeof truck.assignedDriver === 'object' && truck.assignedDriver.driverId && (
+    <Box component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', display: 'block' }}>
+      ID: {truck.assignedDriver.driverId}
+    </Box>
+  )}
+</StyledTableCell>
                   <StyledTableCell>
                     <StatusChip status={truck.status} />
                   </StyledTableCell>
@@ -771,87 +770,85 @@ const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page 
         isLoading={isCreating || isUpdating}
       />
 
-      {/* MUI Delete Confirmation Toast */}
-      {/* Blur Background Overlay */}
-{deleteToast.open && (
-  <Box
-    sx={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.1)',
-      backdropFilter: 'blur(2px)',
-      zIndex: 1299,
-    }}
-  />
-)}
+      {/* Delete Confirmation Dialog */}
+      {deleteToast.open && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.1)',
+            backdropFilter: 'blur(2px)',
+            zIndex: 1299,
+          }}
+        />
+      )}
 
-{/* Delete Confirmation Dialog - Centered */}
-<Dialog
-  open={deleteToast.open}
-  onClose={cancelDelete}
-  PaperProps={{
-    sx: {
-      borderRadius: 2,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
-      minWidth: 300,
-      maxWidth: 400,
-      margin: 2,
-    }
-  }}
-  sx={{
-    zIndex: 1300,
-    '& .MuiDialog-container': {
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-    }
-  }}
->
-  <Box sx={{ p: 3, textAlign: 'center' }}>
-    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
-      Confirm Delete
-    </Typography>
-    <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
-      {deleteToast.message}
-    </Typography>
-    <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-      <Button 
-        variant="outlined" 
-        color="inherit" 
-        onClick={cancelDelete}
-        sx={{ 
-          borderRadius: 1,
-          minWidth: 80,
-          borderColor: 'grey.400',
-          '&:hover': {
-            borderColor: 'grey.600',
-            backgroundColor: 'grey.50'
+      <Dialog
+        open={deleteToast.open}
+        onClose={cancelDelete}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            minWidth: 300,
+            maxWidth: 400,
+            margin: 2,
+          }
+        }}
+        sx={{
+          zIndex: 1300,
+          '& .MuiDialog-container': {
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
           }
         }}
       >
-        Cancel
-      </Button>
-      <Button 
-        variant="contained" 
-        color="error" 
-        onClick={confirmDelete}
-        sx={{ 
-          borderRadius: 1,
-          minWidth: 80,
-          backgroundColor: 'error.main',
-          '&:hover': {
-            backgroundColor: 'error.dark'
-          }
-        }}
-      >
-        Delete
-      </Button>
-    </Box>
-  </Box>
-</Dialog>
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+            Confirm Delete
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+            {deleteToast.message}
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+            <Button 
+              variant="outlined" 
+              color="inherit" 
+              onClick={cancelDelete}
+              sx={{ 
+                borderRadius: 1,
+                minWidth: 80,
+                borderColor: 'grey.400',
+                '&:hover': {
+                  borderColor: 'grey.600',
+                  backgroundColor: 'grey.50'
+                }
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="contained" 
+              color="error" 
+              onClick={confirmDelete}
+              sx={{ 
+                borderRadius: 1,
+                minWidth: 80,
+                backgroundColor: 'error.main',
+                '&:hover': {
+                  backgroundColor: 'error.dark'
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
     </Box>
   );
 };

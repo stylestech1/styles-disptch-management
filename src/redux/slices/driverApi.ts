@@ -1,12 +1,13 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { TDriver, TLoadSummary, TPagination } from "@/types/globalTypes";
+import { RootState } from "../store";
 
 export const driverApi = createApi({
   reducerPath: "driverApi",
   baseQuery: fetchBaseQuery({
     baseUrl: `${process.env.NEXT_PUBLIC_API_URL}/api/v1`,
-    prepareHeaders: (headers, { getState }: any) => {
-      const token = getState().auth.token;
+    prepareHeaders: (headers, { getState }) => {
+      const token = (getState() as RootState).auth.token;
       if (token) {
         headers.set("Authorization", `Bearer ${token}`);
       }
@@ -40,7 +41,7 @@ export const driverApi = createApi({
     getDriverSummary: builder.query<{ data: TLoadSummary }, string>({
       query: (id) => `/summary/driver/${id}`,
       providesTags: ["DriverSummary"],
-    }),
+    }), 
 
     // 🔹 Get driver summary with date filter
     getDriverSummaryWithFilter: builder.query<
@@ -71,7 +72,7 @@ export const driverApi = createApi({
     updateDriver: builder.mutation<{ data: TDriver }, { id: string; body: Partial<TDriver> }>({
       query: ({ id, body }) => ({
         url: `/drivers/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: ["Drivers"],

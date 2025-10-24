@@ -8,14 +8,15 @@ import {
   Tooltip,
   Legend,
   ChartOptions,
+  ChartData,
 } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
 interface TruckChartsProps {
   chartData: {
-    milesChart: any;
-    profitChart: any;
+    milesChart: ChartData<'pie'>;
+    profitChart: ChartData<'pie'>;
   }| null;
 }
 

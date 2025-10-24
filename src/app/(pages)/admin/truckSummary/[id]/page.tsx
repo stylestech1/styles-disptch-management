@@ -26,7 +26,7 @@ import { FaMoneyBillWave } from "react-icons/fa";
 import useError from "@/hook/useError";
 import DataTable from "@/components/ui/DataTable";
 import { truckSummaryColumns } from "@/data/truckSummaryTable";
-
+ 
 // ✅ Import RTK Query hooks
 import { 
   useGetTruckByIdQuery,
@@ -112,52 +112,6 @@ const TruckSummary = () => {
       setError(errorMessage?.data?.message || "Failed to load data");
     }
   }, [profileError, summaryError, setError]);
-
-  // const handleApplyFilter = async () => {
-  //   if (!fromDate && !toDate) {
-  //     toast.error("Please select at least one date", {
-  //       style: { background: "#dc2626", color: "#fff" },
-  //     });
-  //     return;
-  //   }
-
-  //   if (!id) return;
-
-  //   try {
-  //     const params: any = {};
-  //     if (fromDate) params.from = `${fromDate}T00:00:00Z`;
-  //     if (toDate) params.to = `${toDate}T23:59:59Z`;
-
-  //     await fetchTruckSummary({
-  //       id: id as string,
-  //       ...params
-  //     }).unwrap();
-
-  //     toast.success("Filter applied successfully", {
-  //       style: { background: "#10b981", color: "#fff" },
-  //     });
-  //   } catch (error) {
-  //     const err = error as any;
-  //     setError(err?.data?.message || "Filter failed");
-  //   }
-  // }; 
-
-  // const handleReset = async () => {
-  //   setFromDate("");
-  //   setToDate("");
-
-  //   if (!id) return;
-    
-  //   try {
-  //     await fetchTruckSummary(id as string).unwrap();
-  //     toast.success("Reset successfully", {
-  //       style: { background: "#3b82f6", color: "#fff" },
-  //     });
-  //   } catch (error) {
-  //     const err = error as any;
-  //     setError(err?.data?.message || "Reset failed");
-  //   }
-  // };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {

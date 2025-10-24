@@ -59,7 +59,7 @@ export type TTruck = {
   status: TStatusDriver;
   createdBy: string;
   updatedBy: string;
-  assignedDriver: { name: string; driverId: number };
+  assignedDriver?: string | { name: string; driverId: number }; 
   type: TTruckType;
   fuelPerMile:number;
   insuranceCost:number;
