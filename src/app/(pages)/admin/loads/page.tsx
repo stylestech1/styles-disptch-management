@@ -35,6 +35,7 @@ import {
   useGetNotesQuery,
   useUpdateLoadsMutation,
   useCreateLoadsMutation,
+  useUploadDocumentsMutation,
 } from "@/redux/slices/apiSlice";
 
 // Import the new modal components
@@ -87,7 +88,7 @@ const LoadsPage = () => {
     }
   );
 
-  const [updateLoads] = useUpdateLoadsMutation();
+  const [updateLoads] = useUploadDocumentsMutation();
 
   // responses
   const load = loadsData?.data || [];
@@ -135,41 +136,6 @@ const LoadsPage = () => {
       return rtkError.message;
     }
     return "An error occurred";
-  };
-
-  // TODO: Adding Document
-  const handleAddDocument = async (loadId: string, files: File[]) => {
-    try {
-      if (!loadId || files.length === 0) {
-        toast.error("Missing Files ❌");
-        return;
-      }
-
-      const formData = new FormData();
-
-      files.forEach((file) => {
-        formData.append("documents", file);
-        console.log("📄 Added file:", file.name, file.type, file.size);
-      });
-
-      formData.append("updateType", "documents");
-
-      await updateLoads({
-        id: loadId,
-        documents: formData,
-      }).unwrap();
-
-      toast.success(`Uploading ${files.length} Success ✅`, {
-        style: { background: "#059669", color: "#fff" },
-      });
-
-      refetchLoads();
-      setShowViewDocumentModal(false);
-      setSelectedLoadForDocuments(null);
-    } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err);
-      toast.error(errorMessage || "Adding document failed ❌");
-    }
   };
 
   // TODO: Open Edit Load
@@ -516,7 +482,6 @@ const LoadsPage = () => {
           setSelectedLoadForDocuments(null);
         }}
         selectedLoad={selectedLoadForDocuments}
-        onAddDocument={handleAddDocument}
       />
     </section>
   );

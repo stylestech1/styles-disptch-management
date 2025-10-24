@@ -18,26 +18,30 @@ export const apiSlice = api.injectEndpoints({
 
     // Create Load
     createLoads: builder.mutation({
-      query: (body) => ({ url: `/api/v1/loads`, method: "POST", body }),
+      query: (formData) => ({
+        url: `/api/v1/loads`,
+        method: "POST",
+        body: formData,
+      }),
       invalidatesTags: ["Loads"],
     }),
 
     // Update Load
     updateLoads: builder.mutation({
-      query: ({ id, ...body }) => ({
+      query: ({ id, formData  }) => ({
         url: `/api/v1/loads/update/${id}`,
         method: "PATCH",
-        body,
+        body: formData ,
       }),
       invalidatesTags: ["Loads"],
     }),
 
     // Upload Documents
     uploadDocuments: builder.mutation({
-      query: (formData) => ({
-        url: `/api/v1/upload`,
+      query: ({ formData }) => ({
+        url: `/api/v1/loads`,
         method: "POST",
-        documents: formData,
+        body: formData,
       }),
     }),
 
@@ -127,8 +131,6 @@ export const apiSlice = api.injectEndpoints({
       }),
       invalidatesTags: ["Dispatchers"],
     }),
-
-
   }),
 });
 
@@ -138,6 +140,7 @@ export const {
   useCreateLoadsMutation,
   useUpdateLoadsMutation,
   useUpdateLoadsStatusMutation,
+  useUploadDocumentsMutation,
   useGetDriversQuery,
   useGetTrucksQuery,
   useAddNoteMutation,
