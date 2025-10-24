@@ -108,7 +108,7 @@ const AdminProfile = () => {
 
     try {
       const res = await fetch(`${apiURL}/api/v1/userDashboard/updateMyData`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -177,7 +177,7 @@ const AdminProfile = () => {
 
     try {
       const res = await fetch(`${apiURL}/api/v1/updatePassword/`, {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
