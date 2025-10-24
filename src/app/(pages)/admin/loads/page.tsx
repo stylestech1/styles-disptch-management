@@ -9,9 +9,7 @@ import Titles from "@/components/ui/Titles";
 import { loadColumns } from "@/data/loadTables";
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
-import {
-  TLoads,
-} from "@/types/globalTypes";
+import { TLoads } from "@/types/globalTypes";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import { CiStickyNote } from "react-icons/ci";
@@ -24,6 +22,7 @@ import {
   IoNavigate,
   IoSearch,
   IoLocationSharp,
+  IoDocument,
 } from "react-icons/io5";
 import { LiaShippingFastSolid } from "react-icons/lia";
 import { RxUpdate } from "react-icons/rx";
@@ -34,6 +33,8 @@ import {
   useGetDriversQuery,
   useGetTrucksQuery,
   useGetNotesQuery,
+  useUpdateLoadsMutation,
+  useCreateLoadsMutation,
 } from "@/redux/slices/apiSlice";
 
 // Import the new modal components
@@ -42,21 +43,28 @@ import AddNoteModal from "@/components/loads/AddNoteModal";
 import UpdateStatusModal from "@/components/loads/UpdateStatusModal";
 import ViewAppointmentsModal from "@/components/loads/ViewAppointmentsModal";
 import ViewNotesModal from "@/components/loads/ViewNotesModal";
+import ViewDocumentModal from "@/components/loads/ViewDocumentModal";
 
 const LoadsPage = () => {
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
-  
+
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
   const [showViewNotesModal, setShowViewNotesModal] = useState(false);
-  const [showViewAppointmentsModal, setShowViewAppointmentsModal] = useState(false);
+  const [showViewAppointmentsModal, setShowViewAppointmentsModal] =
+    useState(false);
+  const [showViewDocumentModal, setShowViewDocumentModal] = useState(false);
 
   // Selected items for modals
-  const [selectedLoadForNotes, setSelectedLoadForNotes] = useState<TLoads | null>(null);
-  const [selectedLoadForAppointments, setSelectedLoadForAppointments] = useState<TLoads | null>(null);
+  const [selectedLoadForNotes, setSelectedLoadForNotes] =
+    useState<TLoads | null>(null);
+  const [selectedLoadForAppointments, setSelectedLoadForAppointments] =
+    useState<TLoads | null>(null);
+  const [selectedLoadForDocuments, setSelectedLoadForDocuments] =
+    useState<TLoads | null>(null);
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
@@ -69,26 +77,17 @@ const LoadsPage = () => {
     refetch: refetchLoads,
   } = useGetLoadsQuery({ page, limit: 10 });
 
-  const {
-    data: allLoadsData,
-    isLoading: allLoadsLoading,
-  } = useGetAllLoadsQuery();
+  const { data: allLoadsData, isLoading: allLoadsLoading } =
+    useGetAllLoadsQuery();
 
-  const {
-    isLoading: driversLoading,
-    isError: driversError,
-  } = useGetDriversQuery();
+  const { isLoading: notesLoading } = useGetNotesQuery(
+    selectedLoadForNotes?.id || "",
+    {
+      skip: !selectedLoadForNotes?.id,
+    }
+  );
 
-  const {
-    isLoading: trucksLoading,
-    isError: trucksError,
-  } = useGetTrucksQuery();
-
-  const {
-    isLoading: notesLoading,
-  } = useGetNotesQuery(selectedLoadForNotes?.id || "", {
-    skip: !selectedLoadForNotes?.id,
-  });
+  const [updateLoads] = useUpdateLoadsMutation();
 
   // responses
   const load = loadsData?.data || [];
@@ -97,21 +96,9 @@ const LoadsPage = () => {
 
   // إدارة حالة ال loading بناءً على جميع ال queries
   useEffect(() => {
-    const isLoading =
-      loadsLoading ||
-      allLoadsLoading ||
-      driversLoading ||
-      trucksLoading ||
-      notesLoading;
+    const isLoading = loadsLoading || allLoadsLoading || notesLoading;
     setLoading(isLoading);
-  }, [
-    loadsLoading,
-    allLoadsLoading,
-    driversLoading,
-    trucksLoading,
-    notesLoading,
-    setLoading,
-  ]);
+  }, [loadsLoading, allLoadsLoading, notesLoading, setLoading]);
 
   // إدارة الأخطاء
   useEffect(() => {
@@ -122,21 +109,7 @@ const LoadsPage = () => {
         style: { background: "#dc2626", color: "#fff" },
       });
     }
-    if (driversError) {
-      const errorMessage = getErrorMessage(driversError);
-      setError(errorMessage);
-      toast.error(errorMessage || "Loading drivers failed ❌", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-    }
-    if (trucksError) {
-      const errorMessage = getErrorMessage(trucksError);
-      setError(errorMessage);
-      toast.error(errorMessage || "Loading trucks failed ❌", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-    }
-  }, [loadsError, driversError, trucksError, setError]);
+  }, [loadsError, setError]);
 
   // Error Handling
   interface RTKError {
@@ -164,6 +137,41 @@ const LoadsPage = () => {
     return "An error occurred";
   };
 
+  // TODO: Adding Document
+  const handleAddDocument = async (loadId: string, files: File[]) => {
+    try {
+      if (!loadId || files.length === 0) {
+        toast.error("Missing Files ❌");
+        return;
+      }
+
+      const formData = new FormData();
+
+      files.forEach((file) => {
+        formData.append("documents", file);
+        console.log("📄 Added file:", file.name, file.type, file.size);
+      });
+
+      formData.append("updateType", "documents");
+
+      await updateLoads({
+        id: loadId,
+        documents: formData,
+      }).unwrap();
+
+      toast.success(`Uploading ${files.length} Success ✅`, {
+        style: { background: "#059669", color: "#fff" },
+      });
+
+      refetchLoads();
+      setShowViewDocumentModal(false);
+      setSelectedLoadForDocuments(null);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Adding document failed ❌");
+    }
+  };
+
   // TODO: Open Edit Load
   const openEditLoadPopup = async (loadItem: TLoads) => {
     if (!loadItem?.id) return;
@@ -183,6 +191,13 @@ const LoadsPage = () => {
     if (!loadItem?.id) return;
     setSelectedLoadForAppointments(loadItem);
     setShowViewAppointmentsModal(true);
+  };
+
+  // TODO: Open Documents for Selected Load
+  const openViewDocumentsPopup = async (loadItem: TLoads) => {
+    if (!loadItem?.id) return;
+    setSelectedLoadForDocuments(loadItem);
+    setShowViewDocumentModal(true);
   };
 
   // Filter loads للبحث
@@ -311,6 +326,17 @@ const LoadsPage = () => {
         >
           <RxUpdate />
           <span>Update</span>
+        </button>
+      </td>
+
+      {/* Documents */}
+      <td className="p-4 text-center text-slate-600 text-xs">
+        <button
+          onClick={() => openViewDocumentsPopup(loadItem)}
+          className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 border border-green-200 hover:bg-green-800 hover:text-green-200 transition-colors"
+        >
+          <IoDocument size={14} />
+          <span>Documents</span>
         </button>
       </td>
     </tr>
@@ -481,6 +507,16 @@ const LoadsPage = () => {
           setSelectedLoadForAppointments(null);
         }}
         selectedLoad={selectedLoadForAppointments}
+      />
+
+      <ViewDocumentModal
+        isOpen={showViewDocumentModal}
+        onClose={() => {
+          setShowViewDocumentModal(false);
+          setSelectedLoadForDocuments(null);
+        }}
+        selectedLoad={selectedLoadForDocuments}
+        onAddDocument={handleAddDocument}
       />
     </section>
   );

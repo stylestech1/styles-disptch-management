@@ -35,7 +35,7 @@ export type TLoads = {
   leftReceiver?: string; // new
   deliveredAt?: string;
   createdAt?: string; 
-
+  documents?: {viewLink: string; downloadLink: string}[]
 };
 export type TDriver = {
   id: string;

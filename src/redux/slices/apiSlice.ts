@@ -32,6 +32,15 @@ export const apiSlice = api.injectEndpoints({
       invalidatesTags: ["Loads"],
     }),
 
+    // Upload Documents
+    uploadDocuments: builder.mutation({
+      query: (formData) => ({
+        url: `/api/v1/upload`,
+        method: "POST",
+        documents: formData,
+      }),
+    }),
+
     // Update Load Status
     updateLoadsStatus: builder.mutation({
       query: ({ id, ...body }) => ({
