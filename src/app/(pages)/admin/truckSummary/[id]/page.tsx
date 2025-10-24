@@ -19,7 +19,7 @@ import {
   IoNavigate,
   IoCashOutline,
   IoTimeOutline,
-  IoIdCardOutline,
+  IoIdCardOutline, 
   IoPersonOutline,
   IoArrowBack,
 } from "react-icons/io5";
@@ -27,7 +27,7 @@ import { FaMoneyBillWave } from "react-icons/fa";
 import useError from "@/hook/useError";
 import DataTable from "@/components/ui/DataTable";
 import { truckSummaryColumns } from "@/data/truckSummaryTable";
-
+ 
 // ✅ Import RTK Query hooks
 import {
   useGetTruckByIdQuery,
@@ -46,13 +46,14 @@ const TruckSummary = () => {
   const {
     data: profileData,
     isLoading: profileLoading,
+    isError: profileError,
   } = useGetTruckByIdQuery(id as string, {
     skip: !id,
   });
 
   const [
     fetchTruckSummary,
-    { data: truckSummaryData, isLoading: summaryLoading },
+    { data: truckSummaryData, isLoading: summaryLoading ,isError: summaryError},
   ] = useLazyGetTruckSummaryQuery();
 
   const profile = profileData?.data;
@@ -64,6 +65,13 @@ const TruckSummary = () => {
       fetchTruckSummary(id as string);
     }
   }, [id, fetchTruckSummary]);
+
+  useEffect(() => {
+    if (profileError || summaryError) {
+      const errorMessage = (profileError || summaryError) as any;
+      setError(errorMessage?.data?.message || "Failed to load data");
+    }
+  }, [profileError, summaryError, setError]);
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -422,7 +430,7 @@ const TruckSummary = () => {
                     <IoStatsChart size={20} className="text-blue-600" />
                   </div>
                 </div>
-              </div>
+              </div> 
 
               {/* Total Miles Card */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">

@@ -7,7 +7,7 @@ export const apiSlice = api.injectEndpoints({
     getLoads: builder.query({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/loads?page=${page}&limit=${limit}`,
-      providesTags: ["Loads"],
+      providesTags: ["Loads","Drivers", "Trucks"],
     }),
 
     // Get All Loads (للبحث)
@@ -15,6 +15,12 @@ export const apiSlice = api.injectEndpoints({
       query: (arg: void) => `/api/v1/loads?limit=50`,
       providesTags: ["Loads"],
     }),
+    getLoadById: builder.query({
+  query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
+  providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
+}),
+
+
 
     // Create Load
     createLoads: builder.mutation({
@@ -137,6 +143,7 @@ export const apiSlice = api.injectEndpoints({
 export const {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
+  useGetLoadByIdQuery ,
   useCreateLoadsMutation,
   useUpdateLoadsMutation,
   useUpdateLoadsStatusMutation,

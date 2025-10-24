@@ -41,7 +41,7 @@ export const driverApi = createApi({
     getDriverSummary: builder.query<{ data: TLoadSummary }, string>({
       query: (id) => `/summary/driver/${id}`,
       providesTags: ["DriverSummary"],
-    }),
+    }), 
 
     // 🔹 Get driver summary with date filter
     getDriverSummaryWithFilter: builder.query<
@@ -72,7 +72,7 @@ export const driverApi = createApi({
     updateDriver: builder.mutation<{ data: TDriver }, { id: string; body: Partial<TDriver> }>({
       query: ({ id, body }) => ({
         url: `/drivers/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: ["Drivers"],

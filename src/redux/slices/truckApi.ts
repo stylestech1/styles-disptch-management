@@ -86,7 +86,7 @@ export const truckApi = createApi({
     updateTruck: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/trucks/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: (result, error, { id }) => [
@@ -95,7 +95,7 @@ export const truckApi = createApi({
         { type: "Truck", id: "ALL_LIST" },
         { type: "TruckSummary", id },
       ],
-    }),
+    }), 
 
     deleteTruck: builder.mutation({
       query: (id) => ({ url: `/trucks/${id}`, method: "DELETE" }),

@@ -98,8 +98,8 @@ const TruckDashboard = () => {
         if (truckId) {
           summaryMap[truckId] = result.data;
         }
-      });
-      
+      }); 
+       
       setSummaries(summaryMap);
     } catch (error) {
       console.error('Error fetching truck summaries:', error);

@@ -7,6 +7,11 @@ export type TTruckId = {
   truckId: number;
   plateNumber: string;
 };
+export type TDocument = {
+  viewLink: string;
+  downloadLink: string;
+  name?: string;
+};
 export type TLoads = {
   id?: string;
   loadId: string;
@@ -35,7 +40,7 @@ export type TLoads = {
   leftReceiver?: string; // new
   deliveredAt?: string;
   createdAt?: string; 
-  documents?: {viewLink: string; downloadLink: string}[]
+  documents?: TDocument[]
 };
 export type TDriver = {
   id: string;
@@ -59,7 +64,7 @@ export type TTruck = {
   status: TStatusDriver;
   createdBy: string;
   updatedBy: string;
-  assignedDriver: { name: string; driverId: number };
+  assignedDriver?: string | { name: string; driverId: number }; 
   type: TTruckType;
   fuelPerMile:number;
   insuranceCost:number;
@@ -85,7 +90,8 @@ export type TComments = {
   driver: TDriver;
   truck: TTruck;
   text: string;
-  addedBy: { _id: string; name: string; jobId: number };
+  content: string;
+  addedBy: string ;
   _id: string;
   createdAt: string;
   updatedAt: string;
@@ -148,5 +154,18 @@ export type TLoadSummary = {
   loads: TLoads,
   period: TPeriod
 }
-
-
+export interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
+export interface InfoCardProps {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}
+export interface InfoItemProps {
+  icon: React.ReactNode;
+  primary: string;
+  secondary: string | number;
+}

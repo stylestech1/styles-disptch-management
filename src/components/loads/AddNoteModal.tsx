@@ -9,20 +9,18 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 interface AddNoteModalProps {
   isOpen: boolean;
   onClose: () => void;
+  load: TLoads
 }
 
-const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose }) => {
-  const [selectedLoadIdForNote, setSelectedLoadIdForNote] = useState("");
+const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) => {
+  const [selectedLoadIdForNote, setSelectedLoadIdForNote] = useState(load?.id || "");
   const [addingNote, setAddingNote] = useState("");
   const [noteType, setNoteType] = useState<"dispatcher" | "driver">(
     "dispatcher"
   );
 
   // استخدام useGetLoadsQuery بدلاً من useSelector
-  const { data: loadsData } = useGetLoadsQuery({ page: 1, limit: 10 });
   const [addNote, { isLoading: addingNoteLoading }] = useAddNoteMutation();
-
-  const loads = loadsData?.data || [];
 
   const handleNotes = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,7 +37,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose }) => {
 
     try {
       await addNote({
-        loadId: selectedLoadIdForNote,
+        loadId: load.id,
         text: addingNote,
         type: noteType,
       }).unwrap();
@@ -56,7 +54,6 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleClose = () => {
-    setSelectedLoadIdForNote("");
     setAddingNote("");
     setNoteType("dispatcher");
     onClose();
@@ -75,19 +72,12 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose }) => {
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Load ID
           </label>
-          <select
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
-            value={selectedLoadIdForNote}
-            onChange={(e) => setSelectedLoadIdForNote(e.target.value)}
-            required
-          >
-            <option value="">Select Load</option>
-            {loads.map((l: TLoads) => (
-              <option key={l.id} value={l.id}>
-                {l.loadId}
-              </option>
-            ))}
-          </select>
+          <input
+            type="text"
+            readOnly
+            value={load?.loadId || 'N/A'}
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-slate-100"
+          />
         </div>
 
         {/* Note Type */}
@@ -140,7 +130,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose }) => {
           )}
         </button>
       </form>
-    </Modal>
+    </Modal >
   );
 };
 
