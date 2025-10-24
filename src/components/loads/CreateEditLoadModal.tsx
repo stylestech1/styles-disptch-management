@@ -390,7 +390,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     // 🔹 التأكد من إضافة origin
     if (origin && origin.display_name) {
       formData.append("origin[address]", origin.display_name);
-      console.log("✅ Origin added:", origin.display_name);
     } else {
       console.error("❌ Origin is missing or invalid");
     }
@@ -400,7 +399,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       validDestinations.forEach((dest, index) => {
         if (dest && dest.display_name) {
           formData.append(`destination[${index}][address]`, dest.display_name);
-          console.log(`✅ Destination ${index} added:`, dest.display_name);
         } else {
           console.error(`❌ Destination ${index} is missing or invalid`);
         }
@@ -412,7 +410,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     // 🔹 التأكد من إضافة DHO
     if (dho && dho.display_name) {
       formData.append("DHO[address]", dho.display_name);
-      console.log("✅ DHO added:", dho.display_name);
     } else {
       console.log("ℹ️ DHO is optional, not added");
     }
@@ -421,11 +418,9 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     if (!isEditing) {
       if (driverId) {
         formData.append("driverId", driverId);
-        console.log("✅ Driver ID added:", driverId);
       }
       if (truckId) {
         formData.append("truckId", truckId);
-        console.log("✅ Truck ID added:", truckId);
       }
     }
 
@@ -449,28 +444,16 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     Object.entries(commonFields).forEach(([key, value]) => {
       if (value !== null && value !== undefined && value !== "") {
         formData.append(key, value.toString());
-        console.log(`✅ ${key} added:`, value);
       }
     });
 
     // 🔹 إضافة الملفات
     if (selectedDocuments.length > 0) {
-      selectedDocuments.forEach((file, index) => {
+      selectedDocuments.forEach((file) => {
         formData.append("documents", file);
-        console.log(`✅ Document ${index} added:`, file.name);
       });
     } else {
       console.log("ℹ️ No documents to add");
-    }
-
-    // 🔹 طباعة جميع محتويات FormData للتأكد
-    console.log("📦 Final FormData contents:");
-    for (const [key, value] of formData.entries()) {
-      if (value instanceof File) {
-        console.log(`${key}: File - ${value.name} (${value.size} bytes)`);
-      } else {
-        console.log(`${key}:`, value);
-      }
     }
 
     try {
