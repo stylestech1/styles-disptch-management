@@ -40,13 +40,7 @@ export type TLoads = {
   leftReceiver?: string; // new
   deliveredAt?: string;
   createdAt?: string; 
-<<<<<<< HEAD
   documents?: TDocument[]
-=======
-  documents?: {viewLink: string; downloadLink: string}[]
-  hasNotes?: boolean; 
-
->>>>>>> secondary/viola
 };
 export type TDriver = {
   id: string;
