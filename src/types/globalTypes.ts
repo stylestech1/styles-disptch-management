@@ -36,6 +36,8 @@ export type TLoads = {
   deliveredAt?: string;
   createdAt?: string; 
   documents?: {viewLink: string; downloadLink: string}[]
+  hasNotes?: boolean; 
+
 };
 export type TDriver = {
   id: string;

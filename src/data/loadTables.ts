@@ -8,5 +8,6 @@ export const loadColumns: Column[] = [
   { key: "total", header: "Total", align: "center" },
   { key: "status", header: "Status", align: "center" },
   { key: "driver", header: "Driver", align: "center" },
+  { key: "note", header: "HasNote", align: "center" },
 
 ];
