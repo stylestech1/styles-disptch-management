@@ -62,50 +62,6 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
     onClose();
   };
 
-  // Selecting Files
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const newFiles = Array.from(files);
-    setUploadError("");
-
-    // Checking of documents number
-    const totalFiles = selectedFiles.length + newFiles.length;
-    if (totalFiles > 2) {
-      setUploadError("You can only upload maximun 2 files 😢");
-      return;
-    }
-
-    // Checking of documents type
-    const invalidFiles = newFiles.filter((file) => {
-      const fileExtension = file.name.toLowerCase().split(".").pop();
-      return fileExtension !== "pdf" && file.type !== "application/pdf";
-    });
-    if (invalidFiles.length > 0) {
-      setUploadError("Only PDF files are allowed 😒");
-      return;
-    }
-
-    // reset
-    setSelectedFiles((prev) => [...prev, ...newFiles]);
-    e.target.value = "";
-  };
-
-  // Add New Document
-  const handleAddDocClick = async () => {
-    if (selectedFiles.length === 0) {
-      setUploadError("Please select at least one PDF file 😉");
-      return;
-    }
-
-    if (selectedLoad?.id) {
-      await onAddDocument?.(selectedLoad.id, selectedFiles);
-      setSelectedFiles([]);
-      setUploadError("");
-    }
-  };
-
   // Extract Name from link
   const getFileNameFromLink = (link: string): string => {
     try {
@@ -118,14 +74,12 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
     }
   };
 
-  // Remove Document
-  const handleRemoveFile = (index: number) => {
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-    setUploadError("");
-  };
-
   // Extract Icon from link
   const getFileIcon = (link: string, type?: string) => {
+    if (!link || typeof link !== 'string') {
+      return <IoDocument className="text-gray-500" size={20} />;
+    }
+
     const fileName = getFileNameFromLink(link);
 
     if (
@@ -141,6 +95,10 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
 
   // Extract Type from link
   const getFileType = (link: string, type?: string) => {
+    if (!link || typeof link !== 'string') {
+      return <IoDocument className="text-gray-500" size={20} />;
+    }
+
     const fileName = getFileNameFromLink(link);
 
     if (
@@ -236,14 +194,6 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
     }
   };
 
-  // Estimate File Size
-  const estimateFileSize = (link: string): string => {
-    const sizes = ["0.5 MB", "1.2 MB", "2.1 MB", "3.5 MB", "4.8 MB"];
-    return sizes[Math.floor(Math.random() * sizes.length)];
-  };
-
-  const canAddMoreFiles = documents.length + selectedFiles.length < 2;
-
   return (
     <Modal
       isOpen={isOpen}
@@ -338,81 +288,6 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
             </p>
           </div>
         )}
-
-        {/* File Upload Section */}
-        {documents.length !== 2 && (
-          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 bg-slate-50">
-            <div className="text-center">
-              <div className="flex justify-center mb-3">
-                <MdPictureAsPdf className="text-red-500" size={32} />
-              </div>
-              <h5 className="text-sm font-semibold text-slate-700 mb-1">
-                Add PDF Documents
-              </h5>
-              <p className="text-xs text-slate-500 mb-4">
-                Maximum 2 PDF files allowed
-              </p>
-
-              <input
-                type="file"
-                id="pdf-upload"
-                accept=".pdf,application/pdf"
-                multiple
-                onChange={handleFileSelect}
-                disabled={!canAddMoreFiles}
-                className="hidden"
-              />
-              <label
-                htmlFor="pdf-upload"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer ${
-                  canAddMoreFiles
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-slate-300 text-slate-500 cursor-not-allowed"
-                }`}
-              >
-                <IoAdd size={16} />
-                Select PDF Files
-              </label>
-
-              {uploadError && (
-                <div className="mt-3 flex items-center justify-center gap-2 text-red-600 text-sm">
-                  <MdError size={16} />
-                  {uploadError}
-                </div>
-              )}
-
-              {/* Selected Files Preview */}
-              {selectedFiles.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium text-slate-700">
-                    Selected Files ({selectedFiles.length}/2):
-                  </p>
-                  {selectedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
-                    >
-                      <div className="flex items-center gap-2">
-                        <MdPictureAsPdf className="text-red-500" size={18} />
-                        <div>
-                          <p className="text-sm font-medium text-slate-800">
-                            {file.name}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => handleRemoveFile(index)}
-                        className="text-red-500 hover:text-red-700 transition-colors"
-                      >
-                        <IoClose size={18} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="mt-6 pt-4 border-t border-slate-200">
@@ -426,17 +301,6 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
               </span>
             )}
           </div>
-
-          {selectedFiles.length > 0 && (
-            <button
-              onClick={handleAddDocClick}
-              className="flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all duration-200"
-            >
-              <IoAdd size={18} />
-              Upload {selectedFiles.length} File
-              {selectedFiles.length !== 1 ? "s" : ""}
-            </button>
-          )}
         </div>
       </div>
     </Modal>

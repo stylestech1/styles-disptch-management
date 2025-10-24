@@ -57,12 +57,14 @@ import {
   useGetDriversQuery,
   useGetTrucksQuery,
   useUpdateLoadsMutation,
+  useUploadDocumentsMutation,
 } from "@/redux/slices/apiSlice";
 import { RootState } from "@/redux/store";
 import { TDriver, TLoads, TTruck, TTruckType } from "@/types/globalTypes";
 import toast from "react-hot-toast";
 import GoogleMapsLoader from "@/components/ui/GoogleMapsLoader";
 import MapWithRoute from "@/components/ui/MapWithRoute";
+import { MdError, MdPictureAsPdf } from "react-icons/md";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
@@ -103,6 +105,11 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     isEditing,
   } = useSelector((state: RootState) => state.loadsForm);
 
+  // For Documents
+  const [selectedDocuments, setSelectedDocuments] = useState<File[]>([]);
+  const [uploadError, setUploadError] = useState<string>("");
+  const [uploadDocuments] = useUploadDocumentsMutation();
+
   // تحويل التواريخ من strings إلى Dayjs objects للاستخدام في UI
   const pickupAtDayjs = pickupAt ? dayjs(pickupAt) : null;
   const completedAtDayjs = completedAt ? dayjs(completedAt) : null;
@@ -133,6 +140,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   useEffect(() => {
     if (isOpen && editingLoad) {
       loadEditData(editingLoad);
+      setSelectedDocuments([]);
+      setUploadError("");
     }
   }, [isOpen, editingLoad]);
 
@@ -314,6 +323,37 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     calculateTotalDistance();
   }, [origin, destinations, dho, price]);
 
+  // Handle File Selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    const newFiles = Array.from(files);
+    setUploadError("");
+
+    // Check documents limit
+    const totalFiles = selectedDocuments.length + newFiles.length;
+    if (totalFiles > 2) {
+      setUploadError("You can only upload maximum 2 files 😢");
+      return;
+    }
+
+    // Validate PDF files
+    const invalidFiles = newFiles.filter((file) => {
+      const fileExtension = file.name.toLowerCase().split(".").pop();
+      return fileExtension !== "pdf" && file.type !== "application/pdf";
+    });
+
+    if (invalidFiles.length > 0) {
+      setUploadError("Only PDF files are allowed 😒");
+      return;
+    }
+
+    // Add files
+    setSelectedDocuments((prev) => [...prev, ...newFiles]);
+    e.target.value = "";
+  };
+
   // Handle form submission
   const handleCreateLoad = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -345,58 +385,99 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       return;
     }
 
-    const bodyData = {
-      origin: { address: origin.display_name },
-      destination: validDestinations.map((dest) => ({
-        address: dest!.display_name,
-      })),
-      DHO: dho ? { address: dho.display_name } : null,
-      driverId: isEditing ? editingLoad?.driverId?.id : driverId,
-      truckId: isEditing ? editingLoad?.truckId?.truckId?.toString() : truckId,
-      pickupAt: pickupAt,
-      completedAt: completedAt,
+    const formData = new FormData();
+
+    // 🔹 التأكد من إضافة origin
+    if (origin && origin.display_name) {
+      formData.append("origin[address]", origin.display_name);
+    } else {
+      console.error("❌ Origin is missing or invalid");
+    }
+
+    // 🔹 التأكد من إضافة destinations
+    if (validDestinations.length > 0) {
+      validDestinations.forEach((dest, index) => {
+        if (dest && dest.display_name) {
+          formData.append(`destination[${index}][address]`, dest.display_name);
+        } else {
+          console.error(`❌ Destination ${index} is missing or invalid`);
+        }
+      });
+    } else {
+      console.error("❌ No valid destinations found");
+    }
+
+    // 🔹 التأكد من إضافة DHO
+    if (dho && dho.display_name) {
+      formData.append("DHO[address]", dho.display_name);
+    } else {
+      console.log("ℹ️ DHO is optional, not added");
+    }
+
+    // 🔹 الحقول الخاصة بالإنشاء فقط
+    if (!isEditing) {
+      if (driverId) {
+        formData.append("driverId", driverId);
+      }
+      if (truckId) {
+        formData.append("truckId", truckId);
+      }
+    }
+
+    // 🔹 الحقول المشتركة
+    const commonFields = {
+      pickupAt,
+      completedAt,
+      arrivalAtShipper,
+      arrivalAtReceiver,
+      leftShipper,
+      leftReceiver,
       truckTemp,
       truckType,
-      distanceMiles: finalDistance,
-      totalPrice: total,
-      pricePerMile: total / finalDistance,
+      distanceMiles: finalDistance.toString(),
+      totalPrice: total.toString(),
+      pricePerMile: (total / finalDistance).toString(),
       feesNumber: fees,
       loadId: loadIDInp,
     };
 
-    const updateBody = {
-      origin: { address: origin.display_name },
-      destination: validDestinations.map((dest) => ({
-        address: dest!.display_name,
-      })),
-      DHO: dho ? { address: dho.display_name } : null,
-      pickupAt: pickupAt,
-      completedAt: completedAt,
-      ...(arrivalAtShipper && { arrivalAtShipper }),
-      ...(arrivalAtReceiver && { arrivalAtReceiver }),
-      ...(leftShipper && { leftShipper }),
-      ...(leftReceiver && { leftReceiver }),
-      truckTemp,
-      truckType,
-      distanceMiles: finalDistance,
-      totalPrice: total,
-      pricePerMile: total / finalDistance,
-      feesNumber: fees,
-      loadId: loadIDInp,
-    };
+    Object.entries(commonFields).forEach(([key, value]) => {
+      if (value !== null && value !== undefined && value !== "") {
+        formData.append(key, value.toString());
+      }
+    });
+
+    // 🔹 إضافة الملفات
+    if (selectedDocuments.length > 0) {
+      selectedDocuments.forEach((file) => {
+        formData.append("documents", file);
+      });
+    } else {
+      console.log("ℹ️ No documents to add");
+    }
 
     try {
+      let createdLoadId: string | undefined;
+
       if (isEditing && editingLoad) {
-        await updateLoad({ id: editingLoad.id, ...updateBody }).unwrap();
+        console.log("🔄 Sending UPDATE request...");
+        await updateLoad({
+          id: editingLoad.id,
+          formData,
+        }).unwrap();
         toast.success("Load updated ✅");
+        createdLoadId = editingLoad.id;
       } else {
-        await createLoad(bodyData).unwrap();
+        console.log("🆕 Sending CREATE request...");
+        const result = await createLoad(formData).unwrap();
         toast.success("Load created ✅");
+        createdLoadId = result?.data?.id || result?.id;
       }
 
       handleClose();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
+      console.error("❌ Request failed:", err);
       toast.error(
         errorMessage || `Load ${isEditing ? "update" : "creation"} failed ❌`
       );
@@ -428,6 +509,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
   const handleClose = () => {
     dispatch(resetForm());
+    setSelectedDocuments([]);
+    setUploadError("");
     setShowMaps(false);
     onClose();
   };
@@ -785,6 +868,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               pricePerMile={pricePerMile}
               isEditing={isEditing}
               destinations={destinations}
+              selectedDocuments={selectedDocuments}
+              uploadError={uploadError}
               onPriceChange={handlePriceChange}
               onFeesChange={(value) => dispatch(setFees(value))}
               onLoadIDChange={(value) => dispatch(setLoadIDInp(value))}
@@ -810,6 +895,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               onLeftReceiverChange={(value) =>
                 dispatch(setLeftReceiver(value ? value.toISOString() : null))
               }
+              onFileSelect={handleFileSelect}
               isTabValid={isTab2Valid()}
               onPrevTab={() => dispatch(setActiveTab(1))}
               onNextTab={() => dispatch(setActiveTab(3))}
@@ -1069,6 +1155,9 @@ interface LoadDetailsTabProps {
   pricePerMile: number | null;
   isEditing: boolean;
   destinations: (TPlace | null)[];
+  selectedDocuments: File[];
+  uploadError: string;
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onPriceChange: (value: string) => void;
   onFeesChange: (value: string) => void;
   onLoadIDChange: (value: string) => void;
@@ -1097,6 +1186,9 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   pricePerMile,
   isEditing,
   destinations,
+  selectedDocuments,
+  uploadError,
+  onFileSelect,
   onPriceChange,
   onFeesChange,
   onLoadIDChange,
@@ -1110,6 +1202,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   onPrevTab,
   onNextTab,
 }) => {
+  const canAddMoreFiles = selectedDocuments.length < 2;
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1344,6 +1437,78 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
               )}
             </div>
           </LocalizationProvider>
+        </div>
+
+        {/* Documents */}
+        <div className="md:col-span-2">
+          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 bg-slate-50">
+            <div className="text-center">
+              <div className="flex justify-center mb-3">
+                <MdPictureAsPdf className="text-red-500" size={32} />
+              </div>
+              <h5 className="text-sm font-semibold text-slate-700 mb-1">
+                Add PDF Documents (Optional)
+              </h5>
+              <p className="text-xs text-slate-500 mb-4">
+                Maximum 2 PDF files allowed - You can add documents later
+              </p>
+
+              <input
+                type="file"
+                id="pdf-upload-create"
+                accept=".pdf,application/pdf"
+                multiple
+                onChange={onFileSelect}
+                disabled={!canAddMoreFiles}
+                className="hidden"
+              />
+              <label
+                htmlFor="pdf-upload-create"
+                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer ${
+                  canAddMoreFiles
+                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                    : "bg-slate-300 text-slate-500 cursor-not-allowed"
+                }`}
+              >
+                <IoAdd size={16} />
+                Select PDF Files
+              </label>
+
+              {uploadError && (
+                <div className="mt-3 flex items-center justify-center gap-2 text-red-600 text-sm">
+                  <MdError size={16} />
+                  {uploadError}
+                </div>
+              )}
+
+              {/* Selected Files Preview */}
+              {selectedDocuments.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-medium text-slate-700">
+                    Selected Files ({selectedDocuments.length}/2):
+                  </p>
+                  {selectedDocuments.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
+                    >
+                      <div className="flex items-center gap-2">
+                        <MdPictureAsPdf className="text-red-500" size={18} />
+                        <div className="text-left">
+                          <p className="text-sm font-medium text-slate-800">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            {(file.size / 1024).toFixed(2)} KB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 

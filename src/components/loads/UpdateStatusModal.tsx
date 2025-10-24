@@ -16,15 +16,15 @@ import { getErrorMessage } from '@/utils/getErrorMessage';
 interface UpdateStatusModalProps {
   isOpen: boolean;
   onClose: () => void;
+  load: TLoads
 }
 
-const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose }) => {
-  const [selectedLoadId, setSelectedLoadId] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>('pending');
-  const [deliveredAt, setDeliveredAt] = useState<string>('');
-  const [showDeliveredAt, setShowDeliveredAt] = useState(false);
+const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose, load }) => {
+  const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>(load?.status || 'pending');
+  const [deliveredAt, setDeliveredAt] = useState<string>(load?.deliveredAt || '');
+  const [showDeliveredAt, setShowDeliveredAt] = useState(load?.status === 'delivered');
 
-  const {data: loadsData} = useGetLoadsQuery({page: 1, limit: 10})
+  const { data: loadsData } = useGetLoadsQuery({ page: 1, limit: 10 })
   const [updateLoadStatus, { isLoading: updatingStatus }] = useUpdateLoadsStatusMutation();
 
   const loads = loadsData?.data || []
@@ -43,11 +43,6 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose }
   const handleUpdateLoadStatus = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedLoadId)
-      return toast.error('Please select a load', {
-        style: { background: '#dc2626', color: '#fff' },
-      });
-
     // Validate delivery date if status is delivered
     if (selectedStatus === 'delivered' && !deliveredAt) {
       return toast.error('Please select delivery date and time', {
@@ -59,12 +54,12 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose }
       const requestBody: { status: TStatusLoad; deliveredAt?: string } = {
         status: selectedStatus,
       };
-      
+
       if (selectedStatus === 'delivered' && deliveredAt) {
         requestBody.deliveredAt = deliveredAt;
       }
 
-      await updateLoadStatus({ id: selectedLoadId, ...requestBody }).unwrap();
+      await updateLoadStatus({ id: load.id, ...requestBody }).unwrap();
 
       toast.success('Load updated ✅', {
         style: { background: '#16a34a', color: '#fff' },
@@ -78,10 +73,9 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose }
   };
 
   const handleClose = () => {
-    setSelectedLoadId('');
-    setSelectedStatus('pending');
-    setDeliveredAt('');
-    setShowDeliveredAt(false);
+    setSelectedStatus(load?.status || 'pending');
+    setDeliveredAt(load?.deliveredAt || '');
+    setShowDeliveredAt(load?.status === 'delivered');
     onClose();
   };
 
@@ -97,19 +91,8 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose }
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Load ID
           </label>
-          <select
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
-            value={selectedLoadId}
-            onChange={(e) => setSelectedLoadId(e.target.value)}
-            required
-          >
-            <option value="">Select Load</option>
-            {loads.map((l: TLoads) => (
-              <option key={l.id} value={l.id}>
-                {l.loadId}
-              </option>
-            ))}
-          </select>
+          <input type="text" readOnly value={load?.loadId || 'N/A'} className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
+          />
         </div>
 
         <div>

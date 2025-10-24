@@ -85,7 +85,8 @@ export type TComments = {
   driver: TDriver;
   truck: TTruck;
   text: string;
-  addedBy: { _id: string; name: string; jobId: number };
+  content: string;
+  addedBy: string ;
   _id: string;
   createdAt: string;
   updatedAt: string;
@@ -148,5 +149,8 @@ export type TLoadSummary = {
   loads: TLoads,
   period: TPeriod
 }
-
-
+export interface TabPanelProps {
+    children?: React.ReactNode;
+    index: number;
+    value: number;
+}
