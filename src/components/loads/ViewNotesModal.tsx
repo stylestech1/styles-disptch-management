@@ -96,10 +96,7 @@ const ViewNotesModal: React.FC<ViewNotesModalProps> = ({
               {note.addedBy && (
                 <div className="mt-3 text-center text-xs text-slate-600">
                   <span className="font-semibold text-slate-700">
-                    Added by: {note.addedBy.name}
-                  </span>
-                  <span className="text-slate-500 ml-2">
-                    (ID: {note.addedBy.jobId})
+                    Added by: {note.addedBy}
                   </span>
                 </div>
               )}
