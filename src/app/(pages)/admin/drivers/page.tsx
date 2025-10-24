@@ -150,7 +150,7 @@ const DriverForm = ({
           zIndex: 1,
         }}
       >
-        <Typography variant="h5" component='span' fontWeight="bold">
+        <Typography variant="h5" component="span" fontWeight="bold">
           {editMode ? "Edit Driver" : "Add New Driver"}
         </Typography>
         <IconButton onClick={onClose} sx={{ color: "white" }} size="small">
@@ -354,7 +354,7 @@ const DriversPage = () => {
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
   const [updateDriver, { isLoading: isUpdating }] = useUpdateDriverMutation();
   const [deleteDriver, { isLoading: isDeleting }] = useDeleteDriverMutation();
-const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
+  const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
   const drivers = driversData?.data || [];
   const allDrivers = allDriversData?.data || [];
@@ -369,7 +369,7 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
           driver.driverId?.toString().includes(search.toLowerCase())
       )
     : drivers;
- 
+
   // ✅ Modal States
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<TDriver>>({});
@@ -381,7 +381,7 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
     setEditMode(false);
     setOpen(true);
   };
- 
+
   const handleEditClick = (driver: TDriver) => {
     setOriginalData(driver);
     setFormData({
@@ -408,17 +408,21 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const getChangedFields = (original: Partial<TDriver>, updated: Partial<TDriver>) => {
-  const changed: Partial<TDriver> = {};
-  Object.keys(updated).forEach((key) => {
-    const k = key as keyof TDriver;
-    if (updated[k] !== original[k]) {
-      changed[k] = updated[k] as TDriver[keyof TDriver];
-    }
-  });
-  return changed;
-};
+  const getChangedFields = (
+    original: Partial<TDriver>,
+    updated: Partial<TDriver>
+  ): Partial<TDriver> => {
+    const changedFields: Record<string, unknown> = {};
 
+    Object.entries(updated).forEach(([key, value]) => {
+      const k = key as keyof TDriver;
+      if (value !== original[k] && value !== undefined) {
+        changedFields[key] = value;
+      }
+    });
+
+    return changedFields as Partial<TDriver>;
+  };
 
   // ✅ Function to display API errors in toast
   const showApiErrors = (error: unknown) => {
@@ -462,34 +466,33 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
   };
 
   // ✅ Update Driver
-const handleUpdate = async () => {
-  if (!formData?.id) {
-    toast.error("Missing driver ID");
-    return;
-  }
+  const handleUpdate = async () => {
+    if (!formData?.id) {
+      toast.error("Missing driver ID");
+      return;
+    }
 
-  const changedFields = getChangedFields(originalData, formData);
+    const changedFields = getChangedFields(originalData, formData);
 
-  if (Object.keys(changedFields).length === 0) {
-    toast("⚠️ No changes detected.");
-    return;
-  }
+    if (Object.keys(changedFields).length === 0) {
+      toast("⚠️ No changes detected.");
+      return;
+    }
 
-  try {
-    await updateDriver({
-      id: formData.id,
-      body: changedFields, // 🟢 فقط التغييرات
-    }).unwrap();
-    toast.success("✅ Driver updated successfully!");
-    setOpen(false);
-    refetch();
-  } catch (err: unknown) {
-    const errorMessage = getErrorMessage(err);
-    showApiErrors(err);
-    toast.error(errorMessage || "Driver update failed ❌");
-  }
-};
-
+    try {
+      await updateDriver({
+        id: formData.id,
+        body: changedFields, // 🟢 فقط التغييرات
+      }).unwrap();
+      toast.success("✅ Driver updated successfully!");
+      setOpen(false);
+      refetch();
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      showApiErrors(err);
+      toast.error(errorMessage || "Driver update failed ❌");
+    }
+  };
 
   // ✅ Delete Driver with MUI Toast
   const [driverToDelete, setDriverToDelete] = useState<{
