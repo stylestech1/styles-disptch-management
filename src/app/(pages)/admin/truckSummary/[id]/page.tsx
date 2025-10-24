@@ -33,6 +33,7 @@ import {
   useGetTruckByIdQuery,
   useLazyGetTruckSummaryQuery,
 } from "@/redux/slices/truckApi";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const TruckSummary = () => {
   const { id } = useParams();
@@ -68,8 +69,8 @@ const TruckSummary = () => {
 
   useEffect(() => {
     if (profileError || summaryError) {
-      const errorMessage = (profileError || summaryError) as any;
-      setError(errorMessage?.data?.message || "Failed to load data");
+      const errorMessage = getErrorMessage(profileError || summaryError);
+      setError(errorMessage || "Failed to load data");
     }
   }, [profileError, summaryError, setError]);
 
