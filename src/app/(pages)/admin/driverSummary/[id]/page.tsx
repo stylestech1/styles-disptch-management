@@ -83,7 +83,7 @@ const handleApplyFilter = () => {
 
   applyGlobalFilter({
     id: driverId,
-    fromDate,
+    fromDate, 
     toDate,
     fetchFunction: (params) => fetchDriverSummary(params).unwrap(),
   });

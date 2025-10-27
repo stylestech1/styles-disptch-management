@@ -2,27 +2,27 @@
 import { useParams } from "next/navigation";
 import { useGetLoadByIdQuery } from "@/redux/slices/apiSlice";
 import {
-  Box,
-  Typography,
-  Paper,
-  Chip,
-  Tab,
-  Tabs,
-  Card,
-  CardContent,
-  List,
-  ListItem,
-  Divider,
-  Link,
-  Button,
-  Stack,
-  alpha,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  IconButton,
+    Box,
+    Typography,
+    Paper,
+    Chip,
+    Tab,
+    Tabs,
+    Card,
+    CardContent,
+    List,
+    ListItem,
+    Divider,
+    Link,
+    Button,
+    Stack, 
+    alpha,
+    Alert,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogActions,
+    IconButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useState } from "react";
@@ -364,10 +364,8 @@ const LoadDetailsPage = () => {
                         mb: 3,
                         display: 'flex',
                         justifyContent: 'flex-end',
-                        background: 'linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%)',
                         p: 2,
                         borderRadius: 2,
-                        border: `1px solid ${colorPalette.border}`
                     }}>
                         <Button
                             onClick={() => openEditLoadPopup(load)}
@@ -588,150 +586,120 @@ const LoadDetailsPage = () => {
           </Grid>
         </TabPanel>
 
-        {/* Tab 2: Notes */}
+                {/* Tab 2: Notes */}
         <TabPanel value={tabValue} index={1}>
-          <Grid container spacing={0}>
-            <Grid size={{ xs: 12, md: 12 }}>
-              <Card
-                variant="outlined"
-                sx={{
-                  border: `1px solid ${colorPalette.border}`,
-                  borderRadius: 2,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                }}
-              >
+    <Grid container spacing={0}>
+        <Grid size={{ xs: 12, md: 12 }}>
+            <Card variant="outlined" sx={{
+                border: `1px solid ${colorPalette.border}`,
+                borderRadius: 2,
+                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            }}>
                 <CardContent sx={{ p: 3 }}>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={2}
-                    sx={{ mb: 3 }}
-                  >
-                    <Box
-                      sx={{
-                        color: colorPalette.primary,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        bgcolor: alpha(colorPalette.primary, 0.1),
-                      }}
-                    >
-                      <Description />
-                    </Box>
-                    <Typography
-                      variant="h6"
-                      color={colorPalette.textPrimary}
-                      fontWeight="600"
-                    >
-                      Previous Notes ({allNotes.length})
-                    </Typography>
-                    <button
-                      onClick={() => setShowAddNoteModal(true)}
-                      className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
-                    >
-                      <MdEdit size={18} />
-                      Add Note
-                    </button>
-                  </Stack>
-                  {allNotes.length > 0 ? (
-                    <List sx={{ maxHeight: 400, overflow: "auto" }}>
-                      {allNotes.map((comment: TComments, index: number) => (
-                        <Box key={comment.id || index}>
-                          <ListItem
-                            alignItems="flex-start"
-                            sx={{ px: 0, py: 2 }}
-                          >
-                            <Stack spacing={1.5} sx={{ width: "100%" }}>
-                              <Box
-                                sx={{
-                                  bgcolor: alpha(colorPalette.primary, 0.03),
-                                  p: 2,
-                                  borderRadius: 1,
-                                  border: `1px solid ${colorPalette.border}`,
-                                  position: "relative",
-                                }}
-                              >
-                                <Typography variant="body2" sx={{ pr: 4 }}>
-                                  {comment.text || comment.content}
-                                </Typography>
-                                <IconButton
-                                  size="small"
-                                  onClick={() => handleViewNote(comment)}
-                                  sx={{
-                                    position: "absolute",
-                                    top: 8,
-                                    right: 8,
-                                    color: colorPalette.primary,
-                                    "&:hover": {
-                                      backgroundColor: colorPalette.primary,
-                                      color: "white",
-                                    },
-                                  }}
-                                >
-                                  <Visibility fontSize="small" />
-                                </IconButton>
-                              </Box>
-                              <Stack
-                                direction="row"
-                                justifyContent="space-between"
-                                alignItems="center"
-                              >
-                                <Typography
-                                  variant="caption"
-                                  color={colorPalette.textSecondary}
-                                >
-                                  {comment.createdAt
-                                    ? `Added on ${new Date(
-                                        comment.createdAt
-                                      ).toLocaleString()}`
-                                    : "No date available"}
-                                </Typography>
-                                {comment.addedBy && (
-                                  <Typography
-                                    variant="caption"
-                                    color={colorPalette.primary}
-                                    fontWeight="500"
-                                  >
-                                    By: {comment.addedBy}
-                                  </Typography>
-                                )}
-                              </Stack>
-                            </Stack>
-                          </ListItem>
-                          {index < allNotes.length - 1 && (
-                            <Divider
-                              sx={{ my: 1, borderColor: colorPalette.border }}
-                            />
-                          )}
+                    {/* Add Note*/}
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
+                        <Stack direction="row" alignItems="center" spacing={2}>
+                            <Box sx={{
+                                color: colorPalette.primary,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                bgcolor: alpha(colorPalette.primary, 0.1),
+                            }}>
+                                <Description />
+                            </Box>
+                            <Typography variant="h6" color={colorPalette.textPrimary} fontWeight="600">
+                                Previous Notes ({allNotes.length})
+                            </Typography>
+                        </Stack>
+                        
+                        <Button
+                            onClick={() => setShowAddNoteModal(true)}
+                            variant="contained"
+                            startIcon={<MdEdit size={16} />}
+                            sx={{
+                                bgcolor: colorPalette.primary,
+                                '&:hover': {
+                                    bgcolor: alpha(colorPalette.primary, 0.9),
+                                },
+                                fontWeight: 600,
+                                borderRadius: 2,
+                                px: 3,
+                                py: 1,
+                                textTransform: 'none',
+                            }}
+                        >
+                            Add Note
+                        </Button>
+                    </Stack>
+
+                    {allNotes.length > 0 ? (
+                        <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+                            {allNotes.map((comment: TComments, index: number) => (
+                                <Box key={comment.id || index}>
+                                    <ListItem alignItems="flex-start" sx={{ px: 0, py: 2 }}>
+                                        <Stack spacing={1.5} sx={{ width: '100%' }}>
+                                            <Box sx={{
+                                                bgcolor: alpha(colorPalette.primary, 0.03),
+                                                p: 2,
+                                                borderRadius: 1,
+                                                border: `1px solid ${colorPalette.border}`,
+                                                position: 'relative'
+                                            }}>
+                                                <Typography variant="body2" sx={{ pr: 4 }}>
+                                                    {comment.text || comment.content}
+                                                </Typography>
+                                                <IconButton
+                                                    size="small"
+                                                    onClick={() => handleViewNote(comment)}
+                                                    sx={{
+                                                        position: 'absolute',
+                                                        top: 8,
+                                                        right: 8,
+                                                        color: colorPalette.primary,
+                                                        '&:hover': {
+                                                            backgroundColor: colorPalette.primary,
+                                                            color: 'white'
+                                                        }
+                                                    }}
+                                                >
+                                                    <Visibility fontSize="small" />
+                                                </IconButton>
+                                            </Box>
+                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                                <Typography variant="caption" color={colorPalette.textSecondary}>
+                                                    {comment.createdAt ?
+                                                        `Added on ${new Date(comment.createdAt).toLocaleString()}` :
+                                                        "No date available"}
+                                                </Typography>
+                                                {comment.addedBy && (
+                                                    <Typography variant="caption" color={colorPalette.primary} fontWeight="500">
+                                                        By: {comment.addedBy}
+                                                    </Typography>
+                                                )}
+                                            </Stack>
+                                        </Stack>
+                                    </ListItem>
+                                    {index < allNotes.length - 1 && <Divider sx={{ my: 1, borderColor: colorPalette.border }} />}
+                                </Box>
+                            ))}
+                        </List>
+                    ) : (
+                        <Box textAlign="center" py={6}>
+                            <Note sx={{ fontSize: 48, color: colorPalette.textSecondary, mb: 2, opacity: 0.5 }} />
+                            <Typography variant="body2" color={colorPalette.textSecondary}>
+                                No notes available yet
+                            </Typography>
                         </Box>
-                      ))}
-                    </List>
-                  ) : (
-                    <Box textAlign="center" py={6}>
-                      <Note
-                        sx={{
-                          fontSize: 48,
-                          color: colorPalette.textSecondary,
-                          mb: 2,
-                          opacity: 0.5,
-                        }}
-                      />
-                      <Typography
-                        variant="body2"
-                        color={colorPalette.textSecondary}
-                      >
-                        No notes available yet
-                      </Typography>
-                    </Box>
-                  )}
+                    )}
                 </CardContent>
-              </Card>
-            </Grid>
-          </Grid>
-        </TabPanel>
+            </Card>
+        </Grid>
+    </Grid>
+</TabPanel>
 
                 {/* Tab 3: Appointments */}
                 <TabPanel value={tabValue} index={2}>
