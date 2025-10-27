@@ -108,6 +108,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   // For Documents
   const [selectedDocuments, setSelectedDocuments] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState<string>("");
+  const [isDragging, setIsDragging] = useState<boolean>(false);
   const [uploadDocuments] = useUploadDocumentsMutation();
 
   // تحويل التواريخ من strings إلى Dayjs objects للاستخدام في UI
@@ -134,7 +135,77 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   const [pricePerMile, setPricePerMile] = useState<number | null>(null);
   const [showMaps, setShowMaps] = useState(false);
 
-  const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
+  // Drag and Drop Handlers
+  const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  }, [isDragging]);
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+
+    processFiles(Array.from(files));
+  }, []);
+
+  // Process Files (used by both drag & drop and file input)
+  const processFiles = (files: File[]) => {
+    setUploadError("");
+
+    // Check documents limit
+    const totalFiles = selectedDocuments.length + files.length;
+    if (totalFiles > 2) {
+      setUploadError("You can only upload maximum 2 files 😢");
+      return;
+    }
+
+    // Validate PDF files
+    const invalidFiles = files.filter((file) => {
+      const fileExtension = file.name.toLowerCase().split(".").pop();
+      return fileExtension !== "pdf" && file.type !== "application/pdf";
+    });
+
+    if (invalidFiles.length > 0) {
+      setUploadError("Only PDF files are allowed 😒");
+      return;
+    }
+
+    // Add files
+    setSelectedDocuments((prev) => [...prev, ...files]);
+  };
+
+  // Handle File Selection (for file input)
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
+
+    processFiles(Array.from(files));
+    e.target.value = ""; // Reset input
+  };
+
+  // Remove a file
+  const handleRemoveFile = (index: number) => {
+    setSelectedDocuments((prev) => prev.filter((_, i) => i !== index));
+  };
 
   // تحميل بيانات التحميل عند فتح المودال للتعديل
   useEffect(() => {
@@ -323,37 +394,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     calculateTotalDistance();
   }, [origin, destinations, dho, price]);
 
-  // Handle File Selection
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-
-    const newFiles = Array.from(files);
-    setUploadError("");
-
-    // Check documents limit
-    const totalFiles = selectedDocuments.length + newFiles.length;
-    if (totalFiles > 2) {
-      setUploadError("You can only upload maximum 2 files 😢");
-      return;
-    }
-
-    // Validate PDF files
-    const invalidFiles = newFiles.filter((file) => {
-      const fileExtension = file.name.toLowerCase().split(".").pop();
-      return fileExtension !== "pdf" && file.type !== "application/pdf";
-    });
-
-    if (invalidFiles.length > 0) {
-      setUploadError("Only PDF files are allowed 😒");
-      return;
-    }
-
-    // Add files
-    setSelectedDocuments((prev) => [...prev, ...newFiles]);
-    e.target.value = "";
-  };
-
   // Handle form submission
   const handleCreateLoad = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -511,6 +551,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     dispatch(resetForm());
     setSelectedDocuments([]);
     setUploadError("");
+    setIsDragging(false);
     setShowMaps(false);
     onClose();
   };
@@ -870,6 +911,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               destinations={destinations}
               selectedDocuments={selectedDocuments}
               uploadError={uploadError}
+              isDragging={isDragging}
               onPriceChange={handlePriceChange}
               onFeesChange={(value) => dispatch(setFees(value))}
               onLoadIDChange={(value) => dispatch(setLoadIDInp(value))}
@@ -896,6 +938,11 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                 dispatch(setLeftReceiver(value ? value.toISOString() : null))
               }
               onFileSelect={handleFileSelect}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+              onRemoveFile={handleRemoveFile}
               isTabValid={isTab2Valid()}
               onPrevTab={() => dispatch(setActiveTab(1))}
               onNextTab={() => dispatch(setActiveTab(3))}
@@ -931,215 +978,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
 export default CreateEditLoadModal;
 
-// Location Tab Component
-interface LocationTabProps {
-  dho: TPlace | null;
-  origin: TPlace | null;
-  destinations: (TPlace | null)[];
-  dhoToOriginDistance: number | null;
-  averageTime: number | null;
-  allDistance: string;
-  onDhoChange: (place: TPlace | null) => void;
-  onOriginChange: (place: TPlace | null) => void;
-  onAddDestination: () => void;
-  onUpdateDestination: (index: number, place: TPlace | null) => void;
-  onRemoveDestination: (index: number) => void;
-  formatTime: (hours: number) => string;
-  isTabValid: boolean;
-  onNextTab: () => void;
-  googleMapsApiKey: string;
-}
-
-const LocationTab: React.FC<LocationTabProps> = ({
-  dho,
-  origin,
-  destinations,
-  dhoToOriginDistance,
-  averageTime,
-  allDistance,
-  onDhoChange,
-  onOriginChange,
-  onAddDestination,
-  onUpdateDestination,
-  onRemoveDestination,
-  formatTime,
-  isTabValid,
-  onNextTab,
-  googleMapsApiKey,
-}) => {
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Direction */}
-        <div className="space-y-6">
-          <LocationAutocomplete
-            label="DHO (Driver Home Origin)"
-            value={dho}
-            setValue={onDhoChange}
-            placeholder="Enter driver's starting location"
-          />
-
-          <LocationAutocomplete
-            label="Pick Up (Origin)"
-            value={origin}
-            setValue={onOriginChange}
-            placeholder="Enter origin address"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                DHO to Origin Distance
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={
-                    dhoToOriginDistance
-                      ? `${dhoToOriginDistance.toFixed(2)} miles`
-                      : ""
-                  }
-                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                  readOnly
-                  placeholder="Distance will auto-calculate"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Average Time To Pickup
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={averageTime ? `${formatTime(averageTime)}` : ""}
-                  className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                  readOnly
-                  placeholder="Time will auto-calculate"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Destinations Section */}
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-slate-700">
-                Destinations <span className="text-red-500">*</span>
-              </label>
-              <button
-                type="button"
-                onClick={onAddDestination}
-                className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-              >
-                <IoAdd size={16} />
-                Add Destination
-              </button>
-            </div>
-
-            {destinations.map((destination, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <div className="flex-1">
-                  <LocationAutocomplete
-                    label={`Destination ${index + 1}`}
-                    value={destination}
-                    setValue={(place) => onUpdateDestination(index, place)}
-                    placeholder={`Enter destination ${index + 1} address`}
-                  />
-                </div>
-
-                {destinations.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => onRemoveDestination(index)}
-                    className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <IoClose size={20} />
-                  </button>
-                )}
-              </div>
-            ))}
-
-            {destinations.length === 0 && (
-              <div className="text-center py-6 border-2 border-dashed border-slate-300 rounded-lg bg-gray-50">
-                <p className="text-gray-500 font-medium">
-                  No destinations added yet
-                </p>
-                <p className="text-gray-400 text-sm mt-1">
-                  You must add at least one destination to continue
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Maps */}
-        <div className="grid grid-cols-1 gap-6">
-          <GoogleMapsLoader
-            onLoad={() => console.log("Google Maps loaded successfully")}
-            onError={(error) =>
-              console.error("Failed to load Google Maps:", error)
-            }
-          >
-            <MapWithRoute
-              dho={dho}
-              origin={origin}
-              destinations={destinations}
-            />
-          </GoogleMapsLoader>
-        </div>
-      </div>
-
-      <div className="flex justify-end pt-4">
-        <button
-          type="button"
-          onClick={onNextTab}
-          disabled={!isTabValid}
-          className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
-            isTabValid
-              ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-              : "bg-slate-300 text-slate-500 cursor-not-allowed"
-          }`}
-        >
-          Next
-          <IoArrowForward size={16} />
-        </button>
-      </div>
-
-      {/* Information Message */}
-      {allDistance && (
-        <div className="mt-5 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-start gap-2">
-            <IoInformationCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="text-sm font-medium text-blue-800">
-                Route Distance Information
-              </h4>
-              <p className="text-xs text-blue-700 mt-1">
-                Total distance calculated from {dho ? "DHO" : "Origin"} through
-                all destinations: <strong>{allDistance} miles</strong>
-              </p>
-              {dho && origin && (
-                <p className="text-xs text-blue-600 mt-1">
-                  • DHO to Origin: {dhoToOriginDistance?.toFixed(2) || "0"}{" "}
-                  miles
-                </p>
-              )}
-              {destinations.filter((d) => d !== null).length > 0 && (
-                <p className="text-xs text-blue-600">
-                  • Including {destinations.filter((d) => d !== null).length}{" "}
-                  destination(s)
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Load Details Tab Component
 interface LoadDetailsTabProps {
   allDistance: string;
@@ -1157,7 +995,13 @@ interface LoadDetailsTabProps {
   destinations: (TPlace | null)[];
   selectedDocuments: File[];
   uploadError: string;
+  isDragging: boolean;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  onRemoveFile: (index: number) => void;
   onPriceChange: (value: string) => void;
   onFeesChange: (value: string) => void;
   onLoadIDChange: (value: string) => void;
@@ -1188,7 +1032,13 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   destinations,
   selectedDocuments,
   uploadError,
+  isDragging,
   onFileSelect,
+  onDragEnter,
+  onDragLeave,
+  onDragOver,
+  onDrop,
+  onRemoveFile,
   onPriceChange,
   onFeesChange,
   onLoadIDChange,
@@ -1203,6 +1053,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   onNextTab,
 }) => {
   const canAddMoreFiles = selectedDocuments.length < 2;
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1439,12 +1290,27 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
           </LocalizationProvider>
         </div>
 
-        {/* Documents */}
+        {/* Documents - Drag & Drop Area */}
         <div className="md:col-span-2">
-          <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 bg-slate-50">
+          <div
+            className={`border-2 border-dashed rounded-lg p-6 transition-all duration-200 ${
+              isDragging
+                ? "border-blue-500 bg-blue-50"
+                : "border-slate-300 bg-slate-50"
+            }`}
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+          >
             <div className="text-center">
               <div className="flex justify-center mb-3">
-                <MdPictureAsPdf className="text-red-500" size={32} />
+                <MdPictureAsPdf 
+                  className={`transition-colors ${
+                    isDragging ? "text-blue-500" : "text-red-500"
+                  }`} 
+                  size={32} 
+                />
               </div>
               <h5 className="text-sm font-semibold text-slate-700 mb-1">
                 Add PDF Documents (Optional)
@@ -1473,6 +1339,10 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                 <IoAdd size={16} />
                 Select PDF Files
               </label>
+
+              <p className="text-xs text-slate-500 mt-3">
+                or <strong>drag and drop</strong> PDF files here
+              </p>
 
               {uploadError && (
                 <div className="mt-3 flex items-center justify-center gap-2 text-red-600 text-sm">
@@ -1503,6 +1373,13 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                           </p>
                         </div>
                       </div>
+                      <button
+                        type="button"
+                        onClick={() => onRemoveFile(index)}
+                        className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                      >
+                        <IoClose size={16} />
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -1539,7 +1416,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   );
 };
 
-// Assignment Tab Component
+// Assignment Tab Component (يجب إضافة هذا الجزء أيضًا)
 interface AssignmentTabProps {
   isEditing: boolean;
   editingLoad: TLoads | null;
