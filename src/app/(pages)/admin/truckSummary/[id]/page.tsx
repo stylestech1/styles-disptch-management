@@ -1,13 +1,10 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import {
-  TLoads,
-  TStatusLoad,
-} from "@/types/globalTypes";
+import { TLoads, TStatusLoad } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import {
   IoCar,
@@ -35,6 +32,7 @@ import {
   useLazyGetTruckSummaryWithFilterQuery,
 } from "@/redux/slices/truckApi";
 import { applyGlobalFilter, resetGlobalFilter } from "@/utils/filterUtils";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const TruckSummary = () => {
   const { id } = useParams();
@@ -55,9 +53,13 @@ const TruckSummary = () => {
 
   const [
     fetchTruckSummary,
-    { data: truckSummaryData, isLoading: summaryLoading, isError: summaryError },
+    {
+      data: truckSummaryData,
+      isLoading: summaryLoading,
+      isError: summaryError,
+    },
   ] = useLazyGetTruckSummaryQuery();
-const [fetchTruckSummaryWithFilter] = useLazyGetTruckSummaryWithFilterQuery();
+  const [fetchTruckSummaryWithFilter] = useLazyGetTruckSummaryWithFilterQuery();
 
   const profile = profileData?.data;
   const truckSummary = truckSummaryData?.data;
@@ -69,48 +71,42 @@ const [fetchTruckSummaryWithFilter] = useLazyGetTruckSummaryWithFilterQuery();
     }
   }, [id, fetchTruckSummary]);
 
+  const handleApplyFilter = async () => {
+    if (!id) return;
+    const truckId = Array.isArray(id) ? id[0] : id;
 
- const handleApplyFilter = async () => {
-  if (!id) return;
-  const truckId = Array.isArray(id) ? id[0] : id;
+    try {
+      await applyGlobalFilter({
+        id: truckId,
+        fromDate,
+        toDate,
+        fetchFunction: (params) => fetchTruckSummaryWithFilter(params).unwrap(),
+      });
+      toast.success("Filter applied successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to apply filter");
+    }
+  };
 
-  try {
-    await applyGlobalFilter({
-      id: truckId,
-      fromDate,
-      toDate,
-      fetchFunction: (params) =>
-        fetchTruckSummaryWithFilter(params).unwrap(),
-    });
-    toast.success("Filter applied successfully");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to apply filter");
-  }
-};
+  const handleReset = async () => {
+    if (!id) return;
+    const truckId = Array.isArray(id) ? id[0] : id;
 
+    setFromDate("");
+    setToDate("");
 
-const handleReset = async () => {
-  if (!id) return;
-  const truckId = Array.isArray(id) ? id[0] : id;
-
-  setFromDate("");
-  setToDate("");
-
-  try {
-    await resetGlobalFilter({
-      id: truckId,
-      fetchFunction: (params) =>
-        fetchTruckSummaryWithFilter(params).unwrap(),
-    });
-    toast.success("Filter reset successfully");
-  } catch (err) {
-    console.error(err);
-    toast.error("Failed to reset filter");
-  }
-};
-
-
+    try {
+      await resetGlobalFilter({
+        id: truckId,
+        fetchFunction: (params) => fetchTruckSummaryWithFilter(params).unwrap(),
+      });
+      toast.success("Filter reset successfully");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to reset filter");
+    }
+  };
 
   useEffect(() => {
     if (profileError || summaryError) {
@@ -438,10 +434,11 @@ const handleReset = async () => {
                 <div className="flex items-center justify-between">
                   <span className="text-slate-600">Availability</span>
                   <span
-                    className={`font-medium ${profile.status === "available"
-                      ? "text-emerald-600"
-                      : "text-amber-600"
-                      }`}
+                    className={`font-medium ${
+                      profile.status === "available"
+                        ? "text-emerald-600"
+                        : "text-amber-600"
+                    }`}
                   >
                     {profile.status === "available"
                       ? "Available"
@@ -548,9 +545,6 @@ const handleReset = async () => {
         </div>
       )}
 
-
-
-
       {/* ✅ Loads Table Section */}
       {truckSummary && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -563,43 +557,43 @@ const handleReset = async () => {
                 </h3>
               </div>
             </div>
-                {/* ✅ Filter Section */}
-          <div className="flex flex-wrap items-center gap-3 mb-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
-            <div className="flex flex-col">
-              <label className="text-sm text-slate-600 mb-1">From Date</label>
-              <input
-                type="date"
-                value={fromDate}
-                onChange={(e) => setFromDate(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            {/* ✅ Filter Section */}
+            <div className="flex flex-wrap items-center gap-3 mb-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
+              <div className="flex flex-col">
+                <label className="text-sm text-slate-600 mb-1">From Date</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-            <div className="flex flex-col">
-              <label className="text-sm text-slate-600 mb-1">To Date</label>
-              <input
-                type="date"
-                value={toDate}
-                onChange={(e) => setToDate(e.target.value)}
-                className="border border-slate-300 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+              <div className="flex flex-col">
+                <label className="text-sm text-slate-600 mb-1">To Date</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-            <div className="flex gap-3 mt-5 sm:mt-6">
-              <button
-                onClick={handleApplyFilter}
-                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-              >
-                Apply Filter
-              </button>
-              <button
-                onClick={handleReset}
-                className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
-              >
-                Reset
-              </button>
+              <div className="flex gap-3 mt-5 sm:mt-6">
+                <button
+                  onClick={handleApplyFilter}
+                  className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                >
+                  Apply Filter
+                </button>
+                <button
+                  onClick={handleReset}
+                  className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
+                >
+                  Reset
+                </button>
+              </div>
             </div>
-          </div>
           </div>
           {/* Table For Truck Loads Summary */}
           {(flattenedLoads as TLoads[]).length > 0 ? (
