@@ -5,7 +5,7 @@ interface FilterParams {
   id: string;
   fromDate?: string;
   toDate?: string;
-  fetchFunction: (params: { id: string; from?: string; to?: string }) => Promise<any>;
+  fetchFunction: (params: { id: string; from?: string; to?: string }) => Promise<string>;
 }
 
 export const applyGlobalFilter = async ({
@@ -42,7 +42,7 @@ export const resetGlobalFilter = async ({
   fetchFunction,
 }: { 
   id: string;
-  fetchFunction: (params: { id: string }) => Promise<any>;
+  fetchFunction: (params: { id: string }) => Promise<string>;
 }) => {
   try {
     await fetchFunction({ id });
