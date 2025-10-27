@@ -192,5 +192,7 @@ export const {
   useActivateUserMutation,
   useDeactivateUserMutation,
     useGetLoadsWithFilterQuery, 
-
+  useGetUserInfoQuery,
+  useUpdateUserInfoMutation,
+  useUpdateUserPasswordMutation,
 } = apiSlice;
