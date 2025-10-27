@@ -1,6 +1,13 @@
 "use client";
 import Titles from "@/components/ui/Titles";
-import { useState, useEffect, lazy, Suspense, useCallback, useMemo } from "react";
+import {
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+  useCallback,
+  useMemo,
+} from "react";
 import toast from "react-hot-toast";
 import {
   Box,
@@ -34,16 +41,29 @@ import {
   MyLocation,
   Route,
 } from "@mui/icons-material";
-import LocationAutocomplete, { TPlace } from "@/components/sections/LocationAutocomplete";
-import { calculateDhoToOriginDistance, calculateFullRouteDistance } from "@/utils/googleDistanceCalculator";
+import LocationAutocomplete, {
+  TPlace,
+} from "@/components/sections/LocationAutocomplete";
+import {
+  calculateDhoToOriginDistance,
+  calculateFullRouteDistance,
+} from "@/utils/googleDistanceCalculator";
 
 // Lazy load the map components
-const LazyGoogleMapsLoader = lazy(() => import("@/components/ui/GoogleMapsLoader"));
+const LazyGoogleMapsLoader = lazy(
+  () => import("@/components/ui/GoogleMapsLoader")
+);
 const LazyMapWithRoute = lazy(() => import("@/components/ui/MapWithRoute"));
 
 // Custom hook for distance calculations
-const useRouteCalculations = (dho: TPlace | null, origin: TPlace | null, destinations: (TPlace | null)[]) => {
-  const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(null);
+const useRouteCalculations = (
+  dho: TPlace | null,
+  origin: TPlace | null,
+  destinations: (TPlace | null)[]
+) => {
+  const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
+    null
+  );
   const [dhoToOriginTime, setDhoToOriginTime] = useState<number | null>(null);
   const [totalDistance, setTotalDistance] = useState<number | null>(null);
   const [totalTime, setTotalTime] = useState<number | null>(null);
@@ -75,19 +95,26 @@ const useRouteCalculations = (dho: TPlace | null, origin: TPlace | null, destina
   }, [dho, origin]);
 
   const calculateTotalRoute = useCallback(async () => {
-    const validDestinations = destinations.filter((dest): dest is TPlace => dest !== null);
+    const validDestinations = destinations.filter(
+      (dest): dest is TPlace => dest !== null
+    );
 
-    if ((dho && origin && validDestinations.length > 0) || (origin && validDestinations.length > 0)) {
+    if (
+      (dho && origin && validDestinations.length > 0) ||
+      (origin && validDestinations.length > 0)
+    ) {
       setIsCalculating(true);
       try {
-        const destinationsCoords = validDestinations.map(dest => ({
+        const destinationsCoords = validDestinations.map((dest) => ({
           lat: parseFloat(dest.lat),
           lng: parseFloat(dest.lon),
         }));
 
         const result = await calculateFullRouteDistance(
           dho ? { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) } : null,
-          origin ? { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) } : null,
+          origin
+            ? { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }
+            : null,
           destinationsCoords
         );
 
@@ -136,30 +163,33 @@ const useRateCalculation = () => {
   const [rate, setRate] = useState<number | "">("");
   const [calc, setCalc] = useState<number | "">("");
 
-  const handleCalc = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCalc = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
 
-    const dhNum = Number(dh);
-    const loadMilesNum = Number(loadMiles);
-    const rateNum = Number(rate);
+      const dhNum = Number(dh);
+      const loadMilesNum = Number(loadMiles);
+      const rateNum = Number(rate);
 
-    if (isNaN(dhNum) || isNaN(loadMilesNum) || isNaN(rateNum)) {
-      toast.error("Please enter valid numbers to calculate", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-      return;
-    }
+      if (isNaN(dhNum) || isNaN(loadMilesNum) || isNaN(rateNum)) {
+        toast.error("Please enter valid numbers to calculate", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+        return;
+      }
 
-    if (loadMilesNum + dhNum === 0) {
-      toast.error("Total miles cannot be zero", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-      return;
-    }
+      if (loadMilesNum + dhNum === 0) {
+        toast.error("Total miles cannot be zero", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+        return;
+      }
 
-    const result = rateNum / (loadMilesNum + dhNum);
-    setCalc(Number(result.toFixed(3)));
-  }, [dh, loadMiles, rate]);
+      const result = rateNum / (loadMilesNum + dhNum);
+      setCalc(Number(result.toFixed(3)));
+    },
+    [dh, loadMiles, rate]
+  );
 
   const clearCalculation = useCallback(() => {
     setDh("");
@@ -198,16 +228,16 @@ const formatTime = (hours: number): string => {
 
 // Map fallback component
 const MapFallback = () => (
-  <Box 
-    sx={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      height: 400, 
-      bgcolor: 'grey.50', 
+  <Box
+    sx={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      height: 400,
+      bgcolor: "grey.50",
       borderRadius: 2,
-      border: '1px solid',
-      borderColor: 'divider'
+      border: "1px solid",
+      borderColor: "divider",
     }}
   >
     <Stack spacing={2} alignItems="center">
@@ -220,26 +250,36 @@ const MapFallback = () => (
 );
 
 // Statistics Card Component
-const StatCard = ({ title, value, subtitle, icon, color = "primary" }: {
+const StatCard = ({
+  title,
+  value,
+  subtitle,
+  icon,
+  color = "primary",
+}: {
   title: string;
   value: string;
   subtitle?: string;
   icon: React.ReactNode;
   color?: "primary" | "secondary" | "success" | "info";
 }) => (
-  <Card 
-    variant="outlined" 
-    sx={{ 
-      height: '100%',
+  <Card
+    variant="outlined"
+    sx={{
+      height: "100%",
       borderColor: `${color}.light`,
       backgroundColor: `${color}.50`,
     }}
   >
-    <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+    <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
       <Stack spacing={1}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{ color: `${color}.main` }}>{icon}</Box>
-          <Typography variant="subtitle2" color="text.secondary" fontWeight="500">
+          <Typography
+            variant="subtitle2"
+            color="text.secondary"
+            fontWeight="500"
+          >
             {title}
           </Typography>
         </Box>
@@ -285,22 +325,28 @@ const Calculation = () => {
 
   // Destination management
   const handleAddDestination = useCallback(() => {
-    setDestinations(prev => [...prev, null]);
+    setDestinations((prev) => [...prev, null]);
   }, []);
 
-  const handleUpdateDestination = useCallback((index: number, place: TPlace | null) => {
-    setDestinations(prev => {
-      const newDestinations = [...prev];
-      newDestinations[index] = place;
-      return newDestinations;
-    });
-  }, []);
+  const handleUpdateDestination = useCallback(
+    (index: number, place: TPlace | null) => {
+      setDestinations((prev) => {
+        const newDestinations = [...prev];
+        newDestinations[index] = place;
+        return newDestinations;
+      });
+    },
+    []
+  );
 
-  const handleRemoveDestination = useCallback((index: number) => {
-    if (destinations.length > 1) {
-      setDestinations(prev => prev.filter((_, i) => i !== index));
-    }
-  }, [destinations.length]);
+  const handleRemoveDestination = useCallback(
+    (index: number) => {
+      if (destinations.length > 1) {
+        setDestinations((prev) => prev.filter((_, i) => i !== index));
+      }
+    },
+    [destinations.length]
+  );
 
   const clearAllRoutes = useCallback(() => {
     setDho(null);
@@ -308,13 +354,13 @@ const Calculation = () => {
     setDestinations([null]);
   }, []);
 
-  const hasValidRoute = useMemo(() => 
-    dho && origin && destinations.some(dest => dest !== null),
+  const hasValidRoute = useMemo(
+    () => dho && origin && destinations.some((dest) => dest !== null),
     [dho, origin, destinations]
   );
 
-  const validDestinationsCount = useMemo(() => 
-    destinations.filter(dest => dest !== null).length,
+  const validDestinationsCount = useMemo(
+    () => destinations.filter((dest) => dest !== null).length,
     [destinations]
   );
 
@@ -324,7 +370,8 @@ const Calculation = () => {
       <Box sx={{ mb: 6 }}>
         <Titles>Calculation & Route Planning</Titles>
         <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          Calculate rates and plan your routes with real-time distance measurements
+          Calculate rates and plan your routes with real-time distance
+          measurements
         </Typography>
       </Box>
 
@@ -343,17 +390,28 @@ const Calculation = () => {
                 backgroundColor: "background.paper",
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
                 <Typography variant="h5" color="primary.main" fontWeight="600">
                   Rate Calculation
                 </Typography>
                 <Tooltip title="Clear all fields">
-                  <IconButton onClick={clearCalculation} size="small" color="inherit">
+                  <IconButton
+                    onClick={clearCalculation}
+                    size="small"
+                    color="inherit"
+                  >
                     <Refresh />
                   </IconButton>
                 </Tooltip>
               </Box>
-              
+
               <Box component="form" onSubmit={handleCalc}>
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                   <Grid size={{ xs: 12, md: 4 }}>
@@ -362,7 +420,9 @@ const Calculation = () => {
                       label="Dead Head (Miles)"
                       placeholder="0.00"
                       value={dh}
-                      onChange={(e) => setDh(e.target.value ? Number(e.target.value) : "")}
+                      onChange={(e) =>
+                        setDh(e.target.value ? Number(e.target.value) : "")
+                      }
                       type="number"
                       slotProps={{
                         input: {
@@ -382,7 +442,11 @@ const Calculation = () => {
                       label="Load Miles"
                       placeholder="0.00"
                       value={loadMiles}
-                      onChange={(e) => setLoadMiles(e.target.value ? Number(e.target.value) : "")}
+                      onChange={(e) =>
+                        setLoadMiles(
+                          e.target.value ? Number(e.target.value) : ""
+                        )
+                      }
                       type="number"
                       slotProps={{
                         input: {
@@ -402,7 +466,9 @@ const Calculation = () => {
                       label="Rate ($)"
                       placeholder="0.00"
                       value={rate}
-                      onChange={(e) => setRate(e.target.value ? Number(e.target.value) : "")}
+                      onChange={(e) =>
+                        setRate(e.target.value ? Number(e.target.value) : "")
+                      }
                       type="number"
                       slotProps={{
                         input: {
@@ -417,7 +483,12 @@ const Calculation = () => {
                   </Grid>
                 </Grid>
 
-                <Stack direction="row" spacing={3} alignItems="center" flexWrap="wrap">
+                <Stack
+                  direction="row"
+                  spacing={3}
+                  alignItems="center"
+                  flexWrap="wrap"
+                >
                   <Button
                     type="submit"
                     variant="contained"
@@ -449,7 +520,7 @@ const Calculation = () => {
                     }}
                     sx={{
                       minWidth: 200,
-                      '& .MuiOutlinedInput-root': {
+                      "& .MuiOutlinedInput-root": {
                         backgroundColor: "success.50",
                         borderColor: "success.light",
                       },
@@ -459,13 +530,10 @@ const Calculation = () => {
 
                 {calc !== "" && (
                   <Fade in={true}>
-                    <Alert 
-                      severity="success" 
-                      sx={{ mt: 2 }}
-                      icon={<Check />}
-                    >
+                    <Alert severity="success" sx={{ mt: 2 }} icon={<Check />}>
                       <Typography variant="body2">
-                        Calculation: ${rate} / ({loadMiles} + {dh} miles) = <strong>${calc} per mile</strong>
+                        Calculation: ${rate} / ({loadMiles} + {dh} miles) ={" "}
+                        <strong>${calc} per mile</strong>
                       </Typography>
                     </Alert>
                   </Fade>
@@ -474,146 +542,111 @@ const Calculation = () => {
             </Paper>
 
             {/* Route Planning Section */}
+
             <Paper
               elevation={0}
               sx={{
-                p: 4,
+                p: 3,
                 borderRadius: 3,
                 border: "1px solid",
                 borderColor: "divider",
                 backgroundColor: "background.paper",
+                height: "fit-content",
+                minHeight: 600,
               }}
             >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 3,
+                }}
+              >
                 <Typography variant="h5" color="primary.main" fontWeight="600">
-                  Route Planning
+                  Route Map
                 </Typography>
-                <Tooltip title="Recalculate distances">
-                  <IconButton onClick={recalculateAll} size="small" disabled={isCalculating}>
-                    <MyLocation />
-                  </IconButton>
-                </Tooltip>
+                <Chip
+                  icon={<Route />}
+                  label={`${validDestinationsCount} Stops`}
+                  color="primary"
+                  variant="outlined"
+                />
               </Box>
 
-              <Stack spacing={3}>
-                {/* DHO Input */}
-                <LocationAutocomplete
-                  label="DHO (Driver Home Origin)"
-                  value={dho}
-                  setValue={setDho}
-                  placeholder="Enter driver's starting location"
-                />
+              <Suspense fallback={<MapFallback />}>
+                <LazyGoogleMapsLoader
+                  onLoad={() => console.log("Maps loaded successfully")}
+                  onError={(error) =>
+                    console.error("Failed to load maps:", error)
+                  }
+                >
+                  <LazyMapWithRoute
+                    dho={dho}
+                    origin={origin}
+                    destinations={destinations}
+                    height="500px"
+                  />
+                </LazyGoogleMapsLoader>
+              </Suspense>
 
-                {/* Origin Input */}
-                <LocationAutocomplete
-                  label="Pick Up (Origin)"
-                  value={origin}
-                  setValue={setOrigin}
-                  placeholder="Enter origin address"
-                />
-
-                {/* Distance Statistics */}
-                {(dhoToOriginDistance !== null || totalDistance !== null) && (
-                  <Grid container spacing={2}>
-                    {dhoToOriginDistance !== null && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <StatCard
-                          title="DHO to Origin"
-                          value={`${dhoToOriginDistance.toFixed(1)} miles`}
-                          subtitle={dhoToOriginTime ? formatTime(dhoToOriginTime) : ''}
-                          icon={<Route />}
-                          color="info"
-                        />
-                      </Grid>
-                    )}
-                    {totalDistance !== null && (
-                      <Grid size={{ xs: 12, md: 6 }}>
-                        <StatCard
-                          title="Total Route"
-                          value={`${totalDistance.toFixed(1)} miles`}
-                          subtitle={totalTime ? formatTime(totalTime) : `${validDestinationsCount} stops`}
-                          icon={<DirectionsCar />}
-                          color="success"
-                        />
-                      </Grid>
-                    )}
-                  </Grid>
-                )}
-
-                <Divider />
-
-                {/* Destinations Section */}
+              {/* Route Summary */}
+              <Fade in={!!hasValidRoute}>
                 <Box>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-                    <Typography variant="h6" fontWeight="500">
-                      Destinations ({validDestinationsCount})
+                  <Stack spacing={2} sx={{ mt: 2 }}>
+                    <Divider />
+                    <Typography
+                      variant="subtitle2"
+                      fontWeight="600"
+                      color="text.primary"
+                    >
+                      Route Summary
                     </Typography>
-                    <Stack direction="row" spacing={1}>
-                      <Tooltip title="Clear all routes">
-                        <IconButton onClick={clearAllRoutes} size="small" color="error">
-                          <Close />
-                        </IconButton>
-                      </Tooltip>
-                      <Button
-                        startIcon={<Add />}
-                        onClick={handleAddDestination}
-                        variant="outlined"
-                        size="medium"
-                      >
-                        Add
-                      </Button>
-                    </Stack>
-                  </Stack>
-
-                  <Stack spacing={2}>
-                    {destinations.map((destination, index) => (
-                      <Stack key={index} direction="row" spacing={1} alignItems="flex-end">
-                        <Box sx={{ flex: 1 }}>
-                          <LocationAutocomplete
-                            label={`Destination ${index + 1}`}
-                            value={destination}
-                            setValue={(place) => handleUpdateDestination(index, place)}
-                            placeholder={`Enter destination ${index + 1} address`}
+                    <Stack
+                      direction="row"
+                      spacing={1}
+                      flexWrap="wrap"
+                      useFlexGap
+                    >
+                      {dho && (
+                        <Chip
+                          label="DHO"
+                          size="small"
+                          color="primary"
+                          variant="filled"
+                        />
+                      )}
+                      {origin && (
+                        <Chip
+                          label="Origin"
+                          size="small"
+                          color="secondary"
+                          variant="filled"
+                        />
+                      )}
+                      {destinations
+                        .filter((d) => d !== null)
+                        .map((_, index) => (
+                          <Chip
+                            key={index}
+                            label={`Dest ${index + 1}`}
+                            size="small"
+                            color="success"
+                            variant="filled"
                           />
-                        </Box>
-                        {destinations.length > 1 && (
-                          <Tooltip title="Remove destination">
-                            <IconButton
-                              onClick={() => handleRemoveDestination(index)}
-                              sx={{ mb: 0.5 }}
-                              color="error"
-                              size="small"
-                            >
-                              <Close />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </Stack>
-                    ))}
+                        ))}
+                    </Stack>
+                    {totalDistance && (
+                      <Typography variant="body2" color="text.secondary">
+                        Total distance:{" "}
+                        <strong>{totalDistance.toFixed(1)} miles</strong>
+                        {totalTime &&
+                          ` • Estimated time: ${formatTime(totalTime)}`}
+                      </Typography>
+                    )}
                   </Stack>
                 </Box>
-
-                {isCalculating && (
-                  <Fade in={true}>
-                    <Alert severity="info">
-                      <Stack direction="row" spacing={2} alignItems="center">
-                        <CircularProgress size={20} />
-                        <Typography variant="body2">
-                          Calculating distances and travel times...
-                        </Typography>
-                      </Stack>
-                    </Alert>
-                  </Fade>
-                )}
-
-                {!hasValidRoute && (
-                  <Fade in={true}>
-                    <Alert severity="warning">
-                      Please enter DHO, Origin, and at least one destination to see the complete route.
-                    </Alert>
-                  </Fade>
-                )}
-              </Stack>
+              </Fade>
             </Paper>
           </Stack>
         </Grid>
@@ -623,85 +656,177 @@ const Calculation = () => {
           <Paper
             elevation={0}
             sx={{
-              p: 3,
+              p: 4,
               borderRadius: 3,
               border: "1px solid",
               borderColor: "divider",
               backgroundColor: "background.paper",
-              height: 'fit-content',
-              minHeight: 600,
             }}
           >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 3,
+              }}
+            >
               <Typography variant="h5" color="primary.main" fontWeight="600">
-                Route Map
+                Route Planning
               </Typography>
-              <Chip 
-                icon={<Route />}
-                label={`${validDestinationsCount} Stops`}
-                color="primary"
-                variant="outlined"
-              />
+              <Tooltip title="Recalculate distances">
+                <IconButton
+                  onClick={recalculateAll}
+                  size="small"
+                  disabled={isCalculating}
+                >
+                  <MyLocation />
+                </IconButton>
+              </Tooltip>
             </Box>
-            
-            <Suspense fallback={<MapFallback />}>
-              <LazyGoogleMapsLoader
-                onLoad={() => console.log("Maps loaded successfully")}
-                onError={(error) => console.error("Failed to load maps:", error)}
-              >
-                <LazyMapWithRoute
-                  dho={dho}
-                  origin={origin}
-                  destinations={destinations}
-                  height="500px"
-                />
-              </LazyGoogleMapsLoader>
-            </Suspense>
 
-            {/* Route Summary */}
-            <Fade in={!!hasValidRoute}>
-              <Box>
-                <Stack spacing={2} sx={{ mt: 2 }}>
-                  <Divider />
-                  <Typography variant="subtitle2" fontWeight="600" color="text.primary">
-                    Route Summary
-                  </Typography>
-                  <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
-                    {dho && (
-                      <Chip 
-                        label="DHO" 
-                        size="small" 
-                        color="primary" 
-                        variant="filled"
+            <Stack spacing={3}>
+              {/* DHO Input */}
+              <LocationAutocomplete
+                label="DHO (Driver Home Origin)"
+                value={dho}
+                setValue={setDho}
+                placeholder="Enter driver's starting location"
+              />
+
+              {/* Origin Input */}
+              <LocationAutocomplete
+                label="Pick Up (Origin)"
+                value={origin}
+                setValue={setOrigin}
+                placeholder="Enter origin address"
+              />
+
+              {/* Distance Statistics */}
+              {(dhoToOriginDistance !== null || totalDistance !== null) && (
+                <Grid container spacing={2}>
+                  {dhoToOriginDistance !== null && (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <StatCard
+                        title="DHO to Origin"
+                        value={`${dhoToOriginDistance.toFixed(1)} miles`}
+                        subtitle={
+                          dhoToOriginTime ? formatTime(dhoToOriginTime) : ""
+                        }
+                        icon={<Route />}
+                        color="info"
                       />
-                    )}
-                    {origin && (
-                      <Chip 
-                        label="Origin" 
-                        size="small" 
-                        color="secondary" 
-                        variant="filled"
-                      />
-                    )}
-                    {destinations.filter(d => d !== null).map((_, index) => (
-                      <Chip 
-                        key={index} 
-                        label={`Dest ${index + 1}`} 
-                        size="small" 
-                        color="success" 
-                        variant="filled"
-                      />
-                    ))}
-                  </Stack>
-                  {totalDistance && (
-                    <Typography variant="body2" color="text.secondary">
-                      Total distance: <strong>{totalDistance.toFixed(1)} miles</strong>
-                      {totalTime && ` • Estimated time: ${formatTime(totalTime)}`}
-                    </Typography>
+                    </Grid>
                   )}
+                  {totalDistance !== null && (
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <StatCard
+                        title="Total Route"
+                        value={`${totalDistance.toFixed(1)} miles`}
+                        subtitle={
+                          totalTime
+                            ? formatTime(totalTime)
+                            : `${validDestinationsCount} stops`
+                        }
+                        icon={<DirectionsCar />}
+                        color="success"
+                      />
+                    </Grid>
+                  )}
+                </Grid>
+              )}
+
+              <Divider />
+
+              {/* Destinations Section */}
+              <Box>
+                <Stack
+                  direction="row"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  sx={{ mb: 2 }}
+                >
+                  <Typography variant="h6" fontWeight="500">
+                    Destinations ({validDestinationsCount})
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    <Tooltip title="Clear all routes">
+                      <IconButton
+                        onClick={clearAllRoutes}
+                        size="small"
+                        color="error"
+                      >
+                        <Close />
+                      </IconButton>
+                    </Tooltip>
+                    <Button
+                      startIcon={<Add />}
+                      onClick={handleAddDestination}
+                      variant="outlined"
+                      size="medium"
+                    >
+                      Add
+                    </Button>
+                  </Stack>
+                </Stack>
+
+                <Stack spacing={2}>
+                  {destinations.map((destination, index) => (
+                    <Stack
+                      key={index}
+                      direction="row"
+                      spacing={1}
+                      alignItems="flex-end"
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <LocationAutocomplete
+                          label={`Destination ${index + 1}`}
+                          value={destination}
+                          setValue={(place) =>
+                            handleUpdateDestination(index, place)
+                          }
+                          placeholder={`Enter destination ${index + 1} address`}
+                        />
+                      </Box>
+                      {destinations.length > 1 && (
+                        <Tooltip title="Remove destination">
+                          <IconButton
+                            onClick={() => handleRemoveDestination(index)}
+                            sx={{ mb: 0.5 }}
+                            color="error"
+                            size="small"
+                          >
+                            <Close />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
+                  ))}
                 </Stack>
               </Box>
-            </Fade>
+
+              {isCalculating && (
+                <Fade in={true}>
+                  <Alert severity="info">
+                    <Stack direction="row" spacing={2} alignItems="center">
+                      <CircularProgress size={20} />
+                      <Typography variant="body2">
+                        Calculating distances and travel times...
+                      </Typography>
+                    </Stack>
+                  </Alert>
+                </Fade>
+              )}
+
+              {!hasValidRoute && (
+                <Fade in={true}>
+                  <Alert severity="warning">
+                    Please enter DHO, Origin, and at least one destination to
+                    see the complete route.
+                  </Alert>
+                </Fade>
+              )}
+            </Stack>
           </Paper>
         </Grid>
       </Grid>

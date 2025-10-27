@@ -13,7 +13,15 @@ import { TDriver, TTruck } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
-import { IoAdd, IoPencil, IoTrash, IoSearch, IoClose, IoAnalytics, IoPerson } from "react-icons/io5";
+import {
+  IoAdd,
+  IoPencil,
+  IoTrash,
+  IoSearch,
+  IoClose,
+  IoAnalytics,
+  IoPerson,
+} from "react-icons/io5";
 import {
   Dialog,
   DialogTitle,
@@ -43,10 +51,10 @@ import {
   CircularProgress,
   Divider,
   Alert,
-  Snackbar,
 } from "@mui/material";
 import { muiTheme } from "@/theme/theme";
 import { useGetAllDriversQuery } from "@/redux/slices/driverApi";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -56,7 +64,7 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
   '&[class*="MuiTableCell-head"]': {
     backgroundColor: muiTheme.palette.primary.main,
     color: theme.palette.common.white,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     fontSize: 16,
   },
   '&[class*="MuiTableCell-body"]': {
@@ -65,13 +73,13 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
 }));
 
 const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  '&:nth-of-type(even)': {
+  "&:nth-of-type(even)": {
     backgroundColor: theme.palette.action.hover,
   },
-  '&:last-child td, &:last-child th': {
+  "&:last-child td, &:last-child th": {
     border: 0,
   },
-  '&:hover': {
+  "&:hover": {
     backgroundColor: theme.palette.action.selected,
   },
 }));
@@ -91,8 +99,6 @@ const StatusChip = ({ status }: { status: string }) => {
   return <Chip label={status} color={getColor(status)} size="small" />;
 };
 
-// ✅ Truck Form Component - Vertical Layout
-// ✅ Truck Form Component - معدل بدون validate
 const TruckForm = ({
   open,
   onClose,
@@ -110,20 +116,15 @@ const TruckForm = ({
   editMode: boolean;
   isLoading: boolean;
 }) => {
-
-  // ✅ جلب جميع السائقين للاختيار منهم
+  // ✅ Get all Drivers
   const { data: driversData } = useGetAllDriversQuery();
-  const drivers = driversData?.data || [];
   const allDrivers = driversData?.data || [];
 
   const availableDrivers = allDrivers.filter((driver: TDriver) =>
     driver.status === "available"
   );
   // ✅ Truck types options
-  const truckTypes = [
-    "reefer",
-    "van",
-  ];
+  const truckTypes = ["reefer", "van"];
 
   return (
     <Dialog
@@ -134,9 +135,9 @@ const TruckForm = ({
       PaperProps={{
         sx: {
           borderRadius: 3,
-          boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
-          maxHeight: '90vh',
-        }
+          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+          maxHeight: "90vh",
+        },
       }}
     >
       {/* Header */}
@@ -168,7 +169,12 @@ const TruckForm = ({
 
           {/* Basic Information Section */}
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              gutterBottom
+              color="primary"
+            >
               Basic Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -230,7 +236,12 @@ const TruckForm = ({
 
           {/* Specifications Section */}
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              gutterBottom
+              color="primary"
+            >
               Specifications
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -246,7 +257,9 @@ const TruckForm = ({
                 size="medium"
                 inputProps={{ min: 0 }}
                 InputProps={{
-                  endAdornment: <InputAdornment position="end">kg</InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position="end">kg</InputAdornment>
+                  ),
                 }}
               />
 
@@ -256,11 +269,15 @@ const TruckForm = ({
                 name="fuelPerMile"
                 type="number"
                 value={formData.fuelPerMile || ""}
-                onChange={(e) => onChange("fuelPerMile", Number(e.target.value))}
+                onChange={(e) =>
+                  onChange("fuelPerMile", Number(e.target.value))
+                }
                 size="medium"
                 inputProps={{ min: 0, step: 0.1 }}
                 InputProps={{
-                  endAdornment: <InputAdornment position="end">L/mile</InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position="end">L/mile</InputAdornment>
+                  ),
                 }}
               />
             </Box>
@@ -452,7 +469,12 @@ const TruckForm = ({
 
           {/* Status Section */}
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              gutterBottom
+              color="primary"
+            >
               Status
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -466,19 +488,19 @@ const TruckForm = ({
                 onChange={(e) => onChange("status", e.target.value)}
               >
                 <MenuItem value="available">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Chip label="Available" color="success" size="small" />
                     <Typography>Available</Typography>
                   </Box>
                 </MenuItem>
                 <MenuItem value="busy">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Chip label="Busy" color="error" size="small" />
                     <Typography>Busy</Typography>
                   </Box>
                 </MenuItem>
                 <MenuItem value="inactive">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                     <Chip label="Inactive" color="default" size="small" />
                     <Typography>Inactive</Typography>
                   </Box>
@@ -488,9 +510,7 @@ const TruckForm = ({
           </Box>
 
           {/* Helper Text */}
-          <Alert severity="info">
-            Fields marked with * are required
-          </Alert>
+          <Alert severity="info">Fields marked with * are required</Alert>
         </Box>
       </DialogContent>
 
@@ -513,7 +533,7 @@ const TruckForm = ({
             borderRadius: 2,
             px: 4,
             minWidth: 140,
-            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`
+            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
           }}
         >
           {isLoading
@@ -529,6 +549,7 @@ const TruckForm = ({
 const TrucksPage = () => {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+  const token = useAppSelector((state) => state.auth.token);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -536,8 +557,12 @@ const TrucksPage = () => {
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
   // 🔹 API Queries
-  const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page + 1 });
-  const { data: allTrucksData } = useGetAllTrucksQuery();
+  const {
+    data: trucksData,
+    isLoading,
+    refetch,
+  } = useGetTrucksQuery({ page: page + 1 });
+  const { data: allTrucksData } = useGetAllTrucksQuery({skip: !token});
 
   const [createTruck, {
     isLoading: isCreating,
@@ -559,7 +584,7 @@ const TrucksPage = () => {
 
   const filteredTrucks = search
     ? allTrucks.filter(
-      (t) =>
+      (t:TTruck) =>
         t.truckId?.toString().includes(search.toLowerCase()) ||
         t.model?.toLowerCase().includes(search.toLowerCase()) ||
         t.plateNumber?.toLowerCase().includes(search.toLowerCase())
@@ -599,14 +624,12 @@ const TrucksPage = () => {
     setOpen(true);
   };
 
-  // ✅ Handle Truck Dashboard Navigation
-  const handleTruckDashboard = () => {
-    router.push("/admin/truckDashboard");
-  };
-
   // ✅ Handle Form Change
-  const handleFormChange = <K extends keyof TTruck>(field: K, value: TTruck[K]) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const handleFormChange = <K extends keyof TTruck>(
+    field: K,
+    value: TTruck[K]
+  ) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   // ✅ عرض errors من RTK Query
@@ -678,7 +701,7 @@ const TrucksPage = () => {
   const handleDelete = async (id: string, truckId?: number) => {
     setDeleteToast({
       open: true,
-      message: `Are you sure you want to delete truck #${truckId}?`
+      message: `Are you sure you want to delete truck #${truckId}?`,
     });
     setTruckToDelete({ id, truckId });
   };
@@ -691,7 +714,10 @@ const TrucksPage = () => {
       await deleteTruck(truckToDelete.id).unwrap();
       toast.success(`✅ Truck #${truckToDelete.truckId} deleted successfully!`);
       refetch();
-    } catch (err) {
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Deactivating user failed ❌");
+      throw err;
     } finally {
       setDeleteToast({ open: false, message: "" });
       setTruckToDelete(null);
@@ -708,7 +734,9 @@ const TrucksPage = () => {
     setPage(newPage);
   };
 
-  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChangeRowsPerPage = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
@@ -720,26 +748,16 @@ const TrucksPage = () => {
       <Toaster position="top-right" />
 
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 4,
+        }}
+      >
         <Titles>Truck Management</Titles>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<IoAnalytics />}
-            onClick={handleTruckDashboard}
-            sx={{
-              borderRadius: 2,
-              borderWidth: 2,
-              '&:hover': {
-                borderWidth: 2,
-                background: `linear-gradient(135deg, ${muiTheme.palette.primary.main}15 0%, ${muiTheme.palette.primary.dark}15 100%)`
-              }
-            }}
-          >
-            Truck Dashboard
-          </Button>
-
+        <Box>
           <Button
             variant="contained"
             color="primary"
@@ -747,7 +765,7 @@ const TrucksPage = () => {
             onClick={handleOpenAdd}
             sx={{
               borderRadius: 2,
-              background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`
+              background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
             }}
           >
             Add Truck
@@ -770,25 +788,28 @@ const TrucksPage = () => {
         sx={{
           mb: 3,
           borderRadius: 2,
-          backgroundColor: 'white',
-          '& .MuiOutlinedInput-root': {
+          backgroundColor: "white",
+          "& .MuiOutlinedInput-root": {
             borderRadius: 2,
-            backgroundColor: 'white',
-            '& fieldset': {
+            backgroundColor: "white",
+            "& fieldset": {
               borderColor: muiTheme.palette.primary.light,
             },
-            '&:hover fieldset': {
+            "&:hover fieldset": {
               borderColor: muiTheme.palette.primary.main,
             },
-            '&.Mui-focused fieldset': {
+            "&.Mui-focused fieldset": {
               borderColor: muiTheme.palette.primary.main,
             },
-          }
+          },
         }}
       />
 
       {/* Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <TableContainer
+        component={Paper}
+        sx={{ borderRadius: 2, overflow: "hidden" }}
+      >
         <Table sx={{ minWidth: 650 }} aria-label="trucks table">
           <TableHead>
             <TableRow>
@@ -838,7 +859,9 @@ const TrucksPage = () => {
                     <StatusChip status={truck.status} />
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", gap: 1 }}
+                    >
                       <Tooltip title="Edit Truck">
                         <IconButton
                           size="small"
@@ -856,7 +879,11 @@ const TrucksPage = () => {
                           onClick={() => handleDelete(truck.id, truck.truckId)}
                           disabled={isDeleting}
                         >
-                          {isDeleting ? <CircularProgress size={16} /> : <IoTrash />}
+                          {isDeleting ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <IoTrash />
+                          )}
                         </IconButton>
                       </Tooltip>
                     </Box>
@@ -895,13 +922,13 @@ const TrucksPage = () => {
       {deleteToast.open && (
         <Box
           sx={{
-            position: 'fixed',
+            position: "fixed",
             top: 0,
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.1)',
-            backdropFilter: 'blur(2px)',
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            backdropFilter: "blur(2px)",
             zIndex: 1299,
           }}
         />
@@ -913,26 +940,30 @@ const TrucksPage = () => {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
             minWidth: 300,
             maxWidth: 400,
             margin: 2,
-          }
+          },
         }}
         sx={{
           zIndex: 1300,
-          '& .MuiDialog-container': {
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }
+          "& .MuiDialog-container": {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
         }}
       >
-        <Box sx={{ p: 3, textAlign: 'center' }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: 'text.primary' }}>
+        <Box sx={{ p: 3, textAlign: "center" }}>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 600, color: "text.primary" }}
+          >
             Confirm Delete
           </Typography>
-          <Typography variant="body2" sx={{ mb: 3, color: 'text.secondary' }}>
+          <Typography variant="body2" sx={{ mb: 3, color: "text.secondary" }}>
             {deleteToast.message}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
@@ -943,11 +974,11 @@ const TrucksPage = () => {
               sx={{
                 borderRadius: 1,
                 minWidth: 80,
-                borderColor: 'grey.400',
-                '&:hover': {
-                  borderColor: 'grey.600',
-                  backgroundColor: 'grey.50'
-                }
+                borderColor: "grey.400",
+                "&:hover": {
+                  borderColor: "grey.600",
+                  backgroundColor: "grey.50",
+                },
               }}
             >
               Cancel
@@ -959,10 +990,10 @@ const TrucksPage = () => {
               sx={{
                 borderRadius: 1,
                 minWidth: 80,
-                backgroundColor: 'error.main',
-                '&:hover': {
-                  backgroundColor: 'error.dark'
-                }
+                backgroundColor: "error.main",
+                "&:hover": {
+                  backgroundColor: "error.dark",
+                },
               }}
             >
               Delete

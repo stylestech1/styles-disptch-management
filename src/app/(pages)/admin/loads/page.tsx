@@ -70,7 +70,6 @@ const LoadsPage = () => {
     }
   );
 
-  const [updateLoads] = useUploadDocumentsMutation();
   const { data: filteredData, refetch: refetchFiltered } = useGetLoadsWithFilterQuery(
     { from: fromDate, to: toDate },
     { skip: !isFiltered } // عشان ميعملش request طول الوقت
@@ -443,6 +442,7 @@ const LoadsPage = () => {
         }}
         editingLoad={editingLoad}
       />
+      
     </section>
   );
 };

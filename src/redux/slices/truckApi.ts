@@ -4,6 +4,24 @@ import { RootState } from "../store";
 
 const apiURL = process.env.NEXT_PUBLIC_API_URL;
 
+// Update your types to match backend response
+export type TTruckWithSummary = TTruck & {
+  _id:string
+  summary?: TTruckSummary;
+};
+
+export type TTrucksSummaryResponse = {
+  data: {
+    period: {
+      from: string;
+      to: string;
+    };
+    totalTrucks: number;
+    trucksSummary: TTruckWithSummary[];
+    totalSummary: TTruckSummary;
+  };
+};
+
 export const truckApi = createApi({
   reducerPath: "trucksApi",
   baseQuery: fetchBaseQuery({
@@ -42,24 +60,30 @@ export const truckApi = createApi({
       keepUnusedDataFor: 60 * 60,
     }),
 
-    // ✅ Get all trucks (for search/filter across all)
-    getAllTrucks: builder.query<{ data: { data: TTruck[] } }, void>({
+    // Get All Trucks for Search
+    getAllTrucks: builder.query({
       query: () => `/trucks?limit=50`,
+      providesTags: ['Truck']
+    }),
+
+    // ✅ Get all trucks with summaries (for dashboard) - FIXED
+    getTruckSummary: builder.query<TTrucksSummaryResponse, void>({
+      query: () => `/summary/truck`, // This should match your backend endpoint
       providesTags: (result) =>
         result
           ? [
-            ...result.data.data.map((t: TTruck) => ({
+            ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
               type: "Truck" as const,
               id: t.id,
             })),
-            { type: "Truck", id: "ALL_LIST" },
+            { type: "TruckSummary", id: "LIST" },
           ]
-          : [{ type: "Truck", id: "ALL_LIST" }],
+          : [{ type: "TruckSummary", id: "LIST" }],
       keepUnusedDataFor: 60 * 60,
     }),
 
-    // ✅ Get truck summary 
-    getTruckSummary: builder.query<{ data: TTruckSummary }, string>({
+    // ✅ Get specific truck summary  
+    getSpecificTruckSummary: builder.query<{ data: TTruckSummary }, string>({
       query: (id) => `/summary/truck/${id}`,
       providesTags: (result, error, id) => [
         { type: "TruckSummary", id },
@@ -67,7 +91,7 @@ export const truckApi = createApi({
       keepUnusedDataFor: 60 * 60,
     }),
 
-      // ✅ Get truck summary with date filter
+    // ✅ Get truck summary with date filter
     getTruckSummaryWithFilter: builder.query<
       { data: TTruckSummary },
       { id: string; from?: string; to?: string }
@@ -81,7 +105,7 @@ export const truckApi = createApi({
       providesTags: (result, error, { id }) => [{ type: "TruckSummary", id }],
       keepUnusedDataFor: 60 * 60,
     }),
- 
+
     // ✅ Get single truck by ID
     getTruckById: builder.query<{ data: TTruck }, string>({
       query: (id) => `/trucks/${id}`,
@@ -94,7 +118,7 @@ export const truckApi = createApi({
       query: (body) => ({ url: "/trucks", method: "POST", body }),
       invalidatesTags: [
         { type: "Truck", id: "LIST" },
-        { type: "Truck", id: "ALL_LIST" },
+        { type: "TruckSummary", id: "LIST" },
       ],
     }),
 
@@ -107,17 +131,17 @@ export const truckApi = createApi({
       invalidatesTags: (result, error, { id }) => [
         { type: "Truck", id },
         { type: "Truck", id: "LIST" },
-        { type: "Truck", id: "ALL_LIST" },
+        { type: "TruckSummary", id: "LIST" },
         { type: "TruckSummary", id },
       ],
-    }), 
+    }),
 
     deleteTruck: builder.mutation({
       query: (id) => ({ url: `/trucks/${id}`, method: "DELETE" }),
       invalidatesTags: (result, error, id) => [
         { type: "Truck", id },
         { type: "Truck", id: "LIST" },
-        { type: "Truck", id: "ALL_LIST" },
+        { type: "TruckSummary", id: "LIST" },
         { type: "TruckSummary", id },
       ],
     }),
@@ -128,11 +152,12 @@ export const {
   useGetTrucksQuery,
   useGetAllTrucksQuery,
   useGetTruckSummaryQuery,
-  useGetTruckSummaryWithFilterQuery,       // ✅ NEW
-  useLazyGetTruckSummaryWithFilterQuery,   // ✅ NEW
+  useGetTruckSummaryWithFilterQuery,
+  useLazyGetTruckSummaryWithFilterQuery,
   useGetTruckByIdQuery,
   useCreateTruckMutation,
   useUpdateTruckMutation,
   useDeleteTruckMutation,
-  useLazyGetTruckSummaryQuery,
+  useGetSpecificTruckSummaryQuery,
+  useLazyGetSpecificTruckSummaryQuery
 } = truckApi;

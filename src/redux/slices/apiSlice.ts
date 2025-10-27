@@ -7,14 +7,16 @@ export const apiSlice = api.injectEndpoints({
     getLoads: builder.query({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/loads?page=${page}&limit=${limit}`,
-      providesTags: ["Loads","Drivers", "Trucks"],
+      providesTags: ["Loads", "Drivers", "Trucks"],
     }),
 
-    // Get All Loads (للبحث)
+    // Get All Loads
     getAllLoads: builder.query({
       query: (arg: void) => `/api/v1/loads?limit=50`,
       providesTags: ["Loads"], 
     }),
+
+    // Get Loads Using Id
     getLoadById: builder.query({
   query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
   providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
@@ -48,10 +50,10 @@ getLoadsWithFilter: builder.query({
 
     // Update Load
     updateLoads: builder.mutation({
-      query: ({ id, formData  }) => ({
+      query: ({ id, formData }) => ({
         url: `/api/v1/loads/update/${id}`,
         method: "PATCH",
-        body: formData ,
+        body: formData,
       }),
       invalidatesTags: ["Loads"],
     }),
@@ -94,7 +96,7 @@ getLoadsWithFilter: builder.query({
         method: "POST",
         body,
       }),
-      invalidatesTags: ["Comments", 'Loads'],
+      invalidatesTags: ["Comments", "Loads"],
     }),
 
     // Get Notes
@@ -151,13 +153,31 @@ getLoadsWithFilter: builder.query({
       }),
       invalidatesTags: ["Dispatchers"],
     }),
+
+    // Get User Information
+    getUserInfo: builder.query({
+      query: () => `/api/v1/userDashboard/getMyData`,
+      providesTags: ['Users']
+    }),
+
+    // Update User Info
+    updateUserInfo: builder.mutation({
+      query: ({...body}) => ({url: `/api/v1/userDashboard/updateMyData`, method:'PATCH', body}),
+      invalidatesTags: ['Users']
+    }),
+
+    // Update User Password
+    updateUserPassword: builder.mutation({
+      query: (body) => ({url: `/api/v1/updatePassword/`, method: 'PATCH', body}),
+      invalidatesTags: ['Users']
+    })
   }),
 });
 
 export const {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
-  useGetLoadByIdQuery ,
+  useGetLoadByIdQuery,
   useCreateLoadsMutation,
   useUpdateLoadsMutation,
   useUpdateLoadsStatusMutation,
@@ -172,5 +192,7 @@ export const {
   useActivateUserMutation,
   useDeactivateUserMutation,
     useGetLoadsWithFilterQuery, 
-
+  useGetUserInfoQuery,
+  useUpdateUserInfoMutation,
+  useUpdateUserPasswordMutation,
 } = apiSlice;

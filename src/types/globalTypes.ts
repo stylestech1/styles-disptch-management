@@ -7,6 +7,21 @@ export type TTruckId = {
   truckId: number;
   plateNumber: string;
 };
+export type TUser = {
+  id: string;
+  name: string;
+  active: boolean;
+  email: string;
+  phone: string;
+  role: TUserRole;
+  position: string;
+  jobId: number;
+};
+export type TDocument = {
+  viewLink: string;
+  downloadLink: string;
+  name?: string;
+};
 export type TLoads = {
   id?: string;
   loadId: string;
@@ -34,10 +49,8 @@ export type TLoads = {
   leftShipper?: string; // new
   leftReceiver?: string; // new
   deliveredAt?: string;
-  createdAt?: string; 
-  documents?: {viewLink: string; downloadLink: string}[]
-  hasNotes?: boolean; 
-
+  createdAt?: string;
+  documents?: TDocument[]
 };
 export type TDriver = {
   id: string;
@@ -61,10 +74,10 @@ export type TTruck = {
   status: TStatusDriver;
   createdBy: string;
   updatedBy: string;
-  assignedDriver?: string | { name: string; driverId: number }; 
+  assignedDriver?: string | { name: string; driverId: number };
   type: TTruckType;
-  fuelPerMile:number;
-  insuranceCost:number;
+  fuelPerMile: number;
+  insuranceCost: number;
   repairCost: number;
   summary?: TTruckSummary
 };
@@ -88,7 +101,7 @@ export type TComments = {
   truck: TTruck;
   text: string;
   content: string;
-  addedBy: string ;
+  addedBy: string;
   _id: string;
   createdAt: string;
   updatedAt: string;
@@ -133,26 +146,36 @@ export type TLoadSummary = {
   period: TPeriod;
   loads: TLoads[];
 };
- export type TTruckSummary = {
+export type TTruckSummary = {
+  _id:string
   truckId: number;
-  summary: {
-    totalLoads: number;
-    totalMiles: number;
-    totalRevenue: number;
-    fuelCost: number;
-    repairCost: number;
-    insuranceCost: number;
-    driverPay: number;
-    netProfit: number;
-    avgRevenuePerMile: number;
-    avgExpensePerMile: number;
-    currency: string;
-  };
+  totalLoads: number;
+  totalMiles: number;
+  totalRevenue: number;
+  fuelCost: number;
+  repairCost: number;
+  insuranceCost: number;
+  driverPay: number;
+  totalExpenses: number;
+  netProfit: number;
+  avgRevenuePerMile: number;
+  avgExpensePerMile: number;
+  currency: string;
   loads: TLoads,
   period: TPeriod
 }
 export interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+export interface InfoCardProps {
+  title: string;
+  icon: React.ReactNode;
+  children: React.ReactNode;
+}
+export interface InfoItemProps {
+  icon: React.ReactNode;
+  primary: string;
+  secondary: string | number;
 }

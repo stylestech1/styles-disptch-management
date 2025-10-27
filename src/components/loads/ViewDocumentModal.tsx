@@ -3,8 +3,8 @@ import { useGetLoadsQuery } from "@/redux/slices/apiSlice";
 import { TLoads } from "@/types/globalTypes";
 import { useEffect, useState } from "react";
 import { FaExternalLinkAlt, FaFilePdf, FaFileUpload } from "react-icons/fa";
-import { IoAdd, IoClose, IoDocument, IoDownload } from "react-icons/io5";
-import { MdError, MdPictureAsPdf } from "react-icons/md";
+import { IoDocument, IoDownload } from "react-icons/io5";
+import { MdPictureAsPdf } from "react-icons/md";
 
 interface ViewDocumentModalProps {
   isOpen: boolean;
@@ -25,7 +25,6 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
   isOpen,
   onClose,
   selectedLoad,
-  onAddDocument,
 }) => {
   const {
     data: loadsData,
@@ -63,20 +62,31 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
   };
 
   // Extract Name from link
-  const getFileNameFromLink = (link: string): string => {
-    try {
-      const url = new URL(link);
-      const pathname = url.pathname;
-      const filename = pathname.split("/").pop() || "Document";
-      return decodeURIComponent(filename);
-    } catch {
-      return "Document";
+const getFileNameFromLink = (link: string): string => {
+  try {
+    const matches = link.match(/\/([^\/?]+)(?=\?|$)/);
+    if (matches && matches[1]) {
+      let filename = matches[1];
+      filename = decodeURIComponent(filename);
+      const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
+      return nameWithoutExt || "Document";
     }
-  };
+    const queryMatch = link.match(/[?&]name=([^&]+)/);
+    if (queryMatch && queryMatch[1]) {
+      let filename = queryMatch[1];
+      filename = decodeURIComponent(filename);
+      const nameWithoutExt = filename.split('.').slice(0, -1).join('.') || filename;
+      return nameWithoutExt || "Document";
+    }
+    return "Document";
+  } catch {
+    return "Document";
+  }
+};
 
   // Extract Icon from link
   const getFileIcon = (link: string, type?: string) => {
-    if (!link || typeof link !== 'string') {
+    if (!link || typeof link !== "string") {
       return <IoDocument className="text-gray-500" size={20} />;
     }
 
@@ -95,7 +105,7 @@ const ViewDocumentModal: React.FC<ViewDocumentModalProps> = ({
 
   // Extract Type from link
   const getFileType = (link: string, type?: string) => {
-    if (!link || typeof link !== 'string') {
+    if (!link || typeof link !== "string") {
       return <IoDocument className="text-gray-500" size={20} />;
     }
 

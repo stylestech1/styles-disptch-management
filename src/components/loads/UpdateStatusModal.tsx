@@ -1,13 +1,10 @@
-// components/loads/UpdateStatusModal.tsx
 import { useState } from 'react';
-import { useSelector } from 'react-redux';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import Modal from '@/components/ui/Modals';
-import { useGetLoadsQuery, useUpdateLoadsStatusMutation } from '@/redux/slices/apiSlice';
-import { RootState } from '@/redux/store';
+import { useUpdateLoadsStatusMutation } from '@/redux/slices/apiSlice';
 import { TLoads, TStatusLoad } from '@/types/globalTypes';
 import { IoTime, IoRefresh } from 'react-icons/io5';
 import toast from 'react-hot-toast';
@@ -24,10 +21,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({ isOpen, onClose, 
   const [deliveredAt, setDeliveredAt] = useState<string>(load?.deliveredAt || '');
   const [showDeliveredAt, setShowDeliveredAt] = useState(load?.status === 'delivered');
 
-  const { data: loadsData } = useGetLoadsQuery({ page: 1, limit: 10 })
   const [updateLoadStatus, { isLoading: updatingStatus }] = useUpdateLoadsStatusMutation();
-
-  const loads = loadsData?.data || []
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newStatus = e.target.value as TStatusLoad;

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/redux/store";
 import {
@@ -19,13 +19,6 @@ import {
   IoTrash,
   IoSearch,
   IoClose,
-  IoAnalytics,
-  IoPerson,
-  IoCall,
-  IoMail,
-  IoCard,
-  IoCash,
-  IoCalendar,
   IoStatsChart,
 } from "react-icons/io5";
 import {
@@ -150,7 +143,7 @@ const DriverForm = ({
           zIndex: 1,
         }}
       >
-        <Typography variant="h5" component='span' fontWeight="bold">
+        <Typography variant="h5" component="span" fontWeight="bold">
           {editMode ? "Edit Driver" : "Add New Driver"}
         </Typography>
         <IconButton onClick={onClose} sx={{ color: "white" }} size="small">
@@ -354,7 +347,7 @@ const DriversPage = () => {
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
   const [updateDriver, { isLoading: isUpdating }] = useUpdateDriverMutation();
   const [deleteDriver, { isLoading: isDeleting }] = useDeleteDriverMutation();
-const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
+  const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
   const drivers = driversData?.data || [];
   const allDrivers = allDriversData?.data || [];
@@ -369,7 +362,7 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
           driver.driverId?.toString().includes(search.toLowerCase())
       )
     : drivers;
- 
+
   // ✅ Modal States
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<TDriver>>({});
@@ -381,7 +374,7 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
     setEditMode(false);
     setOpen(true);
   };
- 
+
   const handleEditClick = (driver: TDriver) => {
     setOriginalData(driver);
     setFormData({
@@ -467,18 +460,18 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
   };
 
   // ✅ Update Driver
-const handleUpdate = async () => {
-  if (!formData?.id) {
-    toast.error("Missing driver ID");
-    return;
-  }
+  const handleUpdate = async () => {
+    if (!formData?.id) {
+      toast.error("Missing driver ID");
+      return;
+    }
 
-  const changedFields = getChangedFields(originalData, formData);
+    const changedFields = getChangedFields(originalData, formData);
 
-  if (Object.keys(changedFields).length === 0) {
-    toast("⚠️ No changes detected.");
-    return;
-  }
+    if (Object.keys(changedFields).length === 0) {
+      toast("⚠️ No changes detected.");
+      return;
+    }
 
   try {
     await updateDriver({
