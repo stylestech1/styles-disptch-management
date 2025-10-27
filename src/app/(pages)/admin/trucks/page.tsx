@@ -99,8 +99,6 @@ const StatusChip = ({ status }: { status: string }) => {
   return <Chip label={status} color={getColor(status)} size="small" />;
 };
 
-// ✅ Truck Form Component - Vertical Layout
-// ✅ Truck Form Component - معدل بدون validate
 const TruckForm = ({
   open,
   onClose,
@@ -551,6 +549,7 @@ const TruckForm = ({
 const TrucksPage = () => {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+  const token = useAppSelector((state) => state.auth.token);
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -563,7 +562,7 @@ const TrucksPage = () => {
     isLoading,
     refetch,
   } = useGetTrucksQuery({ page: page + 1 });
-  const { data: allTrucksData } = useGetAllTrucksQuery();
+  const { data: allTrucksData } = useGetAllTrucksQuery({skip: !token});
 
   const [createTruck, {
     isLoading: isCreating,
@@ -585,7 +584,7 @@ const TrucksPage = () => {
 
   const filteredTrucks = search
     ? allTrucks.filter(
-      (t) =>
+      (t:TTruck) =>
         t.truckId?.toString().includes(search.toLowerCase()) ||
         t.model?.toLowerCase().includes(search.toLowerCase()) ||
         t.plateNumber?.toLowerCase().includes(search.toLowerCase())
@@ -623,11 +622,6 @@ const TrucksPage = () => {
     });
     setEditMode(true);
     setOpen(true);
-  };
-
-  // ✅ Handle Truck Dashboard Navigation
-  const handleTruckDashboard = () => {
-    router.push("/admin/truckDashboard");
   };
 
   // ✅ Handle Form Change
@@ -763,24 +757,7 @@ const TrucksPage = () => {
         }}
       >
         <Titles>Truck Management</Titles>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            startIcon={<IoAnalytics />}
-            onClick={handleTruckDashboard}
-            sx={{
-              borderRadius: 2,
-              borderWidth: 2,
-              "&:hover": {
-                borderWidth: 2,
-                background: `linear-gradient(135deg, ${muiTheme.palette.primary.main}15 0%, ${muiTheme.palette.primary.dark}15 100%)`,
-              },
-            }}
-          >
-            Truck Dashboard
-          </Button>
-
+        <Box>
           <Button
             variant="contained"
             color="primary"

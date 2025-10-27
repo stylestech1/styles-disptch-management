@@ -28,7 +28,7 @@ import { truckSummaryColumns } from "@/data/truckSummaryTable";
 // ✅ Import RTK Query hooks
 import {
   useGetTruckByIdQuery,
-  useLazyGetTruckSummaryQuery,
+  useLazyGetSpecificTruckSummaryQuery,
   useLazyGetTruckSummaryWithFilterQuery,
 } from "@/redux/slices/truckApi";
 import { applyGlobalFilter, resetGlobalFilter } from "@/utils/filterUtils";
@@ -58,7 +58,7 @@ const TruckSummary = () => {
       isLoading: summaryLoading,
       isError: summaryError,
     },
-  ] = useLazyGetTruckSummaryQuery();
+  ] = useLazyGetSpecificTruckSummaryQuery();
   const [fetchTruckSummaryWithFilter] = useLazyGetTruckSummaryWithFilterQuery();
 
   const profile = profileData?.data;
@@ -238,7 +238,7 @@ const TruckSummary = () => {
 
       {/* Miles */}
       <td className="p-4 text-right text-slate-700 font-medium">
-        {load.distanceMiles?.toLocaleString()}
+        {load.distanceMiles}
       </td>
 
       {/* Price/Mile */}
@@ -248,7 +248,7 @@ const TruckSummary = () => {
 
       {/* Total */}
       <td className="p-4 text-right font-semibold text-emerald-700">
-        {load.currency} {load.totalPrice?.toLocaleString()}
+        {load.currency} {load.totalPrice}
       </td>
 
       {/* Status */}
@@ -282,7 +282,7 @@ const TruckSummary = () => {
         <div className="mb-4 lg:mb-0">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push("/admin/truckDashboard")}
+              onClick={() => router.push("/admin/truckdashboard")}
               className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <IoArrowBack size={20} />
@@ -465,7 +465,7 @@ const TruckSummary = () => {
                       Total Loads
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {truckSummary.summary.totalLoads}
+                      {truckSummary.totalLoads}
                     </p>
                   </div>
                   <div className="p-2.5 bg-blue-50 rounded-lg">
@@ -482,7 +482,7 @@ const TruckSummary = () => {
                       Total Miles
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {truckSummary.summary.totalMiles.toLocaleString()}
+                      {truckSummary.totalMiles}
                     </p>
                   </div>
                   <div className="p-2.5 bg-emerald-50 rounded-lg">
@@ -499,8 +499,8 @@ const TruckSummary = () => {
                       Total Revenue
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {truckSummary.summary.currency}{" "}
-                      {truckSummary.summary.totalRevenue.toLocaleString()}
+                      {truckSummary.currency}{" "}
+                      {truckSummary.totalRevenue}
                     </p>
                   </div>
                   <div className="p-2.5 bg-amber-50 rounded-lg">
@@ -517,8 +517,8 @@ const TruckSummary = () => {
                       Net Profit
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {truckSummary.summary.currency}{" "}
-                      {truckSummary.summary.netProfit.toLocaleString()}
+                      {truckSummary.currency}{" "}
+                      {truckSummary.netProfit}
                     </p>
                   </div>
                   <div className="p-2.5 bg-red-50 rounded-lg">
