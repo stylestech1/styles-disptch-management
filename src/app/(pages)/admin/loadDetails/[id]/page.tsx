@@ -358,46 +358,70 @@ const LoadDetailsPage = () => {
           />
         </Tabs>
 
-        {/* Tab 1: Load, Driver & Truck */}
-        <TabPanel value={tabValue} index={0}>
-          <div className="mb-5">
-            <button
-              onClick={() => openEditLoadPopup(load)}
-              className="cursor-pointer flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 border border-yellow-200 hover:bg-yellow-800 hover:text-yellow-200 transition-colors"
-            >
-              <RxUpdate />
-              <span>Update</span>
-            </button>
-          </div>
-          <Grid container spacing={3}>
-            {/* Load Information */}
-            <Grid size={{ xs: 12, md: 4 }}>
-              <InfoCard title="Load Information" icon={<LocalShipping />}>
-                <List dense sx={{ py: 0 }}>
-                  <InfoItem
-                    icon={<LocationOn fontSize="small" />}
-                    primary="Origin"
-                    secondary={load.origin}
-                  />
-                  <Divider sx={{ borderColor: colorPalette.border }} />
-                  <InfoItem
-                    icon={<LocationOn fontSize="small" />}
-                    primary="DHO"
-                    secondary={load.DHO}
-                  />
-                  <Divider sx={{ borderColor: colorPalette.border }} />
-                  <InfoItem
-                    icon={<LocationOn fontSize="small" />}
-                    primary="Destination"
-                    secondary={
-                      Array.isArray(load.destination)
-                        ? load.destination.join(", ")
-                        : load.destination
-                    }
-                  />
-                </List>
-              </InfoCard>
-            </Grid>
+                {/* Tab 1: Load, Driver & Truck */}
+                <TabPanel value={tabValue} index={0}>
+                    <Box sx={{
+                        mb: 3,
+                        display: 'flex',
+                        justifyContent: 'flex-end',
+                        background: 'linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%)',
+                        p: 2,
+                        borderRadius: 2,
+                        border: `1px solid ${colorPalette.border}`
+                    }}>
+                        <Button
+                            onClick={() => openEditLoadPopup(load)}
+                            variant="contained"
+                            startIcon={<RxUpdate />}
+                            sx={{
+                                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
+                                    transform: 'translateY(-2px)',
+                                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
+                                },
+                                fontWeight: 600,
+                                borderRadius: 2,
+                                px: 4,
+                                py: 1.5,
+                                textTransform: 'none',
+                                transition: 'all 0.3s ease',
+                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
+                            }}
+                        >
+                            Update Load Information
+                        </Button>
+                    </Box>
+
+                    <Grid container spacing={3}>
+                        {/* Load Information */}
+                        <Grid size={{ xs: 12, md: 4 }}>
+                            <InfoCard title="Load Information" icon={<LocalShipping />}>
+                                <List dense sx={{ py: 0 }}>
+                                    <InfoItem
+                                        icon={<LocationOn fontSize="small" />}
+                                        primary="Origin"
+                                        secondary={load.origin}
+                                    />
+                                    <Divider sx={{ borderColor: colorPalette.border }} />
+                                    <InfoItem
+                                        icon={<LocationOn fontSize="small" />}
+                                        primary="DHO"
+                                        secondary={load.DHO}
+                                    />
+                                    <Divider sx={{ borderColor: colorPalette.border }} />
+                                    <InfoItem
+                                        icon={<LocationOn fontSize="small" />}
+                                        primary="Destination"
+                                        secondary={
+                                            Array.isArray(load.destination)
+                                                ? load.destination.join(", ")
+                                                : load.destination
+                                        }
+                                    />
+                                </List>
+                            </InfoCard>
+                        </Grid>
 
             {/* Trip Details */}
             <Grid size={{ xs: 12, md: 4 }}>
@@ -709,56 +733,57 @@ const LoadDetailsPage = () => {
           </Grid>
         </TabPanel>
 
-        {/* Tab 3: Appointments */}
-        <TabPanel value={tabValue} index={2}>
-          <div className="mb-8">
-            <button
-              onClick={() => setShowUpdateStatusModal(true)}
-              className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
-            >
-              <IoRefresh size={18} />
-              Update Status
-            </button>
-          </div>
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12 }}>
-              <Card
-                variant="outlined"
-                sx={{
-                  border: `1px solid ${colorPalette.border}`,
-                  borderRadius: 2,
-                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Stack
-                    direction="row"
-                    alignItems="center"
-                    spacing={2}
-                    sx={{ mb: 3 }}
-                  >
-                    <Box
-                      sx={{
-                        color: colorPalette.primary,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        bgcolor: alpha(colorPalette.primary, 0.1),
-                      }}
-                    >
-                      <Schedule />
+                {/* Tab 3: Appointments */}
+                <TabPanel value={tabValue} index={2}>
+                    <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
+                        <Button
+                            onClick={() => setShowUpdateStatusModal(true)}
+                            variant="contained"
+                            startIcon={<IoRefresh size={18} />}
+                            sx={{
+                                bgcolor: colorPalette.primary,
+                                '&:hover': {
+                                    bgcolor: alpha(colorPalette.primary, 0.9),
+                                    transform: 'translateY(-1px)',
+                                },
+                                fontWeight: 600,
+                                borderRadius: 2,
+                                px: 4,
+                                py: 1.5,
+                                textTransform: 'none',
+                                fontSize: '0.9rem',
+                                transition: 'all 0.2s ease',
+                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
+                            }}
+                        >
+                            Update Status
+                        </Button>
                     </Box>
-                    <Typography
-                      variant="h6"
-                      color={colorPalette.textPrimary}
-                      fontWeight="600"
-                    >
-                      Appointments Timeline
-                    </Typography>
-                  </Stack>
+                    <Grid container spacing={3}>
+                        <Grid size={{ xs: 12 }}>
+                            <Card variant="outlined" sx={{
+                                border: `1px solid ${colorPalette.border}`,
+                                borderRadius: 2,
+                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                            }}>
+                                <CardContent sx={{ p: 3 }}>
+                                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
+                                        <Box sx={{
+                                            color: colorPalette.primary,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: 40,
+                                            height: 40,
+                                            borderRadius: '50%',
+                                            bgcolor: alpha(colorPalette.primary, 0.1),
+                                        }}>
+                                            <Schedule />
+                                        </Box>
+                                        <Typography variant="h6" color={colorPalette.textPrimary} fontWeight="600">
+                                            Appointments Timeline
+                                        </Typography>
+                                    </Stack>
 
                   <Stack spacing={2}>
                     {/* Pickup Appointment */}

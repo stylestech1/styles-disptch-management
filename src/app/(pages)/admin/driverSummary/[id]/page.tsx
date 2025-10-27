@@ -32,6 +32,7 @@ import {
   useGetDriverByIdQuery,
   useLazyGetDriverSummaryWithFilterQuery
 } from "@/redux/slices/driverApi";
+import {  applyGlobalFilter, resetGlobalFilter } from "@/utils/filterUtils";
 
 const DriverSummary = () => {
   const { id } = useParams();
@@ -75,52 +76,35 @@ const DriverSummary = () => {
   }
 }, [profileError, summaryError]);
 
+const handleApplyFilter = () => {
+  if (!id) return;
 
-  const handleApplyFilter = async () => {
-    if (!fromDate && !toDate) {
-      toast.error("Please select at least one date", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-      return;
-    }
+  const driverId = Array.isArray(id) ? id[0] : id;
 
-    if (!id) return;
+  applyGlobalFilter({
+    id: driverId,
+    fromDate,
+    toDate,
+    fetchFunction: (params) => fetchDriverSummary(params).unwrap(),
+  });
+};
 
-    try {
-      const params: Record<string, string> = {};
-      if (fromDate) params.from = `${fromDate}T00:00:00Z`;
-      if (toDate) params.to = `${toDate}T23:59:59Z`;
+const handleReset = () => {
+  if (!id) return;
 
-      await fetchDriverSummary({
-        id: id as string,
-        ...params
-      }).unwrap();
+  const driverId = Array.isArray(id) ? id[0] : id;
+setFromDate("");
+  setToDate("");
+  resetGlobalFilter({
+    id: driverId,
+    fetchFunction: (params) => fetchDriverSummary(params).unwrap(),
+  });
+};
 
-      toast.success("Filter applied successfully", {
-        style: { background: "#10b981", color: "#fff" },
-      });
-    } catch (error) {
-      const err = error as { data?: { message?: string } };
-      setError(err?.data?.message || "Filter failed");
-    }
-  };
 
-  const handleReset = async () => {
-    setFromDate("");
-    setToDate("");
- 
-    if (!id) return;
-    
-    try {
-      await fetchDriverSummary({ id: id as string }).unwrap();
-      toast.success("Reset successfully", {
-        style: { background: "#3b82f6", color: "#fff" },
-      });
-    } catch (error) {
-      const err = error as { data?: { message?: string } };
-      setError(err?.data?.message || "Reset failed");
-    }
-  };
+
+
+
 
   // Status badge component
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {

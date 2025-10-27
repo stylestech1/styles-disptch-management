@@ -401,7 +401,7 @@ const DriversPage = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const getChangedFields = (
+    const getChangedFields = (
     original: Partial<TDriver>,
     updated: Partial<TDriver>
   ): Partial<TDriver> => {
@@ -416,6 +416,7 @@ const DriversPage = () => {
 
     return changedFields as Partial<TDriver>;
   };
+
 
   // ✅ Function to display API errors in toast
   const showApiErrors = (error: unknown) => {
@@ -472,20 +473,21 @@ const DriversPage = () => {
       return;
     }
 
-    try {
-      await updateDriver({
-        id: formData.id,
-        body: changedFields, // 🟢 فقط التغييرات
-      }).unwrap();
-      toast.success("✅ Driver updated successfully!");
-      setOpen(false);
-      refetch();
-    } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err);
-      showApiErrors(err);
-      toast.error(errorMessage || "Driver update failed ❌");
-    }
-  };
+  try {
+    await updateDriver({
+      id: formData.id,
+      body: changedFields, 
+    }).unwrap();
+    toast.success("✅ Driver updated successfully!");
+    setOpen(false);
+    refetch();
+  } catch (err: unknown) {
+    const errorMessage = getErrorMessage(err);
+    showApiErrors(err);
+    toast.error(errorMessage || "Driver update failed ❌");
+  }
+};
+
 
   // ✅ Delete Driver with MUI Toast
   const [driverToDelete, setDriverToDelete] = useState<{

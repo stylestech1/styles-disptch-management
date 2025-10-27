@@ -13,14 +13,30 @@ export const apiSlice = api.injectEndpoints({
     // Get All Loads
     getAllLoads: builder.query({
       query: (arg: void) => `/api/v1/loads?limit=50`,
-      providesTags: ["Loads"],
+      providesTags: ["Loads"], 
     }),
 
     // Get Loads Using Id
     getLoadById: builder.query({
-      query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
-      providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
-    }),
+  query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
+  providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
+}),
+
+// Get Loads with Date Filter
+getLoadsWithFilter: builder.query({
+  query: ({ from, to }) => {
+    let url = `/api/v1/loads`;
+    const params = [];
+
+    if (from) params.push(`from=${from}`);
+    if (to) params.push(`to=${to}`);
+
+    if (params.length) url += `?${params.join("&")}`;
+    return url;
+  },
+  providesTags: ["Loads"],
+}),
+
 
     // Create Load
     createLoads: builder.mutation({
@@ -175,7 +191,6 @@ export const {
   useUpdateUserRoleMutation,
   useActivateUserMutation,
   useDeactivateUserMutation,
-  useGetUserInfoQuery,
-  useUpdateUserInfoMutation,
-  useUpdateUserPasswordMutation,
+    useGetLoadsWithFilterQuery, 
+
 } = apiSlice;
