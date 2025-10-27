@@ -86,7 +86,7 @@ const LoadDetailsPage = () => {
     };
 
     // Handling View Note Details
-    const handleViewNote = (note: any) => {
+    const handleViewNote = (note: TComments) => {
         setSelectedNote(note);
         setViewNoteDialog(true);
     };
