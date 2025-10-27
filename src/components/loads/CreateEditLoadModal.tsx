@@ -57,13 +57,10 @@ import {
   useGetDriversQuery,
   useGetTrucksQuery,
   useUpdateLoadsMutation,
-  useUploadDocumentsMutation,
 } from "@/redux/slices/apiSlice";
 import { RootState } from "@/redux/store";
 import { TDriver, TLoads, TTruck, TTruckType } from "@/types/globalTypes";
 import toast from "react-hot-toast";
-import GoogleMapsLoader from "@/components/ui/GoogleMapsLoader";
-import MapWithRoute from "@/components/ui/MapWithRoute";
 import { MdError, MdPictureAsPdf } from "react-icons/md";
 
 // Lazy load the map components
@@ -109,7 +106,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   const [selectedDocuments, setSelectedDocuments] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState<string>("");
   const [isDragging, setIsDragging] = useState<boolean>(false);
-  const [uploadDocuments] = useUploadDocumentsMutation();
 
   // تحويل التواريخ من strings إلى Dayjs objects للاستخدام في UI
   const pickupAtDayjs = pickupAt ? dayjs(pickupAt) : null;
@@ -148,13 +144,16 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     setIsDragging(false);
   }, []);
 
-  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!isDragging) {
-      setIsDragging(true);
-    }
-  }, [isDragging]);
+  const handleDragOver = useCallback(
+    (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!isDragging) {
+        setIsDragging(true);
+      }
+    },
+    [isDragging]
+  );
 
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -1053,7 +1052,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   onNextTab,
 }) => {
   const canAddMoreFiles = selectedDocuments.length < 2;
-  
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1305,11 +1304,11 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
           >
             <div className="text-center">
               <div className="flex justify-center mb-3">
-                <MdPictureAsPdf 
+                <MdPictureAsPdf
                   className={`transition-colors ${
                     isDragging ? "text-blue-500" : "text-red-500"
-                  }`} 
-                  size={32} 
+                  }`}
+                  size={32}
                 />
               </div>
               <h5 className="text-sm font-semibold text-slate-700 mb-1">
@@ -1447,7 +1446,6 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
   onTruckTempChange,
   isTabValid,
   onPrevTab,
-  onSubmit,
   isLoading,
 }) => {
   const { data: driversData } = useGetDriversQuery();

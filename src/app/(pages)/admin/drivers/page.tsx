@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/redux/store";
 import {
@@ -19,13 +19,6 @@ import {
   IoTrash,
   IoSearch,
   IoClose,
-  IoAnalytics,
-  IoPerson,
-  IoCall,
-  IoMail,
-  IoCard,
-  IoCash,
-  IoCalendar,
   IoStatsChart,
 } from "react-icons/io5";
 import {

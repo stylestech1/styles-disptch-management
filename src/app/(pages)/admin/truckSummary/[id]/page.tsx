@@ -7,7 +7,7 @@ import {
 } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import {
   IoCar,

@@ -107,18 +107,15 @@ const TruckDashboard = () => {
     } finally {
       setIsLoadingSummaries(false);
     }
-  }, [ getTruckSummary, setError]);
+  }, [getTruckSummary, setError]);
 
   useEffect(() => {
     if (allTrucksData?.data?.data && Object.keys(summaries).length === 0) {
       fetchAllSummaries();
     }
-  }, [allTrucksData,  fetchAllSummaries]);
+  }, [allTrucksData,  fetchAllSummaries, summaries]);
 
   
-  const isLoading = trucksLoading || isLoadingSummaries;
-
-
   const chartData = useMemo(() => {
     const validTrucks = (allTrucksData?.data?.data || []).filter(truck => 
       truck.id && summaries[truck.id]

@@ -80,7 +80,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
             type="text"
             readOnly
             value={load?.loadId || 'N/A'}
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-slate-100"
+            className="block w-full px-3 py-3 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-slate-100"
           />
         </div>
 

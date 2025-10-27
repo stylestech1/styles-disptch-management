@@ -66,8 +66,6 @@ const router = useRouter();
     }
   );
 
-  const [updateLoads] = useUploadDocumentsMutation();
-
   // responses
   const load = loadsData?.data || [];
   const pagination = loadsData?.paginationResult || null;

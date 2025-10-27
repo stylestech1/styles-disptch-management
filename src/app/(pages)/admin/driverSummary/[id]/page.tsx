@@ -1,9 +1,8 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { RootState, useAppSelector } from "@/redux/store";
-import { TDriver, TErrors, TLoads, TStatusLoad, TLoadSummary } from "@/types/globalTypes";
-import { useState, useEffect, useCallback } from "react";
+import { TLoads, TStatusLoad } from "@/types/globalTypes";
+import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation"; 
@@ -31,15 +30,8 @@ import { driverSummaryColumns } from "@/data/driverSummaryTable";
 // ✅ Import RTK Query hooks
 import {
   useGetDriverByIdQuery,
-  useGetDriverSummaryQuery,
-  useGetDriverSummaryWithFilterQuery,
   useLazyGetDriverSummaryWithFilterQuery
 } from "@/redux/slices/driverApi";
-
-type TPeriod = {
-  from: string;
-  to: string;
-};
 
 const DriverSummary = () => {
   const { id } = useParams();
@@ -534,7 +526,7 @@ const DriverSummary = () => {
 
             {/* ✅ Active Filter Message */}
             {(fromDate || toDate) && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-slate-700 border border-slate-200 rounded-lg px-4 py-3 bg-blue-50 border-blue-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-slate-700 border border-slate-200 rounded-lg px-4 py-3 bg-blue-50">
                 <div className="flex items-center gap-3 mb-2 sm:mb-0">
                   <IoFilterOutline className="text-blue-600" size={18} />
                   <div>
