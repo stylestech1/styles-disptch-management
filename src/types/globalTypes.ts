@@ -7,6 +7,16 @@ export type TTruckId = {
   truckId: number;
   plateNumber: string;
 };
+export type TUser = {
+  id: string;
+  name: string;
+  active: boolean;
+  email: string;
+  phone: string;
+  role: TUserRole;
+  position: string;
+  jobId: number;
+};
 export type TDocument = {
   viewLink: string;
   downloadLink: string;

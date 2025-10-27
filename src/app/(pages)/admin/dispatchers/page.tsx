@@ -14,7 +14,7 @@ import {
   IoSettingsOutline,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
-import { TDispatcher, TPagination } from "@/types/globalTypes";
+import { TDispatcher } from "@/types/globalTypes";
 import useError from "@/hook/useError";
 import Pagination from "@/components/ui/Pagination";
 import DataTable from "@/components/ui/DataTable";
@@ -42,7 +42,7 @@ const Dispatchers = () => {
   const token = useAppSelector((state: RootState) => state.auth.token);
   const { error, setError } = useError();
 
-  // RTK Querys - إضافة pollingInterval للتأكد من تحديث البيانات
+  // RTK Querys
   const {
     data: dispatchersData,
     isError: dispatchersError,
@@ -53,7 +53,7 @@ const Dispatchers = () => {
     { page, limit: 10 },
     {
       skip: !token,
-      pollingInterval: 30000, // إعادة جلب البيانات كل 30 ثانية
+      pollingInterval: 30000,
       refetchOnMountOrArgChange: true,
     }
   );
@@ -64,11 +64,11 @@ const Dispatchers = () => {
   const [activateUser, { isLoading: activating }] = useActivateUserMutation();
   const [deactivateUser, { isLoading: deactivating }] = useDeactivateUserMutation();
 
-  // Export Data - تحسين التعامل مع البيانات
+  // Export Data 
   const dispatchers = dispatchersData?.data || [];
   const pagination = dispatchersData?.paginationResult || null;
 
-  // Token Checking وتحسين الـ redirect
+  // Token Checking 
   useEffect(() => {
     if (!token) {
       router.replace("/");

@@ -1,8 +1,7 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { RootState, useAppSelector } from "@/redux/store";
-import { TErrors, TUserRole } from "@/types/globalTypes";
+import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast from "react-hot-toast";
@@ -19,24 +18,13 @@ import {
   IoPersonOutline,
 } from "react-icons/io5";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-
-type TUser = {
-  id: string;
-  name: string;
-  active: boolean;
-  email: string;
-  phone: string;
-  role: TUserRole;
-  position: string;
-  jobId: number;
-};
+import { useGetUserInfoQuery, useUpdateUserInfoMutation, useUpdateUserPasswordMutation } from "@/redux/slices/apiSlice";
+import { useRouter } from "next/navigation";
+import { setError, clearError } from "@/redux/slices/uiSlice";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const AdminProfile = () => {
-  const [profile, setProfile] = useState<TUser | null>(null);
   const [popup, setPopup] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-  const [updateLoading, setUpdateLoading] = useState(false);
   const [showPassword, setShowPassword] = useState({
     currentPassword: false,
     newPassword: false,
@@ -56,97 +44,76 @@ const AdminProfile = () => {
     phone: "",
   });
 
+  const dispatch = useAppDispatch()
+  const router = useRouter()
   const token = useAppSelector((state: RootState) => state.auth.token);
-  const apiURL = process.env.NEXT_PUBLIC_API_URL;
+  const error = useAppSelector((state: RootState) => state.ui.error)
 
-  // Get My Data
+  const {
+    data: userData,
+    isLoading: userLoading,
+    error: userError,
+  } = useGetUserInfoQuery({ skip: !token });
+
+  const profile = userData?.data || [];
+
+  const [updateUser, {isLoading: updatingUser}] = useUpdateUserInfoMutation()
+  const [updatePassword, {isLoading: updatingPassword}] = useUpdateUserPasswordMutation()
+
+  // Token Checking وتحسين الـ redirect
   useEffect(() => {
-    const fetchMyData = async () => {
-      setLoading(true);
-      try {
-        const res = await fetch(`${apiURL}/api/v1/userDashboard/getMyData`, {
-          method: "GET",
-          headers: {
-            "content-type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    if (!token) {
+      router.replace("/");
+      return;
+    }
+  }, [token, router]);
 
-        const result = await res.json();
-        if (!res.ok) {
-          if (Array.isArray(result.errors)) {
-            result.errors.forEach((err: TErrors) => {
-              toast.error(err.msg || "Create user failed", {
-                style: { background: "#dc2626", color: "#fff" },
-              });
-            });
-          }
-          return;
-        }
-        setProfile(result.data);
-        // Initialize form data with current profile data
-        setFormData({
-          name: result.data.name,
-          email: result.data.email,
-          phone: result.data.phone,
+  // Handling Errors - تحسين معالجة الأخطاء
+  useEffect(() => {
+    if (userError) {
+      const errorMessage = getErrorMessage(userError);
+      dispatch(setError(errorMessage))
+      console.error("User Error:", userError);
+
+      if (
+        errorMessage.includes("401") ||
+        errorMessage.includes("unauthorized")
+      ) {
+        toast.error("Session expired. Please login again.", {
+          style: { background: "#dc2626", color: "#fff" },
         });
-      } catch (error) {
-        if (error instanceof Error) {
-          setErr(error.message || "Failed to load profile");
-        }
-      } finally {
-        setLoading(false);
+        router.replace("/");
+        return;
       }
-    };
-    fetchMyData();
-  }, [apiURL, token]);
+
+      toast.error(errorMessage || "Loading User failed ❌", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+    }
+  }, [userError, dispatch, router]);
 
   // Update My Data Function
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setUpdateLoading(true);
+    dispatch(clearError())
 
     try {
-      const res = await fetch(`${apiURL}/api/v1/userDashboard/updateMyData`, {
-        method: "PATCH",
-        headers: {
-          "content-type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      await updateUser(({
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-        }),
-      });
+        })).unwrap()
 
-      const result = await res.json();
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
-        return;
-      }
-
-      toast.success(result.message || "Profile updated successfully! ✅", {
+      toast.success("User Updated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
 
-      setProfile(result.data);
       setPopup(false);
-    } catch (error) {
-      if (error instanceof Error) {
-        setErr(error.message || "Update failed");
-        toast.error(error.message || "Update failed ❌", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
-    } finally {
-      setUpdateLoading(false);
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      dispatch(setError(errorMessage))
+      toast.error(errorMessage || "Updating user failed ❌");
+      throw err;
     }
   };
 
@@ -169,36 +136,20 @@ const AdminProfile = () => {
       });
     }
     setPopup(true);
+    dispatch(clearError())
   };
 
   // Change Password
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    dispatch(clearError())
 
     try {
-      const res = await fetch(`${apiURL}/api/v1/updatePassword/`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(passwordData),
+      await updatePassword(passwordData).unwrap()
+
+      toast.success("Password Updated successfully!", {
+        style: { background: "#16a34a", color: "#fff" },
       });
-
-      const result = await res.json();
-
-      if (!res.ok) {
-        if (Array.isArray(result.errors)) {
-          result.errors.forEach((err: TErrors) => {
-            toast.error(err.msg || "Create user failed", {
-              style: { background: "#dc2626", color: "#fff" },
-            });
-          });
-        }
-        return;
-      }
-
-      toast.success(result.message || "Password updated successfully!");
 
       // Reset and close popup
       setChangePasswordPopup(false);
@@ -207,13 +158,15 @@ const AdminProfile = () => {
         newPassword: "",
         newPasswordConfirm: "",
       });
-    } catch (error) {
-      if (error instanceof Error)
-        toast.error(error.message || "Password update failed ❌");
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      dispatch(setError(errorMessage))
+      toast.error(errorMessage || "Updating user failed ❌");
+      throw err;
     }
   };
 
-  if (loading) return <Loading />;
+  if (userLoading || updatingUser || updatingPassword) return <Loading />;
 
   return (
     <section className="container mx-auto p-6">
@@ -245,9 +198,9 @@ const AdminProfile = () => {
       </div>
 
       {/* Errors */}
-      {err && (
+      {error && (
         <div className="mb-6">
-          <Erros message={err} />
+          <Erros message={error} />
         </div>
       )}
 
@@ -336,7 +289,7 @@ const AdminProfile = () => {
               <button
                 onClick={() => setPopup(false)}
                 className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
-                disabled={updateLoading}
+                disabled={updatingUser}
               >
                 <IoClose size={24} />
               </button>
@@ -359,7 +312,7 @@ const AdminProfile = () => {
                     className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Enter full name"
                     required
-                    disabled={updateLoading}
+                    disabled={updatingUser}
                   />
                 </div>
               </div>
@@ -380,7 +333,7 @@ const AdminProfile = () => {
                     className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Enter email address"
                     required
-                    disabled={updateLoading}
+                    disabled={updatingUser}
                   />
                 </div>
               </div>
@@ -401,7 +354,7 @@ const AdminProfile = () => {
                     className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
                     placeholder="Enter phone number"
                     required
-                    disabled={updateLoading}
+                    disabled={updatingUser}
                   />
                 </div>
               </div>
@@ -411,16 +364,16 @@ const AdminProfile = () => {
                   type="button"
                   onClick={() => setPopup(false)}
                   className="flex-1 py-3 px-4 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-                  disabled={updateLoading}
+                  disabled={updatingUser}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={updateLoading}
+                  disabled={updatingUser}
                 >
-                  {updateLoading ? (
+                  {updatingUser ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                       Updating...
