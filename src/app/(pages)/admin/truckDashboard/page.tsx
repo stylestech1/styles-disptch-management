@@ -10,7 +10,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Typography,
+  Typography, 
   styled,
   Skeleton,
 } from "@mui/material";

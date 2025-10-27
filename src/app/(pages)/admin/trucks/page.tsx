@@ -22,7 +22,7 @@ import {
   TextField,
   Button,
   MenuItem,
-  Select, 
+  Select,
   InputLabel,
   FormControl,
   Table,
@@ -93,14 +93,14 @@ const StatusChip = ({ status }: { status: string }) => {
 
 // ✅ Truck Form Component - Vertical Layout
 // ✅ Truck Form Component - معدل بدون validate
-const TruckForm = ({ 
-  open, 
-  onClose, 
-  formData, 
-  onChange, 
-  onSubmit, 
+const TruckForm = ({
+  open,
+  onClose,
+  formData,
+  onChange,
+  onSubmit,
   editMode,
-  isLoading 
+  isLoading
 }: {
   open: boolean;
   onClose: () => void;
@@ -116,7 +116,7 @@ const TruckForm = ({
   const drivers = driversData?.data || [];
   const allDrivers = driversData?.data || [];
 
-  const availableDrivers = allDrivers.filter((driver: TDriver) => 
+  const availableDrivers = allDrivers.filter((driver: TDriver) =>
     driver.status === "available"
   );
   // ✅ Truck types options
@@ -126,13 +126,13 @@ const TruckForm = ({
   ];
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose} 
-      fullWidth 
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
       maxWidth="sm"
       PaperProps={{
-        sx: { 
+        sx: {
           borderRadius: 3,
           boxShadow: '0 10px 40px rgba(0,0,0,0.1)',
           maxHeight: '90vh',
@@ -140,10 +140,10 @@ const TruckForm = ({
       }}
     >
       {/* Header */}
-      <DialogTitle sx={{ 
-        pb: 1, 
-        display: 'flex', 
-        alignItems: 'center', 
+      <DialogTitle sx={{
+        pb: 1,
+        display: 'flex',
+        alignItems: 'center',
         justifyContent: 'space-between',
         background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
         color: 'white',
@@ -154,8 +154,8 @@ const TruckForm = ({
         <Typography variant="h5" component='span' fontWeight="bold">
           {editMode ? "Edit Truck" : "Add New Truck"}
         </Typography>
-        <IconButton 
-          onClick={onClose} 
+        <IconButton
+          onClick={onClose}
           sx={{ color: 'white' }}
           size="small"
         >
@@ -165,14 +165,14 @@ const TruckForm = ({
 
       <DialogContent sx={{ py: 3 }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          
+
           {/* Basic Information Section */}
           <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
               Basic Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 fullWidth
@@ -183,7 +183,7 @@ const TruckForm = ({
                 size="medium"
                 placeholder="e.g., Volvo FH16"
               />
-              
+
               <TextField
                 fullWidth
                 label="Plate Number *"
@@ -193,7 +193,7 @@ const TruckForm = ({
                 size="medium"
                 placeholder="e.g., ABC-12345"
               />
-              
+
               {/* Type as Selector */}
               <FormControl fullWidth size="medium">
                 <InputLabel>Type *</InputLabel>
@@ -210,7 +210,7 @@ const TruckForm = ({
                   ))}
                 </Select>
               </FormControl>
-              
+
               {/* Year as Normal TextField */}
               <TextField
                 fullWidth
@@ -220,9 +220,9 @@ const TruckForm = ({
                 value={formData.year || ""}
                 onChange={(e) => onChange("year", Number(e.target.value))}
                 size="medium"
-                inputProps={{ 
-                  min: 1900, 
-                  max: new Date().getFullYear() + 1 
+                inputProps={{
+                  min: 1900,
+                  max: new Date().getFullYear() + 1
                 }}
               />
             </Box>
@@ -234,7 +234,7 @@ const TruckForm = ({
               Specifications
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            
+
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <TextField
                 fullWidth
@@ -249,7 +249,7 @@ const TruckForm = ({
                   endAdornment: <InputAdornment position="end">kg</InputAdornment>,
                 }}
               />
-              
+
               <TextField
                 fullWidth
                 label="Fuel Per Mile *"
@@ -267,61 +267,188 @@ const TruckForm = ({
           </Box>
 
           {/* ✅ Driver Assignment Section */}
-     <Box>
+          <Box>
             <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
               Driver Assignment
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            
+
             <FormControl fullWidth size="medium">
-              <InputLabel>Assigned Driver</InputLabel>
+              <InputLabel id="driver-assignment-label">Assigned Driver</InputLabel>
               <Select
+                labelId="driver-assignment-label"
                 label="Assigned Driver"
                 name="assignedDriver"
                 value={formData.assignedDriver || ""}
                 onChange={(e) => onChange("assignedDriver", e.target.value)}
-                startAdornment={<IoPerson style={{ marginRight: '8px' }} />}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <IoPerson style={{ color: muiTheme.palette.primary.main }} />
+                  </InputAdornment>
+                }
+                sx={{
+                  '& .MuiSelect-select': {
+                    display: 'flex',
+                    alignItems: 'center',
+                  }
+                }}
               >
                 <MenuItem value="">
-                  <em>Unassigned</em>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        bgcolor: 'grey.100',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'grey.500'
+                      }}
+                    >
+                      <IoPerson size={16} />
+                    </Box>
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                        Unassigned
+                      </Typography>
+                    </Box>
+                  </Box>
                 </MenuItem>
-                
+
                 {/* ✅ عرض السواقين المتاحين فقط */}
                 {availableDrivers.length > 0 ? (
                   availableDrivers.map((driver: TDriver) => (
                     <MenuItem key={driver.id} value={driver.id}>
-                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                        <Typography variant="body1">{driver.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          ID: {driver.id} • {driver.licenseNumber}
-                        </Typography>
-                        <Chip 
-                          label={driver.status} 
-                          color="success" 
-                          size="small" 
-                          sx={{ mt: 0.5, fontSize: '0.6rem' }}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
+                        {/* Avatar */}
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: '50%',
+                            bgcolor: 'primary.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'white',
+                            fontWeight: 'bold',
+                            fontSize: '0.875rem'
+                          }}
+                        >
+                          {driver.name?.charAt(0)?.toUpperCase() || 'D'}
+                        </Box>
+
+                        {/* Driver Info */}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="body1" fontWeight="500" noWrap>
+                            {driver.name}
+                          </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                            <Typography variant="caption" color="text.secondary">
+                              ID: {driver.driverId || driver.id}
+                            </Typography>
+                            <Box sx={{ width: 4, height: 4, borderRadius: '50%', bgcolor: 'grey.400' }} />
+                            <Typography variant="caption" color="text.secondary" noWrap>
+                              {driver.licenseNumber}
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Status Badge */}
+                        <Chip
+                          label={driver.status}
+                          color="success"
+                          size="small"
+                          sx={{
+                            fontSize: '0.625rem',
+                            height: 20,
+                            '& .MuiChip-label': { px: 1 }
+                          }}
                         />
                       </Box>
                     </MenuItem>
                   ))
                 ) : (
                   <MenuItem disabled>
-                    <Typography variant="body2" color="text.secondary">
-                      No available drivers found
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%', py: 1 }}>
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: '50%',
+                          bgcolor: 'grey.100',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'grey.500'
+                        }}
+                      >
+                        <IoPerson size={20} />
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          No available drivers
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          All drivers are currently busy
+                        </Typography>
+                      </Box>
+                    </Box>
                   </MenuItem>
                 )}
               </Select>
-              
-              {/* ✅ رسالة توضيحية */}
+
+              {/* ✅ رسالة توضيحية محسنة */}
               {availableDrivers.length === 0 && (
-                <Typography variant="caption" color="warning.main" sx={{ mt: 1, ml: 2 }}>
-                  ⚠️ No available drivers. All drivers are currently busy or inactive.
-                </Typography>
+                <Alert
+                  severity="warning"
+                  sx={{
+                    mt: 2,
+                    borderRadius: 1,
+                    '& .MuiAlert-message': {
+                      fontSize: '0.875rem'
+                    }
+                  }}
+                  icon={false}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: '50%',
+                        bgcolor: 'warning.main',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      ⚠️
+                    </Box>
+                    <Typography variant="caption">
+                      No available drivers. All drivers are currently busy or inactive.
+                    </Typography>
+                  </Box>
+                </Alert>
+              )}
+
+              {/* ✅ إحصائيات السائقين */}
+              {availableDrivers.length > 0 && (
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1, px: 1 }}>
+                  <Typography variant="caption" color="success.main" fontWeight="500">
+                    {availableDrivers.length} available driver{availableDrivers.length !== 1 ? 's' : ''}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Total: {allDrivers.length} drivers
+                  </Typography>
+                </Box>
               )}
             </FormControl>
           </Box>
-
 
           {/* Status Section */}
           <Box>
@@ -329,7 +456,7 @@ const TruckForm = ({
               Status
             </Typography>
             <Divider sx={{ mb: 2 }} />
-            
+
             <FormControl fullWidth size="medium">
               <InputLabel>Status *</InputLabel>
               <Select
@@ -350,12 +477,6 @@ const TruckForm = ({
                     <Typography>Busy</Typography>
                   </Box>
                 </MenuItem>
-                <MenuItem value="maintenance">
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Chip label="Maintenance" color="warning" size="small" />
-                    <Typography>Maintenance</Typography>
-                  </Box>
-                </MenuItem>
                 <MenuItem value="inactive">
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Chip label="Inactive" color="default" size="small" />
@@ -374,8 +495,8 @@ const TruckForm = ({
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
-        <Button 
-          onClick={onClose} 
+        <Button
+          onClick={onClose}
           color="inherit"
           variant="outlined"
           disabled={isLoading}
@@ -388,15 +509,15 @@ const TruckForm = ({
           variant="contained"
           disabled={isLoading}
           startIcon={isLoading ? <CircularProgress size={16} /> : null}
-          sx={{ 
+          sx={{
             borderRadius: 2,
             px: 4,
             minWidth: 140,
             background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`
           }}
         >
-          {isLoading 
-            ? (editMode ? "Saving..." : "Creating...") 
+          {isLoading
+            ? (editMode ? "Saving..." : "Creating...")
             : (editMode ? "Save Changes" : "Create Truck")
           }
         </Button>
@@ -418,19 +539,19 @@ const TrucksPage = () => {
   const { data: trucksData, isLoading, refetch } = useGetTrucksQuery({ page: page + 1 });
   const { data: allTrucksData } = useGetAllTrucksQuery();
 
-  const [createTruck, { 
-    isLoading: isCreating, 
-    error: createError 
+  const [createTruck, {
+    isLoading: isCreating,
+    error: createError
   }] = useCreateTruckMutation();
-  
-  const [updateTruck, { 
-    isLoading: isUpdating, 
-    error: updateError 
+
+  const [updateTruck, {
+    isLoading: isUpdating,
+    error: updateError
   }] = useUpdateTruckMutation();
-  
-  const [deleteTruck, { 
-    isLoading: isDeleting, 
-    error: deleteError 
+
+  const [deleteTruck, {
+    isLoading: isDeleting,
+    error: deleteError
   }] = useDeleteTruckMutation();
 
   const trucks = trucksData?.data?.data || [];
@@ -438,11 +559,11 @@ const TrucksPage = () => {
 
   const filteredTrucks = search
     ? allTrucks.filter(
-        (t) =>
-          t.truckId?.toString().includes(search.toLowerCase()) ||
-          t.model?.toLowerCase().includes(search.toLowerCase()) ||
-          t.plateNumber?.toLowerCase().includes(search.toLowerCase()) 
-      )
+      (t) =>
+        t.truckId?.toString().includes(search.toLowerCase()) ||
+        t.model?.toLowerCase().includes(search.toLowerCase()) ||
+        t.plateNumber?.toLowerCase().includes(search.toLowerCase())
+    )
     : trucks;
 
   // ✅ Modal States
@@ -463,14 +584,14 @@ const TrucksPage = () => {
       truckId: truck.truckId,
       model: truck.model,
       plateNumber: truck.plateNumber,
-      type: truck.type, 
+      type: truck.type,
       year: truck.year,
       capacity: truck.capacity,
       fuelPerMile: truck.fuelPerMile,
       status: truck.status,
-    assignedDriver: typeof truck.assignedDriver === 'object' 
-      ? truck.assignedDriver.driverId.toString() 
-      : truck.assignedDriver,
+      assignedDriver: typeof truck.assignedDriver === 'object'
+        ? truck.assignedDriver.driverId.toString()
+        : truck.assignedDriver,
       // createdBy: truck.createdBy,
       // updatedBy: truck.updatedBy
     });
@@ -494,12 +615,12 @@ const TrucksPage = () => {
       const error = createError as { data?: { message?: string } };
       toast.error(error?.data?.message || "Failed to create truck");
     }
-    
+
     if (updateError) {
       const error = updateError as { data?: { message?: string } };
       toast.error(error?.data?.message || "Failed to update truck");
     }
-    
+
     if (deleteError) {
       const error = deleteError as { data?: { message?: string } };
       toast.error(error?.data?.message || "Failed to delete truck");
@@ -523,36 +644,36 @@ const TrucksPage = () => {
       setOpen(false);
       refetch();
     } catch (err) {
-     
+
     }
   };
 
   // ✅ Update Truck
- const handleUpdate = async () => {
-  if (!formData?.id) {
-    toast.error("Missing truck ID");
-    return;
-  }
-  if (!user?.id) {
-    toast.error("User not found!");
-    return;
-  }
+  const handleUpdate = async () => {
+    if (!formData?.id) {
+      toast.error("Missing truck ID");
+      return;
+    }
+    if (!user?.id) {
+      toast.error("User not found!");
+      return;
+    }
 
-  try {
-    await updateTruck({
-      id: formData.id,
-      ...formData,
-      updatedBy: user.id,
-    }).unwrap();
+    try {
+      await updateTruck({
+        id: formData.id,
+        ...formData,
+        updatedBy: user.id,
+      }).unwrap();
 
-    toast.success("✅ Truck updated successfully!");
-    setOpen(false);
-    refetch();
-  } catch (err) {}
-};
+      toast.success("✅ Truck updated successfully!");
+      setOpen(false);
+      refetch();
+    } catch (err) { }
+  };
 
   // ✅ Delete Truck
-  const [truckToDelete, setTruckToDelete] = useState<{id: string, truckId?: number} | null>(null);
+  const [truckToDelete, setTruckToDelete] = useState<{ id: string, truckId?: number } | null>(null);
 
   const handleDelete = async (id: string, truckId?: number) => {
     setDeleteToast({
@@ -597,7 +718,7 @@ const TrucksPage = () => {
   return (
     <Box sx={{ p: 3 }}>
       <Toaster position="top-right" />
-      
+
       {/* Header */}
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4 }}>
         <Titles>Truck Management</Titles>
@@ -607,7 +728,7 @@ const TrucksPage = () => {
             color="primary"
             startIcon={<IoAnalytics />}
             onClick={handleTruckDashboard}
-            sx={{ 
+            sx={{
               borderRadius: 2,
               borderWidth: 2,
               '&:hover': {
@@ -618,13 +739,13 @@ const TrucksPage = () => {
           >
             Truck Dashboard
           </Button>
-          
+
           <Button
             variant="contained"
             color="primary"
             startIcon={<IoAdd />}
             onClick={handleOpenAdd}
-            sx={{ 
+            sx={{
               borderRadius: 2,
               background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`
             }}
@@ -646,8 +767,8 @@ const TrucksPage = () => {
             </InputAdornment>
           ),
         }}
-        sx={{ 
-          mb: 3, 
+        sx={{
+          mb: 3,
           borderRadius: 2,
           backgroundColor: 'white',
           '& .MuiOutlinedInput-root': {
@@ -702,17 +823,17 @@ const TrucksPage = () => {
                   <StyledTableCell>{truck.year}</StyledTableCell>
                   <StyledTableCell>{truck.capacity}</StyledTableCell>
                   <StyledTableCell>{truck.fuelPerMile || 'N/A'}</StyledTableCell>
-                <StyledTableCell>
-  {typeof truck.assignedDriver === 'object' 
-    ? truck.assignedDriver.name 
-    : truck.assignedDriver || 'Unassigned'
-  }
-  {typeof truck.assignedDriver === 'object' && truck.assignedDriver.driverId && (
-    <Box component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', display: 'block' }}>
-      ID: {truck.assignedDriver.driverId}
-    </Box>
-  )}
-</StyledTableCell>
+                  <StyledTableCell>
+                    {typeof truck.assignedDriver === 'object'
+                      ? truck.assignedDriver.name
+                      : truck.assignedDriver || 'Unassigned'
+                    }
+                    {typeof truck.assignedDriver === 'object' && truck.assignedDriver.driverId && (
+                      <Box component="span" sx={{ fontSize: '0.75rem', color: 'text.secondary', display: 'block' }}>
+                        ID: {truck.assignedDriver.driverId}
+                      </Box>
+                    )}
+                  </StyledTableCell>
                   <StyledTableCell>
                     <StatusChip status={truck.status} />
                   </StyledTableCell>
@@ -815,11 +936,11 @@ const TrucksPage = () => {
             {deleteToast.message}
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
-            <Button 
-              variant="outlined" 
-              color="inherit" 
+            <Button
+              variant="outlined"
+              color="inherit"
               onClick={cancelDelete}
-              sx={{ 
+              sx={{
                 borderRadius: 1,
                 minWidth: 80,
                 borderColor: 'grey.400',
@@ -831,11 +952,11 @@ const TrucksPage = () => {
             >
               Cancel
             </Button>
-            <Button 
-              variant="contained" 
-              color="error" 
+            <Button
+              variant="contained"
+              color="error"
               onClick={confirmDelete}
-              sx={{ 
+              sx={{
                 borderRadius: 1,
                 minWidth: 80,
                 backgroundColor: 'error.main',

@@ -66,6 +66,21 @@ export const truckApi = createApi({
       ],
       keepUnusedDataFor: 60 * 60,
     }),
+
+      // ✅ Get truck summary with date filter
+    getTruckSummaryWithFilter: builder.query<
+      { data: TTruckSummary },
+      { id: string; from?: string; to?: string }
+    >({
+      query: ({ id, from, to }) => {
+        const params = new URLSearchParams();
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+        return `/summary/truck/${id}?${params.toString()}`;
+      },
+      providesTags: (result, error, { id }) => [{ type: "TruckSummary", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
  
     // ✅ Get single truck by ID
     getTruckById: builder.query<{ data: TTruck }, string>({
@@ -113,6 +128,8 @@ export const {
   useGetTrucksQuery,
   useGetAllTrucksQuery,
   useGetTruckSummaryQuery,
+  useGetTruckSummaryWithFilterQuery,       // ✅ NEW
+  useLazyGetTruckSummaryWithFilterQuery,   // ✅ NEW
   useGetTruckByIdQuery,
   useCreateTruckMutation,
   useUpdateTruckMutation,

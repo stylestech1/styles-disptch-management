@@ -13,13 +13,27 @@ export const apiSlice = api.injectEndpoints({
     // Get All Loads (للبحث)
     getAllLoads: builder.query({
       query: (arg: void) => `/api/v1/loads?limit=50`,
-      providesTags: ["Loads"],
+      providesTags: ["Loads"], 
     }),
     getLoadById: builder.query({
   query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
   providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
 }),
 
+// Get Loads with Date Filter
+getLoadsWithFilter: builder.query({
+  query: ({ from, to }) => {
+    let url = `/api/v1/loads`;
+    const params = [];
+
+    if (from) params.push(`from=${from}`);
+    if (to) params.push(`to=${to}`);
+
+    if (params.length) url += `?${params.join("&")}`;
+    return url;
+  },
+  providesTags: ["Loads"],
+}),
 
 
     // Create Load
@@ -157,4 +171,6 @@ export const {
   useUpdateUserRoleMutation,
   useActivateUserMutation,
   useDeactivateUserMutation,
+    useGetLoadsWithFilterQuery, 
+
 } = apiSlice;

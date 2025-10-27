@@ -408,16 +408,21 @@ const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const getChangedFields = (original: Partial<TDriver>, updated: Partial<TDriver>) => {
-  const changed: Partial<TDriver> = {};
-  Object.keys(updated).forEach((key) => {
-    const k = key as keyof TDriver;
-    if (updated[k] !== original[k]) {
-      changed[k] = updated[k] as TDriver[keyof TDriver];
-    }
-  });
-  return changed;
-};
+    const getChangedFields = (
+    original: Partial<TDriver>,
+    updated: Partial<TDriver>
+  ): Partial<TDriver> => {
+    const changedFields: Record<string, unknown> = {};
+
+    Object.entries(updated).forEach(([key, value]) => {
+      const k = key as keyof TDriver;
+      if (value !== original[k] && value !== undefined) {
+        changedFields[key] = value;
+      }
+    });
+
+    return changedFields as Partial<TDriver>;
+  };
 
 
   // ✅ Function to display API errors in toast
@@ -478,7 +483,7 @@ const handleUpdate = async () => {
   try {
     await updateDriver({
       id: formData.id,
-      body: changedFields, // 🟢 فقط التغييرات
+      body: changedFields, 
     }).unwrap();
     toast.success("✅ Driver updated successfully!");
     setOpen(false);
