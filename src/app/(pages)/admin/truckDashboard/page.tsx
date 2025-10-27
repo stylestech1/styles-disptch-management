@@ -20,13 +20,12 @@ import { tableCellClasses } from "@mui/material/TableCell";
 import { IoSearch, IoCar, IoStatsChart } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { RootState, useAppSelector } from "@/redux/store";
-import { TTruck, TTruckSummary } from "@/types/globalTypes";
+import { TTruck, TTruckSummary, TTruckWithSummary } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Erros from "@/components/ui/Erros";
 import useError from "@/hook/useError";
 import { muiTheme } from "@/theme/theme";
 import {
-  TTruckWithSummary,
   useGetTruckSummaryQuery
 } from "@/redux/slices/truckApi";
 import ChartSection from "@/components/ui/ChartSection";
