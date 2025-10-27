@@ -101,11 +101,6 @@ setFromDate("");
   });
 };
 
-
-
-
-
-
   // Status badge component
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {
     const statusConfig = {

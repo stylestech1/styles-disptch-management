@@ -1,24 +1,38 @@
 import toast from "react-hot-toast";
 import { getErrorMessage } from "./getErrorMessage";
 
-interface FilterParams {
+// تعريف أنواع عامة للبيانات المرتجعة
+interface ApiResponse<T = unknown> {
+  data?: T;
+  message?: string;
+  success?: boolean;
+}
+
+// أنواع معاملات الفلتر
+interface FilterParams<T = unknown> {
   id: string;
   fromDate?: string;
   toDate?: string;
-  fetchFunction: (params: { id: string; from?: string; to?: string }) => Promise<string>;
+  fetchFunction: (params: { id: string; from?: string; to?: string }) => Promise<ApiResponse<T>>;
 }
 
-export const applyGlobalFilter = async ({
+// أنواع معاملات الإعادة
+interface ResetParams<T = unknown> {
+  id: string;
+  fetchFunction: (params: { id: string }) => Promise<ApiResponse<T>>;
+}
+
+export const applyGlobalFilter = async <T = unknown>({
   id,
   fromDate,
   toDate,
   fetchFunction,
-}: FilterParams) => {
+}: FilterParams<T>): Promise<ApiResponse<T>> => {
   if (!fromDate && !toDate) {
     toast.error("Please select at least one date", {
       style: { background: "#dc2626", color: "#fff" },
     });
-    return;
+    throw new Error("No date selected");
   }
 
   const params: { id: string; from?: string; to?: string } = { id };
@@ -26,32 +40,31 @@ export const applyGlobalFilter = async ({
   if (toDate) params.to = `${toDate}T23:59:59Z`;
 
   try {
-    await fetchFunction(params);
+    const response = await fetchFunction(params);
     toast.success("Filter applied successfully", {
       style: { background: "#10b981", color: "#fff" },
     });
+    return response;
   } catch (err: unknown) {
-      const errorMessage = getErrorMessage(err);
-      toast.error(errorMessage || "Creating user failed ❌");
-      throw err;
-    }
+    const errorMessage = getErrorMessage(err);
+    toast.error(errorMessage || "Filter application failed ❌");
+    throw err;
+  }
 };
 
-export const resetGlobalFilter = async ({
+export const resetGlobalFilter = async <T = unknown>({
   id,
   fetchFunction,
-}: { 
-  id: string;
-  fetchFunction: (params: { id: string }) => Promise<string>;
-}) => {
+}: ResetParams<T>): Promise<ApiResponse<T>> => {
   try {
-    await fetchFunction({ id });
+    const response = await fetchFunction({ id });
     toast.success("Reset successfully", {
       style: { background: "#3b82f6", color: "#fff" },
     });
+    return response;
   } catch (err: unknown) {
-        const errorMessage = getErrorMessage(err);
-        toast.error(errorMessage || "Creating user failed ❌");
-        throw err;
-      }
+    const errorMessage = getErrorMessage(err);
+    toast.error(errorMessage || "Reset failed ❌");
+    throw err;
+  }
 };
