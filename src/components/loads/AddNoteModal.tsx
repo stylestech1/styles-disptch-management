@@ -73,7 +73,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
       <form onSubmit={handleNotes} className="space-y-4">
         {/* Load ID */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <label className="block text-sm font-medium text-slate-700 mb-2 ">
             Load ID
           </label>
           <input
