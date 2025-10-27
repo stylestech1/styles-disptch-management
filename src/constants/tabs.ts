@@ -6,6 +6,7 @@ export const TABS_CONFIG: Record<TUserRole, string[]> = {
     "Dispatchers",
     "Drivers",
     "Trucks",
+    "TruckDashboard",
     "Trailers",
     "Calculation",
   ],
