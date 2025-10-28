@@ -19,7 +19,6 @@ import {
   IoTrash,
   IoSearch,
   IoClose,
-  IoAnalytics,
   IoPerson,
 } from "react-icons/io5";
 import {
@@ -45,7 +44,6 @@ import {
   Tooltip,
   Chip,
   InputAdornment,
-  TablePagination,
   styled,
   Typography,
   CircularProgress,
@@ -117,13 +115,33 @@ const TruckForm = ({
   editMode: boolean;
   isLoading: boolean;
 }) => {
-  // ✅ Get all Drivers
+  const token = useAppSelector((state) => state.auth.token);
+  // ✅ Get all Drivers and Trucks
   const { data: driversData } = useGetAllDriversQuery();
+  const { data: trucksData } = useGetAllTrucksQuery({skip: !token});
+  
   const allDrivers = driversData?.data || [];
+  const allTrucks = trucksData?.data?.data || [];
 
-  const availableDrivers = allDrivers.filter(
-    (driver: TDriver) => driver.status === "available"
+  // ✅ الحصول على IDs السائقين المعينين بالفعل
+  const assignedDriverIds = React.useMemo(() => {
+    return allTrucks
+      .filter((truck: TTruck) => truck.assignedDriver && truck.id !== formData.id) 
+      .map((truck: TTruck) => 
+        typeof truck.assignedDriver === 'object' 
+          ? truck.assignedDriver.id 
+          : truck.assignedDriver
+      )
+      .filter(Boolean);
+  }, [allTrucks, formData.id]);
+
+  // ✅ السائقين المتاحين وغير المعينين
+  const availableUnassignedDrivers = allDrivers.filter(
+    (driver: TDriver) => 
+      driver.status === "available" && 
+      !assignedDriverIds.includes(driver.id)
   );
+
   // ✅ Truck types options
   const truckTypes = ["reefer", "van"];
 
@@ -345,9 +363,9 @@ const TruckForm = ({
                   </Box>
                 </MenuItem>
 
-                {/* ✅ عرض السواقين المتاحين فقط */}
-                {availableDrivers.length > 0 ? (
-                  availableDrivers.map((driver: TDriver) => (
+                {/* ✅ عرض السواقين المتاحين وغير المعينين فقط */}
+                {availableUnassignedDrivers.length > 0 ? (
+                  availableUnassignedDrivers.map((driver: TDriver) => (
                     <MenuItem key={driver.id} value={driver.id}>
                       <Box
                         sx={{
@@ -414,7 +432,7 @@ const TruckForm = ({
 
                         {/* Status Badge */}
                         <Chip
-                          label={driver.status}
+                          label="Available"
                           color="success"
                           size="small"
                           sx={{
@@ -456,7 +474,7 @@ const TruckForm = ({
                           No available drivers
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          All drivers are currently busy
+                          All drivers are currently assigned or busy
                         </Typography>
                       </Box>
                     </Box>
@@ -465,7 +483,7 @@ const TruckForm = ({
               </Select>
 
               {/* ✅ رسالة توضيحية محسنة */}
-              {availableDrivers.length === 0 && (
+              {availableUnassignedDrivers.length === 0 && (
                 <Alert
                   severity="warning"
                   sx={{
@@ -494,15 +512,14 @@ const TruckForm = ({
                       ⚠️
                     </Box>
                     <Typography variant="caption">
-                      No available drivers. All drivers are currently busy or
-                      inactive.
+                      No available unassigned drivers. All drivers are currently assigned to other trucks or busy.
                     </Typography>
                   </Box>
                 </Alert>
               )}
 
               {/* ✅ إحصائيات السائقين */}
-              {availableDrivers.length > 0 && (
+              {availableUnassignedDrivers.length > 0 && (
                 <Box
                   sx={{
                     display: "flex",
@@ -516,8 +533,8 @@ const TruckForm = ({
                     color="success.main"
                     fontWeight="500"
                   >
-                    {availableDrivers.length} available driver
-                    {availableDrivers.length !== 1 ? "s" : ""}
+                    {availableUnassignedDrivers.length} available unassigned driver
+                    {availableUnassignedDrivers.length !== 1 ? "s" : ""}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Total: {allDrivers.length} drivers
@@ -610,12 +627,10 @@ const TruckForm = ({
 };
 
 const TrucksPage = () => {
-  const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
   const token = useAppSelector((state) => state.auth.token);
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [search, setSearch] = useState("");
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
@@ -662,6 +677,11 @@ const TrucksPage = () => {
   };
 
   const handleEditClick = (truck: TTruck) => {
+    // ✅ استخراج ID السائق سواء كان assignedDriver كائن أو string
+    const assignedDriverId = typeof truck.assignedDriver === 'object' 
+      ? truck.assignedDriver.id
+      : truck.assignedDriver;
+
     setFormData({
       id: truck.id,
       truckId: truck.truckId,
@@ -672,12 +692,7 @@ const TrucksPage = () => {
       capacity: truck.capacity,
       fuelPerMile: truck.fuelPerMile,
       status: truck.status,
-      assignedDriver:
-        typeof truck.assignedDriver === "object"
-          ? truck.assignedDriver.driverId.toString()
-          : truck.assignedDriver,
-      // createdBy: truck.createdBy,
-      // updatedBy: truck.updatedBy
+      assignedDriver: assignedDriverId
     });
     setEditMode(true);
     setOpen(true);
@@ -725,7 +740,11 @@ const TrucksPage = () => {
       toast.success("✅ Truck created successfully!");
       setOpen(false);
       refetch();
-    } catch (err) {}
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Updating role failed ❌");
+      throw err;
+    }
   };
 
   // ✅ Update Truck
@@ -749,7 +768,11 @@ const TrucksPage = () => {
       toast.success("✅ Truck updated successfully!");
       setOpen(false);
       refetch();
-    } catch (err) {}
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Updating role failed ❌");
+      throw err;
+    }
   };
 
   // ✅ Delete Truck
@@ -787,18 +810,6 @@ const TrucksPage = () => {
   const cancelDelete = () => {
     setDeleteToast({ open: false, message: "" });
     setTruckToDelete(null);
-  };
-
-  // ✅ Handle Pagination
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
   };
 
   if (isLoading) return <Loading />;
