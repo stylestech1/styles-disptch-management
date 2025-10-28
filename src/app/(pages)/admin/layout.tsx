@@ -83,7 +83,7 @@ export default function AdminLayout({
       >
         {/* Header */}
         <div className="p-6 border-b border-slate-600">
-          <div>
+          <div className="flex justify-between items-center">
             <Link href={user.id} className="flex items-center gap-3">
               <div className="p-2 bg-slate-700 rounded-xl">
                 <IoPersonCircleOutline size={24} className="text-slate-300" />

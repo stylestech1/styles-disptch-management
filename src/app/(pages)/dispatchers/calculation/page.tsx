@@ -48,6 +48,7 @@ import {
   calculateDhoToOriginDistance,
   calculateFullRouteDistance,
 } from "@/utils/googleDistanceCalculator";
+import { muiTheme } from "@/theme/theme";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
@@ -55,7 +56,7 @@ const LazyGoogleMapsLoader = lazy(
 );
 const LazyMapWithRoute = lazy(() => import("@/components/ui/MapWithRoute"));
 
-// Custom hook for distance calculations
+// FIXME: Custom hook for distance calculations
 const useRouteCalculations = (
   dho: TPlace | null,
   origin: TPlace | null,
@@ -69,6 +70,7 @@ const useRouteCalculations = (
   const [totalTime, setTotalTime] = useState<number | null>(null);
   const [isCalculating, setIsCalculating] = useState(false);
 
+  // Calculate DHO ➡ Origin
   const calculateDhoToOrigin = useCallback(async () => {
     if (!dho || !origin) {
       setDhoToOriginDistance(null);
@@ -94,6 +96,7 @@ const useRouteCalculations = (
     }
   }, [dho, origin]);
 
+  // Calculate DHO ➡ Origin ➡ All Destinations
   const calculateTotalRoute = useCallback(async () => {
     const validDestinations = destinations.filter(
       (dest): dest is TPlace => dest !== null
@@ -156,7 +159,7 @@ const useRouteCalculations = (
   };
 };
 
-// Custom hook for rate calculation
+// TODO: Custom hook for rate calculation
 const useRateCalculation = () => {
   const [dh, setDh] = useState<number | "">("");
   const [loadMiles, setLoadMiles] = useState<number | "">("");
@@ -211,7 +214,7 @@ const useRateCalculation = () => {
   };
 };
 
-// Format time function
+// TODO: Format time function
 const formatTime = (hours: number): string => {
   const totalMinutes = hours * 60;
   const hoursPart = Math.floor(totalMinutes / 60);
@@ -226,7 +229,7 @@ const formatTime = (hours: number): string => {
   }
 };
 
-// Map fallback component
+// FIXME: Map fallback component
 const MapFallback = () => (
   <Box
     sx={{
@@ -249,7 +252,7 @@ const MapFallback = () => (
   </Box>
 );
 
-// Statistics Card Component
+// FIXME: Statistics Card Component
 const StatCard = ({
   title,
   value,
@@ -485,7 +488,7 @@ const Calculation = () => {
 
                 <Stack
                   direction="row"
-                  spacing={3}
+                  gap={3}
                   alignItems="center"
                   flexWrap="wrap"
                 >
@@ -499,6 +502,9 @@ const Calculation = () => {
                       px: 4,
                       py: 1.5,
                       minWidth: 140,
+                      [muiTheme.breakpoints.down('md')]: {
+                        width: '100%'
+                      }
                     }}
                   >
                     Calculate
@@ -524,6 +530,9 @@ const Calculation = () => {
                         backgroundColor: "success.50",
                         borderColor: "success.light",
                       },
+                      [muiTheme.breakpoints.down('md')]: {
+                        width: '100%'
+                      }
                     }}
                   />
                 </Stack>
@@ -540,8 +549,6 @@ const Calculation = () => {
                 )}
               </Box>
             </Paper>
-
-            {/* Route Planning Section */}
 
             <Paper
               elevation={0}
@@ -653,6 +660,7 @@ const Calculation = () => {
 
         {/* Right Column - Map */}
         <Grid size={{ xs: 12, lg: 6 }}>
+          {/* Route Planning Section */}
           <Paper
             elevation={0}
             sx={{

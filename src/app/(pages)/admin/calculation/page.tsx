@@ -48,6 +48,7 @@ import {
   calculateDhoToOriginDistance,
   calculateFullRouteDistance,
 } from "@/utils/googleDistanceCalculator";
+import { muiTheme } from "@/theme/theme";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
@@ -487,7 +488,7 @@ const Calculation = () => {
 
                 <Stack
                   direction="row"
-                  spacing={3}
+                  gap={3}
                   alignItems="center"
                   flexWrap="wrap"
                 >
@@ -501,6 +502,9 @@ const Calculation = () => {
                       px: 4,
                       py: 1.5,
                       minWidth: 140,
+                      [muiTheme.breakpoints.down('md')]: {
+                        width: '100%'
+                      }
                     }}
                   >
                     Calculate
@@ -526,6 +530,9 @@ const Calculation = () => {
                         backgroundColor: "success.50",
                         borderColor: "success.light",
                       },
+                      [muiTheme.breakpoints.down('md')]: {
+                        width: '100%'
+                      }
                     }}
                   />
                 </Stack>

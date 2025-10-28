@@ -44,7 +44,6 @@ import {
   Tooltip,
   Chip,
   InputAdornment,
-  TablePagination,
   styled,
   Typography,
   CircularProgress,
@@ -53,6 +52,7 @@ import {
 } from "@mui/material";
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import Pagination from "@/components/ui/Pagination";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -351,6 +351,7 @@ const DriversPage = () => {
 
   const drivers = driversData?.data || [];
   const allDrivers = allDriversData?.data || [];
+  const pagination = driversData?.paginationResult || null;
 
   const filteredDrivers = search
     ? allDrivers.filter(
@@ -401,7 +402,7 @@ const DriversPage = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-    const getChangedFields = (
+  const getChangedFields = (
     original: Partial<TDriver>,
     updated: Partial<TDriver>
   ): Partial<TDriver> => {
@@ -416,7 +417,6 @@ const DriversPage = () => {
 
     return changedFields as Partial<TDriver>;
   };
-
 
   // ✅ Function to display API errors in toast
   const showApiErrors = (error: unknown) => {
@@ -473,21 +473,20 @@ const DriversPage = () => {
       return;
     }
 
-  try {
-    await updateDriver({
-      id: formData.id,
-      body: changedFields, 
-    }).unwrap();
-    toast.success("✅ Driver updated successfully!");
-    setOpen(false);
-    refetch();
-  } catch (err: unknown) {
-    const errorMessage = getErrorMessage(err);
-    showApiErrors(err);
-    toast.error(errorMessage || "Driver update failed ❌");
-  }
-};
-
+    try {
+      await updateDriver({
+        id: formData.id,
+        body: changedFields,
+      }).unwrap();
+      toast.success("✅ Driver updated successfully!");
+      setOpen(false);
+      refetch();
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      showApiErrors(err);
+      toast.error(errorMessage || "Driver update failed ❌");
+    }
+  };
 
   // ✅ Delete Driver with MUI Toast
   const [driverToDelete, setDriverToDelete] = useState<{
@@ -528,18 +527,6 @@ const DriversPage = () => {
     setDriverToDelete(null);
   };
 
-  // ✅ Handle Pagination
-  const handleChangePage = (event: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
   if (isLoading) return <Loading />;
 
   return (
@@ -553,6 +540,11 @@ const DriversPage = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 4,
+          [muiTheme.breakpoints.down("md")]: {
+            flexDirection: "column",
+            gap: 2,
+            alignItems: "stretch",
+          },
         }}
       >
         <Titles>Driver Management</Titles>
@@ -599,13 +591,31 @@ const DriversPage = () => {
               borderColor: muiTheme.palette.primary.main,
             },
           },
+          [muiTheme.breakpoints.down("md")]: {
+            width: "100%",
+          },
         }}
       />
 
       {/* Table */}
       <TableContainer
         component={Paper}
-        sx={{ borderRadius: 2, overflow: "hidden" }}
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+          overflowX: "auto",
+          maxWidth: "100%",
+          "&::-webkit-scrollbar": {
+            height: 8,
+          },
+          "&::-webkit-scrollbar-track": {
+            background: muiTheme.palette.grey[100],
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: muiTheme.palette.grey[400],
+            borderRadius: 4,
+          },
+        }}
       >
         <Table sx={{ minWidth: 650 }} aria-label="drivers table">
           <TableHead>
@@ -716,16 +726,15 @@ const DriversPage = () => {
       </TableContainer>
 
       {/* Pagination */}
-      <TablePagination
-        rowsPerPageOptions={[5, 10, 25]}
-        component="div"
-        count={filteredDrivers.length}
-        rowsPerPage={rowsPerPage}
-        page={page}
-        onPageChange={handleChangePage}
-        onRowsPerPageChange={handleChangeRowsPerPage}
-        sx={{ mt: 2 }}
-      />
+      {pagination && allDrivers.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+          pageSize={10}
+          showInfo={true}
+        />
+      )}
 
       {/* Driver Form Modal */}
       <DriverForm

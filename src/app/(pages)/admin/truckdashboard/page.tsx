@@ -23,12 +23,10 @@ import { RootState, useAppSelector } from "@/redux/store";
 import { TTruck, TTruckSummary, TTruckWithSummary } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Erros from "@/components/ui/Erros";
-import useError from "@/hook/useError";
 import { muiTheme } from "@/theme/theme";
-import {
-  useGetTruckSummaryQuery
-} from "@/redux/slices/truckApi";
+import { useGetTruckSummaryQuery } from "@/redux/slices/truckApi";
 import ChartSection from "@/components/ui/ChartSection";
+import Pagination from "@/components/ui/Pagination";
 
 const StyledTableCell = styled(TableCell)(() => ({
   [`&.${tableCellClasses.head}`]: {
@@ -64,162 +62,187 @@ const TableSkeleton = ({ rows = 5 }: { rows?: number }) => (
   <TableBody>
     {Array.from({ length: rows }).map((_, index) => (
       <TableRow key={index}>
-        <TableCell><Skeleton variant="text" width={20} /></TableCell>
+        <TableCell>
+          <Skeleton variant="text" width={20} />
+        </TableCell>
         <TableCell>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Skeleton variant="circular" width={18} height={18} />
             <Skeleton variant="text" width={80} />
           </Box>
         </TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={60} /></TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={60} /></TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={80} /></TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={60} /></TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={60} /></TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={60} /></TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={60} /></TableCell>
-        <TableCell align="right"><Skeleton variant="text" width={80} /></TableCell>
-        <TableCell align="center"><Skeleton variant="rectangular" width={80} height={32} /></TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={60} />
+        </TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={60} />
+        </TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={80} />
+        </TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={60} />
+        </TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={60} />
+        </TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={60} />
+        </TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={60} />
+        </TableCell>
+        <TableCell align="right">
+          <Skeleton variant="text" width={80} />
+        </TableCell>
+        <TableCell align="center">
+          <Skeleton variant="rectangular" width={80} height={32} />
+        </TableCell>
       </TableRow>
     ))}
   </TableBody>
 );
 
 // Memoized Truck Row Component
-const TruckRow = React.memo(({
-  truck,
-  index,
-  onViewStats
-}: {
-  truck: TTruckWithSummary
-  index: number;
-  onViewStats: (_id: string) => void;
-}) => {
-  const summary = truck.summary;
-  const hasSummary = !!summary;
+const TruckRow = React.memo(
+  ({
+    truck,
+    index,
+    onViewStats,
+  }: {
+    truck: TTruckWithSummary;
+    index: number;
+    onViewStats: (_id: string) => void;
+  }) => {
+    const summary = truck.summary;
+    const hasSummary = !!summary;
 
-  const profitValue = summary?.netProfit ?? 0;
-  const profitColor = profitValue >= 0 ? "success.main" : "error.main";
+    const profitValue = summary?.netProfit ?? 0;
+    const profitColor = profitValue >= 0 ? "success.main" : "error.main";
 
-  return (
-    <TableRow key={truck.truckId} hover sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-      <TableCell>{index + 1}</TableCell>
-      <TableCell>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IoCar size={18} color="#64748b" />
-          <Typography variant="body2" fontWeight={500}>
-            {truck.truckId}
-          </Typography>
-        </Box>
-      </TableCell>
-
-      {/* Loads */}
-      <TableCell align="right">
-        {!hasSummary ? (
-          <Skeleton width={60} height={18} />
-        ) : (
-          summary.totalLoads || 0
-        )}
-      </TableCell>
-
-      {/* Miles */}
-      <TableCell align="right">
-        {!hasSummary ? (
-          <Skeleton width={60} height={18} />
-        ) : (
-          (summary.totalMiles ?? 0).toLocaleString()
-        )}
-      </TableCell>
-
-      {/* Gross Revenue */}
-      <TableCell align="right">
-        {!hasSummary ? (
-          <Skeleton width={80} height={18} />
-        ) : (
-          `$${(summary.totalRevenue ?? 0).toLocaleString()}`
-        )}
-      </TableCell>
-
-      {/* Fuel Cost */}
-      <TableCell align="right">
-        {!hasSummary ? (
-          <Skeleton width={60} height={18} />
-        ) : (
-          `$${(summary.fuelCost ?? 0).toLocaleString()}`
-        )}
-      </TableCell>
-
-      {/* Driver Pay */}
-      <TableCell align="right">
-        {!hasSummary ? (
-          <Skeleton width={60} height={18} />
-        ) : (
-          `$${(summary.driverPay ?? 0).toLocaleString()}`
-        )}
-      </TableCell>
-
-      {/* Insurance Cost */}
-      <TableCell align="right">
-        {!hasSummary ? (
-          <Skeleton width={60} height={18} />
-        ) : (
-          `$${(summary.insuranceCost ?? 0).toLocaleString()}`
-        )}
-      </TableCell>
-
-      {/* Repair Cost */}
-      <TableCell align="right">
-        {!hasSummary ? (
-          <Skeleton width={60} height={18} />
-        ) : (
-          `$${(summary.repairCost ?? 0).toLocaleString()}`
-        )}
-      </TableCell>
-
-      {/* Net Profit */}
-      <TableCell
-        align="right"
-        sx={{
-          fontWeight: 600,
-          color: profitColor,
-        }}
+    return (
+      <TableRow
+        key={truck.truckId}
+        hover
+        sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
       >
-        {!hasSummary ? (
-          <Skeleton width={80} height={18} />
-        ) : (
-          `$${profitValue.toLocaleString()}`
-        )}
-      </TableCell>
+        <TableCell>{index + 1}</TableCell>
+        <TableCell>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <IoCar size={18} color="#64748b" />
+            <Typography variant="body2" fontWeight={500}>
+              {truck.truckId}
+            </Typography>
+          </Box>
+        </TableCell>
 
-      <TableCell align="center">
-        <button
-          onClick={() => onViewStats(truck._id)}
-          className="flex items-center gap-1 px-3 py-2 bg-blue-950 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors duration-200"
-          disabled={!hasSummary}
+        {/* Loads */}
+        <TableCell align="right">
+          {!hasSummary ? (
+            <Skeleton width={60} height={18} />
+          ) : (
+            summary.totalLoads || 0
+          )}
+        </TableCell>
+
+        {/* Miles */}
+        <TableCell align="right">
+          {!hasSummary ? (
+            <Skeleton width={60} height={18} />
+          ) : (
+            (summary.totalMiles ?? 0).toLocaleString()
+          )}
+        </TableCell>
+
+        {/* Gross Revenue */}
+        <TableCell align="right">
+          {!hasSummary ? (
+            <Skeleton width={80} height={18} />
+          ) : (
+            `$${(summary.totalRevenue ?? 0).toLocaleString()}`
+          )}
+        </TableCell>
+
+        {/* Fuel Cost */}
+        <TableCell align="right">
+          {!hasSummary ? (
+            <Skeleton width={60} height={18} />
+          ) : (
+            `$${(summary.fuelCost ?? 0).toLocaleString()}`
+          )}
+        </TableCell>
+
+        {/* Driver Pay */}
+        <TableCell align="right">
+          {!hasSummary ? (
+            <Skeleton width={60} height={18} />
+          ) : (
+            `$${(summary.driverPay ?? 0).toLocaleString()}`
+          )}
+        </TableCell>
+
+        {/* Insurance Cost */}
+        <TableCell align="right">
+          {!hasSummary ? (
+            <Skeleton width={60} height={18} />
+          ) : (
+            `$${(summary.insuranceCost ?? 0).toLocaleString()}`
+          )}
+        </TableCell>
+
+        {/* Repair Cost */}
+        <TableCell align="right">
+          {!hasSummary ? (
+            <Skeleton width={60} height={18} />
+          ) : (
+            `$${(summary.repairCost ?? 0).toLocaleString()}`
+          )}
+        </TableCell>
+
+        {/* Net Profit */}
+        <TableCell
+          align="right"
+          sx={{
+            fontWeight: 600,
+            color: profitColor,
+          }}
         >
-          <IoStatsChart size={14} />
-          Stats
-        </button>
-      </TableCell>
-    </TableRow>
-  );
-});
+          {!hasSummary ? (
+            <Skeleton width={80} height={18} />
+          ) : (
+            `$${profitValue.toLocaleString()}`
+          )}
+        </TableCell>
 
-TruckRow.displayName = 'TruckRow';
+        <TableCell align="center">
+          <button
+            onClick={() => onViewStats(truck._id)}
+            className="flex items-center gap-1 px-3 py-2 bg-blue-950 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors duration-200"
+            disabled={!hasSummary}
+          >
+            <IoStatsChart size={14} />
+            Stats
+          </button>
+        </TableCell>
+      </TableRow>
+    );
+  }
+);
+
+TruckRow.displayName = "TruckRow";
 
 const TruckDashboard = () => {
   const [search, setSearch] = useState("");
   const router = useRouter();
-  const { setError } = useError();
   const token = useAppSelector((state: RootState) => state.auth.token);
 
   const {
     data: allTrucksData,
     isLoading: trucksLoading,
     error: trucksError,
-    isFetching
+    isFetching,
   } = useGetTruckSummaryQuery(undefined, {
-    skip: !token
+    skip: !token,
   });
 
   // Debounce search
@@ -236,20 +259,18 @@ const TruckDashboard = () => {
       const searchFields = [
         String(truck.truckId || ""),
         String(truck.model || ""),
-        String(truck.plateNumber || "")
+        String(truck.plateNumber || ""),
       ];
 
-      return searchFields.some(field =>
-        field.toLowerCase().includes(term)
-      );
+      return searchFields.some((field) => field.toLowerCase().includes(term));
     });
   }, [allTrucksData, debouncedSearch]);
 
-  // تحسين chart data
+  // chart data
   const chartData = useMemo(() => {
-    const trucksWithSummaries = (allTrucksData?.data?.trucksSummary || []).filter(
-      (truck: TTruck & { summary?: TTruckSummary }) => truck.summary
-    );
+    const trucksWithSummaries = (
+      allTrucksData?.data?.trucksSummary || []
+    ).filter((truck: TTruck & { summary?: TTruckSummary }) => truck.summary);
 
     if (trucksWithSummaries.length === 0) return null;
 
@@ -258,20 +279,31 @@ const TruckDashboard = () => {
     );
 
     const milesData = trucksWithSummaries.map(
-      (truck: TTruck & { summary?: TTruckSummary }) => truck.summary?.totalMiles || 0
+      (truck: TTruck & { summary?: TTruckSummary }) =>
+        truck.summary?.totalMiles || 0
     );
 
     const profitData = trucksWithSummaries.map(
-      (truck: TTruck & { summary?: TTruckSummary }) => truck.summary?.netProfit || 0
+      (truck: TTruck & { summary?: TTruckSummary }) =>
+        truck.summary?.netProfit || 0
     );
 
     const baseColors = [
-      '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
-      '#FF9F40', '#C9CBCF', '#7CDBED', '#FF97B7', '#5DE2A0'
+      "#FF6384",
+      "#36A2EB",
+      "#FFCE56",
+      "#4BC0C0",
+      "#9966FF",
+      "#FF9F40",
+      "#C9CBCF",
+      "#7CDBED",
+      "#FF97B7",
+      "#5DE2A0",
     ];
 
-    const colors = Array.from({ length: trucksWithSummaries.length }, (_, i) =>
-      baseColors[i % baseColors.length]
+    const colors = Array.from(
+      { length: trucksWithSummaries.length },
+      (_, i) => baseColors[i % baseColors.length]
     );
 
     return {
@@ -279,10 +311,10 @@ const TruckDashboard = () => {
         labels,
         datasets: [
           {
-            label: 'Total Miles',
+            label: "Total Miles",
             data: milesData,
             backgroundColor: colors,
-            borderColor: colors.map(color => color.replace('0.2', '1')),
+            borderColor: colors.map((color) => color.replace("0.2", "1")),
             borderWidth: 2,
           },
         ],
@@ -291,10 +323,10 @@ const TruckDashboard = () => {
         labels,
         datasets: [
           {
-            label: 'Net Profit ($)',
+            label: "Net Profit ($)",
             data: profitData,
             backgroundColor: colors,
-            borderColor: colors.map(color => color.replace('0.2', '1')),
+            borderColor: colors.map((color) => color.replace("0.2", "1")),
             borderWidth: 2,
           },
         ],
@@ -303,14 +335,20 @@ const TruckDashboard = () => {
   }, [allTrucksData]);
 
   // Event handlers
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearch(e.target.value);
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(e.target.value);
+    },
+    []
+  );
 
-  const handleViewStats = useCallback((_id: string) => {
-    sessionStorage.setItem('truckDashboardSearch', search);
-    router.push(`/admin/truckSummary/${_id}`);
-  }, [router, search]);
+  const handleViewStats = useCallback(
+    (_id: string) => {
+      sessionStorage.setItem("truckDashboardSearch", search);
+      router.push(`/admin/truckSummary/${_id}`);
+    },
+    [router, search]
+  );
 
   // Loading state
   if (trucksLoading) {
@@ -337,56 +375,73 @@ const TruckDashboard = () => {
   const displayTrucks = filteredTrucks;
 
   return (
-    <section className="relative p-6 max-w-7xl mx-auto">
+    <section className="relative p-6 mx-auto">
       {/* Header */}
-      <Box className="mb-8">
-        <Titles>Truck Dashboard</Titles>
-        <Typography variant="body1" color="text.secondary" className="mt-2">
-          {trucks.length > 0
-            ? `Managing ${trucks.length} trucks in your fleet${isFetching ? ' (updating...)' : ''}`
-            : 'No trucks available in your fleet'
-          }
-        </Typography>
-      </Box>
+      <Box className="flex justify-between items-center flex-col md:flex-row">
+        <Box className="flex flex-col">
+          <Box className="mb-8">
+            <Titles>Truck Dashboard</Titles>
+            <Typography variant="body1" color="text.secondary" className="mt-2">
+              {trucks.length > 0
+                ? `Managing ${trucks.length} trucks in your fleet${
+                    isFetching ? " (updating...)" : ""
+                  }`
+                : "No trucks available in your fleet"}
+            </Typography>
+          </Box>
 
-      {/* Search Bar */}
-      <Box className="mb-8">
-        <TextField
-          fullWidth
-          placeholder="Search by truck ID, model, or plate number..."
-          value={search}
-          onChange={handleSearchChange}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <IoSearch className="text-slate-400" />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            maxWidth: '400px',
-            '& .MuiOutlinedInput-root': {
-              borderRadius: '12px',
-              backgroundColor: 'white',
-            }
-          }}
-        />
-      </Box>
-
-      {/* Charts Section */}
-      {chartData && (
-        <Box className="mb-8">
-          <ChartSection chartData={chartData} />
+          {/* Search Bar */}
+          <Box className="mb-8">
+            <TextField
+              fullWidth
+              placeholder="Search by truck ID, model, or plate number..."
+              value={search}
+              onChange={handleSearchChange}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IoSearch className="text-slate-400" />
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                maxWidth: "400px",
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "12px",
+                  backgroundColor: "white",
+                },
+              }}
+            />
+          </Box>
         </Box>
-      )}
+
+        {/* Charts Section */}
+        {chartData && (
+          <Box>
+            <ChartSection chartData={chartData} />
+          </Box>
+        )}
+      </Box>
 
       {/* Table Section */}
       <TableContainer
         component={Paper}
         sx={{
           borderRadius: "12px",
-          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
-          overflow: 'hidden'
+          boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
+          overflow: "hidden",
+          overflowX: "auto",
+          maxWidth: "100%",
+          "&::-webkit-scrollbar": {
+            height: 8,
+          },
+          "&::-webkit-scrollbar-track": {
+            background: muiTheme.palette.grey[100],
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: muiTheme.palette.grey[400],
+            borderRadius: 4,
+          },
         }}
       >
         <Table sx={{ minWidth: 800 }}>
@@ -423,7 +478,9 @@ const TruckDashboard = () => {
                 <TableRow>
                   <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
                     <Typography variant="body1" color="text.secondary">
-                      {search ? "No trucks match your search" : "No trucks available"}
+                      {search
+                        ? "No trucks match your search"
+                        : "No trucks available"}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -432,6 +489,17 @@ const TruckDashboard = () => {
           )}
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      {/* {pagination && summary.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+          pageSize={10}
+          showInfo={true}
+        />
+      )} */}
     </section>
   );
 };

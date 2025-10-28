@@ -1,5 +1,4 @@
 "use client";
-
 interface PaginationProps {
   pagination: {
     currentPage: number;
@@ -17,28 +16,16 @@ const Pagination = ({
   pagination,
   page,
   setPage,
-  pageSize = 10,
-  showInfo = true,
   variant = "default",
 }: PaginationProps) => {
   if (!pagination) return null;
 
-  const { currentPage, totalPages, total } = pagination;
-
-  const startItem = (page - 1) * pageSize + 1;
-  const endItem = Math.min(page * pageSize, total || totalPages * pageSize);
+  const { currentPage, totalPages } = pagination;
 
   if (variant === "minimal") {
     return (
-      <div className="flex justify-between items-center mt-6">
-        {showInfo && (
-          <div className="text-sm text-slate-600">
-            Showing {startItem} to {endItem} of {total || totalPages * pageSize}{" "}
-            entries
-          </div>
-        )}
-
-        <div className="flex items-center gap-1">
+      <div className="flex justify-end items-center mt-6">
+        <div className="flex items-center justify-end gap-1">
           <button
             disabled={page <= 1}
             onClick={() => setPage(Math.max(1, page - 1))}
@@ -64,15 +51,8 @@ const Pagination = ({
   }
 
   return (
-    <div className="flex justify-between items-center mt-6">
-      {showInfo && (
-        <div className="text-sm text-slate-600">
-          Showing {startItem} to {endItem} of {total || totalPages * pageSize}{" "}
-          entries
-        </div>
-      )}
-
-      <div className="flex items-center gap-2">
+    <div className="flex justify-end items-center mt-6">
+      <div className="flex items-center justify-end gap-2">
         <button
           disabled={page <= 1}
           onClick={() => setPage(Math.max(1, page - 1))}

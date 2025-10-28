@@ -276,7 +276,7 @@ const LoadsPage = () => {
     <section className="relative p-6">
       {/* Header */}
       <div className="space-y-6 mb-10">
-  <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-4">
+  <div className="flex flex-col xl:flex-row xl:items-start xl:justify-between gap-4">
     <div className="flex-1">
       <Titles>Load Management</Titles>
       <p className="text-slate-600 mt-2 text-sm max-w-2xl">
@@ -285,9 +285,9 @@ const LoadsPage = () => {
     </div>
     
     <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
-      <div className="flex flex-col sm:flex-row items-end gap-4">
-        <div className="flex items-center gap-3">
-          <div className="flex flex-col min-w-[140px]">
+      <div className="flex flex-col lg:flex-row items-end gap-4">
+        <div className="flex items-center flex-col md:flex-row gap-3 w-full">
+          <div className="flex flex-col w-full">
             <label className="text-xs font-medium text-slate-700 mb-1">From Date</label>
             <input
               type="date"
@@ -297,7 +297,7 @@ const LoadsPage = () => {
             />
           </div>
 
-          <div className="flex flex-col min-w-[140px]">
+          <div className="flex flex-col w-full">
             <label className="text-xs font-medium text-slate-700 mb-1">To Date</label>
             <input
               type="date"
@@ -339,7 +339,7 @@ const LoadsPage = () => {
     </div>
   </div>
 
-  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm ">
+  <div className="flex flex-col lg:flex-row items-center justify-between gap-4 p-4 bg-white rounded-lg border border-slate-200 shadow-sm ">
     {/* Search */}
     <div className="w-full sm:flex-none sm:w-80">
       <div className="relative">
@@ -361,7 +361,7 @@ const LoadsPage = () => {
         setEditingLoad(null);
         setShowCreateEditModal(true);
       }}
-      className="flex items-center justify-center gap-2 py-3 px-6 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 rounded-lg shadow-md hover:shadow-lg font-medium whitespace-nowrap w-full sm:w-auto"
+      className="flex items-center justify-center gap-2 py-3 px-6 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-all duration-200 rounded-lg shadow-md hover:shadow-lg font-medium whitespace-nowrap w-full lg:w-auto"
     >
       <IoAdd size={18} />
       New Load
@@ -381,7 +381,7 @@ const LoadsPage = () => {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
         <StatsCard
           title="Total Loads"
           value={allLoads.length || 0}

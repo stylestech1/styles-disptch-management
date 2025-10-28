@@ -322,7 +322,7 @@ const Dispatchers = () => {
         <button
           onClick={() => setPopup(true)}
           disabled={loading}
-          className="flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors rounded-lg shadow-sm font-medium"
+          className="w-full sm:w-50 flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors rounded-lg shadow-sm font-medium"
         >
           <IoAdd size={20} />
           {loading ? "Loading..." : "Add New User"}
@@ -355,7 +355,7 @@ const Dispatchers = () => {
       )}
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
         <StatsCard
           title="Total Dispatchers"
           value={dispatchers.length || 0}
