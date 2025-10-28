@@ -118,28 +118,12 @@ const TruckForm = ({
   const token = useAppSelector((state) => state.auth.token);
   // ✅ Get all Drivers and Trucks
   const { data: driversData } = useGetAllDriversQuery();
-  const { data: trucksData } = useGetAllTrucksQuery({skip: !token});
   
   const allDrivers = driversData?.data || [];
-  const allTrucks = trucksData?.data?.data || [];
 
-  // ✅ الحصول على IDs السائقين المعينين بالفعل
-  const assignedDriverIds = React.useMemo(() => {
-    return allTrucks
-      .filter((truck: TTruck) => truck.assignedDriver && truck.id !== formData.id) 
-      .map((truck: TTruck) => 
-        typeof truck.assignedDriver === 'object' 
-          ? truck.assignedDriver.id 
-          : truck.assignedDriver
-      )
-      .filter(Boolean);
-  }, [allTrucks, formData.id]);
-
-  // ✅ السائقين المتاحين وغير المعينين
-  const availableUnassignedDrivers = allDrivers.filter(
-    (driver: TDriver) => 
-      driver.status === "available" && 
-      !assignedDriverIds.includes(driver.id)
+  // Checking for available driver
+  const availableDrivers = allDrivers.filter(
+    (driver: TDriver) => driver.status === "available"
   );
 
   // ✅ Truck types options
@@ -364,8 +348,8 @@ const TruckForm = ({
                 </MenuItem>
 
                 {/* ✅ عرض السواقين المتاحين وغير المعينين فقط */}
-                {availableUnassignedDrivers.length > 0 ? (
-                  availableUnassignedDrivers.map((driver: TDriver) => (
+                {availableDrivers.length > 0 ? (
+                  availableDrivers.map((driver: TDriver) => (
                     <MenuItem key={driver.id} value={driver.id}>
                       <Box
                         sx={{
@@ -483,7 +467,7 @@ const TruckForm = ({
               </Select>
 
               {/* ✅ رسالة توضيحية محسنة */}
-              {availableUnassignedDrivers.length === 0 && (
+              {availableDrivers.length === 0 && (
                 <Alert
                   severity="warning"
                   sx={{
@@ -519,7 +503,7 @@ const TruckForm = ({
               )}
 
               {/* ✅ إحصائيات السائقين */}
-              {availableUnassignedDrivers.length > 0 && (
+              {availableDrivers.length > 0 && (
                 <Box
                   sx={{
                     display: "flex",
@@ -533,8 +517,8 @@ const TruckForm = ({
                     color="success.main"
                     fontWeight="500"
                   >
-                    {availableUnassignedDrivers.length} available unassigned driver
-                    {availableUnassignedDrivers.length !== 1 ? "s" : ""}
+                    {availableDrivers.length} available unassigned driver
+                    {availableDrivers.length !== 1 ? "s" : ""}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Total: {allDrivers.length} drivers
@@ -634,7 +618,7 @@ const TrucksPage = () => {
   const [search, setSearch] = useState("");
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
-  // 🔹 API Queries
+  // 🔹 RTK Queries
   const {
     data: trucksData,
     isLoading,
@@ -642,14 +626,13 @@ const TrucksPage = () => {
   } = useGetTrucksQuery({ page: page + 1 });
   const { data: allTrucksData } = useGetAllTrucksQuery({ skip: !token });
 
+  // 🔹 RTK Mutation
   const [createTruck, { isLoading: isCreating, error: createError }] =
     useCreateTruckMutation();
-
   const [updateTruck, { isLoading: isUpdating, error: updateError }] =
     useUpdateTruckMutation();
-
-  const [deleteTruck, { isLoading: isDeleting, error: deleteError }] =
-    useDeleteTruckMutation();
+    const [deleteTruck, { isLoading: isDeleting, error: deleteError }] =
+      useDeleteTruckMutation();
 
   const trucks = trucksData?.data?.data || [];
   const allTrucks = allTrucksData?.data?.data || [];
@@ -677,7 +660,6 @@ const TrucksPage = () => {
   };
 
   const handleEditClick = (truck: TTruck) => {
-    // ✅ استخراج ID السائق سواء كان assignedDriver كائن أو string
     const assignedDriverId = typeof truck.assignedDriver === 'object' 
       ? truck.assignedDriver.id
       : truck.assignedDriver;
