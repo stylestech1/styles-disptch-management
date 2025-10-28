@@ -1,7 +1,7 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { TLoads, TStatusLoad } from "@/types/globalTypes";
+import { TLoads, TLoadSummary, TStatusLoad, TTruckSummary } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
@@ -45,7 +45,7 @@ const DriverSummary = () => {
   const router = useRouter();
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
-  const [filteredSummary, setFilteredSummary] = useState<any>(null);
+  const [filteredSummary, setFilteredSummary] = useState<TLoadSummary | null>(null);
   const [error, setError] = useState<string>("");
 
   const {
