@@ -258,7 +258,7 @@ const LoadDetailsPage = () => {
               color={colorPalette.textPrimary}
               fontWeight="700"
             >
-              Load #{load.loadId}
+              Load ({load.loadId})
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center">
               <Chip

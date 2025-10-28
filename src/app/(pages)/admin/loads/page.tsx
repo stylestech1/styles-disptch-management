@@ -142,7 +142,7 @@ const LoadsPage = () => {
 
     return (
       <tr key={index} className="hover:bg-slate-50 transition-colors group cursor-pointer"
-        onClick={() => router.push(`/admin/loadDetails/${loadItem.loadId}`)}
+        onClick={() => router.push(`/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`)}
       >
         {/* Load ID */}
         <td className="p-4 text-center">
