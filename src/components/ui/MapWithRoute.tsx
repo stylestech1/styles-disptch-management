@@ -6,6 +6,11 @@ interface MapWithRouteProps {
   origin: TPlace | null;
   destinations: (TPlace | null)[];
   height?: string;
+  onLocationChange?: (
+    type: 'dho' | 'origin' | 'destination', 
+    place: TPlace | null, 
+    index?: number
+  ) => void;
 }
 
 const MapWithRoute: React.FC<MapWithRouteProps> = ({
@@ -13,6 +18,7 @@ const MapWithRoute: React.FC<MapWithRouteProps> = ({
   origin,
   destinations,
   height = "400px",
+  onLocationChange
 }) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const [map, setMap] = useState<google.maps.Map | null>(null);

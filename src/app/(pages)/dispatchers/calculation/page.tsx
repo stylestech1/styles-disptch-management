@@ -160,11 +160,28 @@ const useRouteCalculations = (
 };
 
 // TODO: Custom hook for rate calculation
-const useRateCalculation = () => {
+const useRateCalculation = (
+  dhoToOriginDistance: number | null,
+  totalDistance: number | null
+) => {
   const [dh, setDh] = useState<number | "">("");
   const [loadMiles, setLoadMiles] = useState<number | "">("");
   const [rate, setRate] = useState<number | "">("");
   const [calc, setCalc] = useState<number | "">("");
+
+  // FIXME: Auto-update dh when dhoToOriginDistance changes
+  useEffect(() => {
+    if (dhoToOriginDistance !== null) {
+      setDh(Number(dhoToOriginDistance.toFixed(1)));
+    }
+  }, [dhoToOriginDistance]);
+
+  // FIXME: Auto-update loadMiles when totalDistance changes
+  useEffect(() => {
+    if (totalDistance !== null) {
+      setLoadMiles(Number(totalDistance.toFixed(1)));
+    }
+  }, [totalDistance]); 
 
   const handleCalc = useCallback(
     (e: React.FormEvent) => {
@@ -300,18 +317,6 @@ const StatCard = ({
 );
 
 const Calculation = () => {
-  const {
-    dh,
-    setDh,
-    loadMiles,
-    setLoadMiles,
-    rate,
-    setRate,
-    calc,
-    handleCalc,
-    clearCalculation,
-  } = useRateCalculation();
-
   // Map related states
   const [dho, setDho] = useState<TPlace | null>(null);
   const [origin, setOrigin] = useState<TPlace | null>(null);
@@ -325,6 +330,19 @@ const Calculation = () => {
     isCalculating,
     recalculateAll,
   } = useRouteCalculations(dho, origin, destinations);
+
+  // FIXME: Pass distances to rate calculation hook
+  const {
+    dh,
+    setDh,
+    loadMiles,
+    setLoadMiles,
+    rate,
+    setRate,
+    calc,
+    handleCalc,
+    clearCalculation,
+  } = useRateCalculation(dhoToOriginDistance, totalDistance);
 
   // Destination management
   const handleAddDestination = useCallback(() => {
@@ -365,6 +383,24 @@ const Calculation = () => {
   const validDestinationsCount = useMemo(
     () => destinations.filter((dest) => dest !== null).length,
     [destinations]
+  );
+
+  // FIXME: Handle map location changes
+  const handleMapLocationChange = useCallback(
+    (
+      type: "dho" | "origin" | "destination",
+      place: TPlace | null,
+      index?: number
+    ) => {
+      if (type === "dho") {
+        setDho(place);
+      } else if (type === "origin") {
+        setOrigin(place);
+      } else if (type === "destination" && index !== undefined) {
+        handleUpdateDestination(index, place);
+      }
+    },
+    [handleUpdateDestination]
   );
 
   return (
@@ -502,9 +538,9 @@ const Calculation = () => {
                       px: 4,
                       py: 1.5,
                       minWidth: 140,
-                      [muiTheme.breakpoints.down('md')]: {
-                        width: '100%'
-                      }
+                      [muiTheme.breakpoints.down("md")]: {
+                        width: "100%",
+                      },
                     }}
                   >
                     Calculate
@@ -530,9 +566,9 @@ const Calculation = () => {
                         backgroundColor: "success.50",
                         borderColor: "success.light",
                       },
-                      [muiTheme.breakpoints.down('md')]: {
-                        width: '100%'
-                      }
+                      [muiTheme.breakpoints.down("md")]: {
+                        width: "100%",
+                      },
                     }}
                   />
                 </Stack>
@@ -593,6 +629,9 @@ const Calculation = () => {
                     origin={origin}
                     destinations={destinations}
                     height="500px"
+                    {...{
+                      onLocationChange: handleMapLocationChange,
+                    }}
                   />
                 </LazyGoogleMapsLoader>
               </Suspense>
