@@ -299,24 +299,23 @@ const Dispatchers = () => {
 
   return (
     <section className="relative p-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-        <div className="mb-4 lg:mb-0">
-          <Titles>Dispatcher Management</Titles>
-          <p className="text-slate-600 mt-2 text-sm">
-            Manage your dispatch team members and their access
-          </p>
-        </div>
-
-        <button
-          onClick={() => setPopup(true)}
-          disabled={loading}
-          className="w-full sm:w-50 flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors rounded-lg shadow-sm font-medium"
-        >
-          <IoAdd size={20} />
-          {loading ? "Loading..." : "Add New User"}
-        </button>
+      {/* Title */}
+      <div className="flex flex-col xl:items-start xl:justify-between gap-2">
+        <Titles>Dispatcher Management</Titles>
+        <p className="text-slate-600 text-md">
+          Manage your dispatch team members and their access
+        </p>
       </div>
+      
+      {/* Add User */}
+      <button
+        onClick={() => setPopup(true)}
+        disabled={loading}
+        className="w-full sm:w-50 flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors rounded-lg shadow-sm font-medium"
+      >
+        <IoAdd size={20} />
+        {loading ? "Loading..." : "Add New User"}
+      </button>
 
       <Toaster position="top-right" reverseOrder={false} />
 

@@ -34,11 +34,14 @@ import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 import { useRouter } from "next/navigation";
 
 // ✅ Import MUI DateTimePicker
+import { Dayjs } from "dayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
 import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
-import { Dayjs } from "dayjs";
+import Stack from "@mui/material/Stack";
+
+// Utils
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const LoadsPage = () => {
@@ -58,6 +61,7 @@ const LoadsPage = () => {
 
   // ✅ Dayjs
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
+  const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
 
   // RTK Query
@@ -81,6 +85,7 @@ const LoadsPage = () => {
   const { data: filteredData } = useGetLoadsWithFilterQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
     },
     { skip: !isFiltered }
   );
@@ -114,14 +119,12 @@ const LoadsPage = () => {
       )
     : load;
 
-  // ✅ Auto-filter when date changes
-  useEffect(() => {
-    if (fromDate) {
+  // ✅ When Ok do filter
+  const handleAccept = () => {
+    if (fromDate || toDate) {
       setIsFiltered(true);
-    } else {
-      setIsFiltered(false);
     }
-  }, [fromDate]);
+  };
 
   // TODO: set loading
   if (loading) return <Loading />;
@@ -349,30 +352,51 @@ const LoadsPage = () => {
               placeholder="Search loads by ID, origin, destination, status, or driver..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all duration-200"
+              className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
             />
           </div>
 
           {/* Filter */}
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DemoContainer components={["MobileDatePicker"]}>
-              <MobileDatePicker
-                label="Date"
-                value={fromDate}
-                onChange={(newValue) => setFromDate(newValue)}
-                slotProps={{
-                  textField: {
-                    size: "small",
-                    sx: {
-                      "& .MuiOutlinedInput-root": {
-                        borderRadius: "8px",
-                        backgroundColor: "#EFF6FF",
-                        width: "100%",
+              <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
+                <MobileDatePicker
+                onAccept={handleAccept} 
+                  label="From"
+                  value={fromDate}
+                  onChange={(newValue) => setFromDate(newValue)}
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      sx: {
+                        backgroundColor: "#eff6ff",
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                          width: "100%",
+                        },
                       },
                     },
-                  },
-                }}
-              />
+                  }}
+                />
+                <MobileDatePicker
+                  label="To"
+                  value={toDate}
+                  onChange={(newValue) => setToDate(newValue)}
+                  onAccept={handleAccept} 
+                  slotProps={{
+                    textField: {
+                      size: "small",
+                      sx: {
+                        backgroundColor: "#eff6ff",
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: "8px",
+                          width: "100%",
+                        },
+                      },
+                    },
+                  }}
+                />
+              </Stack>
             </DemoContainer>
           </LocalizationProvider>
         </div>
