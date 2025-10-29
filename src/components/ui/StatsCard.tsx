@@ -42,7 +42,7 @@ const StatsCard = ({
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-slate-500 text-sm font-medium">{title}</p>
+          <p className="text-slate-500 text-sm font-bold">{title}</p>
           <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
           {trend && (
             <div

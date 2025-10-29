@@ -61,7 +61,7 @@ export default function AdminLayout({
   };
 
   return (
-    <section className="flex h-screen bg-slate-50">
+    <section className="flex h-screen">
       {/* Mobile Overlay */}
       {isMobile && isSidebarOpen && (
         <div
@@ -164,27 +164,20 @@ export default function AdminLayout({
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Bar */}
-        <header className="bg-white shadow-sm border-b border-slate-200">
+        <header className="md:hidden bg-white shadow-sm border-b border-slate-200">
           <div className="flex items-center justify-between p-4">
             <button
               onClick={toggleSidebar}
               className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 
-                       transition-colors shadow-sm md:hidden text-slate-600"
+                       transition-colors shadow-sm text-slate-600"
             >
               <IoMenu size={20} />
             </button>
-            <div className="flex-1 md:flex-none">
-              <h1 className="text-xl font-semibold text-slate-800 text-center md:text-left">
-                Styles Dispatch System EG
-              </h1>
-            </div>
-            <div className="w-9 md:hidden"></div>{" "}
-            {/* Spacer for mobile alignment */}
           </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 bg-slate-50">
+        <main className="flex-1 overflow-auto p-4 md:p-6">
           <div className="max-w-7xl mx-auto">
             {isGoogleMapsLoaded ? (
               children
