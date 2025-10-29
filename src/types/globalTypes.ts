@@ -50,7 +50,7 @@ export type TLoads = {
   leftReceiver?: string; // new
   deliveredAt?: string;
   createdAt?: string;
-  documents?: TDocument[]
+  documents?: TDocument[];
 };
 export type TDriver = {
   id: string;
@@ -74,12 +74,12 @@ export type TTruck = {
   status: TStatusDriver;
   createdBy: string;
   updatedBy: string;
-  assignedDriver?: string | { name: string; driverId: number, id: string };
+  assignedDriver?: string | { name: string; driverId: number; id: string };
   type: TTruckType;
   fuelPerMile: number;
   insuranceCost: number;
   repairCost: number;
-  summary?: TTruckSummary
+  summary?: TTruckSummary;
 };
 export interface TruckApiResponse {
   data: TTruck[];
@@ -147,7 +147,7 @@ export type TLoadSummary = {
   loads: TLoads[];
 };
 export type TTruckSummary = {
-  _id:string
+  _id: string;
   truckId: number;
   totalLoads: number;
   totalMiles: number;
@@ -161,9 +161,9 @@ export type TTruckSummary = {
   avgRevenuePerMile: number;
   avgExpensePerMile: number;
   currency: string;
-  loads: TLoads,
-  period: TPeriod
-}
+  loads: TLoads;
+  period: TPeriod;
+};
 export interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -180,7 +180,7 @@ export interface InfoItemProps {
   secondary: string | number;
 }
 export type TTruckWithSummary = TTruck & {
-  _id:string
+  _id: string;
   summary?: TTruckSummary;
 };
 export type TTrucksSummaryResponse = {
@@ -194,3 +194,22 @@ export type TTrucksSummaryResponse = {
     totalSummary: TTruckSummary;
   };
 };
+export interface RTKError {
+  data?: {
+    message?: string;
+    errors?: {
+      msg: string;
+    }[];
+  };
+  error?: {
+    data: {
+      status: string;
+      message: string;
+      errors?: { msg: string }[];
+    };
+    status: string;
+  };
+  message?: string;
+  status?: string;
+  errors?: { msg: string }[];
+}

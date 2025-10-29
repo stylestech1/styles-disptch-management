@@ -45,7 +45,8 @@ const Dispatchers = () => {
   // RTK Querys
   const {
     data: dispatchersData,
-    isError: dispatchersError,
+    isError,
+    error: dispatchersError,
     isLoading: loading,
     isFetching,
     refetch,
@@ -53,22 +54,22 @@ const Dispatchers = () => {
     { page, limit: 10 },
     {
       skip: !token,
-      pollingInterval: 30000,
-      refetchOnMountOrArgChange: true,
     }
   );
 
   // RTK Mutation
   const [createUser, { isLoading: creatingUser }] = useCreateUserMutation();
-  const [updateUserRole, { isLoading: updatingRole }] = useUpdateUserRoleMutation();
+  const [updateUserRole, { isLoading: updatingRole }] =
+    useUpdateUserRoleMutation();
   const [activateUser, { isLoading: activating }] = useActivateUserMutation();
-  const [deactivateUser, { isLoading: deactivating }] = useDeactivateUserMutation();
+  const [deactivateUser, { isLoading: deactivating }] =
+    useDeactivateUserMutation();
 
-  // Export Data 
+  // Export Data
   const dispatchers = dispatchersData?.data || [];
   const pagination = dispatchersData?.paginationResult || null;
 
-  // Token Checking 
+  // Token Checking
   useEffect(() => {
     if (!token) {
       router.replace("/");
@@ -76,33 +77,26 @@ const Dispatchers = () => {
     }
   }, [token, router]);
 
-  // Handling Errors - تحسين معالجة الأخطاء
+  // handling Errors
   useEffect(() => {
     if (dispatchersError) {
       const errorMessage = getErrorMessage(dispatchersError);
+      if (error !== errorMessage) { 
       setError(errorMessage);
-      console.error("Dispatchers Error:", dispatchersError);
-      
-      if (errorMessage.includes("401") || errorMessage.includes("unauthorized")) {
-        toast.error("Session expired. Please login again.", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-        router.replace("/");
-        return;
-      }
-      
-      toast.error(errorMessage || "Loading dispatchers failed ❌", {
+      toast.error(errorMessage || "Loading failed ❌", {
+        id: 'dispatchersError',
         style: { background: "#dc2626", color: "#fff" },
       });
     }
-  }, [dispatchersError, setError, router]);
+    }
+  }, [dispatchersError, setError, error]);
 
-  // إضافة useEffect لمراقبة تغيير الصفحة
+  // Refetching when mounting or updating
   useEffect(() => {
     if (token) {
       refetch();
     }
-  }, [page, token, refetch]);
+  }, [page, token]);
 
   // TODO: Search Filter
   const filteredDispatchers = dispatchers.filter(
@@ -329,7 +323,7 @@ const Dispatchers = () => {
         </button>
       </div>
 
-      <Toaster position="top-center" reverseOrder={false} />
+      <Toaster position="top-right" reverseOrder={false} />
 
       {/* Search */}
       <div className="mb-8">
@@ -376,7 +370,9 @@ const Dispatchers = () => {
 
         <StatsCard
           title="Admins"
-          value={dispatchers.filter((d: TDispatcher) => d.role === "admin").length}
+          value={
+            dispatchers.filter((d: TDispatcher) => d.role === "admin").length
+          }
           icon={IoKey}
           iconColor="text-blue-600"
           bgColor="bg-blue-50"
@@ -385,7 +381,9 @@ const Dispatchers = () => {
 
         <StatsCard
           title="Employees"
-          value={dispatchers.filter((d: TDispatcher) => d.role === "employee").length}
+          value={
+            dispatchers.filter((d: TDispatcher) => d.role === "employee").length
+          }
           icon={IoPerson}
           iconColor="text-emerald-600"
           bgColor="bg-emerald-50"

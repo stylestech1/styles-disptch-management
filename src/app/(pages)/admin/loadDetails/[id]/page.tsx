@@ -82,6 +82,7 @@ const LoadDetailsPage = () => {
   const [selectedNote, setSelectedNote] = useState<TComments | null>(null);
   const [notes, setNotes] = useState<TComments[]>([]);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+
   const {
     data,
     isLoading: loadLoading,
@@ -231,6 +232,7 @@ const LoadDetailsPage = () => {
       </Stack>
     </ListItem>
   );
+  
   return (
     <Box sx={{ p: 3, bgcolor: colorPalette.background, minHeight: "100vh" }}>
       {/* Header */}

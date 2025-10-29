@@ -26,7 +26,6 @@ import {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
   useGetNotesQuery,
-  useUploadDocumentsMutation,
   useGetLoadsWithFilterQuery,
 } from "@/redux/slices/apiSlice";
 
@@ -37,8 +36,9 @@ import { useRouter } from "next/navigation";
 // ✅ Import MUI DateTimePicker
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import dayjs, { Dayjs } from "dayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { Dayjs } from "dayjs";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const LoadsPage = () => {
   const [page, setPage] = useState(1);
@@ -54,7 +54,7 @@ const LoadsPage = () => {
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
-  
+
   // ✅ تغيير نوع التواريخ إلى Dayjs
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
@@ -64,7 +64,7 @@ const LoadsPage = () => {
   const {
     data: loadsData,
     isLoading: loadsLoading,
-    isError: loadsError,
+    error: loadsError,
     refetch: refetchLoads,
   } = useGetLoadsQuery({ page, limit: 10 });
 
@@ -79,9 +79,9 @@ const LoadsPage = () => {
   );
 
   const { data: filteredData } = useGetLoadsWithFilterQuery(
-    { 
-      from: fromDate ? fromDate.format('YYYY-MM-DD') : undefined, 
-      to: toDate ? toDate.format('YYYY-MM-DD') : undefined 
+    {
+      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
     },
     { skip: !isFiltered }
   );
@@ -91,13 +91,13 @@ const LoadsPage = () => {
   const pagination = loadsData?.paginationResult || null;
   const allLoads = allLoadsData?.data || [];
 
-  // إدارة حالة ال loading بناءً على جميع ال queries
+  // Handling Loading
   useEffect(() => {
     const isLoading = loadsLoading || allLoadsLoading || notesLoading;
     setLoading(isLoading);
   }, [loadsLoading, allLoadsLoading, notesLoading, setLoading]);
 
-  // إدارة الأخطاء
+  // handling Errors
   useEffect(() => {
     if (loadsError) {
       const errorMessage = getErrorMessage(loadsError);
@@ -108,37 +108,11 @@ const LoadsPage = () => {
     }
   }, [loadsError, setError]);
 
-  // Error Handling
-  interface RTKError {
-    data?: {
-      message?: string;
-    };
-    message?: string;
-  }
-  const getErrorMessage = (error: unknown): string => {
-    if (typeof error === "string") {
-      return error;
-    }
-
-    if (error instanceof Error) {
-      return error.message;
-    }
-    // للتعامل مع أخطاء RTK Query
-    const rtkError = error as RTKError;
-    if (rtkError?.data?.message) {
-      return rtkError.data.message;
-    }
-    if (rtkError?.message) {
-      return rtkError.message;
-    }
-    return "An error occurred";
-  };
-
-  // Filter loads للبحث
+  // Filter loads
   const filteredLoads = search
     ? allLoads.filter((l: TLoads) =>
-      l.loadId.toLowerCase().includes(search.toLowerCase())
-    )
+        l.loadId.toLowerCase().includes(search.toLowerCase())
+      )
     : load;
 
   // TODO: set loading
@@ -150,8 +124,14 @@ const LoadsPage = () => {
     const commentsCount = loadItem.comments?.length || 0;
 
     return (
-      <tr key={index} className="hover:bg-slate-50 transition-colors group cursor-pointer"
-        onClick={() => router.push(`/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`)}
+      <tr
+        key={index}
+        className="hover:bg-slate-50 transition-colors group cursor-pointer"
+        onClick={() =>
+          router.push(
+            `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
+          )
+        }
       >
         {/* Load ID */}
         <td className="p-4 text-center">
@@ -206,7 +186,9 @@ const LoadsPage = () => {
 
         {/* Price Per Mile */}
         <td className="p-4 text-center text-slate-700">
-          {loadItem.pricePerMile ? `${loadItem.pricePerMile.toFixed(2)} $` : "-"}
+          {loadItem.pricePerMile
+            ? `${loadItem.pricePerMile.toFixed(2)} $`
+            : "-"}
         </td>
 
         {/* Total */}
@@ -243,7 +225,9 @@ const LoadsPage = () => {
                 className="relative cursor-pointer hover:scale-110 transition-transform group/note"
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/admin/loadDetails/${loadItem.loadId}?tab=comments`);
+                  router.push(
+                    `/admin/loadDetails/${loadItem.loadId}?tab=comments`
+                  );
                 }}
                 title={`${commentsCount} comment(s) - Click to view`}
               >
@@ -267,7 +251,9 @@ const LoadsPage = () => {
                 className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center opacity-50 cursor-pointer hover:opacity-70 transition-opacity"
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(`/admin/loadDetails/${loadItem.loadId}?tab=comments`);
+                  router.push(
+                    `/admin/loadDetails/${loadItem.loadId}?tab=comments`
+                  );
                 }}
                 title="No comments - Click to add"
               >
@@ -278,7 +264,7 @@ const LoadsPage = () => {
         </td>
       </tr>
     );
-  }
+  };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -289,15 +275,18 @@ const LoadsPage = () => {
             <div className="flex-1">
               <Titles>Load Management</Titles>
               <p className="text-slate-600 mt-2 text-sm max-w-2xl">
-                Manage and track all your shipments and deliveries in one place. Monitor status, assign drivers, and update load information.
+                Manage and track all your shipments and deliveries in one place.
+                Monitor status, assign drivers, and update load information.
               </p>
             </div>
-            
+
             <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
               <div className="flex flex-col xl:flex-row items-end gap-4">
                 <div className="flex items-center flex-col lg:flex-row gap-3 w-full">
                   <div className="flex flex-col w-full">
-                    <label className="text-xs font-medium text-slate-700 mb-1">From Date</label>
+                    <label className="text-xs font-medium text-slate-700 mb-1">
+                      From Date
+                    </label>
                     <DatePicker
                       value={fromDate}
                       onChange={(newValue) => setFromDate(newValue)}
@@ -305,19 +294,21 @@ const LoadsPage = () => {
                         textField: {
                           size: "small",
                           sx: {
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '8px',
-                              backgroundColor: 'white',
-                              width: '100%'
-                            }
-                          }
-                        }
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              backgroundColor: "white",
+                              width: "100%",
+                            },
+                          },
+                        },
                       }}
                     />
                   </div>
 
                   <div className="flex flex-col w-full">
-                    <label className="text-xs font-medium text-slate-700 mb-1">To Date</label>
+                    <label className="text-xs font-medium text-slate-700 mb-1">
+                      To Date
+                    </label>
                     <DatePicker
                       value={toDate}
                       onChange={(newValue) => setToDate(newValue)}
@@ -325,13 +316,13 @@ const LoadsPage = () => {
                         textField: {
                           size: "small",
                           sx: {
-                            '& .MuiOutlinedInput-root': {
-                              borderRadius: '8px',
-                              backgroundColor: 'white',
-                              width: '100%'
-                            }
-                          }
-                        }
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: "8px",
+                              backgroundColor: "white",
+                              width: "100%",
+                            },
+                          },
+                        },
                       }}
                     />
                   </div>
