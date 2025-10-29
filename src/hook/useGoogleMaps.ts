@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 
-// Global state للتحكم في تحميل الخريطة
 let mapsLoaded = false;
 let mapsLoading = false;
 let mapsLoadCallbacks: Array<(loaded: boolean) => void> = [];
@@ -15,7 +14,6 @@ export const useGoogleMaps = () => {
   const [isLoaded, setIsLoaded] = useState(mapsLoaded);
 
   useEffect(() => {
-    // إذا الخريطة متحملة خلاص، روح مباشرة
     if (mapsLoaded) {
       setIsLoaded(true);
       return;
@@ -25,10 +23,8 @@ export const useGoogleMaps = () => {
       setIsLoaded(loaded);
     };
 
-    // سجل الـ callback
     mapsLoadCallbacks.push(handleLoad);
 
-    // إذا مش بتتحمل حالياً، ابدأ التحميل
     if (!mapsLoading && !mapsLoaded) {
       loadGoogleMaps();
     }
@@ -51,7 +47,6 @@ const loadGoogleMaps = () => {
   mapsLoading = true;
   console.log('Starting to load Google Maps...');
 
-  // تحقق إذا الخريطة متحملة بالفعل
   if (window.google && window.google.maps) {
     console.log('Google Maps already loaded');
     mapsLoaded = true;
@@ -61,7 +56,6 @@ const loadGoogleMaps = () => {
     return;
   }
 
-  // تحقق إذا فيه script موجود بالفعل
   const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
   if (existingScript) {
     console.log('Google Maps script already exists, waiting for load...');
@@ -82,7 +76,6 @@ const loadGoogleMaps = () => {
     return;
   }
 
-  // طريقة مباشرة - احمل الخريطة مباشرة بدون proxy
   const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
   if (!apiKey) {
     console.error('Google Maps API key not found');

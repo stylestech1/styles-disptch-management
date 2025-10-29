@@ -1,4 +1,3 @@
-// components/loads/ViewNotesModal.tsx
 import { useEffect } from 'react';
 import Modal from '@/components/ui/Modals';
 import { useGetNotesQuery } from '@/redux/slices/apiSlice';

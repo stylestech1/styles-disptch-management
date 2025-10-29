@@ -25,8 +25,8 @@ export default function DispatchersLayout({
   const router = useRouter();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
-  // استخدام الـ hook الجديد
+
+  // Google Hook
   const isGoogleMapsLoaded = useGoogleMaps();
 
   // Detect screen size
@@ -84,7 +84,10 @@ export default function DispatchersLayout({
         {/* Header */}
         <div className="p-6 border-b border-slate-600">
           <div className="flex justify-between items-center">
-            <Link href={`${base}/${user.id}`} className="flex items-center gap-3">
+            <Link
+              href={`${base}/${user.id}`}
+              className="flex items-center gap-3"
+            >
               <div className="p-2 bg-slate-700 rounded-xl">
                 <IoPersonCircleOutline size={24} className="text-slate-300" />
               </div>

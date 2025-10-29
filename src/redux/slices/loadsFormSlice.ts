@@ -1,36 +1,6 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Dayjs } from "dayjs";
-import { TLoads, TTruckType } from "@/types/globalTypes";
+import { LoadsFormState, TLoads, TTruckType } from "@/types/globalTypes";
 import { TPlace } from "@/components/sections/LocationAutocomplete";
-
-interface LoadsFormState {
-  // Location Tab
-  dho: TPlace | null;
-  origin: TPlace | null;
-  destinations: (TPlace | null)[];
-
-  // Load Details Tab
-  price: string;
-  fees: string;
-  loadIDInp: string;
-  pickupAt: string | null;
-  completedAt: string | null;
-  arrivalAtShipper: string | null;
-  arrivalAtReceiver: string | null;
-  leftShipper: string | null;
-  leftReceiver: string | null;
-
-  // Assignment Tab
-  driverId: string;
-  truckId: string;
-  truckType: TTruckType;
-  truckTemp: string;
-
-  // UI State
-  activeTab: number;
-  isEditing: boolean;
-  editingLoad: TLoads | null;
-}
 
 const initialState: LoadsFormState = {
   // Location Tab

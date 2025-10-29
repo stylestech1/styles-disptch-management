@@ -45,7 +45,14 @@ import {
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
-import { useCreateTruckMutation, useDeleteTruckMutation, useGetAllDriversQuery, useGetAllTrucksQuery, useGetTrucksWithSearchQuery, useUpdateTruckMutation } from "@/redux/slices/apiSlice";
+import {
+  useCreateTruckMutation,
+  useDeleteTruckMutation,
+  useGetAllDriversQuery,
+  useGetAllTrucksQuery,
+  useGetTrucksWithSearchQuery,
+  useUpdateTruckMutation,
+} from "@/redux/slices/apiSlice";
 
 // Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -117,13 +124,15 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
     allTrucks,
   } = props;
 
-  // assigned driver IDs 
+  // assigned driver IDs
   const assignedDriverIds = useMemo(() => {
     if (!allTrucks || allTrucks.length === 0) return [];
     return allTrucks
       .filter((truck) => truck.assignedDriver && truck.id !== formData.id)
       .map((truck) =>
-        typeof truck.assignedDriver === "object" ? truck.assignedDriver.id : truck.assignedDriver
+        typeof truck.assignedDriver === "object"
+          ? truck.assignedDriver.id
+          : truck.assignedDriver
       )
       .filter(Boolean) as string[];
   }, [allTrucks, formData.id]);
@@ -131,7 +140,8 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
   const availableUnassignedDrivers = useMemo(() => {
     if (!allDrivers) return [];
     return allDrivers.filter(
-      (driver) => driver.status === "available" && !assignedDriverIds.includes(driver.id)
+      (driver) =>
+        driver.status === "available" && !assignedDriverIds.includes(driver.id)
     );
   }, [allDrivers, assignedDriverIds]);
 
@@ -176,7 +186,12 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {/* Basic Information */}
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              gutterBottom
+              color="primary"
+            >
               Basic Information
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -233,7 +248,12 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
 
           {/* Specifications */}
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              gutterBottom
+              color="primary"
+            >
               Specifications
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -248,7 +268,9 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
                 size="medium"
                 inputProps={{ min: 0 }}
                 InputProps={{
-                  endAdornment: <InputAdornment position="end">kg</InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position="end">kg</InputAdornment>
+                  ),
                 }}
               />
               <TextField
@@ -257,11 +279,15 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
                 name="fuelPerMile"
                 type="number"
                 value={formData.fuelPerMile ?? ""}
-                onChange={(e) => onChange("fuelPerMile", Number(e.target.value))}
+                onChange={(e) =>
+                  onChange("fuelPerMile", Number(e.target.value))
+                }
                 size="medium"
                 inputProps={{ min: 0, step: 0.1 }}
                 InputProps={{
-                  endAdornment: <InputAdornment position="end">L/mile</InputAdornment>,
+                  endAdornment: (
+                    <InputAdornment position="end">L/mile</InputAdornment>
+                  ),
                 }}
               />
             </Box>
@@ -269,12 +295,19 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
 
           {/* Driver Assignment */}
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              gutterBottom
+              color="primary"
+            >
               Driver Assignment
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <FormControl fullWidth size="medium">
-              <InputLabel id="driver-assignment-label">Assigned Driver</InputLabel>
+              <InputLabel id="driver-assignment-label">
+                Assigned Driver
+              </InputLabel>
               <Select
                 labelId="driver-assignment-label"
                 label="Assigned Driver"
@@ -283,7 +316,9 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
                 onChange={(e) => onChange("assignedDriver", e.target.value)}
                 startAdornment={
                   <InputAdornment position="start">
-                    <IoPerson style={{ color: muiTheme.palette.primary.main }} />
+                    <IoPerson
+                      style={{ color: muiTheme.palette.primary.main }}
+                    />
                   </InputAdornment>
                 }
                 sx={{
@@ -310,7 +345,11 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
                       <IoPerson size={16} />
                     </Box>
                     <Box>
-                      <Typography variant="body2" color="text.secondary" fontStyle="italic">
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        fontStyle="italic"
+                      >
                         Unassigned
                       </Typography>
                     </Box>
@@ -320,7 +359,14 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
                 {availableUnassignedDrivers.length > 0 ? (
                   availableUnassignedDrivers.map((driver) => (
                     <MenuItem key={driver.id} value={driver.id}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 2,
+                          width: "100%",
+                        }}
+                      >
                         <Box
                           sx={{
                             width: 40,
@@ -341,24 +387,73 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
                           <Typography variant="body1" fontWeight="500" noWrap>
                             {driver.name}
                           </Typography>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.5 }}>
-                            <Typography variant="caption" color="text.secondary">
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                              mt: 0.5,
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
                               ID: {driver.driverId || driver.id}
                             </Typography>
-                            <Box sx={{ width: 4, height: 4, borderRadius: "50%", bgcolor: "grey.400" }} />
-                            <Typography variant="caption" color="text.secondary" noWrap>
+                            <Box
+                              sx={{
+                                width: 4,
+                                height: 4,
+                                borderRadius: "50%",
+                                bgcolor: "grey.400",
+                              }}
+                            />
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                              noWrap
+                            >
                               {driver.licenseNumber}
                             </Typography>
                           </Box>
                         </Box>
-                        <Chip label="Available" color="success" size="small" sx={{ fontSize: "0.625rem", height: 20, "& .MuiChip-label": { px: 1 } }} />
+                        <Chip
+                          label="Available"
+                          color="success"
+                          size="small"
+                          sx={{
+                            fontSize: "0.625rem",
+                            height: 20,
+                            "& .MuiChip-label": { px: 1 },
+                          }}
+                        />
                       </Box>
                     </MenuItem>
                   ))
                 ) : (
                   <MenuItem disabled>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2, width: "100%", py: 1 }}>
-                      <Box sx={{ width: 40, height: 40, borderRadius: "50%", bgcolor: "grey.100", display: "flex", alignItems: "center", justifyContent: "center", color: "grey.500" }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 2,
+                        width: "100%",
+                        py: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          bgcolor: "grey.100",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "grey.500",
+                        }}
+                      >
                         <IoPerson size={20} />
                       </Box>
                       <Box>
@@ -375,22 +470,55 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
               </Select>
 
               {availableUnassignedDrivers.length === 0 && (
-                <Alert severity="warning" sx={{ mt: 2, borderRadius: 1, "& .MuiAlert-message": { fontSize: "0.875rem" } }} icon={false}>
+                <Alert
+                  severity="warning"
+                  sx={{
+                    mt: 2,
+                    borderRadius: 1,
+                    "& .MuiAlert-message": { fontSize: "0.875rem" },
+                  }}
+                  icon={false}
+                >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Box sx={{ width: 20, height: 20, borderRadius: "50%", bgcolor: "warning.main", display: "flex", alignItems: "center", justifyContent: "center", color: "white", fontSize: "0.75rem" }}>
+                    <Box
+                      sx={{
+                        width: 20,
+                        height: 20,
+                        borderRadius: "50%",
+                        bgcolor: "warning.main",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        color: "white",
+                        fontSize: "0.75rem",
+                      }}
+                    >
                       ⚠️
                     </Box>
                     <Typography variant="caption">
-                      No available unassigned drivers. All drivers are currently assigned to other trucks or busy.
+                      No available unassigned drivers. All drivers are currently
+                      assigned to other trucks or busy.
                     </Typography>
                   </Box>
                 </Alert>
               )}
 
               {availableUnassignedDrivers.length > 0 && (
-                <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1, px: 1 }}>
-                  <Typography variant="caption" color="success.main" fontWeight="500">
-                    {availableUnassignedDrivers.length} available unassigned driver{availableUnassignedDrivers.length !== 1 ? "s" : ""}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mt: 1,
+                    px: 1,
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="success.main"
+                    fontWeight="500"
+                  >
+                    {availableUnassignedDrivers.length} available unassigned
+                    driver{availableUnassignedDrivers.length !== 1 ? "s" : ""}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
                     Total: {allDrivers.length} drivers
@@ -402,7 +530,12 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
 
           {/* Status */}
           <Box>
-            <Typography variant="h6" fontWeight="600" gutterBottom color="primary">
+            <Typography
+              variant="h6"
+              fontWeight="600"
+              gutterBottom
+              color="primary"
+            >
               Status
             </Typography>
             <Divider sx={{ mb: 2 }} />
@@ -441,7 +574,13 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
       </DialogContent>
 
       <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
-        <Button onClick={onClose} color="inherit" variant="outlined" disabled={isLoading} sx={{ borderRadius: 2, minWidth: 100 }}>
+        <Button
+          onClick={onClose}
+          color="inherit"
+          variant="outlined"
+          disabled={isLoading}
+          sx={{ borderRadius: 2, minWidth: 100 }}
+        >
           Cancel
         </Button>
         <Button
@@ -456,7 +595,13 @@ const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
             background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
           }}
         >
-          {isLoading ? (editMode ? "Saving..." : "Creating...") : editMode ? "Save Changes" : "Create Truck"}
+          {isLoading
+            ? editMode
+              ? "Saving..."
+              : "Creating..."
+            : editMode
+            ? "Save Changes"
+            : "Create Truck"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -487,13 +632,19 @@ const TrucksPage: React.FC = () => {
   const { data: driversData } = useGetAllDriversQuery();
 
   // Mutations
-  const [createTruck, { isLoading: isCreating, error: createError }] = useCreateTruckMutation();
-  const [updateTruck, { isLoading: isUpdating, error: updateError }] = useUpdateTruckMutation();
-  const [deleteTruck, { isLoading: isDeleting, error: deleteError }] = useDeleteTruckMutation();
+  const [createTruck, { isLoading: isCreating, error: createError }] =
+    useCreateTruckMutation();
+  const [updateTruck, { isLoading: isUpdating, error: updateError }] =
+    useUpdateTruckMutation();
+  const [deleteTruck, { isLoading: isDeleting, error: deleteError }] =
+    useDeleteTruckMutation();
 
   // convenient exposures
   const trucks = useMemo(() => trucksData?.data?.data || [], [trucksData]);
-  const allTrucks = useMemo(() => allTrucksData?.data?.data || [], [allTrucksData]);
+  const allTrucks = useMemo(
+    () => allTrucksData?.data?.data || [],
+    [allTrucksData]
+  );
   const pagination = allTrucksData?.data?.paginationResult || null;
   const allDrivers = driversData?.data || [];
 
@@ -508,7 +659,9 @@ const TrucksPage: React.FC = () => {
         t.plateNumber?.toLowerCase().includes(q) ||
         (typeof t.assignedDriver === "object"
           ? t.assignedDriver.name?.toLowerCase().includes(q)
-          : String(t.assignedDriver || "").toLowerCase().includes(q))
+          : String(t.assignedDriver || "")
+              .toLowerCase()
+              .includes(q))
       );
     });
   }, [search, trucks, allTrucks]);
@@ -519,7 +672,10 @@ const TrucksPage: React.FC = () => {
   const [editMode, setEditMode] = useState(false);
 
   // Delete flow state
-  const [truckToDelete, setTruckToDelete] = useState<{ id: string; truckId?: number } | null>(null);
+  const [truckToDelete, setTruckToDelete] = useState<{
+    id: string;
+    truckId?: number;
+  } | null>(null);
 
   // HANDLE open add
   const handleOpenAdd = useCallback(() => {
@@ -531,7 +687,9 @@ const TrucksPage: React.FC = () => {
   // HANDLE edit click
   const handleEditClick = useCallback((truck: TTruck) => {
     const assignedDriverId =
-      typeof truck.assignedDriver === "object" ? truck.assignedDriver.id : truck.assignedDriver;
+      typeof truck.assignedDriver === "object"
+        ? truck.assignedDriver.id
+        : truck.assignedDriver;
     setFormData({
       id: truck.id,
       truckId: truck.truckId,
@@ -549,15 +707,19 @@ const TrucksPage: React.FC = () => {
   }, []);
 
   // form change
-  const handleFormChange = useCallback(<K extends keyof TTruck>(field: K, value: TTruck[K]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  }, []);
+  const handleFormChange = useCallback(
+    <K extends keyof TTruck>(field: K, value: TTruck[K]) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    },
+    []
+  );
 
   // Show errors from mutations (centralized)
   useEffect(() => {
     const showError = (err: unknown, fallback: string) => {
       if (!err) return;
-      const msg = (err as { data?: { message?: string } })?.data?.message || fallback;
+      const msg =
+        (err as { data?: { message?: string } })?.data?.message || fallback;
       toast.error(msg);
     };
     showError(createError, "Failed to create truck");
@@ -658,9 +820,30 @@ const TrucksPage: React.FC = () => {
       <Toaster position="top-right" />
 
       {/* Header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 4, [muiTheme.breakpoints.down("md")]: { flexDirection: "column", gap: 2, alignItems: "stretch" } }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 4,
+          [muiTheme.breakpoints.down("md")]: {
+            flexDirection: "column",
+            gap: 2,
+            alignItems: "stretch",
+          },
+        }}
+      >
         <Titles>Truck Management</Titles>
-        <Button variant="contained" color="primary" startIcon={<IoAdd />} onClick={handleOpenAdd} sx={{ borderRadius: 2, background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)` }}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<IoAdd />}
+          onClick={handleOpenAdd}
+          sx={{
+            borderRadius: 2,
+            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
+          }}
+        >
           Add Truck
         </Button>
       </Box>
@@ -686,14 +869,32 @@ const TrucksPage: React.FC = () => {
             backgroundColor: "white",
             "& fieldset": { borderColor: muiTheme.palette.primary.light },
             "&:hover fieldset": { borderColor: muiTheme.palette.primary.main },
-            "&.Mui-focused fieldset": { borderColor: muiTheme.palette.primary.main },
+            "&.Mui-focused fieldset": {
+              borderColor: muiTheme.palette.primary.main,
+            },
           },
           [muiTheme.breakpoints.down("md")]: { width: "100%" },
         }}
       />
 
       {/* Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: 2, overflow: "hidden", overflowX: "auto", maxWidth: "100%", "&::-webkit-scrollbar": { height: 8 }, "&::-webkit-scrollbar-track": { background: muiTheme.palette.grey[100] }, "&::-webkit-scrollbar-thumb": { background: muiTheme.palette.grey[400], borderRadius: 4 } }}>
+      <TableContainer
+        component={Paper}
+        sx={{
+          borderRadius: 2,
+          overflow: "hidden",
+          overflowX: "auto",
+          maxWidth: "100%",
+          "&::-webkit-scrollbar": { height: 8 },
+          "&::-webkit-scrollbar-track": {
+            background: muiTheme.palette.grey[100],
+          },
+          "&::-webkit-scrollbar-thumb": {
+            background: muiTheme.palette.grey[400],
+            borderRadius: 4,
+          },
+        }}
+      >
         <Table sx={{ minWidth: 650 }} aria-label="trucks table">
           <TableHead>
             <TableRow>
@@ -727,28 +928,56 @@ const TrucksPage: React.FC = () => {
                   <StyledTableCell>{truck.type}</StyledTableCell>
                   <StyledTableCell>{truck.year}</StyledTableCell>
                   <StyledTableCell>{truck.capacity}</StyledTableCell>
-                  <StyledTableCell>{truck.fuelPerMile ?? "N/A"}</StyledTableCell>
                   <StyledTableCell>
-                    {typeof truck.assignedDriver === "object" ? truck.assignedDriver.name : truck.assignedDriver || "Unassigned"}
-                    {typeof truck.assignedDriver === "object" && truck.assignedDriver.driverId && (
-                      <Box component="span" sx={{ fontSize: "0.75rem", color: "text.secondary", display: "block" }}>
-                        ID: {truck.assignedDriver.driverId}
-                      </Box>
-                    )}
+                    {truck.fuelPerMile ?? "N/A"}
+                  </StyledTableCell>
+                  <StyledTableCell>
+                    {typeof truck.assignedDriver === "object"
+                      ? truck.assignedDriver.name
+                      : truck.assignedDriver || "Unassigned"}
+                    {typeof truck.assignedDriver === "object" &&
+                      truck.assignedDriver.driverId && (
+                        <Box
+                          component="span"
+                          sx={{
+                            fontSize: "0.75rem",
+                            color: "text.secondary",
+                            display: "block",
+                          }}
+                        >
+                          ID: {truck.assignedDriver.driverId}
+                        </Box>
+                      )}
                   </StyledTableCell>
                   <StyledTableCell>
                     <StatusChip status={truck.status} />
                   </StyledTableCell>
                   <StyledTableCell align="center">
-                    <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", gap: 1 }}
+                    >
                       <Tooltip title="Edit Truck">
-                        <IconButton size="small" color="primary" onClick={() => handleEditClick(truck)} disabled={isUpdating}>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleEditClick(truck)}
+                          disabled={isUpdating}
+                        >
                           <IoPencil />
                         </IconButton>
                       </Tooltip>
                       <Tooltip title="Delete Truck">
-                        <IconButton size="small" color="error" onClick={() => handleDelete(truck.id, truck.truckId)} disabled={isDeleting}>
-                          {isDeleting ? <CircularProgress size={16} /> : <IoTrash />}
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDelete(truck.id, truck.truckId)}
+                          disabled={isDeleting}
+                        >
+                          {isDeleting ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <IoTrash />
+                          )}
                         </IconButton>
                       </Tooltip>
                     </Box>
@@ -762,7 +991,13 @@ const TrucksPage: React.FC = () => {
 
       {/* Pagination */}
       {pagination && allTrucks.length > 0 && (
-        <Pagination pagination={pagination} page={page} setPage={setPage} pageSize={10} showInfo={true} />
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+          pageSize={10}
+          showInfo={true}
+        />
       )}
 
       {/* Truck Form*/}
@@ -779,28 +1014,81 @@ const TrucksPage: React.FC = () => {
       />
 
       {/* Delete Confirmation */}
-      {deleteToast.open && <Box sx={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0, 0, 0, 0.1)", backdropFilter: "blur(2px)", zIndex: 1299 }} />}
+      {deleteToast.open && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            backdropFilter: "blur(2px)",
+            zIndex: 1299,
+          }}
+        />
+      )}
 
       <Dialog
         open={deleteToast.open}
         onClose={cancelDelete}
         PaperProps={{
-          sx: { borderRadius: 2, boxShadow: "0 8px 32px rgba(0,0,0,0.2)", minWidth: 300, maxWidth: 400, margin: 2 },
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+            minWidth: 300,
+            maxWidth: 400,
+            margin: 2,
+          },
         }}
-        sx={{ zIndex: 1300, "& .MuiDialog-container": { display: "flex", alignItems: "center", justifyContent: "center" } }}
+        sx={{
+          zIndex: 1300,
+          "& .MuiDialog-container": {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        }}
       >
         <Box sx={{ p: 3, textAlign: "center" }}>
-          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: "text.primary" }}>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 600, color: "text.primary" }}
+          >
             Confirm Delete
           </Typography>
           <Typography variant="body2" sx={{ mb: 3, color: "text.secondary" }}>
             {deleteToast.message}
           </Typography>
           <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
-            <Button variant="outlined" color="inherit" onClick={cancelDelete} sx={{ borderRadius: 1, minWidth: 80, borderColor: "grey.400", "&:hover": { borderColor: "grey.600", backgroundColor: "grey.50" } }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={cancelDelete}
+              sx={{
+                borderRadius: 1,
+                minWidth: 80,
+                borderColor: "grey.400",
+                "&:hover": {
+                  borderColor: "grey.600",
+                  backgroundColor: "grey.50",
+                },
+              }}
+            >
               Cancel
             </Button>
-            <Button variant="contained" color="error" onClick={confirmDelete} sx={{ borderRadius: 1, minWidth: 80, backgroundColor: "error.main", "&:hover": { backgroundColor: "error.dark" } }}>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmDelete}
+              sx={{
+                borderRadius: 1,
+                minWidth: 80,
+                backgroundColor: "error.main",
+                "&:hover": { backgroundColor: "error.dark" },
+              }}
+            >
               Delete
             </Button>
           </Box>

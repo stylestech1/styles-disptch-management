@@ -1,4 +1,3 @@
-// components/loads/ViewAppointmentsModal.tsx
 import Modal from '@/components/ui/Modals';
 import { TLoads } from '@/types/globalTypes';
 import {

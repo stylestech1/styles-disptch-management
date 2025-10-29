@@ -1,4 +1,3 @@
-// Calc Mile
 export const haversineDistance = (
   coords1: { lat: number; lon: number },
   coords2: { lat: number; lon: number }

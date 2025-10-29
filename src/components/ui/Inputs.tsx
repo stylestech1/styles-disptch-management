@@ -1,11 +1,4 @@
-// types
-type typeInp = "text" | "number" | "select";
-type TInp = {
-  disable?: boolean;
-  type?: typeInp;
-  placeholder?: string;
-  children?: React.ReactNode
-};
+import { TInp } from "@/types/globalTypes";
 
 const Inputs = ({ disable, type, placeholder, children }: TInp) => {
   return (

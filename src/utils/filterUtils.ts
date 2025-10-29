@@ -1,27 +1,7 @@
 import toast from "react-hot-toast";
 import { getErrorMessage } from "./getErrorMessage";
-import { Dayjs } from "dayjs";
-
-// تعريف أنواع عامة للبيانات المرتجعة
-interface ApiResponse<T = unknown> {
-  data?: T;
-  message?: string;
-  success?: boolean;
-}
- 
-// أنواع معاملات الفلتر
-interface FilterParams<T = unknown> {
-  id: string;
-  fromDate?: string | Dayjs | null;
-  toDate?: string | Dayjs | null;
-  fetchFunction: (params: { id: string; from?: string; to?: string }) => Promise<ApiResponse<T>>;
-}
-
-// أنواع معاملات الإعادة
-interface ResetParams<T = unknown> {
-  id: string;
-  fetchFunction: (params: { id: string }) => Promise<ApiResponse<T>>;
-}
+import { FilterParams, ResetParams } from "@/types/globalTypes";
+import { ApiResponse } from "./apiClient";
 
 export const applyGlobalFilter = async <T = unknown>({
   id,
@@ -29,8 +9,16 @@ export const applyGlobalFilter = async <T = unknown>({
   toDate,
   fetchFunction,
 }: FilterParams<T>): Promise<ApiResponse<T>> => {
-  const fromDateStr = fromDate ? (typeof fromDate === 'string' ? fromDate : fromDate.format('YYYY-MM-DD')) : undefined;
-  const toDateStr = toDate ? (typeof toDate === 'string' ? toDate : toDate.format('YYYY-MM-DD')) : undefined;
+  const fromDateStr = fromDate
+    ? typeof fromDate === "string"
+      ? fromDate
+      : fromDate.format("YYYY-MM-DD")
+    : undefined;
+  const toDateStr = toDate
+    ? typeof toDate === "string"
+      ? toDate
+      : toDate.format("YYYY-MM-DD")
+    : undefined;
 
   if (!fromDate && !toDate) {
     toast.error("Please select at least one date", {

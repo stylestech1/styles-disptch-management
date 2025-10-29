@@ -1,5 +1,4 @@
 'use client';
-// redux/store.ts
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,7 +16,7 @@ const persistConfig = {
   whitelist: ["auth"], 
 };
 
-// دمج الـ reducers
+// combine reducers
 const rootReducer = combineReducers({
   auth: authSlice,
   loadsForm: loadsFormSlice,

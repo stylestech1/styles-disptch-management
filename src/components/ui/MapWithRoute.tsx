@@ -157,11 +157,9 @@ const MapWithRoute: React.FC<MapWithRouteProps> = ({
       });
     });
 
-    // تأكد من وجود نقاط قبل fitBounds
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds);
 
-      // حد أدنى للـ zoom إذا كانت النقاط قريبة جداً
       const listener = google.maps.event.addListener(map, "idle", () => {
         const currentZoom = map.getZoom();
         if (currentZoom && currentZoom > 15) {
@@ -220,7 +218,7 @@ const MapWithRoute: React.FC<MapWithRouteProps> = ({
         stopover: true,
       }));
     } else if (dho && origin) {
-      // DHO → Origin فقط
+      // DHO → Origin 
       routeOrigin = { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) };
       routeDestination = {
         lat: parseFloat(origin.lat),

@@ -46,7 +46,13 @@ import {
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
-import { useCreateDriverMutation, useDeleteDriverMutation, useGetAllDriversQuery, useGetDriversWithPaginationQuery, useUpdateDriverMutation } from "@/redux/slices/apiSlice";
+import {
+  useCreateDriverMutation,
+  useDeleteDriverMutation,
+  useGetAllDriversQuery,
+  useGetDriversWithPaginationQuery,
+  useUpdateDriverMutation,
+} from "@/redux/slices/apiSlice";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({

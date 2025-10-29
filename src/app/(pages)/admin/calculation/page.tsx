@@ -181,7 +181,7 @@ const useRateCalculation = (
     if (totalDistance !== null) {
       setLoadMiles(Number(totalDistance.toFixed(1)));
     }
-  }, [totalDistance]); 
+  }, [totalDistance]);
 
   const handleCalc = useCallback(
     (e: React.FormEvent) => {

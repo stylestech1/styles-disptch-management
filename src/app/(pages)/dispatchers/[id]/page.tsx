@@ -65,7 +65,7 @@ const AdminProfile = () => {
   const [updatePassword, { isLoading: updatingPassword }] =
     useUpdateUserPasswordMutation();
 
-  // Token Checking وتحسين الـ redirect
+  // Token Checking
   useEffect(() => {
     if (!token) {
       router.replace("/");

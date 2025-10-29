@@ -1,4 +1,3 @@
-// utils/googleDistanceCalculator.ts
 export const calculateRouteDistance = (
   dho: { lat: number; lng: number } | null,
   origin: { lat: number; lng: number } | null,
@@ -12,7 +11,7 @@ export const calculateRouteDistance = (
 
     const directionsService = new google.maps.DirectionsService();
 
-    // إذا كان هناك DHO و Origin و Destinations
+    // DHO و Origin و Destinations
     if (dho && origin && destinations.length > 0) {
       const waypoints = destinations.slice(0, -1).map(dest => ({
         location: dest,
@@ -42,10 +41,9 @@ export const calculateRouteDistance = (
               totalDuration += leg.duration?.value || 0;
             });
 
-            // تحويل المسافة إلى أميال والوقت إلى ساعات
             resolve({
-              distance: totalDistance / 1609.34, // متر إلى أميال
-              duration: totalDuration / 3600, // ثواني إلى ساعات
+              distance: totalDistance / 1609.34, 
+              duration: totalDuration / 3600, 
             });
           } else {
             reject("Route calculation failed");
@@ -53,7 +51,7 @@ export const calculateRouteDistance = (
         }
       );
     }
-    // إذا كان هناك Origin و Destinations فقط
+    //Origin و Destinations
     else if (origin && destinations.length > 0) {
       const waypoints = destinations.slice(0, -1).map(dest => ({
         location: dest,
@@ -90,7 +88,7 @@ export const calculateRouteDistance = (
         }
       );
     }
-    // إذا كان هناك DHO و Origin فقط
+    //DHO و Origin 
     else if (dho && origin) {
       directionsService.route(
         {

@@ -1,4 +1,3 @@
-// hooks/useLoading.ts
 import { useState, useCallback } from 'react';
 
 const useLoading = (initialState: boolean = false) => {

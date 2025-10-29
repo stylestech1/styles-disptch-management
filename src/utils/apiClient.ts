@@ -11,7 +11,7 @@ export interface ApiResponse<T>{
 
 export const apiClient = async <T>(url: string, token: string, options: RequestInit = {}) : Promise<ApiResponse<T>> => {
     const res = await fetch(url, {
-        ...options, // adding Methods
+        ...options,
         headers: {
             'Content-Type' : 'application/json',
             ...(token ? {Authorization: `Bearer ${token}`} : {}),

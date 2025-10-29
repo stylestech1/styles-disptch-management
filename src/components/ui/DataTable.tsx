@@ -1,4 +1,3 @@
-// components/ui/DataTable.tsx
 import { ReactNode } from "react";
 
 export type AlignType = "left" | "center" | "right";

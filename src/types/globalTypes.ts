@@ -1,3 +1,6 @@
+import { TPlace } from "@/components/sections/LocationAutocomplete";
+import { Dayjs } from "dayjs";
+
 export type TUserRole = "admin" | "employee";
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
@@ -16,6 +19,10 @@ export type TUser = {
   role: TUserRole;
   position: string;
   jobId: number;
+};
+export type TAuthState = {
+  user: TUser | null;
+  token: string | null;
 };
 export type TDocument = {
   viewLink: string;
@@ -44,10 +51,10 @@ export type TLoads = {
   feesNumber: string;
   pickupAt: string;
   completedAt: string;
-  arrivalAtShipper?: string; // new
-  arrivalAtReceiver?: string; // new
-  leftShipper?: string; // new
-  leftReceiver?: string; // new
+  arrivalAtShipper?: string; 
+  arrivalAtReceiver?: string; 
+  leftShipper?: string; 
+  leftReceiver?: string; 
   deliveredAt?: string;
   createdAt?: string;
   documents?: TDocument[];
@@ -212,4 +219,72 @@ export interface RTKError {
   message?: string;
   status?: string;
   errors?: { msg: string }[];
+}
+export type typeInp = "text" | "number" | "select";
+export type TInp = {
+  disable?: boolean;
+  type?: typeInp;
+  placeholder?: string;
+  children?: React.ReactNode
+};
+export interface LoadsFormState {
+  // Location Tab
+  dho: TPlace | null;
+  origin: TPlace | null;
+  destinations: (TPlace | null)[];
+
+  // Load Details Tab
+  price: string;
+  fees: string;
+  loadIDInp: string;
+  pickupAt: string | null;
+  completedAt: string | null;
+  arrivalAtShipper: string | null;
+  arrivalAtReceiver: string | null;
+  leftShipper: string | null;
+  leftReceiver: string | null;
+
+  // Assignment Tab
+  driverId: string;
+  truckId: string;
+  truckType: TTruckType;
+  truckTemp: string;
+
+  // UI State
+  activeTab: number;
+  isEditing: boolean;
+  editingLoad: TLoads | null;
+}
+export interface ModalsState {
+  createEditLoadModal: boolean;
+  updateStatusModal: boolean;
+  addNoteModal: boolean;
+  viewNotesModal: boolean;
+  viewAppointmentsModal: boolean;
+  
+  // Selected IDs for modals
+  selectedLoadId: string;
+  selectedLoadForNotes: TLoads | null;
+  selectedLoadForAppointments: TLoads | null;
+}
+export interface UIState {
+  search: string;
+  page: number;
+  loading: boolean;
+  error: string | null;
+}
+export interface ApiResponse<T = unknown> {
+  data?: T;
+  message?: string;
+  success?: boolean;
+}
+export interface FilterParams<T = unknown> {
+  id: string;
+  fromDate?: string | Dayjs | null;
+  toDate?: string | Dayjs | null;
+  fetchFunction: (params: { id: string; from?: string; to?: string }) => Promise<ApiResponse<T>>;
+}
+export interface ResetParams<T = unknown> {
+  id: string;
+  fetchFunction: (params: { id: string }) => Promise<ApiResponse<T>>;
 }

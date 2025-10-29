@@ -26,8 +26,8 @@ export default function AdminLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // استخدام الـ hook الجديد
-    const isGoogleMapsLoaded = useGoogleMaps();
+  // Google Hook
+  const isGoogleMapsLoaded = useGoogleMaps();
 
   // Detect screen size
   useEffect(() => {

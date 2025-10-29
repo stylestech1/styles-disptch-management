@@ -45,7 +45,6 @@ const Dispatchers = () => {
   // RTK Querys
   const {
     data: dispatchersData,
-    isError,
     error: dispatchersError,
     isLoading: loading,
     isFetching,
@@ -81,13 +80,13 @@ const Dispatchers = () => {
   useEffect(() => {
     if (dispatchersError) {
       const errorMessage = getErrorMessage(dispatchersError);
-      if (error !== errorMessage) { 
-      setError(errorMessage);
-      toast.error(errorMessage || "Loading failed ❌", {
-        id: 'dispatchersError',
-        style: { background: "#dc2626", color: "#fff" },
-      });
-    }
+      if (error !== errorMessage) {
+        setError(errorMessage);
+        toast.error(errorMessage || "Loading failed ❌", {
+          id: "dispatchersError",
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
     }
   }, [dispatchersError, setError, error]);
 
@@ -125,7 +124,6 @@ const Dispatchers = () => {
         style: { background: "#16a34a", color: "#fff" },
       });
       setPopup(false);
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -151,7 +149,6 @@ const Dispatchers = () => {
       toast.success(`Role updated to ${newRole} successfully!`, {
         style: { background: "#16a34a", color: "#fff" },
       });
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -174,7 +171,6 @@ const Dispatchers = () => {
       toast.success("User activated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -197,7 +193,6 @@ const Dispatchers = () => {
       toast.success("User deactivated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -299,7 +294,7 @@ const Dispatchers = () => {
     </tr>
   );
 
-  // تحسين عرض الـ loading
+  // set loading
   if (loading && dispatchers.length === 0) return <Loading />;
 
   return (

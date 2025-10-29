@@ -1,19 +1,5 @@
-// redux/slices/modalsSlice.ts
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TLoads } from '@/types/globalTypes';
-
-interface ModalsState {
-  createEditLoadModal: boolean;
-  updateStatusModal: boolean;
-  addNoteModal: boolean;
-  viewNotesModal: boolean;
-  viewAppointmentsModal: boolean;
-  
-  // Selected IDs for modals
-  selectedLoadId: string;
-  selectedLoadForNotes: TLoads | null;
-  selectedLoadForAppointments: TLoads | null;
-}
+import { ModalsState, TLoads } from '@/types/globalTypes';
 
 const initialState: ModalsState = {
   createEditLoadModal: false,

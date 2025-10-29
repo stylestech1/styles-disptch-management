@@ -200,7 +200,6 @@ class ProxyMapsService {
     }
   }
 
-  // للتوافق مع الدوال القديمة
   async calculateFullRouteDistance(
     dho: { lat: number; lng: number } | null,
     origin: { lat: number; lng: number } | null,

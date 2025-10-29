@@ -32,7 +32,6 @@ const UserSettingsModal = ({
     status: "active" as "active" | "deactive",
   });
 
-  // تحديث الحالة عند فتح المودال أو تغيير المستخدم
   useEffect(() => {
     if (user) {
       setTempUser({
@@ -48,12 +47,10 @@ const UserSettingsModal = ({
     e.preventDefault();
 
     try {
-      // تحديث الدور إذا تغير
       if (user.role !== tempUser.role) {
         await onUpdateRole(user.id, tempUser.role);
       }
 
-      // تحديث الحالة إذا تغيرت
       if (user.active !== (tempUser.status === "active")) {
         if (tempUser.status === "active") {
           await onActivateUser(user.id);

@@ -1,11 +1,5 @@
+import { UIState } from '@/types/globalTypes';
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-
-interface UIState {
-  search: string;
-  page: number;
-  loading: boolean;
-  error: string | null;
-}
 
 const initialState: UIState = {
   search: '',
