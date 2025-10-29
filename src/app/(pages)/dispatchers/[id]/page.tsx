@@ -4,7 +4,7 @@ import Titles from "@/components/ui/Titles";
 import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
-import toast from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { IoKeyOutline } from "react-icons/io5";
 import {
   IoPersonCircleOutline,
@@ -18,7 +18,11 @@ import {
   IoPersonOutline,
 } from "react-icons/io5";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { useGetUserInfoQuery, useUpdateUserInfoMutation, useUpdateUserPasswordMutation } from "@/redux/slices/apiSlice";
+import {
+  useGetUserInfoQuery,
+  useUpdateUserInfoMutation,
+  useUpdateUserPasswordMutation,
+} from "@/redux/slices/apiSlice";
 import { useRouter } from "next/navigation";
 import { setError, clearError } from "@/redux/slices/uiSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
@@ -44,10 +48,10 @@ const AdminProfile = () => {
     phone: "",
   });
 
-  const dispatch = useAppDispatch()
-  const router = useRouter()
+  const dispatch = useAppDispatch();
+  const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
-  const error = useAppSelector((state: RootState) => state.ui.error)
+  const error = useAppSelector((state: RootState) => state.ui.error);
 
   const {
     data: userData,
@@ -57,8 +61,9 @@ const AdminProfile = () => {
 
   const profile = userData?.data || [];
 
-  const [updateUser, {isLoading: updatingUser}] = useUpdateUserInfoMutation()
-  const [updatePassword, {isLoading: updatingPassword}] = useUpdateUserPasswordMutation()
+  const [updateUser, { isLoading: updatingUser }] = useUpdateUserInfoMutation();
+  const [updatePassword, { isLoading: updatingPassword }] =
+    useUpdateUserPasswordMutation();
 
   // Token Checking وتحسين الـ redirect
   useEffect(() => {
@@ -68,41 +73,28 @@ const AdminProfile = () => {
     }
   }, [token, router]);
 
-  // Handling Errors - تحسين معالجة الأخطاء
+  // handling Errors
   useEffect(() => {
     if (userError) {
       const errorMessage = getErrorMessage(userError);
-      dispatch(setError(errorMessage))
-      console.error("User Error:", userError);
-
-      if (
-        errorMessage.includes("401") ||
-        errorMessage.includes("unauthorized")
-      ) {
-        toast.error("Session expired. Please login again.", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-        router.replace("/");
-        return;
-      }
-
-      toast.error(errorMessage || "Loading User failed ❌", {
+      setError(errorMessage);
+      toast.error(errorMessage || "Loading failed ❌", {
         style: { background: "#dc2626", color: "#fff" },
       });
     }
-  }, [userError, dispatch, router]);
+  }, [userError, setError]);
 
   // Update My Data Function
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    dispatch(clearError())
+    dispatch(clearError());
 
     try {
-      await updateUser(({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-        })).unwrap()
+      await updateUser({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+      }).unwrap();
 
       toast.success("User Updated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
@@ -111,7 +103,7 @@ const AdminProfile = () => {
       setPopup(false);
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
-      dispatch(setError(errorMessage))
+      dispatch(setError(errorMessage));
       toast.error(errorMessage || "Updating user failed ❌");
       throw err;
     }
@@ -136,16 +128,16 @@ const AdminProfile = () => {
       });
     }
     setPopup(true);
-    dispatch(clearError())
+    dispatch(clearError());
   };
 
   // Change Password
   const handleChangePassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    dispatch(clearError())
+    dispatch(clearError());
 
     try {
-      await updatePassword(passwordData).unwrap()
+      await updatePassword(passwordData).unwrap();
 
       toast.success("Password Updated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
@@ -160,7 +152,7 @@ const AdminProfile = () => {
       });
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
-      dispatch(setError(errorMessage))
+      dispatch(setError(errorMessage));
       toast.error(errorMessage || "Updating user failed ❌");
       throw err;
     }
@@ -196,6 +188,8 @@ const AdminProfile = () => {
           </button>
         </div>
       </div>
+
+      <Toaster position="top-right" />
 
       {/* Errors */}
       {error && (

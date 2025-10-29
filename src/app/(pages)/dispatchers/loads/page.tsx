@@ -9,7 +9,7 @@ import Titles from "@/components/ui/Titles";
 import { loadColumns } from "@/data/loadTables";
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
-import { RTKError, TLoads } from "@/types/globalTypes";
+import { TLoads } from "@/types/globalTypes";
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
@@ -64,7 +64,6 @@ const LoadsPage = () => {
   const {
     data: loadsData,
     isLoading: loadsLoading,
-    isError,
     error: loadsError,
     refetch: refetchLoads,
   } = useGetLoadsQuery({ page, limit: 10 });
