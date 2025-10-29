@@ -28,17 +28,14 @@ import DataTable from "@/components/ui/DataTable";
 import { driverSummaryColumns } from "@/data/driverSummaryTable";
 
 // ✅ Import RTK Query hooks
-import {
-  useGetDriverByIdQuery,
-  useLazyGetDriverSummaryWithFilterQuery
-} from "@/redux/slices/driverApi";
 import { applyGlobalFilter, resetGlobalFilter } from "@/utils/filterUtils";
 
 // ✅ Import MUI DateTimePicker
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import dayjs, { Dayjs } from "dayjs";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Dayjs } from "dayjs";
+import { useGetDriverByIdQuery, useLazyGetDriverSummaryWithFilterQuery } from "@/redux/slices/apiSlice";
 
 const DriverSummary = () => {
   const { id } = useParams();
@@ -493,7 +490,7 @@ const DriverSummary = () => {
               <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-col xl:flex-row sm:items-end gap-4 w-full">
                 <div className="flex flex-col w-full">
                   <label className="text-sm font-medium text-slate-700 mb-1">From</label>
-                  <DateTimePicker
+                  <DatePicker
                     value={fromDate}
                     onChange={(newValue) => setFromDate(newValue)}
                     slotProps={{
@@ -513,7 +510,7 @@ const DriverSummary = () => {
 
                 <div className="flex flex-col w-full">
                   <label className="text-sm font-medium text-slate-700 mb-1">To</label>
-                  <DateTimePicker
+                  <DatePicker
                     value={toDate}
                     onChange={(newValue) => setToDate(newValue)}
                     slotProps={{

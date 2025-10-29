@@ -37,7 +37,7 @@ import { useRouter } from "next/navigation";
 // ✅ Import MUI DateTimePicker
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs, { Dayjs } from "dayjs";
 
 const LoadsPage = () => {
@@ -78,7 +78,7 @@ const LoadsPage = () => {
     }
   );
 
-  const { data: filteredData, refetch: refetchFiltered } = useGetLoadsWithFilterQuery(
+  const { data: filteredData} = useGetLoadsWithFilterQuery(
     { 
       from: fromDate ? fromDate.format('YYYY-MM-DD') : undefined, 
       to: toDate ? toDate.format('YYYY-MM-DD') : undefined 
@@ -298,7 +298,7 @@ const LoadsPage = () => {
                 <div className="flex items-center flex-col lg:flex-row gap-3 w-full">
                   <div className="flex flex-col w-full">
                     <label className="text-xs font-medium text-slate-700 mb-1">From Date</label>
-                    <DateTimePicker
+                    <DatePicker
                       value={fromDate}
                       onChange={(newValue) => setFromDate(newValue)}
                       slotProps={{
@@ -318,7 +318,7 @@ const LoadsPage = () => {
 
                   <div className="flex flex-col w-full">
                     <label className="text-xs font-medium text-slate-700 mb-1">To Date</label>
-                    <DateTimePicker
+                    <DatePicker
                       value={toDate}
                       onChange={(newValue) => setToDate(newValue)}
                       slotProps={{
@@ -345,7 +345,6 @@ const LoadsPage = () => {
                         return;
                       }
                       setIsFiltered(true);
-                      refetchFiltered();
                     }}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-medium shadow-sm transition-all duration-200 hover:shadow-md whitespace-nowrap"
                   >

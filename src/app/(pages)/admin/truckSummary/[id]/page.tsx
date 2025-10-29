@@ -26,20 +26,15 @@ import DataTable from "@/components/ui/DataTable";
 import { truckSummaryColumns } from "@/data/truckSummaryTable";
 
 // ✅ Import RTK Query hooks
-import {
-  useGetTruckByIdQuery,
-  useLazyGetSpecificTruckSummaryQuery,
-  useLazyGetTruckSummaryWithFilterQuery,
-} from "@/redux/slices/truckApi";
 import { applyGlobalFilter, resetGlobalFilter } from "@/utils/filterUtils";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
 // ✅ Import MUI DateTimePicker
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
-import dayjs, { Dayjs } from "dayjs";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { Dayjs } from "dayjs";
+import { useGetTruckByIdQuery, useLazyGetSpecificTruckSummaryQuery, useLazyGetTruckSummaryWithFilterQuery } from "@/redux/slices/apiSlice";
 
 const TruckSummary = () => {
   const { id } = useParams();
@@ -578,7 +573,7 @@ const TruckSummary = () => {
               <div className="flex flex-wrap items-center gap-4 mb-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex flex-col">
                   <label className="text-sm text-slate-600 mb-1">From Date</label>
-                  <DateTimePicker
+                  <DatePicker
                     value={fromDate}
                     onChange={(newValue) => setFromDate(newValue)}
                     slotProps={{
@@ -597,7 +592,7 @@ const TruckSummary = () => {
 
                 <div className="flex flex-col">
                   <label className="text-sm text-slate-600 mb-1">To Date</label>
-                  <DateTimePicker
+                  <DatePicker
                     value={toDate}
                     onChange={(newValue) => setToDate(newValue)}
                     slotProps={{

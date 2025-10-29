@@ -1,8 +1,18 @@
 // apiSlice.ts
+import {
+  TDriver,
+  TLoadSummary,
+  TPagination,
+  TTruck,
+  TTrucksSummaryResponse,
+  TTruckSummary,
+  TTruckWithSummary,
+} from "@/types/globalTypes";
 import { api } from "../api/baseApi";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
+    // ! ========== Loads Methods ==========
     // Get Loads
     getLoads: builder.query({
       query: ({ page = 1, limit = 10 }) =>
@@ -13,30 +23,29 @@ export const apiSlice = api.injectEndpoints({
     // Get All Loads
     getAllLoads: builder.query({
       query: (arg: void) => `/api/v1/loads?limit=50`,
-      providesTags: ["Loads"], 
+      providesTags: ["Loads"],
     }),
 
     // Get Loads Using Id
     getLoadById: builder.query({
-  query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
-  providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
-}),
+      query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
+      providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
+    }),
 
-// Get Loads with Date Filter
-getLoadsWithFilter: builder.query({
-  query: ({ from, to }) => {
-    let url = `/api/v1/loads`;
-    const params = [];
+    // Get Loads with Date Filter
+    getLoadsWithFilter: builder.query({
+      query: ({ from, to }) => {
+        let url = `/api/v1/loads`;
+        const params = [];
 
-    if (from) params.push(`from=${from}`);
-    if (to) params.push(`to=${to}`);
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
 
-    if (params.length) url += `?${params.join("&")}`;
-    return url;
-  },
-  providesTags: ["Loads"],
-}),
-
+        if (params.length) url += `?${params.join("&")}`;
+        return url;
+      },
+      providesTags: ["Loads"],
+    }),
 
     // Create Load
     createLoads: builder.mutation({
@@ -58,15 +67,6 @@ getLoadsWithFilter: builder.query({
       invalidatesTags: ["Loads"],
     }),
 
-    // Upload Documents
-    uploadDocuments: builder.mutation({
-      query: ({ formData }) => ({
-        url: `/api/v1/loads`,
-        method: "POST",
-        body: formData,
-      }),
-    }),
-
     // Update Load Status
     updateLoadsStatus: builder.mutation({
       query: ({ id, ...body }) => ({
@@ -77,17 +77,210 @@ getLoadsWithFilter: builder.query({
       invalidatesTags: ["Loads"],
     }),
 
+    // ! ========== Documents Methods ==========
+
+    // Upload Documents
+    uploadDocuments: builder.mutation({
+      query: ({ formData }) => ({
+        url: `/api/v1/loads`,
+        method: "POST",
+        body: formData,
+      }),
+    }),
+
+    // ! ========== Drivers Methods ==========
+
     // Get Drivers
     getDrivers: builder.query({
       query: (arg: void) => `/api/v1/drivers?status=available`,
       providesTags: ["Drivers"],
     }),
 
+    // 🔹 Get all drivers with Pagination
+    getDriversWithPagination: builder.query<
+      { data: TDriver[]; paginationResult: TPagination },
+      number | void
+    >({
+      query: (page = 1) => `/api/v1/drivers?page=${page}`,
+      providesTags: ["Drivers"],
+    }),
+
+    // 🔹 Get all drivers without pagination
+    getAllDrivers: builder.query<{ data: TDriver[] }, void>({
+      query: () => `/api/v1/drivers?limit=50`,
+      providesTags: ["Drivers"],
+    }),
+    getDriverById: builder.query<{ data: TDriver }, string>({
+      query: (id) => `/api/v1/drivers/${id}`,
+      providesTags: ["Drivers"],
+    }),
+
+    // 🔹 Get driver summary
+    getDriverSummary: builder.query<{ data: TLoadSummary }, string>({
+      query: (id) => `/api/v1/summary/driver/${id}`,
+      providesTags: ["DriverSummary"],
+    }),
+
+    // 🔹 Get driver summary with date filter
+    getDriverSummaryWithFilter: builder.query<
+      { data: TLoadSummary },
+      { id: string; from?: string; to?: string }
+    >({
+      query: ({ id, from, to }) => {
+        const params = new URLSearchParams();
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+        return `/api/v1/summary/driver/${id}?${params.toString()}`;
+      },
+      providesTags: ["DriverSummary"],
+    }),
+
+    // 🔹 Create driver
+        createDriver: builder.mutation<{ data: TDriver }, Partial<TDriver>>({
+          query: (body) => ({
+            url: `/api/v1/drivers`,
+            method: "POST",
+            body,
+          }),
+          invalidatesTags: ["Drivers"],
+        }),
+    
+        // 🔹 Update driver
+        updateDriver: builder.mutation<{ data: TDriver }, { id: string; body: Partial<TDriver> }>({
+          query: ({ id, body }) => ({
+            url: `/api/v1/drivers/${id}`,
+            method: "PATCH",
+            body,
+          }),
+          invalidatesTags: ["Drivers"],
+        }),
+    
+        // 🔹 Delete driver
+        deleteDriver: builder.mutation<{ message: string }, string>({
+          query: (id) => ({
+            url: `/api/v1/drivers/${id}`,
+            method: "DELETE",
+          }),
+          invalidatesTags: ["Drivers"],
+        }),
+
+    // ! ========== Trucks Methods ==========
+
     // Get Trucks
     getTrucks: builder.query({
       query: (arg: void) => `/api/v1/trucks?status=available`,
       providesTags: ["Trucks"],
     }),
+
+    // Get trucks with pagination
+    getTrucksWithSearch: builder.query<
+      { data: { data: TTruck[]; paginationResult?: TPagination } },
+      { page?: number; search?: string }
+    >({
+      query: ({ page = 1, search } = {}) => {
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        if (search && search.trim().length) params.set("search", search.trim());
+        return `/api/v1/trucks?${params.toString()}`;
+      },
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.data.map((t: TTruck) => ({
+                type: "Trucks" as const,
+                id: t.id,
+              })),
+              { type: "Trucks", id: "LIST" },
+            ]
+          : [{ type: "Trucks", id: "LIST" }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // Get All Trucks for Search
+    getAllTrucks: builder.query({
+      query: () => `/api/v1/trucks?limit=50`,
+      providesTags: ["Trucks"],
+    }),
+
+    // Get All Trucks With Summaries (For Dashboard)
+    getTruckSummary: builder.query<TTrucksSummaryResponse, void>({
+      query: () => `/api/v1/summary/truck`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
+                type: "Trucks" as const,
+                id: t.id,
+              })),
+              { type: "TruckSummary", id: "LIST" },
+            ]
+          : [{ type: "TruckSummary", id: "LIST" }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // ✅ Get specific truck summary
+    getSpecificTruckSummary: builder.query<{ data: TTruckSummary }, string>({
+      query: (id) => `/api/v1/summary/truck/${id}`,
+      providesTags: (result, error, id) => [{ type: "TruckSummary", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // ✅ Get truck summary with date filter
+    getTruckSummaryWithFilter: builder.query<
+      { data: TTruckSummary },
+      { id: string; from?: string; to?: string }
+    >({
+      query: ({ id, from, to }) => {
+        const params = new URLSearchParams();
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+        return `/api/v1/summary/truck/${id}?${params.toString()}`;
+      },
+      providesTags: (result, error, { id }) => [{ type: "TruckSummary", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // ✅ Get single truck by ID
+    getTruckById: builder.query<{ data: TTruck }, string>({
+      query: (id) => `/api/v1/trucks/${id}`,
+      providesTags: (result, error, id) => [{ type: "Trucks", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // ✅ Create / Update / Delete
+    createTruck: builder.mutation({
+      query: (body) => ({ url: "/trucks", method: "POST", body }),
+      invalidatesTags: [
+        { type: "Trucks", id: "LIST" },
+        { type: "TruckSummary", id: "LIST" },
+      ],
+    }),
+
+    updateTruck: builder.mutation({
+      query: ({ id, ...body }) => ({
+        url: `/api/v1/trucks/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (result, error, { id }) => [
+        { type: "Trucks", id },
+        { type: "Trucks", id: "LIST" },
+        { type: "TruckSummary", id: "LIST" },
+        { type: "TruckSummary", id },
+      ],
+    }),
+
+    deleteTruck: builder.mutation({
+      query: (id) => ({ url: `/api/v1/trucks/${id}`, method: "DELETE" }),
+      invalidatesTags: (result, error, id) => [
+        { type: "Trucks", id },
+        { type: "Trucks", id: "LIST" },
+        { type: "TruckSummary", id: "LIST" },
+        { type: "TruckSummary", id },
+      ],
+    }),
+
+    // ! ========== Notes Methods ==========
 
     // Add Note
     addNote: builder.mutation({
@@ -107,14 +300,16 @@ getLoadsWithFilter: builder.query({
       ],
     }),
 
-    // Get All Dispatchers
+    // ! ========== Users Methods [adminDashboard] ==========
+
+    // Get All Users
     getAllDispatchers: builder.query({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/adminDashboard?page=${page}&limit=${limit}`,
       providesTags: ["Dispatchers"],
     }),
 
-    // Create Dispatcher (User)
+    // Create User
     createUser: builder.mutation({
       query: (body) => ({
         url: `/api/v1/adminDashboard`,
@@ -154,45 +349,81 @@ getLoadsWithFilter: builder.query({
       invalidatesTags: ["Dispatchers"],
     }),
 
+    // ! ========== Users Methods [userDashboard] ==========
+
     // Get User Information
     getUserInfo: builder.query({
       query: () => `/api/v1/userDashboard/getMyData`,
-      providesTags: ['Users']
+      providesTags: ["Users"],
     }),
 
     // Update User Info
     updateUserInfo: builder.mutation({
-      query: ({...body}) => ({url: `/api/v1/userDashboard/updateMyData`, method:'PATCH', body}),
-      invalidatesTags: ['Users']
+      query: ({ ...body }) => ({
+        url: `/api/v1/userDashboard/updateMyData`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Users"],
     }),
+
+    // ! ========== Password Methods ==========
 
     // Update User Password
     updateUserPassword: builder.mutation({
-      query: (body) => ({url: `/api/v1/updatePassword/`, method: 'PATCH', body}),
-      invalidatesTags: ['Users']
-    })
+      query: (body) => ({
+        url: `/api/v1/updatePassword/`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Users"],
+    }),
   }),
 });
 
 export const {
+  // TODO: ----- Loads -----
   useGetLoadsQuery,
   useGetAllLoadsQuery,
   useGetLoadByIdQuery,
   useCreateLoadsMutation,
   useUpdateLoadsMutation,
   useUpdateLoadsStatusMutation,
+  useGetLoadsWithFilterQuery,
+  // TODO: ----- Documents -----
   useUploadDocumentsMutation,
+  // TODO: ----- Drivers -----
   useGetDriversQuery,
+  useGetDriversWithPaginationQuery,
+  useGetAllDriversQuery,
+  useGetDriverByIdQuery,
+  useGetDriverSummaryQuery,
+  useLazyGetDriverSummaryWithFilterQuery,
+  useCreateDriverMutation,
+  useUpdateDriverMutation,
+  useDeleteDriverMutation,
+  // TODO: ----- Trucks -----
   useGetTrucksQuery,
+  useGetTrucksWithSearchQuery,
+  useGetAllTrucksQuery,
+  useGetTruckSummaryQuery,
+  useLazyGetSpecificTruckSummaryQuery,
+  useLazyGetTruckSummaryWithFilterQuery,
+  useGetTruckByIdQuery,
+  useCreateTruckMutation,
+  useUpdateTruckMutation,
+  useDeleteTruckMutation,
+  // TODO: ----- Notes -----
   useAddNoteMutation,
   useGetNotesQuery,
+  // TODO: ----- Users-----
   useGetAllDispatchersQuery,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
   useActivateUserMutation,
   useDeactivateUserMutation,
-    useGetLoadsWithFilterQuery, 
   useGetUserInfoQuery,
   useUpdateUserInfoMutation,
+  // TODO: ----- Password -----
   useUpdateUserPasswordMutation,
 } = apiSlice;

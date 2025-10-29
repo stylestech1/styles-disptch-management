@@ -13,6 +13,15 @@ export const api = createApi({
       return headers;
     },
   }),
-  tagTypes: ["Loads", "Trucks", "Drivers", "Comments", 'Dispatchers', 'Users'],
+  tagTypes: [
+    "Loads",
+    "Trucks",
+    "Drivers",
+    "Comments",
+    "Dispatchers",
+    "Users",
+    "TruckSummary",
+    "DriverSummary",
+  ],
   endpoints: () => ({}),
 });

@@ -10,8 +10,6 @@ import modalsSlice from "./slices/modalsSlice";
 import uiSlice from "./slices/uiSlice";
 import { apiSlice } from "./slices/apiSlice";
 import { googleMapsApi } from "./slices/googleMapsSlice";
-import { truckApi } from "./slices/truckApi";
-import { driverApi } from "./slices/driverApi";
 
 const persistConfig = {
   key: "root",
@@ -27,8 +25,6 @@ const rootReducer = combineReducers({
   ui: uiSlice,
   [apiSlice.reducerPath]: apiSlice.reducer,
   [googleMapsApi.reducerPath]: googleMapsApi.reducer,
-  [truckApi.reducerPath]: truckApi.reducer,
-  [driverApi.reducerPath]: driverApi.reducer, 
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -40,7 +36,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
       },
-    }).concat(apiSlice.middleware, googleMapsApi.middleware, truckApi.middleware, driverApi.middleware),
+    }).concat(apiSlice.middleware, googleMapsApi.middleware),
 });
 
 export const persistor = persistStore(store);

@@ -1,13 +1,6 @@
 "use client";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useAppSelector } from "@/redux/store";
-import {
-  useGetTrucksQuery,
-  useGetAllTrucksQuery,
-  useCreateTruckMutation,
-  useUpdateTruckMutation,
-  useDeleteTruckMutation,
-} from "@/redux/slices/truckApi";
 import { TDriver, TTruck } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
@@ -50,9 +43,9 @@ import {
   Alert,
 } from "@mui/material";
 import { muiTheme } from "@/theme/theme";
-import { useGetAllDriversQuery } from "@/redux/slices/driverApi";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
+import { useCreateTruckMutation, useDeleteTruckMutation, useGetAllDriversQuery, useGetAllTrucksQuery, useGetTrucksWithSearchQuery, useUpdateTruckMutation } from "@/redux/slices/apiSlice";
 
 // Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -485,7 +478,7 @@ const TrucksPage: React.FC = () => {
     data: trucksData,
     isLoading,
     refetch,
-  } = useGetTrucksQuery({ page: page + 1 });
+  } = useGetTrucksWithSearchQuery({ page: page + 1 });
 
   // all trucks (used for selection logic in form) - only fetched when token exists
   const { data: allTrucksData } = useGetAllTrucksQuery({ skip: !token });
@@ -499,8 +492,8 @@ const TrucksPage: React.FC = () => {
   const [deleteTruck, { isLoading: isDeleting, error: deleteError }] = useDeleteTruckMutation();
 
   // convenient exposures
-  const trucks = trucksData?.data?.data || [];
-  const allTrucks = allTrucksData?.data?.data || [];
+  const trucks = useMemo(() => trucksData?.data?.data || [], [trucksData]);
+  const allTrucks = useMemo(() => allTrucksData?.data?.data || [], [allTrucksData]);
   const pagination = allTrucksData?.data?.paginationResult || null;
   const allDrivers = driversData?.data || [];
 
@@ -518,7 +511,7 @@ const TrucksPage: React.FC = () => {
           : String(t.assignedDriver || "").toLowerCase().includes(q))
       );
     });
-  }, [search]);
+  }, [search, trucks, allTrucks]);
 
   // Modal states
   const [open, setOpen] = useState(false);

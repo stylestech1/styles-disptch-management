@@ -2,13 +2,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/redux/store";
-import {
-  useGetDriversQuery,
-  useGetAllDriversQuery,
-  useCreateDriverMutation,
-  useUpdateDriverMutation,
-  useDeleteDriverMutation,
-} from "@/redux/slices/driverApi";
 import { TDriver } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
@@ -53,6 +46,7 @@ import {
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
+import { useCreateDriverMutation, useDeleteDriverMutation, useGetAllDriversQuery, useGetDriversWithPaginationQuery, useUpdateDriverMutation } from "@/redux/slices/apiSlice";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -340,7 +334,7 @@ const DriversPage = () => {
     data: driversData,
     isLoading,
     refetch,
-  } = useGetDriversQuery(page + 1);
+  } = useGetDriversWithPaginationQuery(page + 1);
   const { data: allDriversData } = useGetAllDriversQuery();
 
   // 🔹 API Mutations

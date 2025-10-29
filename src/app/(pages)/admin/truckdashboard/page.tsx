@@ -24,9 +24,8 @@ import { TTruck, TTruckSummary, TTruckWithSummary } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Erros from "@/components/ui/Erros";
 import { muiTheme } from "@/theme/theme";
-import { useGetTruckSummaryQuery } from "@/redux/slices/truckApi";
 import ChartSection from "@/components/ui/ChartSection";
-import Pagination from "@/components/ui/Pagination";
+import { useGetTruckSummaryQuery } from "@/redux/slices/apiSlice";
 
 const StyledTableCell = styled(TableCell)(() => ({
   [`&.${tableCellClasses.head}`]: {
