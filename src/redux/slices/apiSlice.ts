@@ -249,7 +249,7 @@ export const apiSlice = api.injectEndpoints({
 
     // ✅ Create / Update / Delete
     createTruck: builder.mutation({
-      query: (body) => ({ url: "/trucks", method: "POST", body }),
+      query: (body) => ({ url: "/api/v1/trucks", method: "POST", body }),
       invalidatesTags: [
         { type: "Trucks", id: "LIST" },
         { type: "TruckSummary", id: "LIST" },
