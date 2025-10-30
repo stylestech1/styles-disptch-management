@@ -125,7 +125,7 @@ const DateRangeFilter = ({ onApply }: DateRangeFilterProps) => {
             showMonthAndYearPickers={true}
             showDateDisplay={false}
             editableDateInputs={true}
-            minDate={undefined} // 🧠 allows empty start
+            minDate={undefined}
           />
 
           <div className="flex justify-between mt-3">
