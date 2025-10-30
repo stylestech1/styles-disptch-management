@@ -20,7 +20,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
   );
 
 
-  // استخدام useGetLoadsQuery بدلاً من useSelector
+  // using useGetLoadsQuery instead of useSelector
   const { refetch } = useGetLoadsQuery({ page: 1, limit: 10 })
   const [addNote, { isLoading: addingNoteLoading }] = useAddNoteMutation();
 

@@ -90,34 +90,34 @@ export const apiSlice = api.injectEndpoints({
     }),
 
 
+searchDrivers: builder.query({
+  query: (searchParams: Record<string, any> = {}) => {
+    if (!searchParams || Object.keys(searchParams).length === 0) {
+      return { url: "" };
+    }
 
-    searchDrivers: builder.query({
-      query: (searchParams) => {
-        // 🚫 لو مفيش params متعرفه فعلاً، امنع إرسال أي request
-        if (!searchParams || Object.keys(searchParams).length === 0) {
-          return { url: "", skip: true }; // مهم
-        }
+    const params = new URLSearchParams();
 
-        const params = new URLSearchParams();
-        Object.entries(searchParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            params.append(key, value.toString());
-          }
-        });
+    Object.entries(searchParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        params.append(key, value.toString());
+      }
+    });
 
-        return `/api/v1/drivers?${params.toString()}`;
-      },
-      providesTags: (result) =>
-        result?.data
-          ? [
-            ...result.data.map((driver: TDriver) => ({
-              type: "Drivers" as const,
-              id: driver.id,
-            })),
-            { type: "Drivers", id: "SEARCH_LIST" },
-          ]
-          : [{ type: "Drivers", id: "SEARCH_LIST" }],
-    }),
+    return `/api/v1/drivers?${params.toString()}`;
+  },
+  providesTags: (result) =>
+    result?.data
+      ? [
+          ...result.data.map((driver: TDriver) => ({
+            type: "Drivers" as const,
+            id: driver.id,
+          })),
+          { type: "Drivers", id: "SEARCH_LIST" },
+        ]
+      : [{ type: "Drivers", id: "SEARCH_LIST" }],
+}),
+
 
     // 🔍 SEARCH TRUCKS
     searchTrucks: builder.query({
@@ -350,7 +350,7 @@ export const apiSlice = api.injectEndpoints({
 
     // ✅ Create / Update / Delete
     createTruck: builder.mutation({
-      query: (body) => ({ url: "/trucks", method: "POST", body }),
+      query: (body) => ({ url: "/api/v1/trucks", method: "POST", body }),
       invalidatesTags: [
         { type: "Trucks", id: "LIST" },
         { type: "TruckSummary", id: "LIST" },

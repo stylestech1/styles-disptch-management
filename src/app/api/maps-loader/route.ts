@@ -11,7 +11,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // نرجع script بسيط بدون callbacks متعددة
+    // script
     const scriptContent = `
       (function() {
         if (window.google && window.google.maps) return;

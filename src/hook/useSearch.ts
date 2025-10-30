@@ -1,87 +1,82 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
-import {
-  useSearchDriversQuery,
-  useSearchTrucksQuery,
+import { 
+  useSearchLoadsQuery,
+  useSearchDriversQuery, 
+  useSearchTrucksQuery 
 } from "@/redux/slices/apiSlice";
 
-export const useSearch = (entity: "drivers" | "trucks") => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedTerm, setDebouncedTerm] = useState("");
-  const [hasSearched, setHasSearched] = useState(false);
+export const useSearch = (entity: "drivers" | "trucks" | "loads") => {
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      // الشرط الجديد: لازم يكون أكتر من حرفين علشان يبدأ البحث
-      if (searchTerm.trim().length >= 1) {
-        setDebouncedTerm(searchTerm.trim());
-        setHasSearched(true);
-      } else {
-        setDebouncedTerm(""); // يمنع البحث نهائيًا
-        setHasSearched(false);
-      }
+      setDebouncedSearch(search.trim());
     }, 500);
-
     return () => clearTimeout(handler);
-  }, [searchTerm]);
+  }, [search]);
 
-  // ✅ تحديد نوع البحث الذكي
   const searchParams = useMemo(() => {
-    const value = debouncedTerm;
-    if (!value) return undefined;
+    const term = debouncedSearch;
+    if (!term) return undefined;
 
-    if (/^\d+$/.test(value)) {
-      return entity === "drivers" ? { driverId: value } : { truckId: value };
-    } else if (/\S+@\S+\.\S+/.test(value)) {
-      return { email: value };
-    } else if (/^\d{10,}$/.test(value)) {
-      return { phone: value };
-    } else {
-      return entity === "drivers" ? { name: value } : { model: value };
+    switch (entity) {
+      case "drivers":
+        if (/^\d+$/.test(term)) return { driverId: term };
+        if (/^\d{10,}$/.test(term)) return { phone: term };
+        return { name: term };
+
+      case "trucks":
+        if (/^\d+$/.test(term)) return { truckId: term };
+        return { model: term, licensePlate: term };
+
+      case "loads":
+        if (/^\d+$/.test(term)) return { loadId: term };
+        if (term.includes("→") || term.includes("-")) {
+          const [origin, destination] = term.split(/→|-/).map(s => s.trim());
+          return { origin, destination };
+        }
+        return { 
+          search: term,
+          origin: term,
+          destination: term,
+          customerName: term
+        };
+
+      default:
+        return undefined;
     }
-  }, [debouncedTerm, entity]);
+  }, [debouncedSearch, entity]);
 
-  // ✅ شرط يمنع أي call في البداية تمامًا
-  const shouldSkip = !searchParams || Object.keys(searchParams).length === 0;
+  const shouldSkip = !searchParams;
 
-  // ✅ Queries
-  const driverQuery = useSearchDriversQuery(searchParams!, {
-    skip: shouldSkip || entity !== "drivers", // 🚫 يمنع أول call
-    refetchOnMountOrArgChange: false,
-    selectFromResult: ({ data, isFetching }) => ({
-      data: data?.data ?? [],
-      isFetching,
-    }),
+  // 🔍 API Queries
+  const driversQuery = useSearchDriversQuery(searchParams!, {
+    skip: shouldSkip || entity !== "drivers",
   });
 
-  const truckQuery = useSearchTrucksQuery(searchParams!, {
-    skip: shouldSkip || entity !== "trucks", // 🚫 يمنع أول call
-    refetchOnMountOrArgChange: false,
-    selectFromResult: ({ data, isFetching }) => ({
-      data: data?.data ?? [],
-      isFetching,
-    }),
+  const trucksQuery = useSearchTrucksQuery(searchParams!, {
+    skip: shouldSkip || entity !== "trucks",
   });
 
-  const query = entity === "drivers" ? driverQuery : truckQuery;
+  const loadsQuery = useSearchLoadsQuery(searchParams!, {
+    skip: shouldSkip || entity !== "loads",
+  });
 
-  const clearSearch = () => {
-    setSearchTerm("");
-    setDebouncedTerm("");
-    setHasSearched(false);
+  const query = entity === "drivers" ? driversQuery :
+                entity === "trucks" ? trucksQuery :
+                loadsQuery;
+
+  return {
+    search,
+    setSearch,
+    searchResults: query.data?.data ?? [],
+    isSearchLoading: query.isFetching,
+    clearSearch: () => {
+      setSearch("");
+      setDebouncedSearch("");
+    },
+    hasSearched: !!debouncedSearch,
   };
-
-  // ✅ ما يظهرش تحميل إلا لو فعلاً بي fetch أول مرة
-const isTableLoading = false; // 🚫 مفيش لود خالص
-
-return {
-  searchTerm,
-  setSearchTerm,
-  searchResults: query.data,
-  isSearchLoading: false, // 🚫 مفيش أي تحميل
-  isSearching: !!debouncedTerm,
-  totalResults: query.data?.length || 0,
-  clearSearch,
-};
-
 };

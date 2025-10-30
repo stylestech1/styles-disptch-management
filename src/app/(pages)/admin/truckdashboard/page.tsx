@@ -247,7 +247,7 @@ const TruckDashboard = () => {
   // Debounce search
   const debouncedSearch = useDebounce(search, 400);
 
-  // تحسين البحث مع useMemo
+  // Filter
   const filteredTrucks = useMemo(() => {
     const allTrucks = allTrucksData?.data?.trucksSummary || [];
 

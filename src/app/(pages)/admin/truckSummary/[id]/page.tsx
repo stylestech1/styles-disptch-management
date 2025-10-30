@@ -32,20 +32,26 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 // ✅ Import MUI DateTimePicker
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { Dayjs } from "dayjs";
-import { useGetTruckByIdQuery, useLazyGetSpecificTruckSummaryQuery, useLazyGetTruckSummaryWithFilterQuery } from "@/redux/slices/apiSlice";
+import {
+  useGetTruckByIdQuery,
+  useLazyGetSpecificTruckSummaryQuery,
+  useLazyGetTruckSummaryWithFilterQuery,
+} from "@/redux/slices/apiSlice";
 
 const TruckSummary = () => {
   const { id } = useParams();
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
-  const [filteredSummary, setFilteredSummary] = useState<TTruckSummary | null>(null);
+  const [filteredSummary, setFilteredSummary] = useState<TTruckSummary | null>(
+    null
+  );
 
   const router = useRouter();
   const { error, setError } = useError();
 
-  // ✅ استخدام RTK Query hooks
+  // ✅ RTK Query hooks
   const {
     data: profileData,
     isLoading: profileLoading,
@@ -81,8 +87,8 @@ const TruckSummary = () => {
     try {
       const response = await applyGlobalFilter({
         id: truckId,
-        fromDate: fromDate ? fromDate.format('YYYY-MM-DD') : undefined,
-        toDate: toDate ? toDate.format('YYYY-MM-DD') : undefined,
+        fromDate: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+        toDate: toDate ? toDate.format("YYYY-MM-DD") : undefined,
         fetchFunction: (params) => fetchTruckSummaryWithFilter(params).unwrap(),
       });
       if (response?.data) {
@@ -212,7 +218,7 @@ const TruckSummary = () => {
     );
   };
 
-  // TODO: Table Row Renderer للـ Loads
+  // TODO: Table Row Renderer for Loads
   const renderTruckSummaryRow = (load: TLoads, index: number) => (
     <tr key={index} className="hover:bg-slate-50 transition-colors group">
       {/* Load ID */}
@@ -307,7 +313,7 @@ const TruckSummary = () => {
                 </p>
               </div>
             </div>
-          </div> 
+          </div>
         </div>
 
         {/* Errors */}
@@ -511,8 +517,7 @@ const TruckSummary = () => {
                         Total Revenue
                       </p>
                       <p className="text-2xl font-bold text-slate-800">
-                        {truckSummary.currency}{" "}
-                        {truckSummary.totalRevenue}
+                        {truckSummary.currency} {truckSummary.totalRevenue}
                       </p>
                     </div>
                     <div className="p-2.5 bg-amber-50 rounded-lg">
@@ -529,8 +534,7 @@ const TruckSummary = () => {
                         Net Profit
                       </p>
                       <p className="text-2xl font-bold text-slate-800">
-                        {truckSummary.currency}{" "}
-                        {truckSummary.netProfit}
+                        {truckSummary.currency} {truckSummary.netProfit}
                       </p>
                     </div>
                     <div className="p-2.5 bg-red-50 rounded-lg">
@@ -572,7 +576,9 @@ const TruckSummary = () => {
               {/* ✅ Filter Section مع DateTimePicker */}
               <div className="flex flex-wrap items-center gap-4 mb-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
                 <div className="flex flex-col">
-                  <label className="text-sm text-slate-600 mb-1">From Date</label>
+                  <label className="text-sm text-slate-600 mb-1">
+                    From Date
+                  </label>
                   <DatePicker
                     value={fromDate}
                     onChange={(newValue) => setFromDate(newValue)}
@@ -580,12 +586,12 @@ const TruckSummary = () => {
                       textField: {
                         size: "small",
                         sx: {
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            backgroundColor: 'white',
-                          }
-                        }
-                      }
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "8px",
+                            backgroundColor: "white",
+                          },
+                        },
+                      },
                     }}
                   />
                 </div>
@@ -599,12 +605,12 @@ const TruckSummary = () => {
                       textField: {
                         size: "small",
                         sx: {
-                          '& .MuiOutlinedInput-root': {
-                            borderRadius: '8px',
-                            backgroundColor: 'white',
-                          }
-                        }
-                      }
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: "8px",
+                            backgroundColor: "white",
+                          },
+                        },
+                      },
                     }}
                   />
                 </div>

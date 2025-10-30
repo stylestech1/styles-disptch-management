@@ -1,23 +1,24 @@
+import { RTKError } from "@/types/globalTypes";
+
 export const getErrorMessage = (error: unknown): string => {
-  if (typeof error === 'string') {
-    return error;
+  if (!error) return "Unknown error";
+
+  if (typeof error === "string") return error;
+
+  if (error instanceof Error) return error.message;
+
+  // RTK Query Error handling
+  const err = error as RTKError;
+  const data = err?.data || err?.error?.data || err;
+
+  // For validation errors
+  if (Array.isArray(data?.errors)) {
+    return data.errors.map((e) => e.msg).join("\n \n");
   }
-  
-  if (error instanceof Error) {
-    return error.message;
-  }
-  
-  // للتعامل مع أخطاء RTK Query
-  if (typeof error === 'object' && error !== null && 'data' in error) {
-    const rtkError = error as { data?: { message?: string } };
-    if (rtkError.data?.message) {
-      return rtkError.data.message;
-    }
-  }
-  
-  if (typeof error === 'object' && error !== null && 'message' in error) {
-    return (error as { message: string }).message;
-  }
-  
-  return 'An unknown error occurred';
+
+  // Normal Errors
+  if (data?.message) return data.message;
+  if (err?.message) return err.message;
+
+  return "An error occurred";
 };

@@ -92,25 +92,16 @@ const DriversPage = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
-  // 🔹 استخدام useSearch Hook
-  const {
-    searchTerm,
-    setSearchTerm,
-    searchResults,
-    isSearchLoading, 
-    totalResults,
-    isSearching,
-    clearSearch,
-  } = useSearch('drivers')
-
   // 🔹 API Queries 
-   const {
+  const {
     data: driversData,
-    isLoading: driversLoading, // ✅ loading للبيانات العادية
+    isLoading: driversLoading,
     refetch,
   } = useGetDriversWithPaginationQuery(page + 1);
 
   const { data: allDriversData } = useGetAllDriversQuery();
+
+ const { search, setSearch, searchResults, isSearchLoading, clearSearch } = useSearch("drivers");
 
 
   // 🔹 API Mutations
@@ -119,12 +110,11 @@ const DriversPage = () => {
   const [deleteDriver, { isLoading: isDeleting }] = useDeleteDriverMutation();
   const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
-  const displayDrivers = isSearching ? searchResults : driversData?.data || [];
-  const pagination = driversData?.paginationResult || null;
+  const displayDrivers = search ? searchResults : driversData?.data || [];
+  
+  const pagination = !search ? driversData?.paginationResult : null;
 
-  // ✅ ✅ ✅ التصحيح المهم: فصل حالة الـ loading
-  const isLoading = driversLoading; // ✅ فقط loading البيانات العادية
-  const isTableLoading = isSearchLoading; // ✅ loading البحث فقط
+  const isLoading = driversLoading;
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -324,28 +314,25 @@ const DriversPage = () => {
         </Button>
       </Box>
 
-<TextField
+      {/* Search Field */}
+      <TextField
         placeholder="Search by driver ID, name, email, phone, license..."
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
               <IoSearch />
             </InputAdornment>
           ),
-          endAdornment: searchTerm && (
+          endAdornment: search && (
             <InputAdornment position="end">
-              {isSearchLoading ? (
-                <CircularProgress size={20} />
-              ) : (
-                <IconButton
-                  size="small"
-                  onClick={clearSearch}
-                >
-                  <IoClose />
-                </IconButton>
-              )}
+              <IconButton
+                size="small"
+                onClick={clearSearch}
+              >
+                <IoClose />
+              </IconButton>
             </InputAdornment>
           ),
         }}
@@ -371,10 +358,10 @@ const DriversPage = () => {
       />
 
       {/* Search Results Info */}
-      {searchTerm && (
+      {search && (
         <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
           <Chip 
-            label={`${totalResults} drivers found for "${searchTerm}"`} 
+  label={`${searchResults.length} drivers found for "${search}"`} 
             color="primary" 
             variant="outlined" 
           />
@@ -386,7 +373,6 @@ const DriversPage = () => {
           >
             Show All Drivers
           </Button>
-          {isSearchLoading && <CircularProgress size={20} />}
         </Box>
       )}
 
@@ -428,7 +414,7 @@ const DriversPage = () => {
             {displayDrivers.length === 0 ? (
               <TableRow>
                 <StyledTableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                  {searchTerm ? 'No drivers found' : 'No drivers available'}
+                  {search ? 'No drivers found' : 'No drivers available'}
                 </StyledTableCell>
               </TableRow>
             ) : (
@@ -518,8 +504,8 @@ const DriversPage = () => {
         </Table>
       </TableContainer>
 
-      {/* Pagination */}
-      {pagination && displayDrivers.length > 0 && (
+      {/* Pagination - تظهر فقط للبيانات العادية وليس للبحث */}
+      {pagination && displayDrivers.length > 0 && !search && (
         <Pagination
           pagination={pagination}
           page={page}

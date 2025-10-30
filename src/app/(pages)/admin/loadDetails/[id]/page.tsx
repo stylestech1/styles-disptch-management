@@ -2,27 +2,27 @@
 import { useParams } from "next/navigation";
 import { useGetLoadByIdQuery } from "@/redux/slices/apiSlice";
 import {
-    Box,
-    Typography,
-    Paper,
-    Chip,
-    Tab,
-    Tabs,
-    Card,
-    CardContent,
-    List,
-    ListItem,
-    Divider,
-    Link,
-    Button,
-    Stack, 
-    alpha,
-    Alert,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    IconButton,
+  Box,
+  Typography,
+  Paper,
+  Chip,
+  Tab,
+  Tabs,
+  Card,
+  CardContent,
+  List,
+  ListItem,
+  Divider,
+  Link,
+  Button,
+  Stack,
+  alpha,
+  Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { useState } from "react";
@@ -82,6 +82,7 @@ const LoadDetailsPage = () => {
   const [selectedNote, setSelectedNote] = useState<TComments | null>(null);
   const [notes, setNotes] = useState<TComments[]>([]);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+
   const {
     data,
     isLoading: loadLoading,
@@ -231,6 +232,7 @@ const LoadDetailsPage = () => {
       </Stack>
     </ListItem>
   );
+
   return (
     <Box sx={{ p: 3, bgcolor: colorPalette.background, minHeight: "100vh" }}>
       {/* Header */}
@@ -358,68 +360,71 @@ const LoadDetailsPage = () => {
           />
         </Tabs>
 
-                {/* Tab 1: Load, Driver & Truck */}
-                <TabPanel value={tabValue} index={0}>
-                    <Box sx={{
-                        mb: 3,
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        p: 2,
-                        borderRadius: 2,
-                    }}>
-                        <Button
-                            onClick={() => openEditLoadPopup(load)}
-                            variant="contained"
-                            startIcon={<RxUpdate />}
-                            sx={{
-                                background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                                '&:hover': {
-                                    background: 'linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)',
-                                    transform: 'translateY(-2px)',
-                                    boxShadow: '0 4px 12px rgba(25, 118, 210, 0.4)',
-                                },
-                                fontWeight: 600,
-                                borderRadius: 2,
-                                px: 4,
-                                py: 1.5,
-                                textTransform: 'none',
-                                transition: 'all 0.3s ease',
-                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
-                            }}
-                        >
-                            Update Load Information
-                        </Button>
-                    </Box>
+        {/* Tab 1: Load, Driver & Truck */}
+        <TabPanel value={tabValue} index={0}>
+          <Box
+            sx={{
+              mb: 3,
+              display: "flex",
+              justifyContent: "flex-end",
+              p: 2,
+              borderRadius: 2,
+            }}
+          >
+            <Button
+              onClick={() => openEditLoadPopup(load)}
+              variant="contained"
+              startIcon={<RxUpdate />}
+              sx={{
+                background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
+                "&:hover": {
+                  background:
+                    "linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)",
+                  transform: "translateY(-2px)",
+                  boxShadow: "0 4px 12px rgba(25, 118, 210, 0.4)",
+                },
+                fontWeight: 600,
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: "none",
+                transition: "all 0.3s ease",
+                boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
+              }}
+            >
+              Update Load Information
+            </Button>
+          </Box>
 
-                    <Grid container spacing={3}>
-                        {/* Load Information */}
-                        <Grid size={{ xs: 12, md: 4 }}>
-                            <InfoCard title="Load Information" icon={<LocalShipping />}>
-                                <List dense sx={{ py: 0 }}>
-                                    <InfoItem
-                                        icon={<LocationOn fontSize="small" />}
-                                        primary="Origin"
-                                        secondary={load.origin}
-                                    />
-                                    <Divider sx={{ borderColor: colorPalette.border }} />
-                                    <InfoItem
-                                        icon={<LocationOn fontSize="small" />}
-                                        primary="DHO"
-                                        secondary={load.DHO}
-                                    />
-                                    <Divider sx={{ borderColor: colorPalette.border }} />
-                                    <InfoItem
-                                        icon={<LocationOn fontSize="small" />}
-                                        primary="Destination"
-                                        secondary={
-                                            Array.isArray(load.destination)
-                                                ? load.destination.join(", ")
-                                                : load.destination
-                                        }
-                                    />
-                                </List>
-                            </InfoCard>
-                        </Grid>
+          <Grid container spacing={3}>
+            {/* Load Information */}
+            <Grid size={{ xs: 12, md: 4 }}>
+              <InfoCard title="Load Information" icon={<LocalShipping />}>
+                <List dense sx={{ py: 0 }}>
+                  <InfoItem
+                    icon={<LocationOn fontSize="small" />}
+                    primary="Origin"
+                    secondary={load.origin}
+                  />
+                  <Divider sx={{ borderColor: colorPalette.border }} />
+                  <InfoItem
+                    icon={<LocationOn fontSize="small" />}
+                    primary="DHO"
+                    secondary={load.DHO}
+                  />
+                  <Divider sx={{ borderColor: colorPalette.border }} />
+                  <InfoItem
+                    icon={<LocationOn fontSize="small" />}
+                    primary="Destination"
+                    secondary={
+                      Array.isArray(load.destination)
+                        ? load.destination.join(", ")
+                        : load.destination
+                    }
+                  />
+                </List>
+              </InfoCard>
+            </Grid>
 
             {/* Trip Details */}
             <Grid size={{ xs: 12, md: 4 }}>
@@ -586,172 +591,232 @@ const LoadDetailsPage = () => {
           </Grid>
         </TabPanel>
 
-                {/* Tab 2: Notes */}
+        {/* Tab 2: Notes */}
         <TabPanel value={tabValue} index={1}>
-    <Grid container spacing={0}>
-        <Grid size={{ xs: 12, md: 12 }}>
-            <Card variant="outlined" sx={{
-                border: `1px solid ${colorPalette.border}`,
-                borderRadius: 2,
-                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-            }}>
+          <Grid container spacing={0}>
+            <Grid size={{ xs: 12, md: 12 }}>
+              <Card
+                variant="outlined"
+                sx={{
+                  border: `1px solid ${colorPalette.border}`,
+                  borderRadius: 2,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                }}
+              >
                 <CardContent sx={{ p: 3 }}>
-                    {/* Add Note*/}
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 3 }}>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                            <Box sx={{
-                                color: colorPalette.primary,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                width: 40,
-                                height: 40,
-                                borderRadius: '50%',
-                                bgcolor: alpha(colorPalette.primary, 0.1),
-                            }}>
-                                <Description />
-                            </Box>
-                            <Typography variant="h6" color={colorPalette.textPrimary} fontWeight="600">
-                                Previous Notes ({allNotes.length})
-                            </Typography>
-                        </Stack>
-                        
-                        <Button
-                            onClick={() => setShowAddNoteModal(true)}
-                            variant="contained"
-                            startIcon={<MdEdit size={16} />}
-                            sx={{
-                                bgcolor: colorPalette.primary,
-                                '&:hover': {
-                                    bgcolor: alpha(colorPalette.primary, 0.9),
-                                },
-                                fontWeight: 600,
-                                borderRadius: 2,
-                                px: 3,
-                                py: 1,
-                                textTransform: 'none',
-                            }}
-                        >
-                            Add Note
-                        </Button>
+                  {/* Add Note*/}
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    sx={{ mb: 3 }}
+                  >
+                    <Stack direction="row" alignItems="center" spacing={2}>
+                      <Box
+                        sx={{
+                          color: colorPalette.primary,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: 40,
+                          height: 40,
+                          borderRadius: "50%",
+                          bgcolor: alpha(colorPalette.primary, 0.1),
+                        }}
+                      >
+                        <Description />
+                      </Box>
+                      <Typography
+                        variant="h6"
+                        color={colorPalette.textPrimary}
+                        fontWeight="600"
+                      >
+                        Previous Notes ({allNotes.length})
+                      </Typography>
                     </Stack>
 
-                    {allNotes.length > 0 ? (
-                        <List sx={{ maxHeight: 400, overflow: 'auto' }}>
-                            {allNotes.map((comment: TComments, index: number) => (
-                                <Box key={comment.id || index}>
-                                    <ListItem alignItems="flex-start" sx={{ px: 0, py: 2 }}>
-                                        <Stack spacing={1.5} sx={{ width: '100%' }}>
-                                            <Box sx={{
-                                                bgcolor: alpha(colorPalette.primary, 0.03),
-                                                p: 2,
-                                                borderRadius: 1,
-                                                border: `1px solid ${colorPalette.border}`,
-                                                position: 'relative'
-                                            }}>
-                                                <Typography variant="body2" sx={{ pr: 4 }}>
-                                                    {comment.text || comment.content}
-                                                </Typography>
-                                                <IconButton
-                                                    size="small"
-                                                    onClick={() => handleViewNote(comment)}
-                                                    sx={{
-                                                        position: 'absolute',
-                                                        top: 8,
-                                                        right: 8,
-                                                        color: colorPalette.primary,
-                                                        '&:hover': {
-                                                            backgroundColor: colorPalette.primary,
-                                                            color: 'white'
-                                                        }
-                                                    }}
-                                                >
-                                                    <Visibility fontSize="small" />
-                                                </IconButton>
-                                            </Box>
-                                            <Stack direction="row" justifyContent="space-between" alignItems="center">
-                                                <Typography variant="caption" color={colorPalette.textSecondary}>
-                                                    {comment.createdAt ?
-                                                        `Added on ${new Date(comment.createdAt).toLocaleString()}` :
-                                                        "No date available"}
-                                                </Typography>
-                                                {comment.addedBy && (
-                                                    <Typography variant="caption" color={colorPalette.primary} fontWeight="500">
-                                                        By: {comment.addedBy}
-                                                    </Typography>
-                                                )}
-                                            </Stack>
-                                        </Stack>
-                                    </ListItem>
-                                    {index < allNotes.length - 1 && <Divider sx={{ my: 1, borderColor: colorPalette.border }} />}
-                                </Box>
-                            ))}
-                        </List>
-                    ) : (
-                        <Box textAlign="center" py={6}>
-                            <Note sx={{ fontSize: 48, color: colorPalette.textSecondary, mb: 2, opacity: 0.5 }} />
-                            <Typography variant="body2" color={colorPalette.textSecondary}>
-                                No notes available yet
-                            </Typography>
-                        </Box>
-                    )}
-                </CardContent>
-            </Card>
-        </Grid>
-    </Grid>
-</TabPanel>
+                    <Button
+                      onClick={() => setShowAddNoteModal(true)}
+                      variant="contained"
+                      startIcon={<MdEdit size={16} />}
+                      sx={{
+                        bgcolor: colorPalette.primary,
+                        "&:hover": {
+                          bgcolor: alpha(colorPalette.primary, 0.9),
+                        },
+                        fontWeight: 600,
+                        borderRadius: 2,
+                        px: 3,
+                        py: 1,
+                        textTransform: "none",
+                      }}
+                    >
+                      Add Note
+                    </Button>
+                  </Stack>
 
-                {/* Tab 3: Appointments */}
-                <TabPanel value={tabValue} index={2}>
-                    <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-                        <Button
-                            onClick={() => setShowUpdateStatusModal(true)}
-                            variant="contained"
-                            startIcon={<IoRefresh size={18} />}
-                            sx={{
-                                bgcolor: colorPalette.primary,
-                                '&:hover': {
-                                    bgcolor: alpha(colorPalette.primary, 0.9),
-                                    transform: 'translateY(-1px)',
-                                },
-                                fontWeight: 600,
-                                borderRadius: 2,
-                                px: 4,
-                                py: 1.5,
-                                textTransform: 'none',
-                                fontSize: '0.9rem',
-                                transition: 'all 0.2s ease',
-                                boxShadow: '0 2px 8px rgba(25, 118, 210, 0.3)',
-                            }}
-                        >
-                            Update Status
-                        </Button>
+                  {allNotes.length > 0 ? (
+                    <List sx={{ maxHeight: 400, overflow: "auto" }}>
+                      {allNotes.map((comment: TComments, index: number) => (
+                        <Box key={comment.id || index}>
+                          <ListItem
+                            alignItems="flex-start"
+                            sx={{ px: 0, py: 2 }}
+                          >
+                            <Stack spacing={1.5} sx={{ width: "100%" }}>
+                              <Box
+                                sx={{
+                                  bgcolor: alpha(colorPalette.primary, 0.03),
+                                  p: 2,
+                                  borderRadius: 1,
+                                  border: `1px solid ${colorPalette.border}`,
+                                  position: "relative",
+                                }}
+                              >
+                                <Typography variant="body2" sx={{ pr: 4 }}>
+                                  {comment.text || comment.content}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleViewNote(comment)}
+                                  sx={{
+                                    position: "absolute",
+                                    top: 8,
+                                    right: 8,
+                                    color: colorPalette.primary,
+                                    "&:hover": {
+                                      backgroundColor: colorPalette.primary,
+                                      color: "white",
+                                    },
+                                  }}
+                                >
+                                  <Visibility fontSize="small" />
+                                </IconButton>
+                              </Box>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                              >
+                                <Typography
+                                  variant="caption"
+                                  color={colorPalette.textSecondary}
+                                >
+                                  {comment.createdAt
+                                    ? `Added on ${new Date(
+                                        comment.createdAt
+                                      ).toLocaleString()}`
+                                    : "No date available"}
+                                </Typography>
+                                {comment.addedBy && (
+                                  <Typography
+                                    variant="caption"
+                                    color={colorPalette.primary}
+                                    fontWeight="500"
+                                  >
+                                    By: {comment.addedBy}
+                                  </Typography>
+                                )}
+                              </Stack>
+                            </Stack>
+                          </ListItem>
+                          {index < allNotes.length - 1 && (
+                            <Divider
+                              sx={{ my: 1, borderColor: colorPalette.border }}
+                            />
+                          )}
+                        </Box>
+                      ))}
+                    </List>
+                  ) : (
+                    <Box textAlign="center" py={6}>
+                      <Note
+                        sx={{
+                          fontSize: 48,
+                          color: colorPalette.textSecondary,
+                          mb: 2,
+                          opacity: 0.5,
+                        }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color={colorPalette.textSecondary}
+                      >
+                        No notes available yet
+                      </Typography>
                     </Box>
-                    <Grid container spacing={3}>
-                        <Grid size={{ xs: 12 }}>
-                            <Card variant="outlined" sx={{
-                                border: `1px solid ${colorPalette.border}`,
-                                borderRadius: 2,
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-                            }}>
-                                <CardContent sx={{ p: 3 }}>
-                                    <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
-                                        <Box sx={{
-                                            color: colorPalette.primary,
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            width: 40,
-                                            height: 40,
-                                            borderRadius: '50%',
-                                            bgcolor: alpha(colorPalette.primary, 0.1),
-                                        }}>
-                                            <Schedule />
-                                        </Box>
-                                        <Typography variant="h6" color={colorPalette.textPrimary} fontWeight="600">
-                                            Appointments Timeline
-                                        </Typography>
-                                    </Stack>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </TabPanel>
+
+        {/* Tab 3: Appointments */}
+        <TabPanel value={tabValue} index={2}>
+          <Box sx={{ mb: 3, display: "flex", justifyContent: "flex-end" }}>
+            <Button
+              onClick={() => setShowUpdateStatusModal(true)}
+              variant="contained"
+              startIcon={<IoRefresh size={18} />}
+              sx={{
+                bgcolor: colorPalette.primary,
+                "&:hover": {
+                  bgcolor: alpha(colorPalette.primary, 0.9),
+                  transform: "translateY(-1px)",
+                },
+                fontWeight: 600,
+                borderRadius: 2,
+                px: 4,
+                py: 1.5,
+                textTransform: "none",
+                fontSize: "0.9rem",
+                transition: "all 0.2s ease",
+                boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
+              }}
+            >
+              Update Status
+            </Button>
+          </Box>
+          <Grid container spacing={3}>
+            <Grid size={{ xs: 12 }}>
+              <Card
+                variant="outlined"
+                sx={{
+                  border: `1px solid ${colorPalette.border}`,
+                  borderRadius: 2,
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                }}
+              >
+                <CardContent sx={{ p: 3 }}>
+                  <Stack
+                    direction="row"
+                    alignItems="center"
+                    spacing={2}
+                    sx={{ mb: 3 }}
+                  >
+                    <Box
+                      sx={{
+                        color: colorPalette.primary,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: 40,
+                        height: 40,
+                        borderRadius: "50%",
+                        bgcolor: alpha(colorPalette.primary, 0.1),
+                      }}
+                    >
+                      <Schedule />
+                    </Box>
+                    <Typography
+                      variant="h6"
+                      color={colorPalette.textPrimary}
+                      fontWeight="600"
+                    >
+                      Appointments Timeline
+                    </Typography>
+                  </Stack>
 
                   <Stack spacing={2}>
                     {/* Pickup Appointment */}

@@ -45,7 +45,7 @@ const Dispatchers = () => {
   // RTK Querys
   const {
     data: dispatchersData,
-    isError: dispatchersError,
+    error: dispatchersError,
     isLoading: loading,
     isFetching,
     refetch,
@@ -53,22 +53,22 @@ const Dispatchers = () => {
     { page, limit: 10 },
     {
       skip: !token,
-      pollingInterval: 30000,
-      refetchOnMountOrArgChange: true,
     }
   );
 
   // RTK Mutation
   const [createUser, { isLoading: creatingUser }] = useCreateUserMutation();
-  const [updateUserRole, { isLoading: updatingRole }] = useUpdateUserRoleMutation();
+  const [updateUserRole, { isLoading: updatingRole }] =
+    useUpdateUserRoleMutation();
   const [activateUser, { isLoading: activating }] = useActivateUserMutation();
-  const [deactivateUser, { isLoading: deactivating }] = useDeactivateUserMutation();
+  const [deactivateUser, { isLoading: deactivating }] =
+    useDeactivateUserMutation();
 
-  // Export Data 
+  // Export Data
   const dispatchers = dispatchersData?.data || [];
   const pagination = dispatchersData?.paginationResult || null;
 
-  // Token Checking 
+  // Token Checking
   useEffect(() => {
     if (!token) {
       router.replace("/");
@@ -76,33 +76,26 @@ const Dispatchers = () => {
     }
   }, [token, router]);
 
-  // Handling Errors - تحسين معالجة الأخطاء
+  // handling Errors
   useEffect(() => {
     if (dispatchersError) {
       const errorMessage = getErrorMessage(dispatchersError);
-      setError(errorMessage);
-      console.error("Dispatchers Error:", dispatchersError);
-      
-      if (errorMessage.includes("401") || errorMessage.includes("unauthorized")) {
-        toast.error("Session expired. Please login again.", {
+      if (error !== errorMessage) {
+        setError(errorMessage);
+        toast.error(errorMessage || "Loading failed ❌", {
+          id: "dispatchersError",
           style: { background: "#dc2626", color: "#fff" },
         });
-        router.replace("/");
-        return;
       }
-      
-      toast.error(errorMessage || "Loading dispatchers failed ❌", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
     }
-  }, [dispatchersError, setError, router]);
+  }, [dispatchersError, setError, error]);
 
-  // إضافة useEffect لمراقبة تغيير الصفحة
+  // Refetching when mounting or updating
   useEffect(() => {
     if (token) {
       refetch();
     }
-  }, [page, token, refetch]);
+  }, [page, token]);
 
   // TODO: Search Filter
   const filteredDispatchers = dispatchers.filter(
@@ -131,7 +124,6 @@ const Dispatchers = () => {
         style: { background: "#16a34a", color: "#fff" },
       });
       setPopup(false);
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -157,7 +149,6 @@ const Dispatchers = () => {
       toast.success(`Role updated to ${newRole} successfully!`, {
         style: { background: "#16a34a", color: "#fff" },
       });
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -180,7 +171,6 @@ const Dispatchers = () => {
       toast.success("User activated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -203,7 +193,6 @@ const Dispatchers = () => {
       toast.success("User deactivated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      // إعادة تحميل البيانات فوراً
       setTimeout(() => {
         refetch();
       }, 500);
@@ -305,57 +294,21 @@ const Dispatchers = () => {
     </tr>
   );
 
-  // تحسين عرض الـ loading
+  // set loading
   if (loading && dispatchers.length === 0) return <Loading />;
 
   return (
     <section className="relative p-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-        <div className="mb-4 lg:mb-0">
-          <Titles>Dispatcher Management</Titles>
-          <p className="text-slate-600 mt-2 text-sm">
-            Manage your dispatch team members and their access
-          </p>
-        </div>
-
-        <button
-          onClick={() => setPopup(true)}
-          disabled={loading}
-          className="w-full sm:w-50 flex items-center gap-2 py-3 px-6 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 transition-colors rounded-lg shadow-sm font-medium"
-        >
-          <IoAdd size={20} />
-          {loading ? "Loading..." : "Add New User"}
-        </button>
+      {/* Title */}
+      <div className="flex flex-col xl:items-start xl:justify-between gap-2">
+        <Titles>Dispatcher Management</Titles>
+        <p className="text-slate-600 text-md">
+          Manage your dispatch team members and their access
+        </p>
       </div>
-
-      <Toaster position="top-center" reverseOrder={false} />
-
-      {/* Search */}
-      <div className="mb-8">
-        <div className="relative max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <IoSearch className="h-5 w-5 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search by name or job ID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            disabled={loading}
-          />
-        </div>
-      </div>
-
-      {error && (
-        <div className="mb-6">
-          <Erros message={error} />
-        </div>
-      )}
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
         <StatsCard
           title="Total Dispatchers"
           value={dispatchers.length || 0}
@@ -369,14 +322,16 @@ const Dispatchers = () => {
           title="Active"
           value={dispatchers.filter((d: TDispatcher) => d.active).length}
           icon={IoBriefcase}
-          iconColor="text-amber-600"
-          bgColor="bg-amber-50"
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
           loading={loading}
         />
 
         <StatsCard
           title="Admins"
-          value={dispatchers.filter((d: TDispatcher) => d.role === "admin").length}
+          value={
+            dispatchers.filter((d: TDispatcher) => d.role === "admin").length
+          }
           icon={IoKey}
           iconColor="text-blue-600"
           bgColor="bg-blue-50"
@@ -385,13 +340,52 @@ const Dispatchers = () => {
 
         <StatsCard
           title="Employees"
-          value={dispatchers.filter((d: TDispatcher) => d.role === "employee").length}
+          value={
+            dispatchers.filter((d: TDispatcher) => d.role === "employee").length
+          }
           icon={IoPerson}
-          iconColor="text-emerald-600"
-          bgColor="bg-emerald-50"
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
           loading={loading}
         />
       </div>
+
+      {/* Add User */}
+      <div className="flex justify-end">
+        <button
+          onClick={() => setPopup(true)}
+          disabled={loading}
+          className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
+        >
+          <IoAdd size={25} />
+          {loading ? "Loading..." : "Add User"}
+        </button>
+      </div>
+
+      <Toaster position="top-right" reverseOrder={false} />
+
+      {/* Search */}
+      <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm my-10">
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <IoSearch className="h-5 w-5 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by name or job ID..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            disabled={loading}
+          />
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6">
+          <Erros message={error} />
+        </div>
+      )}
 
       {/* Table */}
       {(loading || isFetching) && dispatchers.length === 0 ? (

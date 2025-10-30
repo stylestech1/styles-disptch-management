@@ -1,7 +1,5 @@
-// redux/slices/googleMapsSlice.ts
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
 
-// تعريف نوع للخطأ
 type GoogleMapsError = {
   status: number;
   data: string;
@@ -15,13 +13,11 @@ export const googleMapsApi = createApi({
     loadGoogleMaps: builder.query<boolean, string>({
       queryFn: async (apiKey: string) => {
         return new Promise((resolve) => {
-          // تحقق إذا كان Google Maps محمل مسبقاً
           if (window.google && window.google.maps) {
             resolve({ data: true });
             return;
           }
 
-          // تحقق إذا كان هناك تحميل قيد التنفيذ
           const existingScript = document.querySelector('script[src*="maps.googleapis.com"]');
           if (existingScript) {
             const onScriptLoad = () => {
@@ -46,7 +42,6 @@ export const googleMapsApi = createApi({
             return;
           }
 
-          // تحميل Google Maps جديد
           const script = document.createElement('script');
           script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places,directions`;
           script.async = true;

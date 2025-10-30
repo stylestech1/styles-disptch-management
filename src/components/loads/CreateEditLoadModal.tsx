@@ -107,7 +107,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   const [uploadError, setUploadError] = useState<string>("");
   const [isDragging, setIsDragging] = useState<boolean>(false);
 
-  // تحويل التواريخ من strings إلى Dayjs objects للاستخدام في UI
+  // Days.js
   const pickupAtDayjs = pickupAt ? dayjs(pickupAt) : null;
   const completedAtDayjs = completedAt ? dayjs(completedAt) : null;
   const arrivalAtShipperDayjs = arrivalAtShipper
@@ -206,7 +206,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     setSelectedDocuments((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // تحميل بيانات التحميل عند فتح المودال للتعديل
+  // Loading when open modal
   useEffect(() => {
     if (isOpen && editingLoad) {
       loadEditData(editingLoad);
@@ -215,7 +215,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     }
   }, [isOpen, editingLoad]);
 
-  // تحميل الخرائط فقط عند فتح التبويب الأول
+  // loading Maps on mounting
   useEffect(() => {
     if (isOpen && activeTab === 1) {
       setShowMaps(true);
@@ -224,11 +224,10 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     }
   }, [isOpen, activeTab]);
 
-  // دالة لتحميل بيانات التحميل للتعديل
+  // loading when edit
   const loadEditData = async (loadItem: TLoads) => {
     if (!loadItem?.id) return;
 
-    // تحديث حالة التحرير
     dispatch(setIsEditing(true));
     dispatch(setEditingLoad(loadItem));
 
@@ -293,7 +292,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       }
     } catch (error) {
       console.error("Error geocoding addresses:", error);
-      // التعامل مع الأخطاء هنا
     }
 
     // Load Details
@@ -314,7 +312,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     dispatch(setTruckId(loadItem.truckId?.truckId?.toString() || ""));
     dispatch(setTruckTemp(loadItem.truckTemp?.toString() || ""));
 
-    // حساب المسافة
     if (loadItem.distanceMiles) {
       setAllDistance(loadItem.distanceMiles.toString());
     }
@@ -426,14 +423,12 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
     const formData = new FormData();
 
-    // 🔹 التأكد من إضافة origin
     if (origin && origin.display_name) {
       formData.append("origin[address]", origin.display_name);
     } else {
       console.error("❌ Origin is missing or invalid");
     }
 
-    // 🔹 التأكد من إضافة destinations
     if (validDestinations.length > 0) {
       validDestinations.forEach((dest, index) => {
         if (dest && dest.display_name) {
@@ -446,14 +441,12 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       console.error("❌ No valid destinations found");
     }
 
-    // 🔹 التأكد من إضافة DHO
     if (dho && dho.display_name) {
       formData.append("DHO[address]", dho.display_name);
     } else {
       console.log("ℹ️ DHO is optional, not added");
     }
 
-    // 🔹 الحقول الخاصة بالإنشاء فقط
     if (!isEditing) {
       if (driverId) {
         formData.append("driverId", driverId);
@@ -463,7 +456,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       }
     }
 
-    // 🔹 الحقول المشتركة
     const commonFields = {
       pickupAt,
       completedAt,
@@ -486,7 +478,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       }
     });
 
-    // 🔹 إضافة الملفات
     if (selectedDocuments.length > 0) {
       selectedDocuments.forEach((file) => {
         formData.append("documents", file);
@@ -1415,7 +1406,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   );
 };
 
-// Assignment Tab Component (يجب إضافة هذا الجزء أيضًا)
+// Assignment Tab Component 
 interface AssignmentTabProps {
   isEditing: boolean;
   editingLoad: TLoads | null;
