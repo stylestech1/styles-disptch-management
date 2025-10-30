@@ -4,7 +4,7 @@ import type { NextRequest } from "next/server";
 export function middleware(req: NextRequest) {
   const token = req.cookies.get("token");
   const isAdminRoute = req.nextUrl.pathname.startsWith("/admin");
-  const isEmployeeRoute = req.nextUrl.pathname.startsWith("/dispatchers");
+  const isEmployeeRoute = req.nextUrl.pathname.startsWith("/users");
 
   if ((isAdminRoute && !token) || (isEmployeeRoute && !token)) {
     return NextResponse.redirect(new URL("/login", req.url));
@@ -14,5 +14,5 @@ export function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/dispatchers/:path*"],
+  matcher: ["/admin/:path*", "/users/:path*"],
 };

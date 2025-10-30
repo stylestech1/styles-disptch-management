@@ -1,11 +1,12 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppSelector } from "@/redux/store";
 import { TDriver } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
+import Erros from "@/components/ui/Erros";
 import {
   IoAdd,
   IoPencil,
@@ -13,7 +14,9 @@ import {
   IoSearch,
   IoStatsChart,
   IoClose,
+  IoPerson,
 } from "react-icons/io5";
+import { FaUserCheck, FaUserLargeSlash } from "react-icons/fa6";
 import {
   Dialog,
   TextField,
@@ -34,12 +37,23 @@ import {
   Typography,
   CircularProgress,
 } from "@mui/material";
+
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
-import { useCreateDriverMutation, useDeleteDriverMutation, useGetAllDriversQuery, useGetDriversWithPaginationQuery, useUpdateDriverMutation } from "@/redux/slices/apiSlice";
+import {
+  useCreateDriverMutation,
+  useDeleteDriverMutation,
+  useGetAllDriversQuery,
+  useGetDriversWithPaginationQuery,
+  useUpdateDriverMutation,
+} from "@/redux/slices/apiSlice";
 import { DriverForm } from "@/components/drivers/DriverForm";
-import { useSearch } from "@/hook/useSearch"; 
+import useError from "@/hook/useError";
+import StatsCard from "@/components/ui/StatsCard";
+import { FaUserMinus } from "react-icons/fa";
+import DataTable from "@/components/ui/DataTable";
+import { driverColumns } from "@/data/driverTables";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -47,28 +61,22 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   '&[class*="MuiTableCell-head"]': {
-    backgroundColor: muiTheme.palette.primary.main,
-    color: theme.palette.common.white,
-    fontWeight: "bold",
-    fontSize: 16,
+    backgroundColor: '#f8fafc',
+    color: '#56677a',
+    fontSize: 14,
   },
   '&[class*="MuiTableCell-body"]': {
     fontSize: 14,
   },
 }));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "&:nth-of-type(even)": {
-    backgroundColor: theme.palette.action.hover,
-  },
+const StyledTableRow = styled(TableRow)(() => ({
   "&:last-child td, &:last-child th": {
     border: 0,
   },
   "&:hover": {
-    backgroundColor: theme.palette.action.selected,
+    backgroundColor: '#fcf9fa',
   },
 }));
-
 const StatusChip = ({ status }: { status: string }) => {
   const getColor = (status: string) => {
     switch (status?.toLowerCase()) {
@@ -79,7 +87,7 @@ const StatusChip = ({ status }: { status: string }) => {
       default:
         return "default";
     }
-  }; 
+  };
 
   return <Chip label={status} color={getColor(status)} size="small" />;
 };
@@ -87,32 +95,29 @@ const StatusChip = ({ status }: { status: string }) => {
 const DriversPage = () => {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+  const { error, setError } = useError();
 
   const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
-  // 🔹 API Queries 
+  // 🔹 API Queries
   const {
     data: driversData,
     isLoading: driversLoading,
+    error: driverError,
     refetch,
   } = useGetDriversWithPaginationQuery(page + 1);
-
-  const { data: allDriversData } = useGetAllDriversQuery();
-
- const { search, setSearch, searchResults, isSearchLoading, clearSearch } = useSearch("drivers");
 
 
   // 🔹 API Mutations
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
   const [updateDriver, { isLoading: isUpdating }] = useUpdateDriverMutation();
-  const [deleteDriver, { isLoading: isDeleting }] = useDeleteDriverMutation();
+  const [deleteDriver] = useDeleteDriverMutation();
   const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
-  const displayDrivers = search ? searchResults : driversData?.data || [];
+  const displayDrivers = driversData?.data || [];
   
-  const pagination = !search ? driversData?.paginationResult : null;
+  const pagination =  driversData?.paginationResult ;
 
   const isLoading = driversLoading;
 
@@ -170,19 +175,19 @@ const DriversPage = () => {
     return changedFields as Partial<TDriver>;
   };
 
-  // ✅ Function to display API errors in toast
-  const showApiErrors = (error: unknown) => {
-    const err = error as {
-      data?: { errors?: { path: string; msg: string }[]; message?: string };
-    };
-    if (err?.data?.errors && Array.isArray(err.data.errors)) {
-      err.data.errors.forEach((e) => toast.error(`${e.path}: ${e.msg}`));
-    } else if (err?.data?.message) {
-      toast.error(err.data.message);
-    } else {
-      toast.error("An unexpected error occurred");
+  // handling Errors
+  useEffect(() => {
+    if (driverError) {
+      const errorMessage = getErrorMessage(driverError);
+      if (error !== errorMessage) {
+        setError(errorMessage);
+        toast.error(errorMessage || "Loading failed ❌", {
+          id: "driverError",
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
     }
-  };
+  }, [driverError, setError, error]);
 
   // ✅ Navigate to Driver Summary
   const handleViewStats = (id: string) => {
@@ -206,8 +211,8 @@ const DriversPage = () => {
       refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
-      showApiErrors(err);
-      toast.error(errorMessage || "Adding note failed ❌");
+      toast.error(errorMessage || "Creating driver failed ❌");
+      throw err;
     }
   };
 
@@ -235,8 +240,8 @@ const DriversPage = () => {
       refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
-      showApiErrors(err);
-      toast.error(errorMessage || "Driver update failed ❌");
+      toast.error(errorMessage || "Updating driver failed ❌");
+      throw err;
     }
   };
 
@@ -246,6 +251,7 @@ const DriversPage = () => {
     driverId?: number;
   } | null>(null);
 
+  // ✅ Delete Driver handler
   const handleDelete = async (id: string, driverId?: number) => {
     setDeleteToast({
       open: true,
@@ -266,14 +272,15 @@ const DriversPage = () => {
       refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
-      showApiErrors(err);
-      toast.error(errorMessage || "Adding note failed ❌");
+      toast.error(errorMessage || "Deleting driver failed ❌");
+      throw err;
     } finally {
       setDeleteToast({ open: false, message: "" });
       setDriverToDelete(null);
     }
   };
 
+  // ✅ Cancel Delete
   const cancelDelete = () => {
     setDeleteToast({ open: false, message: "" });
     setDriverToDelete(null);
@@ -285,7 +292,7 @@ const DriversPage = () => {
     <Box sx={{ p: 3 }}>
       <Toaster position="top-right" />
 
-      {/* Header */}
+      {/* Title */}
       <Box
         sx={{
           display: "flex",
@@ -299,213 +306,204 @@ const DriversPage = () => {
           },
         }}
       >
-        <Titles>Driver Management</Titles>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<IoAdd />}
-          onClick={handleOpenAdd}
-          sx={{
-            borderRadius: 2,
-            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          }}
-        >
-          Add Driver
-        </Button>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Titles>Driver Management</Titles>
+          <p className="text-slate-600 text-md">
+            Manage your driver team members and their access
+          </p>
+        </Box>
       </Box>
 
-      {/* Search Field */}
-      <TextField
-        placeholder="Search by driver ID, name, email, phone, license..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <IoSearch />
-            </InputAdornment>
-          ),
-          endAdornment: search && (
-            <InputAdornment position="end">
-              <IconButton
-                size="small"
-                onClick={clearSearch}
-              >
-                <IoClose />
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-        sx={{
-          mb: 3,
-          width: '100%',
-          borderRadius: 2,
-          backgroundColor: "white",
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 2,
-            backgroundColor: "white",
-            "& fieldset": {
-              borderColor: muiTheme.palette.primary.light,
-            },
-            "&:hover fieldset": {
-              borderColor: muiTheme.palette.primary.main,
-            },
-            "&.Mui-focused fieldset": {
-              borderColor: muiTheme.palette.primary.main,
-            },
-          },
-        }}
-      />
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
+        <StatsCard
+          title="Total Drivers"
+          value={displayDrivers.length || 0}
+          icon={IoPerson}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
 
-      {/* Search Results Info */}
-      {search && (
-        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-          <Chip 
-  label={`${searchResults.length} drivers found for "${search}"`} 
-            color="primary" 
-            variant="outlined" 
-          />
-          <Button 
-            size="small" 
-            onClick={clearSearch}
-            startIcon={<IoClose/>}
-            sx={{ minWidth: 'auto' }}
-          >
-            Show All Drivers
-          </Button>
-        </Box>
+        <StatsCard
+          title="Available"
+          value={
+            displayDrivers.filter((d: TDriver) => d.status === "available")
+              .length
+          }
+          icon={FaUserCheck}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
+
+        <StatsCard
+          title="Busy"
+          value={
+            displayDrivers.filter((d: TDriver) => d.status === "busy").length
+          }
+          icon={FaUserMinus}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
+
+        <StatsCard
+          title="Inactive"
+          value={
+            displayDrivers.filter((d: TDriver) => d.status === "inactive")
+              .length
+          }
+          icon={FaUserLargeSlash}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
+      </div>
+
+      {/* Add Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleOpenAdd}
+          disabled={isLoading}
+          className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
+        >
+          <IoAdd size={25} />
+          {isLoading ? "Loading..." : "Add Driver"}
+        </button>
+      </div>
+      {error && (
+        <div className="mb-6">
+          <Erros message={error} />
+        </div>
       )}
 
       {/* Table */}
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 2,
-          overflow: "hidden",
-          overflowX: "auto",
-          maxWidth: "100%",
-          "&::-webkit-scrollbar": {
-            height: 8,
-          },
-          "&::-webkit-scrollbar-track": {
-            background: muiTheme.palette.grey[100],
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: muiTheme.palette.grey[400],
-            borderRadius: 4,
-          },
-        }}
-      >
-        <Table sx={{ minWidth: 650 }} aria-label="drivers table">
-          <TableHead>
-            <TableRow>
-              <StyledTableCell>Driver ID</StyledTableCell>
-              <StyledTableCell>Name</StyledTableCell>
-              <StyledTableCell>Email</StyledTableCell>
-              <StyledTableCell>Phone</StyledTableCell>
-              <StyledTableCell>License Number</StyledTableCell>
-              <StyledTableCell>Price/Mile</StyledTableCell>
-              <StyledTableCell>Hire Date</StyledTableCell>
-              <StyledTableCell>Status</StyledTableCell>
-              <StyledTableCell align="center">Actions</StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {displayDrivers.length === 0 ? (
+      {isLoading ? (
+        <Loading />
+      ) : displayDrivers.length > 0 ? (
+        <TableContainer component={Paper} sx={{ mt: 3, boxShadow: 1, borderRadius: 3 }}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <StyledTableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                  {search ? 'No drivers found' : 'No drivers available'}
-                </StyledTableCell>
+                <StyledTableCell>Driver ID</StyledTableCell>
+                <StyledTableCell>Name</StyledTableCell>
+                <StyledTableCell>Email</StyledTableCell>
+                <StyledTableCell>Phone</StyledTableCell>
+                <StyledTableCell>License Number</StyledTableCell>
+                <StyledTableCell>Price/Mile</StyledTableCell>
+                <StyledTableCell>Hire Date</StyledTableCell>
+                <StyledTableCell align="center">Status</StyledTableCell>
+                <StyledTableCell align="center">Actions</StyledTableCell>
               </TableRow>
-            ) : (
-              displayDrivers
-                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                .map((driver: TDriver) => (
-                  <StyledTableRow key={driver.id}>
-                    <StyledTableCell component="th" scope="row">
-                      {driver.driverId}
-                    </StyledTableCell>
-                    <StyledTableCell>{driver.name}</StyledTableCell>
-                    <StyledTableCell>{driver.email}</StyledTableCell>
-                    <StyledTableCell>{driver.phone}</StyledTableCell>
-                    <StyledTableCell>{driver.licenseNumber}</StyledTableCell>
-                    <StyledTableCell>
-                      ${driver.pricePerMile?.toFixed(2)}
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      {driver.hireDate
-                        ? new Date(driver.hireDate).toLocaleDateString()
-                        : "N/A"}
-                    </StyledTableCell>
-                    <StyledTableCell>
-                      <StatusChip status={driver.status} />
-                    </StyledTableCell>
-                    <StyledTableCell align="center">
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "center",
-                          gap: 1,
-                        }}
-                      >
-                        {/* Statistics Button */}
-                        <Tooltip title="View Statistics">
-                          <IconButton
-                            size="small"
-                            color="info"
-                            onClick={() => handleViewStats(driver.id)}
-                            sx={{
-                              color: muiTheme.palette.info.main,
-                              "&:hover": {
-                                backgroundColor: muiTheme.palette.info.light,
-                                color: "white",
-                              },
-                            }}
-                          >
-                            <IoStatsChart />
-                          </IconButton>
-                        </Tooltip>
+            </TableHead>
+            <TableBody>
+              {displayDrivers.map((driver: TDriver) => (
+                <StyledTableRow key={driver.id}>
+                  <StyledTableCell>{driver.driverId}</StyledTableCell>
 
-                        {/* Edit Button */}
-                        <Tooltip title="Edit Driver">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEditClick(driver)}
-                            disabled={isUpdating}
-                          >
-                            <IoPencil />
-                          </IconButton>
-                        </Tooltip>
+                  <StyledTableCell>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <IoPerson />
+                      {driver.name}
+                    </Box>
+                  </StyledTableCell>
 
-                        {/* Delete Button */}
-                        <Tooltip title="Delete Driver">
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() =>
-                              handleDelete(driver.id, driver.driverId)
-                            }
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? (
-                              <CircularProgress size={16} />
-                            ) : (
-                              <IoTrash />
-                            )}
-                          </IconButton>
-                        </Tooltip>
-                      </Box>
-                    </StyledTableCell>
-                  </StyledTableRow>
-                ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+                  <StyledTableCell>{driver.email}</StyledTableCell>
 
-      {/* Pagination - تظهر فقط للبيانات العادية وليس للبحث */}
-      {pagination && displayDrivers.length > 0 && !search && (
+                  <StyledTableCell>{driver.phone}</StyledTableCell>
+
+                  <StyledTableCell>{driver.licenseNumber}</StyledTableCell>
+
+                  <StyledTableCell>{driver.pricePerMile}</StyledTableCell>
+
+                  <StyledTableCell>
+                    <Chip
+                      label={driver.hireDate.split('T')[0]}
+                      variant="outlined"
+                      size="small"
+                    />
+                  </StyledTableCell>
+
+                  <StyledTableCell align="center">
+                    <StatusChip status={driver.status} />
+                  </StyledTableCell>
+
+                  <StyledTableCell align="center">
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", gap: 1 }}
+                    >
+                      <Tooltip title="View Statistics">
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={() => handleViewStats(driver.id)}
+                        >
+                          <IoStatsChart />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Edit Driver">
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleEditClick(driver)}
+                        >
+                          <IoPencil />
+                        </IconButton>
+                      </Tooltip>
+
+                      <Tooltip title="Delete Driver">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() =>
+                            handleDelete(driver.id, driver.driverId)
+                          }
+                        >
+                          <IoTrash />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </StyledTableCell>
+                </StyledTableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      ) : (
+        <Box
+          sx={{
+            p: 4,
+            textAlign: "center",
+            border: "1px dashed",
+            borderColor: "grey.300",
+            borderRadius: 2,
+            mt: 3,
+          }}
+        >
+          {/* <Typography variant="h6" color="textSecondary" gutterBottom>
+            No Drivers Found
+          </Typography>
+          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
+            {searchTerm
+              ? `No results found for "${searchTerm}"`
+              : "No drivers available"}
+          </Typography>
+          {!searchTerm && (
+            <Button
+              variant="contained"
+              onClick={handleOpenAdd}
+              startIcon={<IoAdd />}
+            >
+              Add Your First Driver
+            </Button>
+          )} */}
+        </Box>
+      )}
+
+      {/* Pagination */}
+      {pagination && displayDrivers.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}

@@ -54,6 +54,9 @@ import {
   useUpdateTruckMutation,
 } from "@/redux/slices/apiSlice";
 import { TruckForm } from "@/components/truck/TruckForm";
+import StatsCard from "@/components/ui/StatsCard";
+import { FaTruck, FaUserCheck, FaUserMinus } from "react-icons/fa";
+import { FaUserLargeSlash } from "react-icons/fa6";
 
 // Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -61,32 +64,25 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   '&[class*="MuiTableCell-head"]': {
-    backgroundColor: muiTheme.palette.primary.main,
-    color: theme.palette.common.white,
-    fontWeight: "bold",
-    fontSize: 16,
+    backgroundColor: '#f8fafc',
+    color: '#56677a',
+    fontSize: 14,
   },
   '&[class*="MuiTableCell-body"]': {
     fontSize: 14,
   },
 }));
-
-const StyledTableRow = styled(TableRow)(({ theme }) => ({
-  "&:nth-of-type(even)": {
-    backgroundColor: theme.palette.action.hover,
-  },
+const StyledTableRow = styled(TableRow)(() => ({
   "&:last-child td, &:last-child th": {
     border: 0,
   },
   "&:hover": {
-    backgroundColor: theme.palette.action.selected,
+    backgroundColor: '#fcf9fa',
   },
 }));
-
-// StatusChip
-const StatusChip = React.memo(({ status }: { status?: string | undefined }) => {
-  const getColor = (s?: string) => {
-    switch (s?.toLowerCase()) {
+const StatusChip = ({ status }: { status: string }) => {
+  const getColor = (status: string) => {
+    switch (status?.toLowerCase()) {
       case "available":
         return "success";
       case "busy":
@@ -96,9 +92,8 @@ const StatusChip = React.memo(({ status }: { status?: string | undefined }) => {
     }
   };
 
-  return <Chip label={status || "N/A"} color={getColor(status)} size="small" />;
-});
-StatusChip.displayName = "StatusChip";
+  return <Chip label={status} color={getColor(status)} size="small" />;
+};
 
 
 
@@ -155,11 +150,11 @@ const TrucksPage: React.FC = () => {
         (typeof t.assignedDriver === "object"
           ? t.assignedDriver.name?.toLowerCase().includes(q)
           : String(t.assignedDriver || "")
-              .toLowerCase()
-              .includes(q))
+            .toLowerCase()
+            .includes(q))
       );
     });
-  }, [search, trucks, allTrucks]); 
+  }, [search, trucks, allTrucks]);
 
   // Modal states
   const [open, setOpen] = useState(false);
@@ -270,7 +265,7 @@ const TrucksPage: React.FC = () => {
       setOpen(false);
       try {
         refetch();
-      } catch {}
+      } catch { }
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Updating truck failed ❌");
@@ -293,7 +288,7 @@ const TrucksPage: React.FC = () => {
       toast.success(`✅ Truck #${truckToDelete.truckId} deleted successfully!`);
       try {
         refetch();
-      } catch {}
+      } catch { }
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Deleting truck failed ❌");
@@ -314,7 +309,7 @@ const TrucksPage: React.FC = () => {
     <Box sx={{ p: 3 }}>
       <Toaster position="top-right" />
 
-      {/* Header */}
+      {/* Title */}
       <Box
         sx={{
           display: "flex",
@@ -328,20 +323,68 @@ const TrucksPage: React.FC = () => {
           },
         }}
       >
-        <Titles>Truck Management</Titles>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<IoAdd />}
-          onClick={handleOpenAdd}
-          sx={{
-            borderRadius: 2,
-            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          }}
-        >
-          Add Truck
-        </Button>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Titles>Truck Management</Titles>
+        </Box>
       </Box>
+         {/* Stats Summary */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
+            <StatsCard
+          title="Total Trucks"
+          value={filteredTrucks.length || 0}
+          icon={FaTruck}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
+
+          <StatsCard
+            title="Available"
+            value={
+              filteredTrucks.filter((d: TTruck) => d.status === "available")
+                .length
+            }
+            icon={FaUserCheck}
+            iconColor="text-blue-600"
+            bgColor="bg-blue-50"
+            loading={isLoading}
+          />
+
+          <StatsCard 
+            title="Busy"
+            value={
+              filteredTrucks.filter((d: TTruck) => d.status === "busy").length
+            }
+            icon={FaUserMinus}
+            iconColor="text-blue-600"
+            bgColor="bg-blue-50"
+            loading={isLoading}
+          />
+
+          <StatsCard
+            title="Inactive"
+            value={
+              filteredTrucks.filter((d: TTruck) => d.status === "inactive")
+                .length
+            }
+            icon={FaUserLargeSlash}
+            iconColor="text-blue-600"
+            bgColor="bg-blue-50"
+            loading={isLoading}
+          />
+        </div>
+        {/* Add Button */}
+        <div className="flex justify-end">
+          <button
+            onClick={handleOpenAdd}
+            disabled={isLoading}
+            className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
+          >
+            <IoAdd size={25} />
+            {isLoading ? "Loading..." : "Add Truck"}
+          </button>
+        </div>
+      
 
       {/* Search */}
       <TextField

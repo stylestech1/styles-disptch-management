@@ -20,7 +20,7 @@ const Modal = ({
   showCloseButton = true,
 }: ModalProps) => {
   if (!isOpen) return null;
-
+ 
   const sizeClasses = {
     sm: "max-w-sm",
     md: "max-w-md",

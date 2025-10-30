@@ -1,8 +1,9 @@
-import { muiTheme } from "@/theme/theme";
-import { TDriver, TTruck } from "@/types/globalTypes";
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
+"use client";
+
+import { TTruck, TDriver } from "@/types/globalTypes";
+import { Alert, Box, Button, Chip, CircularProgress, Divider, FormControl, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
 import React, { useMemo } from "react";
-import { IoClose, IoPerson } from "react-icons/io5";
+import { IoClose, IoPerson, IoAdd } from "react-icons/io5";
 
 export type TruckFormProps = {
   open: boolean;
@@ -15,6 +16,7 @@ export type TruckFormProps = {
   allDrivers: TDriver[];
   allTrucks: TTruck[];
 };
+
 export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps) {
   const {
     open,
@@ -51,56 +53,61 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
 
   const truckTypes = useMemo(() => ["reefer", "van"], []);
 
+  // Handle number input change
+  const handleNumberChange = (field: keyof TTruck, value: string) => {
+    if (value === '' || value === null || value === undefined) {
+      onChange(field, '' as any);
+    } else {
+      const numValue = Number(value);
+      onChange(field, numValue as any);
+    }
+  };
+
+  // Handle year input change
+  const handleYearChange = (value: string) => {
+    if (value === '' || value === null || value === undefined) {
+      onChange('year', '' as any);
+    } else {
+      const numValue = Number(value);
+      onChange('year', numValue as any);
+    }
+  };
+
+  if (!open) return null;
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-          maxHeight: "90vh",
-        },
-      }}
-    >
-      <DialogTitle
-        sx={{
-          pb: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          color: "white",
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
-        }}
-      >
-        <Typography variant="h5" component="span" fontWeight="bold">
-          {editMode ? "Edit Truck" : "Add New Truck"}
-        </Typography>
-        <IconButton onClick={onClose} sx={{ color: "white" }} size="small">
-          <IoClose />
-        </IconButton>
-      </DialogTitle>
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
+      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            {!editMode && (
+              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                <IoAdd className="text-emerald-600" size={18} />
+              </div>
+            )}
+            <h3 className="text-xl font-semibold text-slate-800">
+              {editMode ? "Edit Truck" : "Add New Truck"}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+          >
+            <IoClose size={24} />
+          </button>
+        </div>
 
-      <DialogContent sx={{ py: 3 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* Basic Information */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Basic Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Content */}
+        <div className="space-y-6">
+          {/* Basic Information Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Basic Information</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
+            <div className="space-y-4">
               <TextField
                 fullWidth
                 label="Model *"
@@ -109,6 +116,14 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                 onChange={(e) => onChange("model", e.target.value)}
                 size="medium"
                 placeholder="e.g., Volvo FH16"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  marginBottom: '16px',
+                }}
               />
               <TextField
                 fullWidth
@@ -118,14 +133,33 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                 onChange={(e) => onChange("plateNumber", e.target.value)}
                 size="medium"
                 placeholder="e.g., ABC-12345"
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  marginBottom: '16px',
+                }}
               />
-              <FormControl fullWidth size="medium">
+              <FormControl 
+                fullWidth 
+                size="medium"
+                sx={{ marginBottom: '16px' }}
+              >
                 <InputLabel>Type *</InputLabel>
                 <Select
                   label="Type *"
                   name="type"
                   value={formData.type || ""}
                   onChange={(e) => onChange("type", e.target.value)}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#10b981',
+                      },
+                    },
+                  }}
                 >
                   {truckTypes.map((type) => (
                     <MenuItem key={type} value={type}>
@@ -140,41 +174,51 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                 name="year"
                 type="number"
                 value={formData.year ?? ""}
-                onChange={(e) => onChange("year", Number(e.target.value))}
+                onChange={(e) => handleYearChange(e.target.value)}
                 size="medium"
                 inputProps={{
                   min: 1900,
                   max: new Date().getFullYear() + 1,
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                }}
               />
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          {/* Specifications */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Specifications
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Specifications Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Specifications</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
+            <div className="space-y-4">
               <TextField
                 fullWidth
                 label="Capacity (kg) *"
                 name="capacity"
                 type="number"
                 value={formData.capacity ?? ""}
-                onChange={(e) => onChange("capacity", Number(e.target.value))}
+                onChange={(e) => handleNumberChange("capacity", e.target.value)}
                 size="medium"
                 inputProps={{ min: 0 }}
                 InputProps={{
                   endAdornment: (
                     <InputAdornment position="end">kg</InputAdornment>
                   ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  marginBottom: '16px',
                 }}
               />
               <TextField
@@ -183,9 +227,7 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                 name="fuelPerMile"
                 type="number"
                 value={formData.fuelPerMile ?? ""}
-                onChange={(e) =>
-                  onChange("fuelPerMile", Number(e.target.value))
-                }
+                onChange={(e) => handleNumberChange("fuelPerMile", e.target.value)}
                 size="medium"
                 inputProps={{ min: 0, step: 0.1 }}
                 InputProps={{
@@ -193,25 +235,25 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                     <InputAdornment position="end">L/mile</InputAdornment>
                   ),
                 }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                }}
               />
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          {/* Driver Assignment */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Driver Assignment
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
+          {/* Driver Assignment Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Driver Assignment</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
             <FormControl fullWidth size="medium">
-              <InputLabel id="driver-assignment-label">
-                Assigned Driver
-              </InputLabel>
+              <InputLabel id="driver-assignment-label">Assigned Driver</InputLabel>
               <Select
                 labelId="driver-assignment-label"
                 label="Assigned Driver"
@@ -220,108 +262,52 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                 onChange={(e) => onChange("assignedDriver", e.target.value)}
                 startAdornment={
                   <InputAdornment position="start">
-                    <IoPerson
-                      style={{ color: muiTheme.palette.primary.main }}
-                    />
+                    <IoPerson className="text-emerald-600" />
                   </InputAdornment>
                 }
                 sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
                   "& .MuiSelect-select": {
                     display: "flex",
                     alignItems: "center",
                   },
+                  marginBottom: '8px',
                 }}
               >
                 <MenuItem value="">
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: "50%",
-                        bgcolor: "grey.100",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "grey.500",
-                      }}
-                    >
-                      <IoPerson size={16} />
-                    </Box>
-                    <Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        fontStyle="italic"
-                      >
-                        Unassigned
-                      </Typography>
-                    </Box>
+                    <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+                      <IoPerson size={16} className="text-slate-500" />
+                    </div>
+                    <span className="text-slate-500 italic">Unassigned</span>
                   </Box>
                 </MenuItem>
 
                 {availableUnassignedDrivers.length > 0 ? (
                   availableUnassignedDrivers.map((driver) => (
                     <MenuItem key={driver.id} value={driver.id}>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 2,
-                          width: "100%",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: "50%",
-                            bgcolor: "primary.main",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            color: "white",
-                            fontWeight: "bold",
-                            fontSize: "0.875rem",
-                          }}
-                        >
+                      <div className="flex items-center gap-3 w-full">
+                        <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
                           {driver.name?.charAt(0)?.toUpperCase() || "D"}
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography variant="body1" fontWeight="500" noWrap>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-slate-900 truncate">
                             {driver.name}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              mt: 0.5,
-                            }}
-                          >
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                            >
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-xs text-slate-500">
                               ID: {driver.driverId || driver.id}
-                            </Typography>
-                            <Box
-                              sx={{
-                                width: 4,
-                                height: 4,
-                                borderRadius: "50%",
-                                bgcolor: "grey.400",
-                              }}
-                            />
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              noWrap
-                            >
+                            </span>
+                            <span className="w-1 h-1 bg-slate-400 rounded-full" />
+                            <span className="text-xs text-slate-500 truncate">
                               {driver.licenseNumber}
-                            </Typography>
-                          </Box>
-                        </Box>
+                            </span>
+                          </div>
+                        </div>
                         <Chip
                           label="Available"
                           color="success"
@@ -332,43 +318,22 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                             "& .MuiChip-label": { px: 1 },
                           }}
                         />
-                      </Box>
+                      </div>
                     </MenuItem>
                   ))
                 ) : (
                   <MenuItem disabled>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 2,
-                        width: "100%",
-                        py: 1,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: "50%",
-                          bgcolor: "grey.100",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          color: "grey.500",
-                        }}
-                      >
-                        <IoPerson size={20} />
-                      </Box>
-                      <Box>
-                        <Typography variant="body2" color="text.secondary">
-                          No available drivers
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                    <div className="flex items-center gap-3 w-full py-1">
+                      <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
+                        <IoPerson size={20} className="text-slate-400" />
+                      </div>
+                      <div>
+                        <p className="text-sm text-slate-600">No available drivers</p>
+                        <p className="text-xs text-slate-500">
                           All drivers are currently assigned or busy
-                        </Typography>
-                      </Box>
-                    </Box>
+                        </p>
+                      </div>
+                    </div>
                   </MenuItem>
                 )}
               </Select>
@@ -378,71 +343,43 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                   severity="warning"
                   sx={{
                     mt: 2,
+                    mb: 2,
                     borderRadius: 1,
                     "& .MuiAlert-message": { fontSize: "0.875rem" },
                   }}
                   icon={false}
                 >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: "50%",
-                        bgcolor: "warning.main",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "white",
-                        fontSize: "0.75rem",
-                      }}
-                    >
+                  <div className="flex items-center gap-2">
+                    <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-white text-xs">
                       ⚠️
-                    </Box>
-                    <Typography variant="caption">
-                      No available unassigned drivers. All drivers are currently
-                      assigned to other trucks or busy.
-                    </Typography>
-                  </Box>
+                    </div>
+                    <span className="text-sm">
+                      No available unassigned drivers. All drivers are currently assigned to other trucks or busy.
+                    </span>
+                  </div>
                 </Alert>
               )}
 
               {availableUnassignedDrivers.length > 0 && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mt: 1,
-                    px: 1,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    color="success.main"
-                    fontWeight="500"
-                  >
+                <div className="flex justify-between mt-2 px-1 mb-2">
+                  <span className="text-xs text-emerald-600 font-medium">
                     {availableUnassignedDrivers.length} available unassigned
                     driver{availableUnassignedDrivers.length !== 1 ? "s" : ""}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
+                  </span>
+                  <span className="text-xs text-slate-500">
                     Total: {allDrivers.length} drivers
-                  </Typography>
-                </Box>
+                  </span>
+                </div>
               )}
             </FormControl>
-          </Box>
+          </div>
 
-          {/* Status */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Status
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
+          {/* Status Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Status</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
             <FormControl fullWidth size="medium">
               <InputLabel>Status *</InputLabel>
               <Select
@@ -450,65 +387,72 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                 name="status"
                 value={formData.status || ""}
                 onChange={(e) => onChange("status", e.target.value)}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                }}
               >
                 <MenuItem value="available">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <div className="flex items-center gap-2">
                     <Chip label="Available" color="success" size="small" />
-                    <Typography>Available</Typography>
-                  </Box>
+                    <span>Available</span>
+                  </div>
                 </MenuItem>
                 <MenuItem value="busy">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <div className="flex items-center gap-2">
                     <Chip label="Busy" color="error" size="small" />
-                    <Typography>Busy</Typography>
-                  </Box>
+                    <span>Busy</span>
+                  </div>
                 </MenuItem>
                 <MenuItem value="inactive">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <div className="flex items-center gap-2">
                     <Chip label="Inactive" color="default" size="small" />
-                    <Typography>Inactive</Typography>
-                  </Box>
+                    <span>Inactive</span>
+                  </div>
                 </MenuItem>
               </Select>
             </FormControl>
-          </Box>
+          </div>
 
-          <Alert severity="info">Fields marked with * are required</Alert>
-        </Box>
-      </DialogContent>
+          {/* Helper Text */}
+          <Alert severity="info" className="rounded-lg mt-4">
+            Fields marked with * are required
+          </Alert>
+        </div>
 
-      <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
-        <Button
-          onClick={onClose}
-          color="inherit"
-          variant="outlined"
-          disabled={isLoading}
-          sx={{ borderRadius: 2, minWidth: 100 }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={onSubmit}
-          variant="contained"
-          disabled={isLoading}
-          startIcon={isLoading ? <CircularProgress size={16} /> : null}
-          sx={{
-            borderRadius: 2,
-            px: 4,
-            minWidth: 140,
-            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          }}
-        >
-          {isLoading
-            ? editMode
-              ? "Saving..."
-              : "Creating..."
-            : editMode
-            ? "Save Changes"
-            : "Create Truck"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        {/* Footer Actions */}
+        <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200">
+          <Button
+            onClick={onClose}
+            color="inherit"
+            variant="outlined"
+            disabled={isLoading}
+            className="flex-1 rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={onSubmit}
+            variant="contained"
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={16} /> : null}
+            className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium"
+          >
+            {isLoading
+              ? editMode
+                ? "Saving..."
+                : "Creating..."
+              : editMode
+              ? "Save Changes"
+              : "Create Truck"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 });
-TruckForm.displayName = "TruckForm"; 
+
+TruckForm.displayName = "TruckForm";

@@ -31,7 +31,7 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import UserSettingsModal from "@/components/users/UserSettingsModal";
 import CreateUserModal from "@/components/users/CreateUserModal";
 
-const Dispatchers = () => {
+const Users = () => {
   const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [popupSetting, setPopupSetting] = useState(false);
@@ -397,7 +397,7 @@ const Dispatchers = () => {
           renderRow={renderDispatcherRow}
           loading={loading}
         />
-      ) : (
+      ) : ( 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-4 py-12 text-center text-slate-500">
             <div className="flex flex-col items-center justify-center">
@@ -456,4 +456,4 @@ const Dispatchers = () => {
   );
 };
 
-export default Dispatchers;
+export default Users;
