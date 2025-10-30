@@ -511,7 +511,7 @@ const TrucksPage: React.FC = () => {
           : String(t.assignedDriver || "").toLowerCase().includes(q))
       );
     });
-  }, [search, trucks, allTrucks]);
+  }, [search, trucks, allTrucks]); 
 
   // Modal states
   const [open, setOpen] = useState(false);

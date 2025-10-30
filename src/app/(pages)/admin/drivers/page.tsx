@@ -11,20 +11,13 @@ import {
   IoPencil,
   IoTrash,
   IoSearch,
-  IoClose,
   IoStatsChart,
+  IoClose,
 } from "react-icons/io5";
 import {
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Button,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
   Table,
   TableBody,
   TableCell,
@@ -40,13 +33,13 @@ import {
   styled,
   Typography,
   CircularProgress,
-  Divider,
-  Alert,
 } from "@mui/material";
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import { useCreateDriverMutation, useDeleteDriverMutation, useGetAllDriversQuery, useGetDriversWithPaginationQuery, useUpdateDriverMutation } from "@/redux/slices/apiSlice";
+import { DriverForm } from "@/components/drivers/DriverForm";
+import { useSearch } from "@/hook/useSearch"; 
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -86,238 +79,9 @@ const StatusChip = ({ status }: { status: string }) => {
       default:
         return "default";
     }
-  };
+  }; 
 
   return <Chip label={status} color={getColor(status)} size="small" />;
-};
-
-// ✅ Driver Form Component - Vertical Layout
-const DriverForm = ({
-  open,
-  onClose,
-  formData,
-  onChange,
-  onSubmit,
-  editMode,
-  isLoading,
-}: {
-  open: boolean;
-  onClose: () => void;
-  formData: Partial<TDriver>;
-  onChange: (field: keyof TDriver, value: TDriver[keyof TDriver]) => void;
-  onSubmit: () => void;
-  editMode: boolean;
-  isLoading: boolean;
-}) => {
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-          maxHeight: "90vh",
-        },
-      }}
-    >
-      {/* Header */}
-      <DialogTitle
-        sx={{
-          pb: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          color: "white",
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
-        }}
-      >
-        <Typography variant="h5" component="span" fontWeight="bold">
-          {editMode ? "Edit Driver" : "Add New Driver"}
-        </Typography>
-        <IconButton onClick={onClose} sx={{ color: "white" }} size="small">
-          <IoClose />
-        </IconButton>
-      </DialogTitle>
-
-      <DialogContent sx={{ py: 3 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {/* Personal Information Section */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Personal Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <TextField
-                fullWidth
-                label="Full Name *"
-                name="name"
-                value={formData.name || ""}
-                onChange={(e) => onChange("name", e.target.value)}
-                size="medium"
-                placeholder="e.g., John Doe"
-              />
-
-              <TextField
-                fullWidth
-                label="Email *"
-                name="email"
-                type="email"
-                value={formData.email || ""}
-                onChange={(e) => onChange("email", e.target.value)}
-                size="medium"
-                placeholder="e.g., john.doe@example.com"
-              />
-
-              <TextField
-                fullWidth
-                label="Phone *"
-                name="phone"
-                value={formData.phone || ""}
-                onChange={(e) => onChange("phone", e.target.value)}
-                size="medium"
-                placeholder="e.g., +1234567890"
-              />
-            </Box>
-          </Box>
-
-          {/* Professional Information Section */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Professional Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              <TextField
-                fullWidth
-                label="License Number *"
-                name="licenseNumber"
-                value={formData.licenseNumber || ""}
-                onChange={(e) => onChange("licenseNumber", e.target.value)}
-                size="medium"
-                placeholder="e.g., DL123456789"
-              />
-
-              <TextField
-                fullWidth
-                label="Price Per Mile *"
-                name="pricePerMile"
-                type="number"
-                value={formData.pricePerMile || ""}
-                onChange={(e) =>
-                  onChange("pricePerMile", parseFloat(e.target.value) || "")
-                }
-                size="medium"
-                inputProps={{ min: 0, step: 0.1 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
-                  ),
-                }}
-              />
-
-              <TextField
-                fullWidth
-                label="Hire Date"
-                name="hireDate"
-                type="date"
-                value={formData.hireDate || ""}
-                onChange={(e) => onChange("hireDate", e.target.value)}
-                size="medium"
-                InputLabelProps={{ shrink: true }}
-              />
-            </Box>
-          </Box>
-
-          {/* Status Section */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Status
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <FormControl fullWidth size="medium">
-              <InputLabel>Status *</InputLabel>
-              <Select
-                label="Status *"
-                name="status"
-                value={formData.status || ""}
-                onChange={(e) => onChange("status", e.target.value)}
-              >
-                <MenuItem value="available">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Chip label="available" color="success" size="small" />
-                    <Typography>Available</Typography>
-                  </Box>
-                </MenuItem>
-                <MenuItem value="busy">
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Chip label="Busy" color="error" size="small" />
-                    <Typography>Busy</Typography>
-                  </Box>
-                </MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          {/* Helper Text */}
-          <Alert severity="info">Fields marked with * are required</Alert>
-        </Box>
-      </DialogContent>
-
-      <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
-        <Button
-          onClick={onClose}
-          color="inherit"
-          variant="outlined"
-          disabled={isLoading}
-          sx={{ borderRadius: 2, minWidth: 100 }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={onSubmit}
-          variant="contained"
-          disabled={isLoading}
-          startIcon={isLoading ? <CircularProgress size={16} /> : null}
-          sx={{
-            borderRadius: 2,
-            px: 4,
-            minWidth: 140,
-            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          }}
-        >
-          {isLoading
-            ? editMode
-              ? "Saving..."
-              : "Creating..."
-            : editMode
-            ? "Save Changes"
-            : "Create Driver"}
-        </Button>
-      </DialogActions>
-    </Dialog>
-  );
 };
 
 const DriversPage = () => {
@@ -326,16 +90,28 @@ const DriversPage = () => {
 
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [search, setSearch] = useState("");
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
-  // 🔹 API Queries
+  // 🔹 استخدام useSearch Hook
   const {
+    searchTerm,
+    setSearchTerm,
+    searchResults,
+    isSearchLoading, 
+    totalResults,
+    isSearching,
+    clearSearch,
+  } = useSearch('drivers')
+
+  // 🔹 API Queries 
+   const {
     data: driversData,
-    isLoading,
+    isLoading: driversLoading, // ✅ loading للبيانات العادية
     refetch,
   } = useGetDriversWithPaginationQuery(page + 1);
+
   const { data: allDriversData } = useGetAllDriversQuery();
+
 
   // 🔹 API Mutations
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
@@ -343,20 +119,12 @@ const DriversPage = () => {
   const [deleteDriver, { isLoading: isDeleting }] = useDeleteDriverMutation();
   const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
-  const drivers = driversData?.data || [];
-  const allDrivers = allDriversData?.data || [];
+  const displayDrivers = isSearching ? searchResults : driversData?.data || [];
   const pagination = driversData?.paginationResult || null;
 
-  const filteredDrivers = search
-    ? allDrivers.filter(
-        (driver: TDriver) =>
-          driver.name?.toLowerCase().includes(search.toLowerCase()) ||
-          driver.email?.toLowerCase().includes(search.toLowerCase()) ||
-          driver.phone?.toLowerCase().includes(search.toLowerCase()) ||
-          driver.licenseNumber?.toLowerCase().includes(search.toLowerCase()) ||
-          driver.driverId?.toString().includes(search.toLowerCase())
-      )
-    : drivers;
+  // ✅ ✅ ✅ التصحيح المهم: فصل حالة الـ loading
+  const isLoading = driversLoading; // ✅ فقط loading البيانات العادية
+  const isTableLoading = isSearchLoading; // ✅ loading البحث فقط
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -556,20 +324,34 @@ const DriversPage = () => {
         </Button>
       </Box>
 
-      {/* Search */}
-      <TextField
-        placeholder="Search by name"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
+<TextField
+        placeholder="Search by driver ID, name, email, phone, license..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
               <IoSearch />
             </InputAdornment>
           ),
+          endAdornment: searchTerm && (
+            <InputAdornment position="end">
+              {isSearchLoading ? (
+                <CircularProgress size={20} />
+              ) : (
+                <IconButton
+                  size="small"
+                  onClick={clearSearch}
+                >
+                  <IoClose />
+                </IconButton>
+              )}
+            </InputAdornment>
+          ),
         }}
         sx={{
           mb: 3,
+          width: '100%',
           borderRadius: 2,
           backgroundColor: "white",
           "& .MuiOutlinedInput-root": {
@@ -585,11 +367,28 @@ const DriversPage = () => {
               borderColor: muiTheme.palette.primary.main,
             },
           },
-          [muiTheme.breakpoints.down("md")]: {
-            width: "100%",
-          },
         }}
       />
+
+      {/* Search Results Info */}
+      {searchTerm && (
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+          <Chip 
+            label={`${totalResults} drivers found for "${searchTerm}"`} 
+            color="primary" 
+            variant="outlined" 
+          />
+          <Button 
+            size="small" 
+            onClick={clearSearch}
+            startIcon={<IoClose/>}
+            sx={{ minWidth: 'auto' }}
+          >
+            Show All Drivers
+          </Button>
+          {isSearchLoading && <CircularProgress size={20} />}
+        </Box>
+      )}
 
       {/* Table */}
       <TableContainer
@@ -626,14 +425,14 @@ const DriversPage = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredDrivers.length === 0 ? (
+            {displayDrivers.length === 0 ? (
               <TableRow>
                 <StyledTableCell colSpan={9} align="center" sx={{ py: 4 }}>
-                  No drivers found
+                  {searchTerm ? 'No drivers found' : 'No drivers available'}
                 </StyledTableCell>
               </TableRow>
             ) : (
-              filteredDrivers
+              displayDrivers
                 .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                 .map((driver: TDriver) => (
                   <StyledTableRow key={driver.id}>
@@ -720,7 +519,7 @@ const DriversPage = () => {
       </TableContainer>
 
       {/* Pagination */}
-      {pagination && allDrivers.length > 0 && (
+      {pagination && displayDrivers.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}
@@ -742,7 +541,6 @@ const DriversPage = () => {
       />
 
       {/* MUI Delete Confirmation Toast */}
-      {/* Blur Background Overlay */}
       {deleteToast.open && (
         <Box
           sx={{

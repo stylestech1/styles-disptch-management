@@ -1,6 +1,7 @@
 // apiSlice.ts
 import {
   TDriver,
+  TLoads,
   TLoadSummary,
   TPagination,
   TTruck,
@@ -88,6 +89,106 @@ export const apiSlice = api.injectEndpoints({
       }),
     }),
 
+
+
+    searchDrivers: builder.query({
+      query: (searchParams) => {
+        // 🚫 لو مفيش params متعرفه فعلاً، امنع إرسال أي request
+        if (!searchParams || Object.keys(searchParams).length === 0) {
+          return { url: "", skip: true }; // مهم
+        }
+
+        const params = new URLSearchParams();
+        Object.entries(searchParams).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            params.append(key, value.toString());
+          }
+        });
+
+        return `/api/v1/drivers?${params.toString()}`;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+            ...result.data.map((driver: TDriver) => ({
+              type: "Drivers" as const,
+              id: driver.id,
+            })),
+            { type: "Drivers", id: "SEARCH_LIST" },
+          ]
+          : [{ type: "Drivers", id: "SEARCH_LIST" }],
+    }),
+
+    // 🔍 SEARCH TRUCKS
+    searchTrucks: builder.query({
+      query: (searchParams: {
+        search?: string;
+        truckId?: string | number;
+        licensePlate?: string;
+        model?: string;
+        status?: string;
+        driverName?: string;
+        page?: number;
+        limit?: number;
+      } = {}) => {
+        const params = new URLSearchParams();
+
+        Object.entries(searchParams).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params.append(key, value.toString());
+          }
+        });
+
+        return `/api/v1/trucks?${params.toString()}`;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+            ...result.data.map((truck: TTruck) => ({
+              type: 'Trucks' as const,
+              id: truck.id
+            })),
+            { type: 'Trucks', id: 'SEARCH_LIST' },
+          ]
+          : [{ type: 'Trucks', id: 'SEARCH_LIST' }],
+    }),
+
+    // 🔍 SEARCH LOADS
+    searchLoads: builder.query({
+      query: (searchParams: {
+        search?: string;
+        loadId?: string;
+        status?: string;
+        origin?: string;
+        destination?: string;
+        customerName?: string;
+        from?: string;
+        to?: string;
+        page?: number;
+        limit?: number;
+      } = {}) => {
+        const params = new URLSearchParams();
+
+        Object.entries(searchParams).forEach(([key, value]) => {
+          if (value !== undefined && value !== null && value !== '') {
+            params.append(key, value.toString());
+          }
+        });
+
+        return `/api/v1/loads?${params.toString()}`;
+      },
+      providesTags: (result) =>
+        result?.data
+          ? [
+            ...result.data.map((load: TLoads) => ({
+              type: 'Loads' as const,
+              id: load.id
+            })),
+            { type: 'Loads', id: 'SEARCH_LIST' },
+          ]
+          : [{ type: 'Loads', id: 'SEARCH_LIST' }],
+    }),
+
     // ! ========== Drivers Methods ==========
 
     // Get Drivers
@@ -136,33 +237,33 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // 🔹 Create driver
-        createDriver: builder.mutation<{ data: TDriver }, Partial<TDriver>>({
-          query: (body) => ({
-            url: `/api/v1/drivers`,
-            method: "POST",
-            body,
-          }),
-          invalidatesTags: ["Drivers"],
-        }),
-    
-        // 🔹 Update driver
-        updateDriver: builder.mutation<{ data: TDriver }, { id: string; body: Partial<TDriver> }>({
-          query: ({ id, body }) => ({
-            url: `/api/v1/drivers/${id}`,
-            method: "PATCH",
-            body,
-          }),
-          invalidatesTags: ["Drivers"],
-        }),
-    
-        // 🔹 Delete driver
-        deleteDriver: builder.mutation<{ message: string }, string>({
-          query: (id) => ({
-            url: `/api/v1/drivers/${id}`,
-            method: "DELETE",
-          }),
-          invalidatesTags: ["Drivers"],
-        }),
+    createDriver: builder.mutation<{ data: TDriver }, Partial<TDriver>>({
+      query: (body) => ({
+        url: `/api/v1/drivers`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Drivers"],
+    }),
+
+    // 🔹 Update driver
+    updateDriver: builder.mutation<{ data: TDriver }, { id: string; body: Partial<TDriver> }>({
+      query: ({ id, body }) => ({
+        url: `/api/v1/drivers/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Drivers"],
+    }),
+
+    // 🔹 Delete driver
+    deleteDriver: builder.mutation<{ message: string }, string>({
+      query: (id) => ({
+        url: `/api/v1/drivers/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Drivers"],
+    }),
 
     // ! ========== Trucks Methods ==========
 
@@ -186,12 +287,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.data.map((t: TTruck) => ({
-                type: "Trucks" as const,
-                id: t.id,
-              })),
-              { type: "Trucks", id: "LIST" },
-            ]
+            ...result.data.data.map((t: TTruck) => ({
+              type: "Trucks" as const,
+              id: t.id,
+            })),
+            { type: "Trucks", id: "LIST" },
+          ]
           : [{ type: "Trucks", id: "LIST" }],
       keepUnusedDataFor: 60 * 60,
     }),
@@ -208,12 +309,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
-                type: "Trucks" as const,
-                id: t.id,
-              })),
-              { type: "TruckSummary", id: "LIST" },
-            ]
+            ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
+              type: "Trucks" as const,
+              id: t.id,
+            })),
+            { type: "TruckSummary", id: "LIST" },
+          ]
           : [{ type: "TruckSummary", id: "LIST" }],
       keepUnusedDataFor: 60 * 60,
     }),
@@ -426,4 +527,11 @@ export const {
   useUpdateUserInfoMutation,
   // TODO: ----- Password -----
   useUpdateUserPasswordMutation,
+  // TODO: ----- Search-----
+  useSearchDriversQuery,
+  useLazySearchDriversQuery,
+  useSearchTrucksQuery,
+  useLazySearchTrucksQuery,
+  useSearchLoadsQuery,
+  useLazySearchLoadsQuery,
 } = apiSlice;
