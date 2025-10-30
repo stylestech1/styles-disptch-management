@@ -1,29 +1,15 @@
 "use client";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useState } from "react";
+import Erros from "@/components/ui/Erros";
 import { useAppSelector } from "@/redux/store";
-import { TDriver, TTruck } from "@/types/globalTypes";
+import { TTruck } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
-import {
-  IoAdd,
-  IoPencil,
-  IoTrash,
-  IoSearch,
-  IoClose,
-  IoPerson,
-} from "react-icons/io5";
+import { IoAdd, IoPencil, IoTrash, IoSearch } from "react-icons/io5";
 import {
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Button,
-  MenuItem,
-  Select,
-  InputLabel,
-  FormControl,
   Table,
   TableBody,
   TableCell,
@@ -35,12 +21,9 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  InputAdornment,
   styled,
   Typography,
   CircularProgress,
-  Divider,
-  Alert,
 } from "@mui/material";
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
@@ -51,12 +34,16 @@ import {
   useGetAllDriversQuery,
   useGetAllTrucksQuery,
   useGetTrucksWithSearchQuery,
+  useGetTruckWithSearchQuery,
   useUpdateTruckMutation,
 } from "@/redux/slices/apiSlice";
 import { TruckForm } from "@/components/truck/TruckForm";
 import StatsCard from "@/components/ui/StatsCard";
 import { FaTruck, FaUserCheck, FaUserMinus } from "react-icons/fa";
 import { FaUserLargeSlash } from "react-icons/fa6";
+import { Dayjs } from "dayjs";
+import { useSearch } from "@/hook/useSearch";
+import useError from "@/hook/useError";
 
 // Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -64,8 +51,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   '&[class*="MuiTableCell-head"]': {
-    backgroundColor: '#f8fafc',
-    color: '#56677a',
+    backgroundColor: "#f8fafc",
+    color: "#56677a",
     fontSize: 14,
   },
   '&[class*="MuiTableCell-body"]': {
@@ -77,7 +64,7 @@ const StyledTableRow = styled(TableRow)(() => ({
     border: 0,
   },
   "&:hover": {
-    backgroundColor: '#fcf9fa',
+    backgroundColor: "#fcf9fa",
   },
 }));
 const StatusChip = ({ status }: { status: string }) => {
@@ -95,66 +82,62 @@ const StatusChip = ({ status }: { status: string }) => {
   return <Chip label={status} color={getColor(status)} size="small" />;
 };
 
-
-
-
-
 /* ---------------- TrucksPage (parent) ---------------- */
 const TrucksPage: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
   const token = useAppSelector((state) => state.auth.token);
 
+  // ✅ Search And Filter
+  const [fromDate, setFromDate] = useState<Dayjs | null>(null);
+  const [toDate, setToDate] = useState<Dayjs | null>(null);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(0);
-  const [search, setSearch] = useState("");
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
+  const { error, setError } = useError();
 
-  // API queries (one for paginated view, one for all data used in form/filtering)
+  // RTK Query
   const {
     data: trucksData,
     isLoading,
     refetch,
   } = useGetTrucksWithSearchQuery({ page: page + 1 });
-
-  // all trucks (used for selection logic in form) - only fetched when token exists
   const { data: allTrucksData } = useGetAllTrucksQuery({ skip: !token });
-
-  // drivers (used in form)
   const { data: driversData } = useGetAllDriversQuery();
+  const { data: filteredData } = useGetTruckWithSearchQuery(
+    {
+      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+    },
+    { skip: !isFiltered }
+  );
 
   // Mutations
-  const [createTruck, { isLoading: isCreating, error: createError }] =
-    useCreateTruckMutation();
-  const [updateTruck, { isLoading: isUpdating, error: updateError }] =
-    useUpdateTruckMutation();
-  const [deleteTruck, { isLoading: isDeleting, error: deleteError }] =
-    useDeleteTruckMutation();
+  const [createTruck, { isLoading: isCreating }] = useCreateTruckMutation();
+  const [updateTruck, { isLoading: isUpdating }] = useUpdateTruckMutation();
+  const [deleteTruck, { isLoading: isDeleting }] = useDeleteTruckMutation();
 
   // convenient exposures
-  const trucks = useMemo(() => trucksData?.data?.data || [], [trucksData]);
-  const allTrucks = useMemo(
-    () => allTrucksData?.data?.data || [],
-    [allTrucksData]
-  );
+  const trucks = isFiltered
+    ? filteredData?.trucksData?.data?.data || []
+    : trucksData?.data?.data || [];
+  const allTrucks = allTrucksData?.data?.data || [];
   const pagination = allTrucksData?.data?.paginationResult || null;
   const allDrivers = driversData?.data || [];
 
-  // Filtered trucks (memoized) - uses search on allTrucks if searching, otherwise uses page data
-  const filteredTrucks = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return trucks;
-    return allTrucks.filter((t: TTruck) => {
-      return (
-        t.truckId?.toString().includes(q) ||
-        t.model?.toLowerCase().includes(q) ||
-        t.plateNumber?.toLowerCase().includes(q) ||
-        (typeof t.assignedDriver === "object"
-          ? t.assignedDriver.name?.toLowerCase().includes(q)
-          : String(t.assignedDriver || "")
-            .toLowerCase()
-            .includes(q))
-      );
-    });
-  }, [search, trucks, allTrucks]);
+  // Filter and Search loads
+  const { filteredData: searchedTrucks } = useSearch({
+    data: trucks,
+    searchFields: [
+      "truckId",
+      "model",
+      "plateNumber",
+      "assignedDriver.driverId",
+      "assignedDriver.name",
+    ],
+    initialSearch: searchInput,
+  });
+  const tableData = searchInput ? searchedTrucks : trucks;
 
   // Modal states
   const [open, setOpen] = useState(false);
@@ -204,19 +187,6 @@ const TrucksPage: React.FC = () => {
     []
   );
 
-  // Show errors from mutations (centralized)
-  useEffect(() => {
-    const showError = (err: unknown, fallback: string) => {
-      if (!err) return;
-      const msg =
-        (err as { data?: { message?: string } })?.data?.message || fallback;
-      toast.error(msg);
-    };
-    showError(createError, "Failed to create truck");
-    showError(updateError, "Failed to update truck");
-    showError(deleteError, "Failed to delete truck");
-  }, [createError, updateError, deleteError]);
-
   // Create truck
   const handleCreate = useCallback(async () => {
     if (!user?.id) {
@@ -231,8 +201,6 @@ const TrucksPage: React.FC = () => {
 
       toast.success("✅ Truck created successfully!");
       setOpen(false);
-      // ideally RTK invalidates tags -> updates automatically
-      // but keep a fallback refetch in case your slice doesn't have tags
       try {
         refetch();
       } catch {
@@ -265,7 +233,7 @@ const TrucksPage: React.FC = () => {
       setOpen(false);
       try {
         refetch();
-      } catch { }
+      } catch {}
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Updating truck failed ❌");
@@ -288,7 +256,7 @@ const TrucksPage: React.FC = () => {
       toast.success(`✅ Truck #${truckToDelete.truckId} deleted successfully!`);
       try {
         refetch();
-      } catch { }
+      } catch {}
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Deleting truck failed ❌");
@@ -325,95 +293,89 @@ const TrucksPage: React.FC = () => {
       >
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
           <Titles>Truck Management</Titles>
+          <p className="text-slate-600 text-md">
+            Manage your trucks and their access
+          </p>
         </Box>
       </Box>
-         {/* Stats Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
-            <StatsCard
+
+      {/* Stats Summary */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
+        <StatsCard
           title="Total Trucks"
-          value={filteredTrucks.length || 0}
+          value={tableData.length || 0}
           icon={FaTruck}
           iconColor="text-blue-600"
           bgColor="bg-blue-50"
           loading={isLoading}
         />
 
-          <StatsCard
-            title="Available"
-            value={
-              filteredTrucks.filter((d: TTruck) => d.status === "available")
-                .length
-            }
-            icon={FaUserCheck}
-            iconColor="text-blue-600"
-            bgColor="bg-blue-50"
-            loading={isLoading}
-          />
+        <StatsCard
+          title="Available"
+          value={
+            tableData.filter((d: TTruck) => d.status === "available").length
+          }
+          icon={FaUserCheck}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
 
-          <StatsCard 
-            title="Busy"
-            value={
-              filteredTrucks.filter((d: TTruck) => d.status === "busy").length
-            }
-            icon={FaUserMinus}
-            iconColor="text-blue-600"
-            bgColor="bg-blue-50"
-            loading={isLoading}
-          />
+        <StatsCard
+          title="Busy"
+          value={tableData.filter((d: TTruck) => d.status === "busy").length}
+          icon={FaUserMinus}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
 
-          <StatsCard
-            title="Inactive"
-            value={
-              filteredTrucks.filter((d: TTruck) => d.status === "inactive")
-                .length
-            }
-            icon={FaUserLargeSlash}
-            iconColor="text-blue-600"
-            bgColor="bg-blue-50"
-            loading={isLoading}
-          />
-        </div>
-        {/* Add Button */}
-        <div className="flex justify-end">
-          <button
-            onClick={handleOpenAdd}
-            disabled={isLoading}
-            className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
-          >
-            <IoAdd size={25} />
-            {isLoading ? "Loading..." : "Add Truck"}
-          </button>
-        </div>
-      
+        <StatsCard
+          title="Inactive"
+          value={
+            tableData.filter((d: TTruck) => d.status === "inactive").length
+          }
+          icon={FaUserLargeSlash}
+          iconColor="text-blue-600"
+          bgColor="bg-blue-50"
+          loading={isLoading}
+        />
+      </div>
+
+      {/* Add Button */}
+      <div className="flex justify-end">
+        <button
+          onClick={handleOpenAdd}
+          disabled={isLoading}
+          className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
+        >
+          <IoAdd size={25} />
+          {isLoading ? "Loading..." : "Add Truck"}
+        </button>
+      </div>
 
       {/* Search */}
-      <TextField
-        placeholder="Search by truck ID, model, plate number, or driver..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <IoSearch />
-            </InputAdornment>
-          ),
-        }}
-        sx={{
-          mb: 3,
-          borderRadius: 2,
-          backgroundColor: "white",
-          "& .MuiOutlinedInput-root": {
-            borderRadius: 2,
-            backgroundColor: "white",
-            "& fieldset": { borderColor: muiTheme.palette.primary.light },
-            "&:hover fieldset": { borderColor: muiTheme.palette.primary.main },
-            "&.Mui-focused fieldset": {
-              borderColor: muiTheme.palette.primary.main,
-            },
-          },
-          [muiTheme.breakpoints.down("md")]: { width: "100%" },
-        }}
-      />
+      <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm my-10">
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <IoSearch className="h-5 w-5 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by Truck Id, Model, Plate Number, Driver ID, or Driver name"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+
+      {error && (
+        <div className="mb-6">
+          <Erros message={error} />
+        </div>
+      )}
 
       {/* Table */}
       <TableContainer
@@ -449,14 +411,14 @@ const TrucksPage: React.FC = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredTrucks.length === 0 ? (
+            {tableData.length === 0 ? (
               <TableRow>
                 <StyledTableCell colSpan={10} align="center" sx={{ py: 4 }}>
                   No trucks found
                 </StyledTableCell>
               </TableRow>
             ) : (
-              filteredTrucks.map((truck: TTruck) => (
+              tableData.map((truck: TTruck) => (
                 <StyledTableRow key={truck.id}>
                   <StyledTableCell component="th" scope="row">
                     {truck.truckId}
@@ -528,7 +490,7 @@ const TrucksPage: React.FC = () => {
       </TableContainer>
 
       {/* Pagination */}
-      {pagination && allTrucks.length > 0 && (
+      {pagination && tableData.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}

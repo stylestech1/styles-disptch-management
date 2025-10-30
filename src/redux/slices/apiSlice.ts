@@ -218,6 +218,21 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Trucks"],
     }),
 
+    // Get Truck with Filter and Search
+    getTruckWithSearch: builder.query({
+      query: ({ from, to }) => {
+        let url = `/api/v1/trucks`;
+        const params = [];
+
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
+
+        if (params.length) url += `?${params.join("&")}`;
+        return url;
+      },
+      providesTags: ["Trucks"],
+    }),
+
     // Get All Trucks With Summaries (For Dashboard)
     getTruckSummary: builder.query<TTrucksSummaryResponse, void>({
       query: () => `/api/v1/summary/truck`,
@@ -439,6 +454,7 @@ export const {
   useGetTrucksWithSearchQuery,
   useGetAllTrucksQuery,
   useGetTruckSummaryQuery,
+  useGetTruckWithSearchQuery,
   useLazyGetSpecificTruckSummaryQuery,
   useLazyGetTruckSummaryWithFilterQuery,
   useGetTruckByIdQuery,
