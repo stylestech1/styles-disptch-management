@@ -1,12 +1,7 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import {
-  TLoads,
-  TLoadSummary,
-  TStatusLoad,
-  TTruckSummary,
-} from "@/types/globalTypes";
+import { TLoads, TLoadSummary, TStatusLoad } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
@@ -32,27 +27,27 @@ import { FaMoneyBillWave } from "react-icons/fa";
 import DataTable from "@/components/ui/DataTable";
 import { driverSummaryColumns } from "@/data/driverSummaryTable";
 
-// ✅ Import RTK Query hooks
-import { applyGlobalFilter, resetGlobalFilter } from "@/utils/filterUtils";
+// ✅ Import MUI DateTimePicker
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import { Dayjs } from "dayjs";
+import DateRangeFilter from "@/components/ui/Filter";
 
 // ✅ Import MUI DateTimePicker
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { Dayjs } from "dayjs";
 import {
   useGetDriverByIdQuery,
   useLazyGetDriverSummaryWithFilterQuery,
 } from "@/redux/slices/apiSlice";
+import { useSearch } from "@/hook/useSearch";
 
 const DriverSummary = () => {
   const { id } = useParams();
   const router = useRouter();
+  // ✅ Search And Filter
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
-  const [filteredSummary, setFilteredSummary] = useState<TLoadSummary | null>(
-    null
-  );
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const [error, setError] = useState<string>("");
 
   const {
@@ -62,7 +57,6 @@ const DriverSummary = () => {
   } = useGetDriverByIdQuery(id as string, {
     skip: !id,
   });
-
   const [
     fetchDriverSummary,
     { data: driverSummaryData, isLoading: summaryLoading, error: summaryError },
@@ -71,12 +65,28 @@ const DriverSummary = () => {
   const profile = profileData?.data;
   const driverSummary = driverSummaryData?.data;
 
+  // ✅ Fixed: Properly handle flattenedLoads based on filtered state
+  const flattenedLoads = driverSummary?.loads || [];
+  const activeSummary = isFiltered ? driverSummary : driverSummary;
+
+  const loading = profileLoading || summaryLoading;
+
+  // Filter and Search loads
+  const { filteredData: searchedDriverLoad } = useSearch({
+    data: flattenedLoads,
+    searchFields: ["loadId", "driverId.phone"],
+    initialSearch: searchInput,
+  });
+  const tableData = searchInput ? searchedDriverLoad : flattenedLoads;
+
+  // fetch driver summary
   useEffect(() => {
     if (id) {
       fetchDriverSummary({ id: id as string });
     }
   }, [id, fetchDriverSummary]);
 
+  // Error handler
   useEffect(() => {
     const errorObj = (profileError || summaryError) as
       | FetchBaseQueryError
@@ -89,49 +99,45 @@ const DriverSummary = () => {
     }
   }, [profileError, summaryError]);
 
-  const handleApplyFilter = async () => {
-    if (!id) return;
+  // ✅ Apply filter with date range
+  // const handleApplyFilter = async () => {
+  //   if (!id) return;
 
-    const driverId = Array.isArray(id) ? id[0] : id;
+  //   try {
+  //     const params: any = { id: id as string };
 
-    try {
-      const response = await applyGlobalFilter({
-        id: driverId,
-        fromDate,
-        toDate,
-        fetchFunction: (params) => fetchDriverSummary(params).unwrap(),
-      });
-      if (response?.data) {
-        setFilteredSummary(response.data);
-      }
-      toast.success("Filter applied successfully");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to apply filter");
-    }
-  };
+  //     if (fromDate) {
+  //       params.from = fromDate.toISOString();
+  //     }
+  //     if (toDate) {
+  //       params.to = toDate.toISOString();
+  //     }
 
-  const handleReset = async () => {
-    if (!id) return;
+  //     await fetchDriverSummary(params);
+  //     setIsFiltered(true);
+  //     toast.success("Filter applied successfully");
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error("Failed to apply filter");
+  //   }
+  // };
 
-    const driverId = Array.isArray(id) ? id[0] : id;
-    setFromDate(null);
-    setToDate(null);
+  // ✅ Reset Filter
+  // const handleReset = async () => {
+  //   if (!id) return;
 
-    try {
-      const response = await resetGlobalFilter({
-        id: driverId,
-        fetchFunction: (params) => fetchDriverSummary(params).unwrap(),
-      });
-      toast.success("Filter reset successfully");
-      if (response?.data) {
-        setFilteredSummary(response.data);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to reset filter");
-    }
-  };
+  //   setFromDate(null);
+  //   setToDate(null);
+
+  //   try {
+  //     await fetchDriverSummary({ id: id as string });
+  //     setIsFiltered(false);
+  //     toast.success("Filter reset successfully");
+  //   } catch (err) {
+  //     console.error(err);
+  //     toast.error("Failed to reset filter");
+  //   }
+  // };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {
@@ -262,236 +268,232 @@ const DriverSummary = () => {
     </tr>
   );
 
-  const activeSummary = filteredSummary || driverSummary;
-  const flattenedLoads = activeSummary?.loads || [];
-  const loading = profileLoading || summaryLoading;
-
   if (loading) return <Loading />;
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <section className="container mx-auto p-6">
-        <Toaster position="top-right" />
+    <section className="container mx-auto p-6">
+      <Toaster position="top-right" />
 
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <div className="mb-4 lg:mb-0">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/admin/drivers")}
-                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <IoArrowBack size={20} />
-                Back to Drivers
-              </button>
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div className="mb-4 lg:mb-0">
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => router.push("/admin/drivers")}
+              className="flex items-center w-fit cursor-pointer gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <IoArrowBack size={20} />
+              Back to Drivers
+            </button>
+            <div>
+              <Titles>Driver Summary - {profile?.driverId || id}</Titles>
+              <p className="text-slate-600 mt-2 text-sm">
+                Detailed overview of driver information and performance
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Errors */}
+      {error && (
+        <div className="mb-6">
+          <Erros message={error} />
+        </div>
+      )}
+
+      {/* Driver Profile Card */}
+      {profile && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Driver Information */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-slate-100 rounded-xl">
+                <IoPersonCircleOutline size={32} className="text-slate-600" />
+              </div>
               <div>
-                <Titles>Driver Summary - {profile?.driverId || id}</Titles>
-                <p className="text-slate-600 mt-2 text-sm">
-                  Detailed overview of driver information and performance
+                <h3 className="text-xl font-semibold text-slate-800">
+                  {profile.name}
+                </h3>
+                <p className="text-slate-500 text-sm mt-0.5">
+                  Driver ID: {profile.driverId}
                 </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoMailOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Email</span>
+                </div>
+                <span className="font-medium text-slate-800">
+                  {profile.email}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoCallOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Phone</span>
+                </div>
+                <span className="font-medium text-slate-800">
+                  {profile.phone}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoIdCardOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">License Number</span>
+                </div>
+                <span className="font-mono font-medium text-slate-800">
+                  {profile.licenseNumber}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoCalendarOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Hire Date</span>
+                </div>
+                <span className="font-medium text-slate-800">
+                  {new Date(profile.hireDate).toLocaleDateString()}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoCheckmarkCircleOutline
+                    className="text-slate-400"
+                    size={18}
+                  />
+                  <span className="text-slate-600">Status</span>
+                </div>
+                <DriverStatusBadge status={profile.status} />
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold text-slate-800">
+                  Quick Stats
+                </h4>
+                <IoStatsChart size={24} className="text-blue-500" />
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-600">Driver ID</span>
+                  <span className="font-mono font-semibold text-slate-800">
+                    {profile.driverId}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-600">Price Per Mile</span>
+                  <span className="font-semibold text-slate-800">
+                    ${profile.pricePerMile?.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-600">Experience</span>
+                  <span className="font-semibold text-slate-800">
+                    {Math.floor(
+                      (new Date().getTime() -
+                        new Date(profile.hireDate).getTime()) /
+                        (1000 * 60 * 60 * 24 * 365)
+                    )}{" "}
+                    years
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Errors */}
-        {error && (
-          <div className="mb-6">
-            <Erros message={error} />
-          </div>
-        )}
-
-        {/* Driver Profile Card */}
-        {profile && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Driver Information */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-slate-100 rounded-xl">
-                  <IoPersonCircleOutline size={32} className="text-slate-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-800">
-                    {profile.name}
-                  </h3>
-                  <p className="text-slate-500 text-sm mt-0.5">
-                    Driver ID: {profile.driverId}
-                  </p>
+      {/* ✅ Financial Summary Section */}
+      {activeSummary && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+          {/* Driver Summary Stats */}
+          <div className="xl:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              {/* Total Loads Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Total Loads
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {activeSummary.totalLoads}
+                    </p>
+                  </div>
+                  <div className="p-2.5 bg-blue-50 rounded-lg">
+                    <IoStatsChart size={20} className="text-blue-600" />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoMailOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Email</span>
+              {/* Total Miles Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Total Miles
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {activeSummary.totalMiles?.toLocaleString()}
+                    </p>
                   </div>
-                  <span className="font-medium text-slate-800">
-                    {profile.email}
-                  </span>
+                  <div className="p-2.5 bg-emerald-50 rounded-lg">
+                    <IoNavigate size={20} className="text-emerald-600" />
+                  </div>
                 </div>
+              </div>
 
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoCallOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Phone</span>
+              {/* Total Earnings Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Total Earnings
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {activeSummary.currency}{" "}
+                      {activeSummary.totalEarnings?.toLocaleString()}
+                    </p>
                   </div>
-                  <span className="font-medium text-slate-800">
-                    {profile.phone}
-                  </span>
+                  <div className="p-2.5 bg-amber-50 rounded-lg">
+                    <IoCashOutline size={20} className="text-amber-600" />
+                  </div>
                 </div>
+              </div>
 
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoIdCardOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">License Number</span>
+              {/* Price Per Mile Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Avg Price/Mile
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {activeSummary.currency}{" "}
+                      {activeSummary.pricePerMile?.toFixed(2)}
+                    </p>
                   </div>
-                  <span className="font-mono font-medium text-slate-800">
-                    {profile.licenseNumber}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoCalendarOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Hire Date</span>
+                  <div className="p-2.5 bg-red-50 rounded-lg">
+                    <FaMoneyBillWave size={20} className="text-red-500" />
                   </div>
-                  <span className="font-medium text-slate-800">
-                    {new Date(profile.hireDate).toLocaleDateString()}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoCheckmarkCircleOutline
-                      className="text-slate-400"
-                      size={18}
-                    />
-                    <span className="text-slate-600">Status</span>
-                  </div>
-                  <DriverStatusBadge status={profile.status} />
                 </div>
               </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="space-y-4">
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-slate-800">
-                    Quick Stats
-                  </h4>
-                  <IoStatsChart size={24} className="text-blue-500" />
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Driver ID</span>
-                    <span className="font-mono font-semibold text-slate-800">
-                      {profile.driverId}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Price Per Mile</span>
-                    <span className="font-semibold text-slate-800">
-                      ${profile.pricePerMile?.toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Experience</span>
-                    <span className="font-semibold text-slate-800">
-                      {Math.floor(
-                        (new Date().getTime() -
-                          new Date(profile.hireDate).getTime()) /
-                          (1000 * 60 * 60 * 24 * 365)
-                      )}{" "}
-                      years
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ✅ Financial Summary Section */}
-        {activeSummary && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-            {/* Driver Summary Stats */}
-            <div className="xl:col-span-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                {/* Total Loads Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Total Loads
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {activeSummary.totalLoads}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-blue-50 rounded-lg">
-                      <IoStatsChart size={20} className="text-blue-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total Miles Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Total Miles
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {activeSummary.totalMiles?.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-emerald-50 rounded-lg">
-                      <IoNavigate size={20} className="text-emerald-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total Earnings Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Total Earnings
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {activeSummary.currency}{" "}
-                        {activeSummary.totalEarnings?.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-amber-50 rounded-lg">
-                      <IoCashOutline size={20} className="text-amber-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Price Per Mile Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Avg Price/Mile
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {activeSummary.currency}{" "}
-                        {activeSummary.pricePerMile?.toFixed(2)}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-red-50 rounded-lg">
-                      <FaMoneyBillWave size={20} className="text-red-500" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Period Info */}
-              <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            {activeSummary.period && (
+              <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
+                {/* Period Info */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
                     <IoCalendarOutline size={14} className="flex-shrink-0" />
@@ -502,177 +504,118 @@ const DriverSummary = () => {
                     </span>
                   </div>
                 </div>
+                {/* Filter */}
+                <DateRangeFilter
+                  onApply={(from, to) => {
+                    setFromDate(from);
+                    setToDate(to);
+                  }}
+                />
               </div>
-            </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ✅ Loads Table Section */}
-        {driverSummary && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            {/* Header مع الفلترة */}
-            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800 mb-1">
-                    Load Details
-                  </h3>
-                  <p className="text-slate-500 text-sm">
-                    Detailed breakdown of all loads assigned to this driver
-                    {(fromDate || toDate) && " (filtered)"}
-                  </p>
-                </div>
+      {/* ✅ Loads Table Section */}
+      {driverSummary && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Header*/}
+          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-1">
+                  Load Details
+                </h3>
+                <p className="text-slate-500 text-sm">
+                  Detailed breakdown of all loads assigned to this driver
+                  {(fromDate || toDate) && " (filtered)"}
+                </p>
               </div>
-
-              {/* ✅ Date Filters مع DateTimePicker */}
-              <div className="bg-white border border-slate-200 rounded-xl p-4 mb-6 flex flex-col xl:flex-row sm:items-end gap-4 w-full">
-                <div className="flex flex-col w-full">
-                  <label className="text-sm font-medium text-slate-700 mb-1">
-                    From
-                  </label>
-                  <DatePicker
-                    value={fromDate}
-                    onChange={(newValue) => setFromDate(newValue)}
-                    slotProps={{
-                      textField: {
-                        size: "small",
-                        sx: {
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "8px",
-                            backgroundColor: "white",
-                            width: "200px",
-                          },
-                        },
-                      },
-                    }}
-                  />
-                </div>
-
-                <div className="flex flex-col w-full">
-                  <label className="text-sm font-medium text-slate-700 mb-1">
-                    To
-                  </label>
-                  <DatePicker
-                    value={toDate}
-                    onChange={(newValue) => setToDate(newValue)}
-                    slotProps={{
-                      textField: {
-                        size: "small",
-                        sx: {
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "8px",
-                            backgroundColor: "white",
-                            width: "200px",
-                          },
-                        },
-                      },
-                    }}
-                  />
-                </div>
-
-                <div className="flex gap-2 w-full">
-                  <button
-                    onClick={handleApplyFilter}
-                    disabled={!fromDate && !toDate}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-slate-400 flex items-center gap-2"
-                  >
-                    <IoFilterOutline />
-                    Apply Filter
-                  </button>
-
-                  <button
-                    onClick={handleReset}
-                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 flex items-center gap-2"
-                  >
-                    <IoRefreshOutline />
-                    Reset
-                  </button>
-                </div>
-              </div>
-
-              {/* ✅ Active Filter Message */}
-              {(fromDate || toDate) && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-slate-700 border border-slate-200 rounded-lg px-4 py-3 bg-blue-50">
-                  <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                    <IoFilterOutline className="text-blue-600" size={18} />
-                    <div>
-                      <span className="text-blue-600 font-medium">
-                        Active Filter:{" "}
-                      </span>
-                      <span className="font-semibold text-blue-800">
-                        {fromDate ? fromDate.format("YYYY-MM-DD HH:mm") : "Any"}{" "}
-                        → {toDate ? toDate.format("YYYY-MM-DD HH:mm") : "Any"}
-                      </span>
-                      <span className="text-xs text-blue-500 ml-2">
-                        ({flattenedLoads.length} loads)
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Table For Driver Loads Summary */}
-            {flattenedLoads.length > 0 ? (
-              <DataTable
-                columns={driverSummaryColumns}
-                data={flattenedLoads}
-                renderRow={renderDriverSummaryRow}
-                loading={loading}
-              />
-            ) : (
-              <div className="px-4 py-12 text-center text-slate-500">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="text-3xl mb-3">📦</div>
-                  <div className="text-slate-600">
-                    {fromDate || toDate
-                      ? "No load records found for the selected date range"
-                      : "No load records found"}
-                  </div>
-                  <div className="text-slate-400 text-sm mt-1">
-                    {fromDate || toDate
-                      ? "Please adjust your date filter"
-                      : "There are no loads available for this driver"}
+            {/* ✅ Active Filter Message */}
+            {(fromDate || toDate) && (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-slate-700 border border-slate-200 rounded-lg px-4 py-3 bg-blue-50">
+                <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                  <IoFilterOutline className="text-blue-600" size={18} />
+                  <div>
+                    <span className="text-blue-600 font-medium">
+                      Active Filter:{" "}
+                    </span>
+                    <span className="font-semibold text-blue-800">
+                      {fromDate ? fromDate.format("YYYY-MM-DD HH:mm") : "Any"} →{" "}
+                      {toDate ? toDate.format("YYYY-MM-DD HH:mm") : "Any"}
+                    </span>
+                    <span className="text-xs text-blue-500 ml-2">
+                      ({flattenedLoads.length} loads)
+                    </span>
                   </div>
                 </div>
               </div>
             )}
           </div>
-        )}
 
-        {/* ✅ Summary Footer */}
-        {driverSummary && (
-          <div className="mt-6 flex justify-end">
-            <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
-              <p className="text-sm text-slate-600">
-                Showing {flattenedLoads.length} loads
-                {(fromDate || toDate) && " (filtered)"}
-              </p>
+          {/* Table For Driver Loads Summary */}
+          {flattenedLoads.length > 0 ? (
+            <DataTable
+              columns={driverSummaryColumns}
+              data={tableData}
+              renderRow={renderDriverSummaryRow}
+              loading={loading}
+            />
+          ) : (
+            <div className="px-4 py-12 text-center text-slate-500">
+              <div className="flex flex-col items-center justify-center">
+                <div className="text-3xl mb-3">📦</div>
+                <div className="text-slate-600">
+                  {fromDate || toDate
+                    ? "No load records found for the selected date range"
+                    : "No load records found"}
+                </div>
+                <div className="text-slate-400 text-sm mt-1">
+                  {fromDate || toDate
+                    ? "Please adjust your date filter"
+                    : "There are no loads available for this driver"}
+                </div>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
-        {!profile && !loading && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
-            <div className="text-4xl mb-4">👨‍💼</div>
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
-              Driver Not Found
-            </h3>
-            <p className="text-slate-600 mb-4">
-              {
-                "The driver you're looking for doesn't exist or you don't have access to it."
-              }
+      {/* ✅ Summary Footer */}
+      {driverSummary && (
+        <div className="mt-6 flex justify-end">
+          <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+            <p className="text-sm text-slate-600">
+              Showing {tableData.length} loads
+              {(fromDate || toDate) && " (filtered)"}
             </p>
-            <button
-              onClick={() => router.push("/admin/drivers")}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-            >
-              Back to Drivers
-            </button>
           </div>
-        )}
-      </section>
-    </LocalizationProvider>
+        </div>
+      )}
+
+      {!profile && !loading && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
+          <div className="text-4xl mb-4">👨‍💼</div>
+          <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            Driver Not Found
+          </h3>
+          <p className="text-slate-600 mb-4">
+            {
+              "The driver you're looking for doesn't exist or you don't have access to it."
+            }
+          </p>
+          <button
+            onClick={() => router.push("/admin/drivers")}
+            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+          >
+            Back to Drivers
+          </button>
+        </div>
+      )}
+    </section>
   );
 };
 

@@ -32,15 +32,14 @@ import {
 import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 import { useRouter } from "next/navigation";
 // ✅ Import MUI DateTimePicker
-import { DateRange, RangeKeyDict, Range } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import dayjs, { Dayjs } from "dayjs";
+import { Dayjs } from "dayjs";
+import DateRangeFilter from "@/components/ui/Filter";
 
 // Utils
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { useSearch } from "@/hook/useSearch";
-import DateRangeFilter from "@/components/ui/Filter";
 
 const LoadsPage = () => {
   const [page, setPage] = useState(1);

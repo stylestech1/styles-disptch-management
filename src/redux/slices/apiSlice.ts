@@ -1,7 +1,5 @@
-// apiSlice.ts
 import {
   TDriver,
-  TLoads,
   TLoadSummary,
   TPagination,
   TTruck,
