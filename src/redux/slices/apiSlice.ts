@@ -116,6 +116,21 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Drivers"],
     }),
 
+    // Get Driver with Filter and Search
+    getDriverWithFilter: builder.query({
+      query: ({ from, to }) => {
+        let url = `/api/v1/drivers`;
+        const params = [];
+
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
+
+        if (params.length) url += `?${params.join("&")}`;
+        return url;
+      },
+      providesTags: ['Drivers'],
+    }),
+
     // 🔹 Get driver summary
     getDriverSummary: builder.query<{ data: TLoadSummary }, string>({
       query: (id) => `/api/v1/summary/driver/${id}`,
@@ -412,6 +427,7 @@ export const {
   useGetDriversQuery,
   useGetDriversWithPaginationQuery,
   useGetAllDriversQuery,
+  useGetDriverWithFilterQuery,
   useGetDriverByIdQuery,
   useGetDriverSummaryQuery,
   useLazyGetDriverSummaryWithFilterQuery,
