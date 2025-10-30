@@ -15,6 +15,7 @@ import {
   Skeleton,
   TextField,
   InputAdornment,
+  Chip,
 } from "@mui/material";
 import { tableCellClasses } from "@mui/material/TableCell";
 import { IoSearch, IoCar, IoStatsChart } from "react-icons/io5";
@@ -27,15 +28,25 @@ import { muiTheme } from "@/theme/theme";
 import ChartSection from "@/components/ui/ChartSection";
 import { useGetTruckSummaryQuery } from "@/redux/slices/apiSlice";
 
-const StyledTableCell = styled(TableCell)(() => ({
-  [`&.${tableCellClasses.head}`]: {
-    backgroundColor: muiTheme.palette.primary.main,
-    color: muiTheme.palette.common.white,
-    fontSize: 14,
-    fontWeight: 600,
+const StyledTableCell = styled(TableCell)(({ theme }) => ({
+  [`&.${theme.components?.MuiTableCell?.styleOverrides?.root}`]: {
+    borderBottom: `1px solid ${theme.palette.divider}`,
   },
-  [`&.${tableCellClasses.body}`]: {
+  '&[class*="MuiTableCell-head"]': {
+    backgroundColor: "#f8fafc",
+    color: "#56677a",
     fontSize: 14,
+  },
+  '&[class*="MuiTableCell-body"]': {
+    fontSize: 14,
+  },
+}));
+const StyledTableRow = styled(TableRow)(() => ({
+  "&:last-child td, &:last-child th": {
+    border: 0,
+  },
+  "&:hover": {
+    backgroundColor: "#fcf9fa",
   },
 }));
 
@@ -488,17 +499,6 @@ const TruckDashboard = () => {
           )}
         </Table>
       </TableContainer>
-
-      {/* Pagination */}
-      {/* {pagination && summary.length > 0 && (
-        <Pagination
-          pagination={pagination}
-          page={page}
-          setPage={setPage}
-          pageSize={10}
-          showInfo={true}
-        />
-      )} */}
     </section>
   );
 };

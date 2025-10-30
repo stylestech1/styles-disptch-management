@@ -13,13 +13,11 @@ import {
   IoTrash,
   IoSearch,
   IoStatsChart,
-  IoClose,
   IoPerson,
 } from "react-icons/io5";
 import { FaUserCheck, FaUserLargeSlash } from "react-icons/fa6";
 import {
   Dialog,
-  TextField,
   Button,
   Table,
   TableBody,
@@ -32,10 +30,8 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  InputAdornment,
   styled,
   Typography,
-  CircularProgress,
 } from "@mui/material";
 
 import { muiTheme } from "@/theme/theme";
@@ -44,16 +40,16 @@ import Pagination from "@/components/ui/Pagination";
 import {
   useCreateDriverMutation,
   useDeleteDriverMutation,
-  useGetAllDriversQuery,
   useGetDriversWithPaginationQuery,
+  useGetDriverWithFilterQuery,
   useUpdateDriverMutation,
 } from "@/redux/slices/apiSlice";
 import { DriverForm } from "@/components/drivers/DriverForm";
 import useError from "@/hook/useError";
 import StatsCard from "@/components/ui/StatsCard";
 import { FaUserMinus } from "react-icons/fa";
-import DataTable from "@/components/ui/DataTable";
-import { driverColumns } from "@/data/driverTables";
+import { Dayjs } from "dayjs";
+import { useSearch } from "@/hook/useSearch";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -61,8 +57,8 @@ const StyledTableCell = styled(TableCell)(({ theme }) => ({
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   '&[class*="MuiTableCell-head"]': {
-    backgroundColor: '#f8fafc',
-    color: '#56677a',
+    backgroundColor: "#f8fafc",
+    color: "#56677a",
     fontSize: 14,
   },
   '&[class*="MuiTableCell-body"]': {
@@ -74,7 +70,7 @@ const StyledTableRow = styled(TableRow)(() => ({
     border: 0,
   },
   "&:hover": {
-    backgroundColor: '#fcf9fa',
+    backgroundColor: "#fcf9fa",
   },
 }));
 const StatusChip = ({ status }: { status: string }) => {
@@ -96,7 +92,11 @@ const DriversPage = () => {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
   const { error, setError } = useError();
-
+  // ✅ Search And Filter
+  const [fromDate, setFromDate] = useState<Dayjs | null>(null);
+  const [toDate, setToDate] = useState<Dayjs | null>(null);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(0);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
@@ -107,7 +107,13 @@ const DriversPage = () => {
     error: driverError,
     refetch,
   } = useGetDriversWithPaginationQuery(page + 1);
-
+  const { data: filteredData } = useGetDriverWithFilterQuery(
+    {
+      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+    },
+    { skip: !isFiltered }
+  );
 
   // 🔹 API Mutations
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
@@ -115,11 +121,20 @@ const DriversPage = () => {
   const [deleteDriver] = useDeleteDriverMutation();
   const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
-  const displayDrivers = driversData?.data || [];
-  
-  const pagination =  driversData?.paginationResult ;
+  const displayDrivers = isFiltered
+    ? filteredData?.driversData?.data || []
+    : driversData?.data || [];
+  const pagination = driversData?.paginationResult || null;
 
   const isLoading = driversLoading;
+
+  // Filter and Search loads
+  const { filteredData: searchedDrivers } = useSearch({
+    data: displayDrivers,
+    searchFields: ["driverId", "name", "phone", "email", 'licenseNumber'],
+    initialSearch: searchInput,
+  });
+  const tableData = searchInput ? searchedDrivers : displayDrivers;
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -133,6 +148,7 @@ const DriversPage = () => {
     setOpen(true);
   };
 
+  // ✅ Handle Edit
   const handleEditClick = (driver: TDriver) => {
     setOriginalData(driver);
     setFormData({
@@ -317,8 +333,8 @@ const DriversPage = () => {
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
         <StatsCard
-          title="Total Drivers"
-          value={displayDrivers.length || 0}
+          title="Total Dispatchers"
+          value={tableData.length || 0}
           icon={IoPerson}
           iconColor="text-blue-600"
           bgColor="bg-blue-50"
@@ -328,7 +344,7 @@ const DriversPage = () => {
         <StatsCard
           title="Available"
           value={
-            displayDrivers.filter((d: TDriver) => d.status === "available")
+            tableData.filter((d: TDriver) => d.status === "available")
               .length
           }
           icon={FaUserCheck}
@@ -340,7 +356,7 @@ const DriversPage = () => {
         <StatsCard
           title="Busy"
           value={
-            displayDrivers.filter((d: TDriver) => d.status === "busy").length
+            tableData.filter((d: TDriver) => d.status === "busy").length
           }
           icon={FaUserMinus}
           iconColor="text-blue-600"
@@ -351,7 +367,7 @@ const DriversPage = () => {
         <StatsCard
           title="Inactive"
           value={
-            displayDrivers.filter((d: TDriver) => d.status === "inactive")
+            tableData.filter((d: TDriver) => d.status === "inactive")
               .length
           }
           icon={FaUserLargeSlash}
@@ -372,6 +388,24 @@ const DriversPage = () => {
           {isLoading ? "Loading..." : "Add Driver"}
         </button>
       </div>
+
+      {/* Search */}
+      <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm my-10">
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <IoSearch className="h-5 w-5 text-slate-400" />
+          </div>
+          <input
+            type="text"
+            placeholder="Search by Name, Phone, Email, License Number or Driver ID"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            disabled={isLoading}
+          />
+        </div>
+      </div>
+
       {error && (
         <div className="mb-6">
           <Erros message={error} />
@@ -381,8 +415,11 @@ const DriversPage = () => {
       {/* Table */}
       {isLoading ? (
         <Loading />
-      ) : displayDrivers.length > 0 ? (
-        <TableContainer component={Paper} sx={{ mt: 3, boxShadow: 1, borderRadius: 3 }}>
+      ) : tableData.length > 0 ? (
+        <TableContainer
+          component={Paper}
+          sx={{ mt: 3, boxShadow: 1, borderRadius: 3 }}
+        >
           <Table>
             <TableHead>
               <TableRow>
@@ -398,7 +435,7 @@ const DriversPage = () => {
               </TableRow>
             </TableHead>
             <TableBody>
-              {displayDrivers.map((driver: TDriver) => (
+              {tableData.map((driver: TDriver) => (
                 <StyledTableRow key={driver.id}>
                   <StyledTableCell>{driver.driverId}</StyledTableCell>
 
@@ -419,7 +456,7 @@ const DriversPage = () => {
 
                   <StyledTableCell>
                     <Chip
-                      label={driver.hireDate.split('T')[0]}
+                      label={driver.hireDate.split("T")[0]}
                       variant="outlined"
                       size="small"
                     />
@@ -482,28 +519,14 @@ const DriversPage = () => {
             mt: 3,
           }}
         >
-          {/* <Typography variant="h6" color="textSecondary" gutterBottom>
+           <Typography variant="h6" color="textSecondary" gutterBottom>
             No Drivers Found
           </Typography>
-          <Typography variant="body2" color="textSecondary" sx={{ mb: 2 }}>
-            {searchTerm
-              ? `No results found for "${searchTerm}"`
-              : "No drivers available"}
-          </Typography>
-          {!searchTerm && (
-            <Button
-              variant="contained"
-              onClick={handleOpenAdd}
-              startIcon={<IoAdd />}
-            >
-              Add Your First Driver
-            </Button>
-          )} */}
         </Box>
       )}
 
       {/* Pagination */}
-      {pagination && displayDrivers.length > 0 && (
+      {pagination && tableData.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}

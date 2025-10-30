@@ -59,13 +59,14 @@ import { FaTruck, FaUserCheck, FaUserMinus } from "react-icons/fa";
 import { FaUserLargeSlash } from "react-icons/fa6";
 
 // Styled Table Components
+// ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${theme.components?.MuiTableCell?.styleOverrides?.root}`]: {
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
   '&[class*="MuiTableCell-head"]': {
-    backgroundColor: '#f8fafc',
-    color: '#56677a',
+    backgroundColor: "#f8fafc",
+    color: "#56677a",
     fontSize: 14,
   },
   '&[class*="MuiTableCell-body"]': {
@@ -77,7 +78,7 @@ const StyledTableRow = styled(TableRow)(() => ({
     border: 0,
   },
   "&:hover": {
-    backgroundColor: '#fcf9fa',
+    backgroundColor: "#fcf9fa",
   },
 }));
 const StatusChip = ({ status }: { status: string }) => {

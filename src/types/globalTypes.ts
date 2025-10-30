@@ -51,10 +51,10 @@ export type TLoads = {
   feesNumber: string;
   pickupAt: string;
   completedAt: string;
-  arrivalAtShipper?: string; 
-  arrivalAtReceiver?: string; 
-  leftShipper?: string; 
-  leftReceiver?: string; 
+  arrivalAtShipper?: string;
+  arrivalAtReceiver?: string;
+  leftShipper?: string;
+  leftReceiver?: string;
   deliveredAt?: string;
   createdAt?: string;
   documents?: TDocument[];
@@ -225,7 +225,7 @@ export type TInp = {
   disable?: boolean;
   type?: typeInp;
   placeholder?: string;
-  children?: React.ReactNode
+  children?: React.ReactNode;
 };
 export interface LoadsFormState {
   // Location Tab
@@ -261,7 +261,7 @@ export interface ModalsState {
   addNoteModal: boolean;
   viewNotesModal: boolean;
   viewAppointmentsModal: boolean;
-  
+
   // Selected IDs for modals
   selectedLoadId: string;
   selectedLoadForNotes: TLoads | null;
@@ -282,9 +282,18 @@ export interface FilterParams<T = unknown> {
   id: string;
   fromDate?: string | Dayjs | null;
   toDate?: string | Dayjs | null;
-  fetchFunction: (params: { id: string; from?: string; to?: string }) => Promise<ApiResponse<T>>;
+  fetchFunction: (params: {
+    id: string;
+    from?: string;
+    to?: string;
+  }) => Promise<ApiResponse<T>>;
 }
 export interface ResetParams<T = unknown> {
   id: string;
   fetchFunction: (params: { id: string }) => Promise<ApiResponse<T>>;
+}
+export interface UseSearchProps<T> {
+  data: T[];
+  searchFields: (keyof T | string)[];
+  initialSearch?: string;
 }

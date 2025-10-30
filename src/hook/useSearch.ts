@@ -1,82 +1,59 @@
-"use client";
-import { useState, useEffect, useMemo } from "react";
-import { 
-  useSearchLoadsQuery,
-  useSearchDriversQuery, 
-  useSearchTrucksQuery 
-} from "@/redux/slices/apiSlice";
+import { UseSearchProps } from '@/types/globalTypes';
+import { useMemo } from 'react';
 
-export const useSearch = (entity: "drivers" | "trucks" | "loads") => {
-  const [search, setSearch] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+export const useSearch = <T,>({ 
+  data, 
+  searchFields, 
+  initialSearch = "" 
+}: UseSearchProps<T>) => {
+  const filteredData = useMemo(() => {
+    if (!initialSearch.trim()) return data;
 
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearch(search.trim());
-    }, 500);
-    return () => clearTimeout(handler);
-  }, [search]);
-
-  const searchParams = useMemo(() => {
-    const term = debouncedSearch;
-    if (!term) return undefined;
-
-    switch (entity) {
-      case "drivers":
-        if (/^\d+$/.test(term)) return { driverId: term };
-        if (/^\d{10,}$/.test(term)) return { phone: term };
-        return { name: term };
-
-      case "trucks":
-        if (/^\d+$/.test(term)) return { truckId: term };
-        return { model: term, licensePlate: term };
-
-      case "loads":
-        if (/^\d+$/.test(term)) return { loadId: term };
-        if (term.includes("→") || term.includes("-")) {
-          const [origin, destination] = term.split(/→|-/).map(s => s.trim());
-          return { origin, destination };
+    const searchTerm = initialSearch.toLowerCase();
+    
+    return data.filter((item: T) =>
+      searchFields.some((field) => {
+        const fieldString = field as string;
+        
+        if (!fieldString.includes('.')) {
+          const value = item[field as keyof T];
+          return handleValueSearch(value, searchTerm);
         }
-        return { 
-          search: term,
-          origin: term,
-          destination: term,
-          customerName: term
-        };
-
-      default:
-        return undefined;
-    }
-  }, [debouncedSearch, entity]);
-
-  const shouldSkip = !searchParams;
-
-  // 🔍 API Queries
-  const driversQuery = useSearchDriversQuery(searchParams!, {
-    skip: shouldSkip || entity !== "drivers",
-  });
-
-  const trucksQuery = useSearchTrucksQuery(searchParams!, {
-    skip: shouldSkip || entity !== "trucks",
-  });
-
-  const loadsQuery = useSearchLoadsQuery(searchParams!, {
-    skip: shouldSkip || entity !== "loads",
-  });
-
-  const query = entity === "drivers" ? driversQuery :
-                entity === "trucks" ? trucksQuery :
-                loadsQuery;
+        
+        const fieldParts = fieldString.split('.');
+        let currentValue: unknown = item;
+        
+        for (const part of fieldParts) {
+          if (currentValue && typeof currentValue === 'object') {
+            currentValue = (currentValue as Record<string, unknown>)[part];
+          } else {
+            currentValue = null;
+            break;
+          }
+        }
+        
+        return handleValueSearch(currentValue, searchTerm);
+      })
+    );
+  }, [data, initialSearch, searchFields]);
 
   return {
-    search,
-    setSearch,
-    searchResults: query.data?.data ?? [],
-    isSearchLoading: query.isFetching,
-    clearSearch: () => {
-      setSearch("");
-      setDebouncedSearch("");
-    },
-    hasSearched: !!debouncedSearch,
+    filteredData,
+    hasSearch: initialSearch.trim().length > 0,
+    resultsCount: filteredData.length,
+    totalCount: data.length
   };
+};
+
+const handleValueSearch = (value: unknown, searchTerm: string): boolean => {
+  if (typeof value === 'string') {
+    return value.toLowerCase().includes(searchTerm);
+  }
+  if (typeof value === 'number') {
+    return value.toString().includes(searchTerm);
+  }
+  if (typeof value === 'boolean') {
+    return value.toString().includes(searchTerm);
+  }
+  return false;
 };

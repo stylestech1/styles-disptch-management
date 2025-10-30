@@ -43,10 +43,10 @@ import Stack from "@mui/material/Stack";
 
 // Utils
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import { useSearch } from "@/hook/useSearch";
 
 const LoadsPage = () => {
   const [page, setPage] = useState(1);
-  const [search, setSearch] = useState("");
   const router = useRouter();
 
   // Modal states
@@ -59,10 +59,11 @@ const LoadsPage = () => {
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
 
-  // ✅ Dayjs
+  // ✅ Search And Filter
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
 
   // RTK Query
   const {
@@ -71,17 +72,14 @@ const LoadsPage = () => {
     error: loadsError,
     refetch: refetchLoads,
   } = useGetLoadsQuery({ page, limit: 10 });
-
   const { data: allLoadsData, isLoading: allLoadsLoading } =
     useGetAllLoadsQuery();
-
   const { isLoading: notesLoading } = useGetNotesQuery(
     selectedLoadForNotes?.id || "",
     {
       skip: !selectedLoadForNotes?.id,
     }
   );
-
   const { data: filteredData } = useGetLoadsWithFilterQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
@@ -92,8 +90,8 @@ const LoadsPage = () => {
 
   // responses
   const load = isFiltered ? filteredData?.data || [] : loadsData?.data || [];
-  const pagination = loadsData?.paginationResult || null;
   const allLoads = allLoadsData?.data || [];
+  const pagination = loadsData?.paginationResult || null;
 
   // Handling Loading
   useEffect(() => {
@@ -112,12 +110,18 @@ const LoadsPage = () => {
     }
   }, [loadsError, setError]);
 
-  // Filter loads
-  const filteredLoads = search
-    ? allLoads.filter((l: TLoads) =>
-        l.loadId.toLowerCase().includes(search.toLowerCase())
-      )
-    : load;
+  // Filter and Search loads
+  const {
+    filteredData: searchedLoads,
+  } = useSearch({
+    data: searchInput ? allLoads : load,
+    searchFields: [
+      "loadId",
+      "driverId.phone",
+    ],
+    initialSearch: searchInput,
+  });
+  const tableData = searchInput ? searchedLoads : load;
 
   // ✅ When Ok do filter
   const handleAccept = () => {
@@ -349,9 +353,9 @@ const LoadsPage = () => {
             </div>
             <input
               type="text"
-              placeholder="Search loads by ID, origin, destination, status, or driver..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search loads by its ID, or driver number"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
             />
           </div>
@@ -361,7 +365,7 @@ const LoadsPage = () => {
             <DemoContainer components={["MobileDatePicker"]}>
               <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
                 <MobileDatePicker
-                onAccept={handleAccept} 
+                  onAccept={handleAccept}
                   label="From"
                   value={fromDate}
                   onChange={(newValue) => setFromDate(newValue)}
@@ -382,7 +386,7 @@ const LoadsPage = () => {
                   label="To"
                   value={toDate}
                   onChange={(newValue) => setToDate(newValue)}
-                  onAccept={handleAccept} 
+                  onAccept={handleAccept}
                   slotProps={{
                     textField: {
                       size: "small",
@@ -414,7 +418,7 @@ const LoadsPage = () => {
       {/* Table For Loads */}
       <DataTable
         columns={loadColumns}
-        data={filteredLoads}
+        data={tableData}
         renderRow={renderLoadRow}
         loading={loading}
       />
