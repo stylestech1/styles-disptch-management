@@ -26,17 +26,25 @@ import {
   useUpdateUserRoleMutation,
   useActivateUserMutation,
   useDeactivateUserMutation,
+  useGetUserWithSearchQuery,
 } from "@/redux/slices/apiSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import UserSettingsModal from "@/components/users/UserSettingsModal";
 import CreateUserModal from "@/components/users/CreateUserModal";
+import { Dayjs } from "dayjs";
+import { useSearch } from "@/hook/useSearch";
 
 const Dispatchers = () => {
-  const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [popupSetting, setPopupSetting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<TDispatcher | null>(null);
   const [page, setPage] = useState(1);
+
+  // ✅ Search And Filter
+  const [fromDate, setFromDate] = useState<Dayjs | null>(null);
+  const [toDate, setToDate] = useState<Dayjs | null>(null);
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [searchInput, setSearchInput] = useState("");
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -55,6 +63,13 @@ const Dispatchers = () => {
       skip: !token,
     }
   );
+  const { data: filteredData } = useGetUserWithSearchQuery(
+    {
+      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+    },
+    { skip: !isFiltered }
+  );
 
   // RTK Mutation
   const [createUser, { isLoading: creatingUser }] = useCreateUserMutation();
@@ -65,7 +80,10 @@ const Dispatchers = () => {
     useDeactivateUserMutation();
 
   // Export Data
-  const dispatchers = dispatchersData?.data || [];
+
+  const dispatchers = isFiltered
+    ? filteredData?.dispatchersData?.data || []
+    : dispatchersData?.data || [];
   const pagination = dispatchersData?.paginationResult || null;
 
   // Token Checking
@@ -97,12 +115,20 @@ const Dispatchers = () => {
     }
   }, [page, token]);
 
-  // TODO: Search Filter
-  const filteredDispatchers = dispatchers.filter(
-    (dispatcher: TDispatcher) =>
-      dispatcher.name.toLowerCase().includes(search.toLowerCase()) ||
-      dispatcher.jobId.toString().includes(search)
-  );
+  // Filter and Search loads
+    const {
+      filteredData: searchedDispatchers,
+    } = useSearch({
+      data: dispatchers,
+      searchFields: [
+        "jobId",
+        "name",
+        "phone",
+        "email",
+      ],
+      initialSearch: searchInput,
+    });
+    const tableData = searchInput ? searchedDispatchers : dispatchers;
 
   // FIXME: Create User
   const handleCreateUser = async (userData: {
@@ -372,9 +398,9 @@ const Dispatchers = () => {
           </div>
           <input
             type="text"
-            placeholder="Search by name or job ID..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search by Name, Phone, Email or Job ID"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
             className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
             disabled={loading}
           />
@@ -390,10 +416,10 @@ const Dispatchers = () => {
       {/* Table */}
       {(loading || isFetching) && dispatchers.length === 0 ? (
         <Loading />
-      ) : filteredDispatchers.length > 0 ? (
+      ) : tableData.length > 0 ? (
         <DataTable
           columns={dispatcherColumns}
-          data={filteredDispatchers}
+          data={tableData}
           renderRow={renderDispatcherRow}
           loading={loading}
         />
@@ -406,7 +432,7 @@ const Dispatchers = () => {
                 {loading ? "Loading dispatchers..." : "No dispatchers found"}
               </div>
               <div className="text-slate-400 text-sm mt-1">
-                {search
+                {searchInput
                   ? "Try adjusting your search terms"
                   : "Get started by adding your first dispatcher"}
               </div>

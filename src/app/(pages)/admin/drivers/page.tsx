@@ -19,7 +19,6 @@ import {
 import { FaUserCheck, FaUserLargeSlash } from "react-icons/fa6";
 import {
   Dialog,
-  TextField,
   Button,
   Table,
   TableBody,
@@ -32,7 +31,6 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  InputAdornment,
   styled,
   Typography,
   CircularProgress,
@@ -44,7 +42,6 @@ import Pagination from "@/components/ui/Pagination";
 import {
   useCreateDriverMutation,
   useDeleteDriverMutation,
-  useGetAllDriversQuery,
   useGetDriversWithPaginationQuery,
   useUpdateDriverMutation,
 } from "@/redux/slices/apiSlice";
@@ -53,8 +50,6 @@ import { useSearch } from "@/hook/useSearch";
 import useError from "@/hook/useError";
 import StatsCard from "@/components/ui/StatsCard";
 import { FaUserMinus } from "react-icons/fa";
-import DataTable from "@/components/ui/DataTable";
-import { driverColumns } from "@/data/driverTables";
 
 // ✅ Styled Table Components
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
@@ -101,7 +96,7 @@ const DriversPage = () => {
   const [page, setPage] = useState(0);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
-  // 🔹 استخدام useSearch Hook
+  // 🔹 useSearch Hook
   const {
     searchTerm,
     setSearchTerm,

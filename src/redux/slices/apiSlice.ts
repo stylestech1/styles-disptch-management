@@ -33,7 +33,7 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
     }),
 
-    // Get Loads with Date Filter
+    // Get Loads with Filter and Search
     getLoadsWithFilter: builder.query({
       query: ({ from, to }) => {
         let url = `/api/v1/loads`;
@@ -87,106 +87,6 @@ export const apiSlice = api.injectEndpoints({
         method: "POST",
         body: formData,
       }),
-    }),
-
-
-
-    searchDrivers: builder.query({
-      query: (searchParams) => {
-        // 🚫 لو مفيش params متعرفه فعلاً، امنع إرسال أي request
-        if (!searchParams || Object.keys(searchParams).length === 0) {
-          return { url: "", skip: true }; // مهم
-        }
-
-        const params = new URLSearchParams();
-        Object.entries(searchParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== "") {
-            params.append(key, value.toString());
-          }
-        });
-
-        return `/api/v1/drivers?${params.toString()}`;
-      },
-      providesTags: (result) =>
-        result?.data
-          ? [
-            ...result.data.map((driver: TDriver) => ({
-              type: "Drivers" as const,
-              id: driver.id,
-            })),
-            { type: "Drivers", id: "SEARCH_LIST" },
-          ]
-          : [{ type: "Drivers", id: "SEARCH_LIST" }],
-    }),
-
-    // 🔍 SEARCH TRUCKS
-    searchTrucks: builder.query({
-      query: (searchParams: {
-        search?: string;
-        truckId?: string | number;
-        licensePlate?: string;
-        model?: string;
-        status?: string;
-        driverName?: string;
-        page?: number;
-        limit?: number;
-      } = {}) => {
-        const params = new URLSearchParams();
-
-        Object.entries(searchParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            params.append(key, value.toString());
-          }
-        });
-
-        return `/api/v1/trucks?${params.toString()}`;
-      },
-      providesTags: (result) =>
-        result?.data
-          ? [
-            ...result.data.map((truck: TTruck) => ({
-              type: 'Trucks' as const,
-              id: truck.id
-            })),
-            { type: 'Trucks', id: 'SEARCH_LIST' },
-          ]
-          : [{ type: 'Trucks', id: 'SEARCH_LIST' }],
-    }),
-
-    // 🔍 SEARCH LOADS
-    searchLoads: builder.query({
-      query: (searchParams: {
-        search?: string;
-        loadId?: string;
-        status?: string;
-        origin?: string;
-        destination?: string;
-        customerName?: string;
-        from?: string;
-        to?: string;
-        page?: number;
-        limit?: number;
-      } = {}) => {
-        const params = new URLSearchParams();
-
-        Object.entries(searchParams).forEach(([key, value]) => {
-          if (value !== undefined && value !== null && value !== '') {
-            params.append(key, value.toString());
-          }
-        });
-
-        return `/api/v1/loads?${params.toString()}`;
-      },
-      providesTags: (result) =>
-        result?.data
-          ? [
-            ...result.data.map((load: TLoads) => ({
-              type: 'Loads' as const,
-              id: load.id
-            })),
-            { type: 'Loads', id: 'SEARCH_LIST' },
-          ]
-          : [{ type: 'Loads', id: 'SEARCH_LIST' }],
     }),
 
     // ! ========== Drivers Methods ==========
@@ -410,6 +310,21 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Dispatchers"],
     }),
 
+    // Get User with Filter and Search
+    getUserWithSearch: builder.query({
+      query: ({ from, to }) => {
+        let url = `/api/v1/adminDashboard`;
+        const params = [];
+
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
+
+        if (params.length) url += `?${params.join("&")}`;
+        return url;
+      },
+      providesTags: ["Dispatchers"],
+    }),
+
     // Create User
     createUser: builder.mutation({
       query: (body) => ({
@@ -519,6 +434,7 @@ export const {
   useGetNotesQuery,
   // TODO: ----- Users-----
   useGetAllDispatchersQuery,
+  useGetUserWithSearchQuery,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
   useActivateUserMutation,
@@ -527,11 +443,4 @@ export const {
   useUpdateUserInfoMutation,
   // TODO: ----- Password -----
   useUpdateUserPasswordMutation,
-  // TODO: ----- Search-----
-  useSearchDriversQuery,
-  useLazySearchDriversQuery,
-  useSearchTrucksQuery,
-  useLazySearchTrucksQuery,
-  useSearchLoadsQuery,
-  useLazySearchLoadsQuery,
 } = apiSlice;
