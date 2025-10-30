@@ -1,7 +1,8 @@
-import { muiTheme } from "@/theme/theme";
+"use client";
+
 import { TDriver } from "@/types/globalTypes";
-import { Alert, Box, Button, Chip, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
-import { IoClose } from "react-icons/io5";
+import { Alert, Box, Button, Chip, CircularProgress, Divider, FormControl, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
+import { IoClose, IoAdd, IoPerson, IoMail, IoCall, IoCash, IoCalendar } from "react-icons/io5";
 
 export const DriverForm = ({
   open,
@@ -20,56 +21,52 @@ export const DriverForm = ({
   editMode: boolean;
   isLoading: boolean;
 }) => {
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="sm"
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
-          maxHeight: "90vh",
-        },
-      }}
-    >
-      {/* Header */}
-      <DialogTitle
-        sx={{
-          pb: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          color: "white",
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
-        }}
-      >
-        <Typography variant="h5" component="span" fontWeight="bold">
-          {editMode ? "Edit Driver" : "Add New Driver"}
-        </Typography>
-        <IconButton onClick={onClose} sx={{ color: "white" }} size="small">
-          <IoClose />
-        </IconButton>
-      </DialogTitle>
 
-      <DialogContent sx={{ py: 3 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+  // Handle number input change for pricePerMile
+  const handleNumberChange = (value: string) => {
+    if (value === '' || value === null || value === undefined) {
+      onChange("pricePerMile", '' as any);
+    } else {
+      const numValue = parseFloat(value);
+      onChange("pricePerMile", numValue as any);
+    }
+  };
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
+      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+        
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            {!editMode && (
+              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
+                <IoAdd className="text-emerald-600" size={18} />
+              </div>
+            )}
+            <h3 className="text-xl font-semibold text-slate-800">
+              {editMode ? "Edit Driver" : "Add New Driver"}
+            </h3>
+          </div>
+          <button
+            onClick={onClose}
+            className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+          >
+            <IoClose size={24} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="space-y-6">
           {/* Personal Information Section */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Personal Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Personal Information</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
+            <div className="space-y-4">
               <TextField
                 fullWidth
                 label="Full Name *"
@@ -78,6 +75,24 @@ export const DriverForm = ({
                 onChange={(e) => onChange("name", e.target.value)}
                 size="medium"
                 placeholder="e.g., John Doe"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoPerson className="text-slate-400" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                  marginBottom: '16px',
+                }}
               />
 
               <TextField
@@ -89,9 +104,27 @@ export const DriverForm = ({
                 onChange={(e) => onChange("email", e.target.value)}
                 size="medium"
                 placeholder="e.g., john.doe@example.com"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoMail className="text-slate-400" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                  marginBottom: '16px',
+                }}
               />
 
-              <TextField
+              <TextField 
                 fullWidth
                 label="Phone *"
                 name="phone"
@@ -99,22 +132,34 @@ export const DriverForm = ({
                 onChange={(e) => onChange("phone", e.target.value)}
                 size="medium"
                 placeholder="e.g., +1234567890"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoCall className="text-slate-400" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                }}
               />
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           {/* Professional Information Section */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Professional Information
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Professional Information</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
+            <div className="space-y-4">
               <TextField
                 fullWidth
                 label="License Number *"
@@ -123,6 +168,24 @@ export const DriverForm = ({
                 onChange={(e) => onChange("licenseNumber", e.target.value)}
                 size="medium"
                 placeholder="e.g., DL123456789"
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoCash className="text-slate-400" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                  marginBottom: '16px',
+                }}
               />
 
               <TextField
@@ -130,16 +193,27 @@ export const DriverForm = ({
                 label="Price Per Mile *"
                 name="pricePerMile"
                 type="number"
-                value={formData.pricePerMile || ""}
-                onChange={(e) =>
-                  onChange("pricePerMile", parseFloat(e.target.value) || "")
-                }
+                value={formData.pricePerMile ?? ""}
+                onChange={(e) => handleNumberChange(e.target.value)}
                 size="medium"
                 inputProps={{ min: 0, step: 0.1 }}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position="start">$</InputAdornment>
+                    <InputAdornment position="start">
+                      <IoCash className="text-slate-400" />
+                    </InputAdornment>
                   ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                  marginBottom: '16px',
                 }}
               />
 
@@ -152,21 +226,33 @@ export const DriverForm = ({
                 onChange={(e) => onChange("hireDate", e.target.value)}
                 size="medium"
                 InputLabelProps={{ shrink: true }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoCalendar className="text-slate-400" />
+                    </InputAdornment>
+                  ),
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                }}
               />
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           {/* Status Section */}
-          <Box>
-            <Typography
-              variant="h6"
-              fontWeight="600"
-              gutterBottom
-              color="primary"
-            >
-              Status
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Status</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
             <FormControl fullWidth size="medium">
               <InputLabel>Status *</InputLabel>
               <Select
@@ -174,10 +260,25 @@ export const DriverForm = ({
                 name="status"
                 value={formData.status || ""}
                 onChange={(e) => onChange("status", e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <IoPerson className="text-slate-400" />
+                  </InputAdornment>
+                }
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                }}
               >
                 <MenuItem value="available">
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <Chip label="available" color="success" size="small" />
+                    <Chip label="Available" color="success" size="small" />
                     <Typography>Available</Typography>
                   </Box>
                 </MenuItem>
@@ -189,44 +290,42 @@ export const DriverForm = ({
                 </MenuItem>
               </Select>
             </FormControl>
-          </Box>
+          </div>
 
           {/* Helper Text */}
-          <Alert severity="info">Fields marked with * are required</Alert>
-        </Box>
-      </DialogContent>
+          <Alert severity="info" className="rounded-lg mt-4">
+            Fields marked with * are required
+          </Alert>
+        </div>
 
-      <DialogActions sx={{ p: 3, pt: 2, gap: 2 }}>
-        <Button
-          onClick={onClose}
-          color="inherit"
-          variant="outlined"
-          disabled={isLoading}
-          sx={{ borderRadius: 2, minWidth: 100 }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={onSubmit}
-          variant="contained"
-          disabled={isLoading}
-          startIcon={isLoading ? <CircularProgress size={16} /> : null}
-          sx={{
-            borderRadius: 2,
-            px: 4,
-            minWidth: 140,
-            background: `linear-gradient(135deg, ${muiTheme.palette.primary.main} 0%, ${muiTheme.palette.primary.dark} 100%)`,
-          }}
-        >
-          {isLoading
-            ? editMode
-              ? "Saving..."
-              : "Creating..."
-            : editMode
-            ? "Save Changes"
-            : "Create Driver"}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        {/* Footer Actions */}
+        <div className="flex gap-3 mt-6 pt-4 border-t border-slate-200">
+          <Button
+            onClick={onClose}
+            color="inherit"
+            variant="outlined"
+            disabled={isLoading}
+            className="flex-1 rounded-xl border-slate-300 text-slate-700 hover:border-slate-400 hover:bg-slate-50"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={onSubmit}
+            variant="contained"
+            disabled={isLoading}
+            startIcon={isLoading ? <CircularProgress size={16} /> : null}
+            className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium"
+          >
+            {isLoading
+              ? editMode
+                ? "Saving..."
+                : "Creating..."
+              : editMode
+              ? "Save Changes"
+              : "Create Driver"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 };
