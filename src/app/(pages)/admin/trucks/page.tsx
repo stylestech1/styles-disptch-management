@@ -664,7 +664,7 @@ const TrucksPage: React.FC = () => {
               .includes(q))
       );
     });
-  }, [search, trucks, allTrucks]);
+  }, [search, trucks, allTrucks]); 
 
   // Modal states
   const [open, setOpen] = useState(false);
