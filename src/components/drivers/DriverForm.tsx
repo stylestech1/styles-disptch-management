@@ -25,10 +25,10 @@ export const DriverForm = ({
   // Handle number input change for pricePerMile
   const handleNumberChange = (value: string) => {
     if (value === '' || value === null || value === undefined) {
-      onChange("pricePerMile", '' as any);
+      onChange("pricePerMile", 0);
     } else {
       const numValue = parseFloat(value);
-      onChange("pricePerMile", numValue as any);
+      onChange("pricePerMile", numValue);
     }
   };
 
