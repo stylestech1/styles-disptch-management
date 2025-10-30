@@ -56,20 +56,20 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
   // Handle number input change
   const handleNumberChange = (field: keyof TTruck, value: string) => {
     if (value === '' || value === null || value === undefined) {
-      onChange(field, '' as any);
+      onChange(field, '');
     } else {
       const numValue = Number(value);
-      onChange(field, numValue as any);
+      onChange(field, numValue);
     }
   };
 
   // Handle year input change
   const handleYearChange = (value: string) => {
     if (value === '' || value === null || value === undefined) {
-      onChange('year', '' as any);
+      onChange('year', 0);
     } else {
       const numValue = Number(value);
-      onChange('year', numValue as any);
+      onChange('year', numValue);
     }
   };
 
