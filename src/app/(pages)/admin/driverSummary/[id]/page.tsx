@@ -275,7 +275,7 @@ const DriverSummary = () => {
         <div className="mb-4 lg:mb-0">
           <div className="flex flex-col gap-4">
             <button
-              onClick={() => router.push("/admin/driverdashboard")}
+              onClick={() => router.push("/admin/drivers")}
               className="flex items-center w-fit cursor-pointer gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <IoArrowBack size={20} />
