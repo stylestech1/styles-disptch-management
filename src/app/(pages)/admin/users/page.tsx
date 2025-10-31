@@ -35,7 +35,6 @@ import { Dayjs } from "dayjs";
 import { useSearch } from "@/hook/useSearch";
 
 const Users = () => {
-  const [search, setSearch] = useState("");
   const [popup, setPopup] = useState(false);
   const [popupSetting, setPopupSetting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<TDispatcher | null>(null);
@@ -164,7 +163,7 @@ const Users = () => {
   // FIXME: Update User Role
   const handleUpdateRole = async (
     userId: string,
-    newRole: "admin" | "employee"
+    newRole: "admin" | "employee" | "driver"
   ) => {
     if (!token) {
       router.replace("/");
@@ -377,7 +376,7 @@ const Users = () => {
         />
       </div>
 
-      {/* Add User */}
+      {/* Add User */} 
       <div className="flex justify-end">
         <button
           onClick={() => setPopup(true)}

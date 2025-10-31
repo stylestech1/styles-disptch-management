@@ -28,26 +28,23 @@ import {
   useGetNotesQuery,
   useGetLoadsWithFilterQuery,
 } from "@/redux/slices/apiSlice";
-
 // Import the new modal components
 import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 import { useRouter } from "next/navigation";
-
 // ✅ Import MUI DateTimePicker
-import { Dayjs } from "dayjs";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DemoContainer } from "@mui/x-date-pickers/internals/demo";
-import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
-import Stack from "@mui/material/Stack";
+import { DateRange, RangeKeyDict, Range } from "react-date-range";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import dayjs, { Dayjs } from "dayjs";
 
 // Utils
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { useSearch } from "@/hook/useSearch";
+import DateRangeFilter from "@/components/ui/Filter";
 
 const LoadsPage = () => {
   const [page, setPage] = useState(1);
-  const router = useRouter();
+  const router = useRouter(); 
 
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
@@ -111,24 +108,12 @@ const LoadsPage = () => {
   }, [loadsError, setError]);
 
   // Filter and Search loads
-  const {
-    filteredData: searchedLoads,
-  } = useSearch({
+  const { filteredData: searchedLoads } = useSearch({
     data: searchInput ? allLoads : load,
-    searchFields: [
-      "loadId",
-      "driverId.phone",
-    ],
+    searchFields: ["loadId", "driverId.phone"],
     initialSearch: searchInput,
   });
   const tableData = searchInput ? searchedLoads : load;
-
-  // ✅ When Ok do filter
-  const handleAccept = () => {
-    if (fromDate || toDate) {
-      setIsFiltered(true);
-    }
-  };
 
   // TODO: set loading
   if (loading) return <Loading />;
@@ -361,48 +346,21 @@ const LoadsPage = () => {
           </div>
 
           {/* Filter */}
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DemoContainer components={["MobileDatePicker"]}>
-              <Stack direction="row" spacing={2} sx={{ width: "100%" }}>
-                <MobileDatePicker
-                  onAccept={handleAccept}
-                  label="From"
-                  value={fromDate}
-                  onChange={(newValue) => setFromDate(newValue)}
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                      sx: {
-                        backgroundColor: "#eff6ff",
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
-                          width: "100%",
-                        },
-                      },
-                    },
-                  }}
-                />
-                <MobileDatePicker
-                  label="To"
-                  value={toDate}
-                  onChange={(newValue) => setToDate(newValue)}
-                  onAccept={handleAccept}
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                      sx: {
-                        backgroundColor: "#eff6ff",
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: "8px",
-                          width: "100%",
-                        },
-                      },
-                    },
-                  }}
-                />
-              </Stack>
-            </DemoContainer>
-          </LocalizationProvider>
+          <DateRangeFilter
+            onApply={(from, to) => {
+              if (!from || !to) {
+                // ✅ clear filter
+                setIsFiltered(false);
+                setFromDate(null);
+                setToDate(null);
+              } else {
+                // ✅ apply filter
+                setIsFiltered(true);
+                setFromDate(from);
+                setToDate(to);
+              }
+            }}
+          />
         </div>
       </div>
 

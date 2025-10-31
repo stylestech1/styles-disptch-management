@@ -218,6 +218,21 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Trucks"],
     }),
 
+    // Get Truck with Filter and Search
+    getTruckWithSearch: builder.query({
+      query: ({ from, to }) => {
+        let url = `/api/v1/trucks`;
+        const params = [];
+
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
+
+        if (params.length) url += `?${params.join("&")}`;
+        return url;
+      },
+      providesTags: ["Trucks"],
+    }),
+
     // Get All Trucks With Summaries (For Dashboard)
     getTruckSummary: builder.query<TTrucksSummaryResponse, void>({
       query: () => `/api/v1/summary/truck`,
@@ -323,6 +338,11 @@ export const apiSlice = api.injectEndpoints({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/adminDashboard?page=${page}&limit=${limit}`,
       providesTags: ["Dispatchers"],
+    }),
+    getAllUsers: builder.query({
+      query: ({ role , driver }) =>
+        `/api/v1/adminDashboard?role=driver`,
+      providesTags: ["Drivers"],
     }),
 
     // Get User with Filter and Search
@@ -439,6 +459,7 @@ export const {
   useGetTrucksWithSearchQuery,
   useGetAllTrucksQuery,
   useGetTruckSummaryQuery,
+  useGetTruckWithSearchQuery,
   useLazyGetSpecificTruckSummaryQuery,
   useLazyGetTruckSummaryWithFilterQuery,
   useGetTruckByIdQuery,
@@ -459,4 +480,5 @@ export const {
   useUpdateUserInfoMutation,
   // TODO: ----- Password -----
   useUpdateUserPasswordMutation,
+  useGetAllUsersQuery,
 } = apiSlice;

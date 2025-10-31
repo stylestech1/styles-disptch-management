@@ -22,7 +22,7 @@ export interface DataTableProps<T> {
 const DataTable = <T,>({
   columns,
   data,
-  renderRow,
+  renderRow,  
   emptyState,
   loading = false,
   className = "",

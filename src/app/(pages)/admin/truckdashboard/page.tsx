@@ -13,11 +13,7 @@ import {
   Typography,
   styled,
   Skeleton,
-  TextField,
-  InputAdornment,
-  Chip,
 } from "@mui/material";
-import { tableCellClasses } from "@mui/material/TableCell";
 import { IoSearch, IoCar, IoStatsChart } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { RootState, useAppSelector } from "@/redux/store";
@@ -27,91 +23,10 @@ import Erros from "@/components/ui/Erros";
 import { muiTheme } from "@/theme/theme";
 import ChartSection from "@/components/ui/ChartSection";
 import { useGetTruckSummaryQuery } from "@/redux/slices/apiSlice";
+import { useSearch } from "@/hook/useSearch";
+import { StyledTableCell, TableSkeleton } from "@/components/ui/TablesMUI";
 
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${theme.components?.MuiTableCell?.styleOverrides?.root}`]: {
-    borderBottom: `1px solid ${theme.palette.divider}`,
-  },
-  '&[class*="MuiTableCell-head"]': {
-    backgroundColor: "#f8fafc",
-    color: "#56677a",
-    fontSize: 14,
-  },
-  '&[class*="MuiTableCell-body"]': {
-    fontSize: 14,
-  },
-}));
-const StyledTableRow = styled(TableRow)(() => ({
-  "&:last-child td, &:last-child th": {
-    border: 0,
-  },
-  "&:hover": {
-    backgroundColor: "#fcf9fa",
-  },
-}));
 
-// Custom debounce hook
-function useDebounce<T>(value: T, delay: number = 400): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-
-  React.useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
-// Skeleton Loader Component
-const TableSkeleton = ({ rows = 5 }: { rows?: number }) => (
-  <TableBody>
-    {Array.from({ length: rows }).map((_, index) => (
-      <TableRow key={index}>
-        <TableCell>
-          <Skeleton variant="text" width={20} />
-        </TableCell>
-        <TableCell>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Skeleton variant="circular" width={18} height={18} />
-            <Skeleton variant="text" width={80} />
-          </Box>
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={60} />
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={60} />
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={80} />
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={60} />
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={60} />
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={60} />
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={60} />
-        </TableCell>
-        <TableCell align="right">
-          <Skeleton variant="text" width={80} />
-        </TableCell>
-        <TableCell align="center">
-          <Skeleton variant="rectangular" width={80} height={32} />
-        </TableCell>
-      </TableRow>
-    ))}
-  </TableBody>
-);
 
 // Memoized Truck Row Component
 const TruckRow = React.memo(
@@ -141,7 +56,7 @@ const TruckRow = React.memo(
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <IoCar size={18} color="#64748b" />
             <Typography variant="body2" fontWeight={500}>
-              {truck.truckId}
+              {truck.plateNumber}
             </Typography>
           </Box>
         </TableCell>
@@ -242,7 +157,7 @@ const TruckRow = React.memo(
 TruckRow.displayName = "TruckRow";
 
 const TruckDashboard = () => {
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
 
@@ -255,32 +170,21 @@ const TruckDashboard = () => {
     skip: !token,
   });
 
-  // Debounce search
-  const debouncedSearch = useDebounce(search, 400);
+  const { filteredData: searchedTrucks } = useSearch({
+    data: allTrucksData?.data?.trucksSummary || [],
+    searchFields: [
+      "truckId",
+      "model", 
+      "plateNumber",
+    ],
+    initialSearch: searchInput,
+  });
 
-  // Filter
-  const filteredTrucks = useMemo(() => {
-    const allTrucks = allTrucksData?.data?.trucksSummary || [];
-
-    if (!debouncedSearch.trim()) return allTrucks;
-
-    const term = debouncedSearch.toLowerCase();
-    return allTrucks.filter((truck: TTruck & { summary?: TTruckSummary }) => {
-      const searchFields = [
-        String(truck.truckId || ""),
-        String(truck.model || ""),
-        String(truck.plateNumber || ""),
-      ];
-
-      return searchFields.some((field) => field.toLowerCase().includes(term));
-    });
-  }, [allTrucksData, debouncedSearch]);
+  const displayTrucks = searchInput ? searchedTrucks : (allTrucksData?.data?.trucksSummary || []);
 
   // chart data
   const chartData = useMemo(() => {
-    const trucksWithSummaries = (
-      allTrucksData?.data?.trucksSummary || []
-    ).filter((truck: TTruck & { summary?: TTruckSummary }) => truck.summary);
+    const trucksWithSummaries = displayTrucks.filter((truck: TTruck & { summary?: TTruckSummary }) => truck.summary);
 
     if (trucksWithSummaries.length === 0) return null;
 
@@ -342,22 +246,22 @@ const TruckDashboard = () => {
         ],
       },
     };
-  }, [allTrucksData]);
+  }, [displayTrucks]);
 
   // Event handlers
   const handleSearchChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearch(e.target.value);
+      setSearchInput(e.target.value);
     },
     []
   );
 
   const handleViewStats = useCallback(
     (_id: string) => {
-      sessionStorage.setItem("truckDashboardSearch", search);
+      sessionStorage.setItem("truckDashboardSearch", searchInput);
       router.push(`/admin/truckSummary/${_id}`);
     },
-    [router, search]
+    [router, searchInput]
   );
 
   // Loading state
@@ -382,13 +286,12 @@ const TruckDashboard = () => {
   }
 
   const trucks = allTrucksData?.data?.trucksSummary || [];
-  const displayTrucks = filteredTrucks;
 
   return (
     <section className="relative p-6 mx-auto">
       {/* Header */}
       <Box className="flex justify-between items-center flex-col md:flex-row">
-        <Box className="flex flex-col">
+        <Box className="flex flex-col w-full">
           <Box className="mb-8">
             <Titles>Truck Dashboard</Titles>
             <Typography variant="body1" color="text.secondary" className="mt-2">
@@ -399,30 +302,6 @@ const TruckDashboard = () => {
                 : "No trucks available in your fleet"}
             </Typography>
           </Box>
-
-          {/* Search Bar */}
-          <Box className="mb-8">
-            <TextField
-              fullWidth
-              placeholder="Search by truck ID, model, or plate number..."
-              value={search}
-              onChange={handleSearchChange}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IoSearch className="text-slate-400" />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                maxWidth: "400px",
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: "12px",
-                  backgroundColor: "white",
-                },
-              }}
-            />
-          </Box>
         </Box>
 
         {/* Charts Section */}
@@ -432,7 +311,22 @@ const TruckDashboard = () => {
           </Box>
         )}
       </Box>
-
+    {/* Search Bar -*/}
+          <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm mb-8">
+            <div className="relative w-full">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <IoSearch className="h-5 w-5 text-slate-400" />
+              </div>
+              <input
+                type="text"
+                placeholder="Search by Plate Number"
+                value={searchInput}
+                onChange={handleSearchChange}
+                className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                disabled={trucksLoading}
+              />
+            </div>
+          </div>
       {/* Table Section */}
       <TableContainer
         component={Paper}
@@ -450,11 +344,11 @@ const TruckDashboard = () => {
           },
           "&::-webkit-scrollbar-thumb": {
             background: muiTheme.palette.grey[400],
-            borderRadius: 4,
+            borderRadius: 4, 
           },
         }}
       >
-        <Table sx={{ minWidth: 800 }}>
+        <Table sx={{ minWidth: 800 }}> 
           <TableHead>
             <TableRow>
               <StyledTableCell>#</StyledTableCell>
@@ -488,7 +382,7 @@ const TruckDashboard = () => {
                 <TableRow>
                   <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
                     <Typography variant="body1" color="text.secondary">
-                      {search
+                      {searchInput
                         ? "No trucks match your search"
                         : "No trucks available"}
                     </Typography>

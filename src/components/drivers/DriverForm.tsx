@@ -1,8 +1,9 @@
-"use client";
-
-import { TDriver } from "@/types/globalTypes";
+// Add this import at the top
+import { TDriver, TUser } from "@/types/globalTypes";
 import { Alert, Box, Button, Chip, CircularProgress, Divider, FormControl, InputAdornment, InputLabel, MenuItem, Select, TextField, Typography } from "@mui/material";
-import { IoClose, IoAdd, IoPerson, IoMail, IoCall, IoCash, IoCalendar } from "react-icons/io5";
+import { useEffect } from "react";
+import { IoAdd, IoCalendar, IoCall, IoCash, IoClose, IoMail, IoPerson } from "react-icons/io5";
+import { useGetAllUsersQuery } from "@/redux/slices/apiSlice"; 
 
 export const DriverForm = ({
   open,
@@ -13,7 +14,7 @@ export const DriverForm = ({
   editMode, 
   isLoading,
 }: {
-  open: boolean;
+  open: boolean; 
   onClose: () => void;
   formData: Partial<TDriver>;
   onChange: (field: keyof TDriver, value: TDriver[keyof TDriver]) => void;
@@ -21,14 +22,34 @@ export const DriverForm = ({
   editMode: boolean;
   isLoading: boolean;
 }) => {
+  // Use RTK Query to fetch users with driver role
+  const { 
+    data: usersData, 
+    isLoading: usersLoading, 
+    error: usersError,
+    refetch 
+  } = useGetAllUsersQuery({ 
+    role: "driver",
+    driver: "true" // Add this parameter if needed based on your API
+  });
+
+  // Refetch users when component opens
+  useEffect(() => {
+    if (open) {
+      refetch();
+    }
+  }, [open, refetch]);
+
+  // Extract users from response
+  const users = usersData?.data || [];
 
   // Handle number input change for pricePerMile
   const handleNumberChange = (value: string) => {
     if (value === '' || value === null || value === undefined) {
-      onChange("pricePerMile", '' as any);
+      onChange("pricePerMile", 0);
     } else {
       const numValue = parseFloat(value);
-      onChange("pricePerMile", numValue as any);
+      onChange("pricePerMile", numValue);
     }
   };
 
@@ -292,6 +313,85 @@ export const DriverForm = ({
             </FormControl>
           </div>
 
+          {/* Assign to users Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="text-lg font-semibold text-slate-800">Assign to User</h4>
+            </div>
+            <Divider sx={{ mb: 3 }} />
+            <FormControl fullWidth size="medium">
+              <InputLabel>Select User *</InputLabel>
+              <Select
+                label="Select User *"
+                name="user"
+                value={formData.user || ""}
+                onChange={(e) => onChange("user", e.target.value)}
+                disabled={usersLoading}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <IoPerson className="text-slate-400" />
+                  </InputAdornment>
+                }
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '&:hover fieldset': {
+                      borderColor: '#10b981',
+                    },
+                  },
+                  '& .MuiInputLabel-root.Mui-focused': {
+                    color: '#10b981',
+                  },
+                }}
+              >
+                {usersLoading ? (
+                  <MenuItem disabled>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <CircularProgress size={16} />
+                      <Typography>Loading users...</Typography>
+                    </Box>
+                  </MenuItem>
+                ) : usersError ? (
+                  <MenuItem disabled>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                      <Typography color="error">
+                        {usersError ? "Error loading users" : "No users found"}
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ) : users.length === 0 ? (
+                  <MenuItem disabled>
+                    <Typography>No drivers found</Typography>
+                  </MenuItem>
+                ) : (
+                  users.map((user : TUser) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <Chip 
+                          label={user.active ? "Active" : "Inactive"} 
+                          color={user.active ? "success" : "default"} 
+                          size="small" 
+                        />
+                        <Box>
+                          <Typography variant="body2" fontWeight="medium">
+                            {user.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {user.email} • {user.jobId}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+            {!usersLoading && !usersError && users.length > 0 && (
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                Found {users.length} driver(s)
+              </Typography>
+            )}
+          </div>
+
           {/* Helper Text */}
           <Alert severity="info" className="rounded-lg mt-4">
             Fields marked with * are required
@@ -312,7 +412,7 @@ export const DriverForm = ({
           <Button
             onClick={onSubmit}
             variant="contained"
-            disabled={isLoading}
+            disabled={isLoading || usersLoading}
             startIcon={isLoading ? <CircularProgress size={16} /> : null}
             className="flex-1 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium"
           >
