@@ -4,7 +4,7 @@ import { DateRange, Range, RangeKeyDict } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs, { Dayjs } from "dayjs";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 type DateRangeFilterProps = {
   onApply?: (from: Dayjs | null, to: Dayjs | null) => void;
@@ -17,7 +17,6 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   onClear,
   onFilterApplied,
 }) => {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   const [showPicker, setShowPicker] = useState(false);
@@ -43,7 +42,6 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
         },
       ]);
     } else {
-      // ✅ reset to empty (fully unselected)
       setDateRange([
         {
           startDate: undefined,
@@ -61,19 +59,10 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
   // ✅ Apply
   const handleApply = () => {
+    if (!dateRange?.[0]?.startDate || !dateRange?.[0]?.endDate) return;
+
     const start = dateRange[0].startDate;
     const end = dateRange[0].endDate;
-
-    if (!start || !end) return;
-
-    const fromStr = dayjs(start).format("YYYY-MM-DD");
-    const toStr = dayjs(end).format("YYYY-MM-DD");
-
-    const params = new URLSearchParams(searchParams);
-    params.set("from", fromStr);
-    params.set("to", toStr);
-
-    router.push(`?${params.toString()}`, { scroll: false });
 
     onApply?.(dayjs(start), dayjs(end));
     onFilterApplied?.(true);
@@ -82,11 +71,6 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
   // ✅ Clear
   const handleClear = () => {
-    const params = new URLSearchParams(searchParams);
-    params.delete("from");
-    params.delete("to");
-    router.push(`?${params.toString()}`, { scroll: false });
-
     setDateRange([
       {
         startDate: undefined,
@@ -94,22 +78,17 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
         key: "selection",
       },
     ]);
-
-    if (onClear) {
-      onClear();
-    }
-
-    // 🧠 Notify parent to reset filter
+    onClear?.();
     onApply?.(null, null);
     onFilterApplied?.(false);
     setShowPicker(false);
   };
 
   // ✅ Display label
-  const from = dateRange[0].startDate
+  const from = dateRange?.[0]?.startDate
     ? dayjs(dateRange[0].startDate).format("MMM D, YYYY")
     : "";
-  const to = dateRange[0].endDate
+  const to = dateRange?.[0]?.endDate
     ? dayjs(dateRange[0].endDate).format("MMM D, YYYY")
     : "";
 
@@ -126,18 +105,38 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
       {showPicker && (
         <div className="absolute top-12 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-4 w-[370px]">
-          <DateRange
-            onChange={handleRangeSelect}
-            moveRangeOnFirstSelection={false}
-            ranges={dateRange}
-            rangeColors={["#2563eb"]}
-            months={1}
-            direction="horizontal"
-            showMonthAndYearPickers={true}
-            showDateDisplay={false}
-            editableDateInputs={true}
-            minDate={undefined}
-          />
+          {dateRange[0].startDate === undefined &&
+          dateRange[0].endDate === undefined ? (
+            <DateRange
+              onChange={handleRangeSelect}
+              moveRangeOnFirstSelection={false}
+              ranges={[
+                {
+                  startDate: new Date(),
+                  endDate: new Date(),
+                  key: "selection",
+                },
+              ]}
+              rangeColors={["#2563eb"]}
+              showDateDisplay={false}
+              months={1}
+              direction="horizontal"
+              showMonthAndYearPickers={true}
+              editableDateInputs={true}
+            />
+          ) : (
+            <DateRange
+              onChange={handleRangeSelect}
+              moveRangeOnFirstSelection={false}
+              ranges={dateRange}
+              rangeColors={["#2563eb"]}
+              showDateDisplay={false}
+              months={1}
+              direction="horizontal"
+              showMonthAndYearPickers={true}
+              editableDateInputs={true}
+            />
+          )}
 
           <div className="flex justify-between mt-3">
             <button
