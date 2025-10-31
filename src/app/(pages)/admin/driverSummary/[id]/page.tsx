@@ -1,10 +1,10 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { TLoads, TLoadSummary, TStatusLoad } from "@/types/globalTypes";
+import { TLoads, TStatusLoad } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
-import toast, { Toaster } from "react-hot-toast";
+import { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
 import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 
@@ -20,7 +20,6 @@ import {
   IoCashOutline,
   IoTimeOutline,
   IoFilterOutline,
-  IoRefreshOutline,
   IoArrowBack,
 } from "react-icons/io5";
 import { FaMoneyBillWave } from "react-icons/fa";
@@ -39,17 +38,21 @@ import {
   useLazyGetDriverSummaryWithFilterQuery,
 } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
+import useError from "@/hook/useError";
 
 const DriverSummary = () => {
   const { id } = useParams();
-  const router = useRouter();
   // ✅ Search And Filter
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
-  const [isFiltered, setIsFiltered] = useState(false);
   const [searchInput, setSearchInput] = useState("");
-  const [error, setError] = useState<string>("");
+  const [isFiltered, setIsFiltered] = useState(false);
+  const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
+  
+  const router = useRouter();
+  const { error, setError } = useError();
 
+  // ✅ RTK Query hooks
   const {
     data: profileData,
     isLoading: profileLoading,
@@ -64,8 +67,6 @@ const DriverSummary = () => {
 
   const profile = profileData?.data;
   const driverSummary = driverSummaryData?.data;
-
-  // ✅ Fixed: Properly handle flattenedLoads based on filtered state
   const flattenedLoads = driverSummary?.loads || [];
   const activeSummary = isFiltered ? driverSummary : driverSummary;
 
@@ -98,46 +99,6 @@ const DriverSummary = () => {
       setError(message);
     }
   }, [profileError, summaryError]);
-
-  // ✅ Apply filter with date range
-  // const handleApplyFilter = async () => {
-  //   if (!id) return;
-
-  //   try {
-  //     const params: any = { id: id as string };
-
-  //     if (fromDate) {
-  //       params.from = fromDate.toISOString();
-  //     }
-  //     if (toDate) {
-  //       params.to = toDate.toISOString();
-  //     }
-
-  //     await fetchDriverSummary(params);
-  //     setIsFiltered(true);
-  //     toast.success("Filter applied successfully");
-  //   } catch (err) {
-  //     console.error(err);
-  //     toast.error("Failed to apply filter");
-  //   }
-  // };
-
-  // ✅ Reset Filter
-  // const handleReset = async () => {
-  //   if (!id) return;
-
-  //   setFromDate(null);
-  //   setToDate(null);
-
-  //   try {
-  //     await fetchDriverSummary({ id: id as string });
-  //     setIsFiltered(false);
-  //     toast.success("Filter reset successfully");
-  //   } catch (err) {
-  //     console.error(err);
-  //     toast.error("Failed to reset filter");
-  //   }
-  // };
 
   // Status badge component
   const StatusBadge = ({ status }: { status: TStatusLoad }) => {

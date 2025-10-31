@@ -8,9 +8,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 type DateRangeFilterProps = {
   onApply?: (from: Dayjs | null, to: Dayjs | null) => void;
+  onClear?: () => void;
+  onFilterApplied?: (applied: boolean) => void;
 };
 
-const DateRangeFilter = ({ onApply }: DateRangeFilterProps) => {
+const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
+  onApply,
+  onClear,
+  onFilterApplied,
+}) => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -70,6 +76,7 @@ const DateRangeFilter = ({ onApply }: DateRangeFilterProps) => {
     router.push(`?${params.toString()}`, { scroll: false });
 
     onApply?.(dayjs(start), dayjs(end));
+    onFilterApplied?.(true);
     setShowPicker(false);
   };
 
@@ -88,9 +95,13 @@ const DateRangeFilter = ({ onApply }: DateRangeFilterProps) => {
       },
     ]);
 
+    if (onClear) {
+      onClear();
+    }
+
     // 🧠 Notify parent to reset filter
     onApply?.(null, null);
-
+    onFilterApplied?.(false);
     setShowPicker(false);
   };
 

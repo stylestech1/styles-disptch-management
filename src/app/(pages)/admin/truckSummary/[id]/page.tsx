@@ -1,7 +1,7 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { TLoads, TStatusLoad, TTruckSummary } from "@/types/globalTypes";
+import { TLoads, TStatusLoad } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
@@ -19,116 +19,118 @@ import {
   IoIdCardOutline,
   IoPersonOutline,
   IoArrowBack,
+  IoRefreshOutline,
 } from "react-icons/io5";
 import { FaMoneyBillWave } from "react-icons/fa";
 import useError from "@/hook/useError";
 import DataTable from "@/components/ui/DataTable";
 import { truckSummaryColumns } from "@/data/truckSummaryTable";
 
-// ✅ Import RTK Query hooks
-import { applyGlobalFilter, resetGlobalFilter } from "@/utils/filterUtils";
-import { getErrorMessage } from "@/utils/getErrorMessage";
-
-// ✅ Import MUI DateTimePicker
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+// ✅ Import DateTimePicker
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 import { Dayjs } from "dayjs";
+import DateRangeFilter from "@/components/ui/Filter";
 import {
   useGetTruckByIdQuery,
   useLazyGetSpecificTruckSummaryQuery,
   useLazyGetTruckSummaryWithFilterQuery,
 } from "@/redux/slices/apiSlice";
+import { useSearch } from "@/hook/useSearch";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const TruckSummary = () => {
   const { id } = useParams();
+  // ✅ Search And Filter
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
-  const [filteredSummary, setFilteredSummary] = useState<TTruckSummary | null>(
-    null
-  );
+  const [searchInput, setSearchInput] = useState("");
+  const [isFilterActive, setIsFilterActive] = useState(false);
+  const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
 
   const router = useRouter();
   const { error, setError } = useError();
 
   // ✅ RTK Query hooks
-  const {
-    data: profileData,
-    isLoading: profileLoading,
-    isError: profileError,
-  } = useGetTruckByIdQuery(id as string, {
-    skip: !id,
-  });
-
+  const { data: profileData, isLoading: profileLoading } = useGetTruckByIdQuery(
+    id as string,
+    {
+      skip: !id,
+    }
+  );
   const [
     fetchTruckSummary,
-    {
-      data: truckSummaryData,
-      isLoading: summaryLoading,
-      isError: summaryError,
-    },
+    { data: truckSummaryData, isLoading: summaryLoading },
   ] = useLazyGetSpecificTruckSummaryQuery();
-  const [fetchTruckSummaryWithFilter] = useLazyGetTruckSummaryWithFilterQuery();
+  const [
+    fetchTruckSummaryWithFilter,
+    {
+      data: truckSummaryFilterData,
+      isLoading: summaryFilterLoading,
+      error: summaryFilterError,
+    },
+  ] = useLazyGetTruckSummaryWithFilterQuery();
 
   const profile = profileData?.data;
-  const truckSummary = truckSummaryData?.data;
+  const summaryData = isFilterActive
+    ? truckSummaryFilterData
+    : truckSummaryData;
+  const loadsData: TLoads[] = (() => {
+    if (!summaryData?.data?.loads) return [];
+    return Array.isArray(summaryData.data.loads) ? summaryData.data.loads : [];
+  })();
+  const { filteredData: searchedTruck } = useSearch<TLoads>({
+    data: loadsData,
+    searchFields: ["loadId", "driverId.name"],
+    initialSearch: searchInput,
+  });
 
-  // ✅ fetching
+  const displayedData = searchInput ? searchedTruck : loadsData;
+
+  // ✅ Fetch truck summary on component mount
   useEffect(() => {
     if (id) {
       fetchTruckSummary(id as string);
     }
   }, [id, fetchTruckSummary]);
 
-  const handleApplyFilter = async () => {
-    if (!id) return;
-    const truckId = Array.isArray(id) ? id[0] : id;
+  // Filter
+  useEffect(() => {
+    if (hasAppliedFilter && id && (fromDate || toDate)) {
+      const fromDateString = fromDate?.toISOString();
+      const toDateString = toDate?.toISOString();
 
-    try {
-      const response = await applyGlobalFilter({
-        id: truckId,
-        fromDate: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
-        toDate: toDate ? toDate.format("YYYY-MM-DD") : undefined,
-        fetchFunction: (params) => fetchTruckSummaryWithFilter(params).unwrap(),
+      setIsFilterActive(true);
+
+      fetchTruckSummaryWithFilter({
+        id: id as string,
+        from: fromDateString,
+        to: toDateString,
       });
-      if (response?.data) {
-        setFilteredSummary(response.data);
-      }
-      toast.success("Filter applied successfully");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to apply filter");
     }
-  };
+  }, [fromDate, toDate, id, fetchTruckSummaryWithFilter, hasAppliedFilter]);
 
-  const handleReset = async () => {
-    if (!id) return;
-    const truckId = Array.isArray(id) ? id[0] : id;
+  // handling Errors
+  useEffect(() => {
+    if (summaryFilterError) {
+      const errorMessage = getErrorMessage(summaryFilterError);
+      setError(errorMessage);
+      toast.error(errorMessage || "Loading failed ❌", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+    }
+  }, [summaryFilterError, setError]);
 
+  // Clear filter
+  const handleClearFilter = () => {
     setFromDate(null);
     setToDate(null);
+    setIsFilterActive(false);
 
-    try {
-      const response = await resetGlobalFilter({
-        id: truckId,
-        fetchFunction: (params) => fetchTruckSummaryWithFilter(params).unwrap(),
-      });
-      toast.success("Filter reset successfully");
-      if (response?.data) {
-        setFilteredSummary(response.data);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to reset filter");
+    if (id) {
+      fetchTruckSummary(id as string);
     }
   };
-
-  useEffect(() => {
-    if (profileError || summaryError) {
-      const errorMessage = getErrorMessage(profileError || summaryError);
-      setError(errorMessage || "Failed to load data");
-    }
-  }, [profileError, summaryError, setError]);
 
   // Status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -218,9 +220,12 @@ const TruckSummary = () => {
     );
   };
 
-  // TODO: Table Row Renderer for Loads
+  // ✅ Table Row Renderer for Loads
   const renderTruckSummaryRow = (load: TLoads, index: number) => (
-    <tr key={index} className="hover:bg-slate-50 transition-colors group">
+    <tr
+      key={load.loadId || index}
+      className="hover:bg-slate-50 transition-colors group"
+    >
       {/* Load ID */}
       <td className="p-4 font-medium text-slate-900">
         <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
@@ -253,7 +258,7 @@ const TruckSummary = () => {
 
       {/* Miles */}
       <td className="p-4 text-right text-slate-700 font-medium">
-        {load.distanceMiles}
+        {load.distanceMiles?.toLocaleString()}
       </td>
 
       {/* Price/Mile */}
@@ -263,7 +268,7 @@ const TruckSummary = () => {
 
       {/* Total */}
       <td className="p-4 text-right font-semibold text-emerald-700">
-        {load.currency} {load.totalPrice}
+        {load.currency} {load.totalPrice?.toLocaleString()}
       </td>
 
       {/* Status */}
@@ -283,415 +288,389 @@ const TruckSummary = () => {
     </tr>
   );
 
-  const activeSummary = filteredSummary || truckSummary;
-  const flattenedLoads = activeSummary?.loads || [];
-
-  const loading = profileLoading || summaryLoading;
-
+  const loading = profileLoading || summaryLoading || summaryFilterLoading;
   if (loading) return <Loading />;
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs}>
-      <section className="container mx-auto p-6">
-        <Toaster position="top-right" />
+    <section className="container mx-auto p-6">
+      <Toaster position="top-right" />
 
-        {/* Header */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-          <div className="mb-4 lg:mb-0">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/admin/truckdashboard")}
-                className="flex items-center gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-              >
-                <IoArrowBack size={20} />
-                Back
-              </button>
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div className="mb-4 lg:mb-0">
+          <div className="flex flex-col gap-4">
+            <button
+              onClick={() => router.push("/admin/truckdashboard")}
+              className="flex items-center w-fit cursor-pointer gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
+            >
+              <IoArrowBack size={20} />
+              Back
+            </button>
+            <div>
+              <Titles>Truck Summary - ({profile?.truckId})</Titles>
+              <p className="text-slate-600 mt-2 text-sm">
+                Detailed overview of truck information and performance
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Errors */}
+      {error && (
+        <div className="mb-6">
+          <Erros message={error} />
+        </div>
+      )}
+
+      {/* Truck Profile Card */}
+      {profile && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Truck Information */}
+          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="p-3 bg-slate-100 rounded-xl">
+                <IoCar size={32} className="text-slate-600" />
+              </div>
               <div>
-                <Titles>Truck Summary - {profile?.truckId}</Titles>
-                <p className="text-slate-600 mt-2 text-sm">
-                  Detailed overview of truck information and performance
+                <h3 className="text-xl font-semibold text-slate-800">
+                  {profile.model}
+                </h3>
+                <p className="text-slate-500 text-sm mt-0.5">
+                  Truck ID: {profile.truckId}
                 </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoIdCardOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Plate Number</span>
+                </div>
+                <span className="font-mono font-medium text-slate-800">
+                  {profile.plateNumber}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoCar className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Type</span>
+                </div>
+                <TypeBadge type={profile.type} />
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoCalendarOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Year</span>
+                </div>
+                <span className="font-medium text-slate-800">
+                  {profile.year}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoScaleOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Capacity</span>
+                </div>
+                <span className="font-medium text-slate-800">
+                  {profile.capacity} kg
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoCheckmarkCircleOutline
+                    className="text-slate-400"
+                    size={18}
+                  />
+                  <span className="text-slate-600">Status</span>
+                </div>
+                <StatusBadge status={profile.status} />
+              </div>
+
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-center gap-3 text-sm">
+                  <IoPersonOutline className="text-slate-400" size={18} />
+                  <span className="text-slate-600">Created By</span>
+                </div>
+                <span className="font-medium text-slate-800">
+                  {profile.createdBy}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards */}
+          <div className="space-y-4">
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold text-slate-800">
+                  Quick Stats
+                </h4>
+                <IoStatsChart size={24} className="text-blue-500" />
+              </div>
+              <div className="space-y-3">
+                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-600">Truck ID</span>
+                  <span className="font-mono font-semibold text-slate-800">
+                    {profile.truckId}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-600">Vehicle Age</span>
+                  <span className="font-semibold text-slate-800">
+                    {new Date().getFullYear() - profile.year} years
+                  </span>
+                </div>
+                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-600">Capacity Category</span>
+                  <span className="font-semibold text-slate-800">
+                    {profile.capacity >= 20000 ? "Heavy Duty" : "Medium Duty"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Overview */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+              <h4 className="text-lg font-semibold text-slate-800 mb-4">
+                Status Overview
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Current Status</span>
+                  <StatusBadge status={profile.status} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Vehicle Type</span>
+                  <TypeBadge type={profile.type} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Availability</span>
+                  <span
+                    className={`font-medium ${
+                      profile.status === "available"
+                        ? "text-emerald-600"
+                        : "text-amber-600"
+                    }`}
+                  >
+                    {profile.status === "available"
+                      ? "Available"
+                      : "Not Available"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
+      )}
 
-        {/* Errors */}
-        {error && (
-          <div className="mb-6">
-            <Erros message={error} />
-          </div>
-        )}
-
-        {/* Truck Profile Card */}
-        {profile && (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Truck Information */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-              <div className="flex items-center gap-4 mb-6">
-                <div className="p-3 bg-slate-100 rounded-xl">
-                  <IoCar size={32} className="text-slate-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-semibold text-slate-800">
-                    {profile.model}
-                  </h3>
-                  <p className="text-slate-500 text-sm mt-0.5">
-                    Truck ID: {profile.truckId}
-                  </p>
+      {/* ✅ Financial Summary Section */}
+      {summaryData?.data && (
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
+          {/* Truck Summary Stats */}
+          <div className="xl:col-span-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+              {/* Total Loads Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Total Loads
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {summaryData.data.totalLoads}
+                    </p>
+                  </div>
+                  <div className="p-2.5 bg-blue-50 rounded-lg">
+                    <IoStatsChart size={20} className="text-blue-600" />
+                  </div>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoIdCardOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Plate Number</span>
+              {/* Total Miles Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Total Miles
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {summaryData.data.totalMiles?.toLocaleString()}
+                    </p>
                   </div>
-                  <span className="font-mono font-medium text-slate-800">
-                    {profile.plateNumber}
-                  </span>
+                  <div className="p-2.5 bg-emerald-50 rounded-lg">
+                    <IoNavigate size={20} className="text-emerald-600" />
+                  </div>
                 </div>
+              </div>
 
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoCar className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Type</span>
+              {/* Total Revenue Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Total Revenue
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {summaryData.data.currency}{" "}
+                      {summaryData.data.totalRevenue?.toLocaleString()}
+                    </p>
                   </div>
-                  <TypeBadge type={profile.type} />
+                  <div className="p-2.5 bg-amber-50 rounded-lg">
+                    <IoCashOutline size={20} className="text-amber-600" />
+                  </div>
                 </div>
+              </div>
 
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoCalendarOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Year</span>
+              {/* Net Profit Card */}
+              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-slate-500 text-sm font-medium mb-1">
+                      Net Profit
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      {summaryData.data.currency}{" "}
+                      {summaryData.data.netProfit?.toLocaleString()}
+                    </p>
                   </div>
-                  <span className="font-medium text-slate-800">
-                    {profile.year}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoScaleOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Capacity</span>
+                  <div className="p-2.5 bg-red-50 rounded-lg">
+                    <FaMoneyBillWave size={20} className="text-red-500" />
                   </div>
-                  <span className="font-medium text-slate-800">
-                    {profile.capacity} kg
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-2 border-b border-slate-100">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoCheckmarkCircleOutline
-                      className="text-slate-400"
-                      size={18}
-                    />
-                    <span className="text-slate-600">Status</span>
-                  </div>
-                  <StatusBadge status={profile.status} />
-                </div>
-
-                <div className="flex items-center justify-between py-2">
-                  <div className="flex items-center gap-3 text-sm">
-                    <IoPersonOutline className="text-slate-400" size={18} />
-                    <span className="text-slate-600">Created By</span>
-                  </div>
-                  <span className="font-medium text-slate-800">
-                    {profile.createdBy}
-                  </span>
                 </div>
               </div>
             </div>
 
-            {/* Stats Cards */}
-            <div className="space-y-4">
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="text-lg font-semibold text-slate-800">
-                    Quick Stats
-                  </h4>
-                  <IoStatsChart size={24} className="text-blue-500" />
-                </div>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Truck ID</span>
-                    <span className="font-mono font-semibold text-slate-800">
-                      {profile.truckId}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Vehicle Age</span>
-                    <span className="font-semibold text-slate-800">
-                      {new Date().getFullYear() - profile.year} years
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Capacity Category</span>
-                    <span className="font-semibold text-slate-800">
-                      {profile.capacity >= 20000 ? "Heavy Duty" : "Medium Duty"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Status Overview */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
-                <h4 className="text-lg font-semibold text-slate-800 mb-4">
-                  Status Overview
-                </h4>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Current Status</span>
-                    <StatusBadge status={profile.status} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Vehicle Type</span>
-                    <TypeBadge type={profile.type} />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Availability</span>
-                    <span
-                      className={`font-medium ${
-                        profile.status === "available"
-                          ? "text-emerald-600"
-                          : "text-amber-600"
-                      }`}
-                    >
-                      {profile.status === "available"
-                        ? "Available"
-                        : "Not Available"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ✅ Financial Summary Section */}
-        {truckSummary && (
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-            {/* Truck Summary Stats */}
-            <div className="xl:col-span-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                {/* Total Loads Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Total Loads
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {truckSummary.totalLoads}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-blue-50 rounded-lg">
-                      <IoStatsChart size={20} className="text-blue-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total Miles Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Total Miles
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {truckSummary.totalMiles}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-emerald-50 rounded-lg">
-                      <IoNavigate size={20} className="text-emerald-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Total Revenue Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Total Revenue
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {truckSummary.currency} {truckSummary.totalRevenue}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-amber-50 rounded-lg">
-                      <IoCashOutline size={20} className="text-amber-600" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Net Profit Card */}
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-slate-500 text-sm font-medium mb-1">
-                        Net Profit
-                      </p>
-                      <p className="text-2xl font-bold text-slate-800">
-                        {truckSummary.currency} {truckSummary.netProfit}
-                      </p>
-                    </div>
-                    <div className="p-2.5 bg-red-50 rounded-lg">
-                      <FaMoneyBillWave size={20} className="text-red-500" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Period Info */}
-              <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
+            {/* Period Info */}
+            {summaryData?.data && (
+              <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
                     <IoCalendarOutline size={14} className="flex-shrink-0" />
                     <span>Period: </span>
                     <span className="font-medium text-slate-700">
-                      {truckSummary.period.from.split("T")[0]} to{" "}
-                      {truckSummary.period.to.split("T")[0]}
+                      {isFilterActive
+                        ? `${
+                            fromDate ? fromDate.format("YYYY-MM-DD") : "Any"
+                          } to ${toDate ? toDate.format("YYYY-MM-DD") : "Any"}`
+                        : "All time"}
                     </span>
+                    {(fromDate || toDate) && (
+                      <span className="text-xs text-blue-500 ml-2">
+                        ({displayedData.length} loads)
+                      </span>
+                    )}
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ✅ Loads Table Section */}
-        {truckSummary && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-            {/* Header مع الفلترة */}
-            <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-slate-800 mb-1">
-                    Load Details
-                  </h3>
-                </div>
-              </div>
-              {/* ✅ Filter Section مع DateTimePicker */}
-              <div className="flex flex-wrap items-center gap-4 mb-5 bg-slate-50 p-4 rounded-lg border border-slate-200">
-                <div className="flex flex-col">
-                  <label className="text-sm text-slate-600 mb-1">
-                    From Date
-                  </label>
-                  <DatePicker
-                    value={fromDate}
-                    onChange={(newValue) => setFromDate(newValue)}
-                    slotProps={{
-                      textField: {
-                        size: "small",
-                        sx: {
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "8px",
-                            backgroundColor: "white",
-                          },
-                        },
-                      },
+                <div className="flex items-center gap-2">
+                  {isFilterActive && (
+                    <button
+                      onClick={handleClearFilter}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+                    >
+                      <IoRefreshOutline size={16} />
+                      Clear Filter
+                    </button>
+                  )}
+                  {/* ✅ Filter */}
+                  <DateRangeFilter
+                    onApply={(from, to) => {
+                      setFromDate(from);
+                      setToDate(to);
                     }}
+                    onFilterApplied={setHasAppliedFilter}
+                    onClear={handleClearFilter}
                   />
-                </div>
-
-                <div className="flex flex-col">
-                  <label className="text-sm text-slate-600 mb-1">To Date</label>
-                  <DatePicker
-                    value={toDate}
-                    onChange={(newValue) => setToDate(newValue)}
-                    slotProps={{
-                      textField: {
-                        size: "small",
-                        sx: {
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: "8px",
-                            backgroundColor: "white",
-                          },
-                        },
-                      },
-                    }}
-                  />
-                </div>
-
-                <div className="flex gap-3 mt-5 sm:mt-6">
-                  <button
-                    onClick={handleApplyFilter}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Apply Filter
-                  </button>
-                  <button
-                    onClick={handleReset}
-                    className="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300 transition-colors"
-                  >
-                    Reset
-                  </button>
-                </div>
-              </div>
-            </div>
-            {/* Table For Truck Loads Summary */}
-            {(flattenedLoads as TLoads[]).length > 0 ? (
-              <DataTable
-                columns={truckSummaryColumns}
-                data={flattenedLoads as TLoads[]}
-                renderRow={renderTruckSummaryRow}
-                loading={loading}
-              />
-            ) : (
-              <div className="px-4 py-12 text-center text-slate-500">
-                <div className="flex flex-col items-center justify-center">
-                  <div className="text-3xl mb-3">📦</div>
-                  <div className="text-slate-600">
-                    {fromDate || toDate
-                      ? "No load records found for the selected date range"
-                      : "No load records found"}
-                  </div>
-                  <div className="text-slate-400 text-sm mt-1">
-                    {fromDate || toDate
-                      ? "Please adjust your date filter"
-                      : "There are no loads available for this truck"}
-                  </div>
                 </div>
               </div>
             )}
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ✅ Summary Footer */}
-        {truckSummary && (
-          <div className="mt-6 flex justify-end">
-            <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
-              <p className="text-sm text-slate-600">
-                Showing {(flattenedLoads as TLoads[]).length} loads
-                {(fromDate || toDate) && " (filtered)"}
-              </p>
+      {/* ✅ Loads Table Section */}
+      {displayedData && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+          {/* Header */}
+          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-slate-800 mb-1">
+                  Load Details
+                </h3>
+                <p className="text-slate-500 text-sm">
+                  Detailed breakdown of all loads assigned to this truck
+                  {(fromDate || toDate) && " (filtered)"}
+                </p>
+              </div>
             </div>
           </div>
-        )}
 
-        {!profile && !loading && (
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
-            <div className="text-4xl mb-4">🚛</div>
-            <h3 className="text-xl font-semibold text-slate-800 mb-2">
-              Truck Not Found
-            </h3>
-            <p className="text-slate-600 mb-4">
-              {
-                "The truck you're looking for doesn't exist or you don't have access to it."
-              }
+          {/* Table For Truck Loads Summary */}
+          {displayedData.length > 0 ? (
+            <DataTable
+              columns={truckSummaryColumns}
+              data={displayedData}
+              renderRow={renderTruckSummaryRow}
+              loading={loading}
+            />
+          ) : (
+            <div className="px-4 py-12 text-center text-slate-500">
+              <div className="flex flex-col items-center justify-center">
+                <div className="text-3xl mb-3">📦</div>
+                <div className="text-slate-600">
+                  {fromDate || toDate
+                    ? "No load records found for the selected date range"
+                    : "No load records found"}
+                </div>
+                <div className="text-slate-400 text-sm mt-1">
+                  {fromDate || toDate
+                    ? "Please adjust your date filter"
+                    : "There are no loads available for this truck"}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ✅ Summary Footer */}
+      {displayedData && (
+        <div className="mt-6 flex justify-end">
+          <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+            <p className="text-sm text-slate-600">
+              Showing {displayedData.length} loads
+              {(fromDate || toDate) && " (filtered)"}
             </p>
-            <button
-              onClick={() => router.push("/admin/trucks")}
-              className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
-            >
-              Back to Trucks
-            </button>
           </div>
-        )}
-      </section>
-    </LocalizationProvider>
+        </div>
+      )}
+
+      {!profile && !loading && (
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
+          <div className="text-4xl mb-4">🚛</div>
+          <h3 className="text-xl font-semibold text-slate-800 mb-2">
+            Truck Not Found
+          </h3>
+          <p className="text-slate-600 mb-4">
+            {
+              "The truck you're looking for doesn't exist or you don't have access to it."
+            }
+          </p>
+          <button
+            onClick={() => router.push("/admin/trucks")}
+            className="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg font-medium transition-colors"
+          >
+            Back to Trucks
+          </button>
+        </div>
+      )}
+    </section>
   );
 };
 
