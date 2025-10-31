@@ -397,17 +397,6 @@ const DriverSummary = () => {
                       ${profile.pricePerMile?.toFixed(2)}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Experience</span>
-                    <span className="font-semibold text-slate-800">
-                      {Math.floor(
-                        (new Date().getTime() -
-                          new Date(profile.hireDate).getTime()) /
-                          (1000 * 60 * 60 * 24 * 365)
-                      )}{" "}
-                      years
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>

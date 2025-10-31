@@ -420,18 +420,6 @@ const TruckSummary = () => {
                       {profile.truckId}
                     </span>
                   </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Vehicle Age</span>
-                    <span className="font-semibold text-slate-800">
-                      {new Date().getFullYear() - profile.year} years
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                    <span className="text-slate-600">Capacity Category</span>
-                    <span className="font-semibold text-slate-800">
-                      {profile.capacity >= 20000 ? "Heavy Duty" : "Medium Duty"}
-                    </span>
-                  </div>
                 </div>
               </div>
 
