@@ -130,7 +130,7 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // 🔹 Get driver summary
-    getDriverSummary: builder.query<{ data: TLoadSummary }, string>({
+    getSpecificDriverSummary: builder.query<{ data: TLoadSummary }, string>({
       query: (id) => `/api/v1/summary/driver/${id}`,
       providesTags: ["DriverSummary"],
     }),
@@ -442,7 +442,7 @@ export const {
   useGetAllDriversQuery,
   useGetDriverWithFilterQuery,
   useGetDriverByIdQuery,
-  useGetDriverSummaryQuery,
+  useLazyGetSpecificDriverSummaryQuery,
   useLazyGetDriverSummaryWithFilterQuery,
   useCreateDriverMutation,
   useUpdateDriverMutation,

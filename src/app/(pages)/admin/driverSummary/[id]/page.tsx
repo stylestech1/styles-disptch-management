@@ -4,10 +4,8 @@ import Titles from "@/components/ui/Titles";
 import { TLoads, TStatusLoad } from "@/types/globalTypes";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
-import { FetchBaseQueryError } from "@reduxjs/toolkit/query";
-
 import {
   IoPersonCircleOutline,
   IoMailOutline,
@@ -19,26 +17,26 @@ import {
   IoNavigate,
   IoCashOutline,
   IoTimeOutline,
-  IoFilterOutline,
   IoArrowBack,
+  IoRefreshOutline,
 } from "react-icons/io5";
 import { FaMoneyBillWave } from "react-icons/fa";
+import useError from "@/hook/useError";
 import DataTable from "@/components/ui/DataTable";
 import { driverSummaryColumns } from "@/data/driverSummaryTable";
 
-// ✅ Import MUI DateTimePicker
+// ✅ Import DateTimePicker
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { Dayjs } from "dayjs";
 import DateRangeFilter from "@/components/ui/Filter";
-
-// ✅ Import MUI DateTimePicker
 import {
   useGetDriverByIdQuery,
+  useLazyGetSpecificDriverSummaryQuery,
   useLazyGetDriverSummaryWithFilterQuery,
 } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
-import useError from "@/hook/useError";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const DriverSummary = () => {
   const { id } = useParams();
@@ -46,62 +44,126 @@ const DriverSummary = () => {
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [searchInput, setSearchInput] = useState("");
-  const [isFiltered, setIsFiltered] = useState(false);
+  const [isFilterActive, setIsFilterActive] = useState(false);
   const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
-  
+
   const router = useRouter();
   const { error, setError } = useError();
 
   // ✅ RTK Query hooks
-  const {
-    data: profileData,
-    isLoading: profileLoading,
-    error: profileError,
-  } = useGetDriverByIdQuery(id as string, {
-    skip: !id,
-  });
+  const { data: profileData, isLoading: profileLoading } = useGetDriverByIdQuery(
+    id as string,
+    {
+      skip: !id,
+    }
+  );
   const [
     fetchDriverSummary,
-    { data: driverSummaryData, isLoading: summaryLoading, error: summaryError },
+    { data: driverSummaryData, isLoading: summaryLoading },
+  ] = useLazyGetSpecificDriverSummaryQuery();
+  const [
+    fetchDriverSummaryWithFilter,
+    {
+      data: driverSummaryFilterData,
+      isLoading: summaryFilterLoading,
+      error: summaryFilterError,
+    },
   ] = useLazyGetDriverSummaryWithFilterQuery();
 
   const profile = profileData?.data;
-  const driverSummary = driverSummaryData?.data;
-  const flattenedLoads = driverSummary?.loads || [];
-  const activeSummary = isFiltered ? driverSummary : driverSummary;
-
-  const loading = profileLoading || summaryLoading;
-
-  // Filter and Search loads
-  const { filteredData: searchedDriverLoad } = useSearch({
-    data: flattenedLoads,
-    searchFields: ["loadId", "driverId.phone"],
+  const summaryData = isFilterActive
+    ? driverSummaryFilterData
+    : driverSummaryData;
+  const loadsData: TLoads[] = (() => {
+    if (!summaryData?.data?.loads) return [];
+    return Array.isArray(summaryData.data.loads) ? summaryData.data.loads : [];
+  })();
+  const { filteredData: searchedDriver } = useSearch<TLoads>({
+    data: loadsData,
+    searchFields: ["loadId", "truckId.truckId"],
     initialSearch: searchInput,
   });
-  const tableData = searchInput ? searchedDriverLoad : flattenedLoads;
 
-  // fetch driver summary
+  const displayedData = searchInput ? searchedDriver : loadsData;
+
+  // ✅ Fetch driver summary on component mount
   useEffect(() => {
     if (id) {
-      fetchDriverSummary({ id: id as string });
+      fetchDriverSummary(id as string);
     }
   }, [id, fetchDriverSummary]);
 
-  // Error handler
+  // Filter
   useEffect(() => {
-    const errorObj = (profileError || summaryError) as
-      | FetchBaseQueryError
-      | undefined;
-    if (errorObj) {
-      const message =
-        (errorObj.data as { message?: string })?.message ||
-        "Failed to load data";
-      setError(message);
+    if (hasAppliedFilter && id && (fromDate || toDate)) {
+      const fromDateString = fromDate?.toISOString();
+      const toDateString = toDate?.toISOString();
+
+      setIsFilterActive(true);
+
+      fetchDriverSummaryWithFilter({
+        id: id as string,
+        from: fromDateString,
+        to: toDateString,
+      });
     }
-  }, [profileError, summaryError]);
+  }, [fromDate, toDate, id, fetchDriverSummaryWithFilter, hasAppliedFilter]);
+
+  // handling Errors
+  useEffect(() => {
+    if (summaryFilterError) {
+      const errorMessage = getErrorMessage(summaryFilterError);
+      setError(errorMessage);
+      toast.error(errorMessage || "Loading failed ❌", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+    }
+  }, [summaryFilterError, setError]);
+
+  // Clear filter
+  const handleClearFilter = () => {
+    setFromDate(null);
+    setToDate(null);
+    setIsFilterActive(false);
+
+    if (id) {
+      fetchDriverSummary(id as string);
+    }
+  };
 
   // Status badge component
-  const StatusBadge = ({ status }: { status: TStatusLoad }) => {
+  const StatusBadge = ({ status }: { status: string }) => {
+    const statusConfig = {
+      available: {
+        color: "bg-emerald-100 text-emerald-800 border-emerald-300",
+        icon: <IoCheckmarkCircleOutline size={14} className="mr-1" />,
+      },
+      busy: {
+        color: "bg-blue-100 text-blue-800 border-blue-300",
+        icon: <IoNavigate size={14} className="mr-1" />,
+      },
+      inactive: {
+        color: "bg-slate-100 text-slate-800 border-slate-300",
+        icon: <IoTimeOutline size={14} className="mr-1" />,
+      },
+    };
+
+    const config =
+      statusConfig[status as keyof typeof statusConfig] ||
+      statusConfig.inactive;
+
+    return (
+      <span
+        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}
+      >
+        {config.icon}
+        {status}
+      </span>
+    );
+  };
+
+  // Load Status badge component
+  const LoadStatusBadge = ({ status }: { status: TStatusLoad }) => {
     const statusConfig = {
       pending: {
         color: "bg-amber-100 text-amber-800 border-amber-300",
@@ -133,40 +195,12 @@ const DriverSummary = () => {
     );
   };
 
-  // Driver Status badge component
-  const DriverStatusBadge = ({ status }: { status: string }) => {
-    const statusConfig = {
-      available: {
-        color: "bg-emerald-100 text-emerald-800 border-emerald-300",
-        icon: <IoCheckmarkCircleOutline size={14} className="mr-1" />,
-      },
-      busy: {
-        color: "bg-blue-100 text-blue-800 border-blue-300",
-        icon: <IoNavigate size={14} className="mr-1" />,
-      },
-      inactive: {
-        color: "bg-slate-100 text-slate-800 border-slate-300",
-        icon: <IoTimeOutline size={14} className="mr-1" />,
-      },
-    };
-
-    const config =
-      statusConfig[status as keyof typeof statusConfig] ||
-      statusConfig.inactive;
-
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}
-      >
-        {config.icon}
-        {status}
-      </span>
-    );
-  };
-
-  // TODO: Table Row Renderer
+  // ✅ Table Row Renderer for Loads
   const renderDriverSummaryRow = (load: TLoads, index: number) => (
-    <tr key={index} className="hover:bg-slate-50 transition-colors group">
+    <tr
+      key={load.loadId || index}
+      className="hover:bg-slate-50 transition-colors group"
+    >
       {/* Load ID */}
       <td className="p-4 font-medium text-slate-900">
         <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
@@ -214,7 +248,7 @@ const DriverSummary = () => {
 
       {/* Status */}
       <td className="p-4 text-center">
-        <StatusBadge status={load.status} />
+        <LoadStatusBadge status={load.status} />
       </td>
 
       {/* Truck */}
@@ -229,6 +263,7 @@ const DriverSummary = () => {
     </tr>
   );
 
+  const loading = profileLoading || summaryLoading || summaryFilterLoading;
   if (loading) return <Loading />;
 
   return (
@@ -240,14 +275,14 @@ const DriverSummary = () => {
         <div className="mb-4 lg:mb-0">
           <div className="flex flex-col gap-4">
             <button
-              onClick={() => router.push("/admin/drivers")}
+              onClick={() => router.push("/admin/driverdashboard")}
               className="flex items-center w-fit cursor-pointer gap-2 px-4 py-2 text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
             >
               <IoArrowBack size={20} />
-              Back to Drivers
+              Back
             </button>
             <div>
-              <Titles>Driver Summary - {profile?.driverId || id}</Titles>
+              <Titles>Driver Summary - ({profile?.driverId})</Titles>
               <p className="text-slate-600 mt-2 text-sm">
                 Detailed overview of driver information and performance
               </p>
@@ -331,7 +366,7 @@ const DriverSummary = () => {
                   />
                   <span className="text-slate-600">Status</span>
                 </div>
-                <DriverStatusBadge status={profile.status} />
+                <StatusBadge status={profile.status} />
               </div>
             </div>
           </div>
@@ -353,12 +388,6 @@ const DriverSummary = () => {
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                  <span className="text-slate-600">Price Per Mile</span>
-                  <span className="font-semibold text-slate-800">
-                    ${profile.pricePerMile?.toFixed(2)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                   <span className="text-slate-600">Experience</span>
                   <span className="font-semibold text-slate-800">
                     {Math.floor(
@@ -369,6 +398,43 @@ const DriverSummary = () => {
                     years
                   </span>
                 </div>
+                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                  <span className="text-slate-600">Price Per Mile</span>
+                  <span className="font-semibold text-slate-800">
+                    ${profile.pricePerMile?.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Status Overview */}
+            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+              <h4 className="text-lg font-semibold text-slate-800 mb-4">
+                Status Overview
+              </h4>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Current Status</span>
+                  <StatusBadge status={profile.status} />
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-600">Availability</span>
+                  <span
+                    className={`font-medium ${
+                      profile.status === "available"
+                        ? "text-emerald-600"
+                        : profile.status === "busy"
+                        ? "text-blue-600"
+                        : "text-slate-600"
+                    }`}
+                  >
+                    {profile.status === "available"
+                      ? "Available"
+                      : profile.status === "busy"
+                      ? "On Duty"
+                      : "Inactive"}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
@@ -376,7 +442,7 @@ const DriverSummary = () => {
       )}
 
       {/* ✅ Financial Summary Section */}
-      {activeSummary && (
+      {summaryData?.data && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
           {/* Driver Summary Stats */}
           <div className="xl:col-span-3">
@@ -389,7 +455,7 @@ const DriverSummary = () => {
                       Total Loads
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {activeSummary.totalLoads}
+                      {summaryData.data.totalLoads}
                     </p>
                   </div>
                   <div className="p-2.5 bg-blue-50 rounded-lg">
@@ -406,7 +472,7 @@ const DriverSummary = () => {
                       Total Miles
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {activeSummary.totalMiles?.toLocaleString()}
+                      {summaryData.data.totalMiles?.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-2.5 bg-emerald-50 rounded-lg">
@@ -423,8 +489,8 @@ const DriverSummary = () => {
                       Total Earnings
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {activeSummary.currency}{" "}
-                      {activeSummary.totalEarnings?.toLocaleString()}
+                      {summaryData.data.currency}{" "}
+                      {summaryData.data.totalEarnings?.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-2.5 bg-amber-50 rounded-lg">
@@ -433,7 +499,7 @@ const DriverSummary = () => {
                 </div>
               </div>
 
-              {/* Price Per Mile Card */}
+              {/* Avg Price/Mile Card */}
               <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center justify-between">
                   <div>
@@ -441,8 +507,8 @@ const DriverSummary = () => {
                       Avg Price/Mile
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {activeSummary.currency}{" "}
-                      {activeSummary.pricePerMile?.toFixed(2)}
+                      {summaryData.data.currency}{" "}
+                      {summaryData.data.pricePerMile?.toFixed(2)}
                     </p>
                   </div>
                   <div className="p-2.5 bg-red-50 rounded-lg">
@@ -452,26 +518,47 @@ const DriverSummary = () => {
               </div>
             </div>
 
-            {activeSummary.period && (
+            {/* Period Info */}
+            {summaryData?.data && (
               <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
-                {/* Period Info */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
                     <IoCalendarOutline size={14} className="flex-shrink-0" />
                     <span>Period: </span>
                     <span className="font-medium text-slate-700">
-                      {activeSummary.period?.from?.split("T")[0]} to{" "}
-                      {activeSummary.period?.to?.split("T")[0]}
+                      {isFilterActive
+                        ? `${
+                            fromDate ? fromDate.format("YYYY-MM-DD") : "Any"
+                          } to ${toDate ? toDate.format("YYYY-MM-DD") : "Any"}`
+                        : "All time"}
                     </span>
+                    {(fromDate || toDate) && (
+                      <span className="text-xs text-blue-500 ml-2">
+                        ({displayedData.length} loads)
+                      </span>
+                    )}
                   </div>
                 </div>
-                {/* Filter */}
-                <DateRangeFilter
-                  onApply={(from, to) => {
-                    setFromDate(from);
-                    setToDate(to);
-                  }}
-                />
+                <div className="flex items-center gap-2">
+                  {isFilterActive && (
+                    <button
+                      onClick={handleClearFilter}
+                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+                    >
+                      <IoRefreshOutline size={16} />
+                      Clear Filter
+                    </button>
+                  )}
+                  {/* ✅ Filter */}
+                  <DateRangeFilter
+                    onApply={(from, to) => {
+                      setFromDate(from);
+                      setToDate(to);
+                    }}
+                    onFilterApplied={setHasAppliedFilter}
+                    onClear={handleClearFilter}
+                  />
+                </div>
               </div>
             )}
           </div>
@@ -479,9 +566,9 @@ const DriverSummary = () => {
       )}
 
       {/* ✅ Loads Table Section */}
-      {driverSummary && (
+      {displayedData && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          {/* Header*/}
+          {/* Header */}
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
               <div>
@@ -494,34 +581,13 @@ const DriverSummary = () => {
                 </p>
               </div>
             </div>
-
-            {/* ✅ Active Filter Message */}
-            {(fromDate || toDate) && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between text-sm text-slate-700 border border-slate-200 rounded-lg px-4 py-3 bg-blue-50">
-                <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                  <IoFilterOutline className="text-blue-600" size={18} />
-                  <div>
-                    <span className="text-blue-600 font-medium">
-                      Active Filter:{" "}
-                    </span>
-                    <span className="font-semibold text-blue-800">
-                      {fromDate ? fromDate.format("YYYY-MM-DD HH:mm") : "Any"} →{" "}
-                      {toDate ? toDate.format("YYYY-MM-DD HH:mm") : "Any"}
-                    </span>
-                    <span className="text-xs text-blue-500 ml-2">
-                      ({flattenedLoads.length} loads)
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Table For Driver Loads Summary */}
-          {flattenedLoads.length > 0 ? (
+          {displayedData.length > 0 ? (
             <DataTable
               columns={driverSummaryColumns}
-              data={tableData}
+              data={displayedData}
               renderRow={renderDriverSummaryRow}
               loading={loading}
             />
@@ -546,11 +612,11 @@ const DriverSummary = () => {
       )}
 
       {/* ✅ Summary Footer */}
-      {driverSummary && (
+      {displayedData && (
         <div className="mt-6 flex justify-end">
           <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
             <p className="text-sm text-slate-600">
-              Showing {tableData.length} loads
+              Showing {displayedData.length} loads
               {(fromDate || toDate) && " (filtered)"}
             </p>
           </div>
