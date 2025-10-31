@@ -44,7 +44,7 @@ const Modal = ({
               <IoClose size={24} />
             </button>
           )}
-        </div>
+        </div> 
 
         {/* Content */}
         {children}

@@ -1,0 +1,34 @@
+import { FaCirclePlus, FaTruckFast } from "react-icons/fa6";
+import { PiUsersFill } from "react-icons/pi";
+import { ImCalculator } from "react-icons/im";
+import {
+  IoPeopleOutline,
+  IoTrailSignOutline,
+} from "react-icons/io5";
+import { SiGoogleanalytics } from "react-icons/si";
+
+import { TUserRole } from "@/types/globalTypes";
+
+type TabItem = {
+  label: string;
+  icon: React.ReactNode;
+};
+
+export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
+  admin: [
+    { label: "Loads", icon: <FaCirclePlus/> },
+    { label: "Users", icon: <IoPeopleOutline /> },
+    { label: "Drivers", icon: <PiUsersFill /> },
+    { label: "Trucks", icon: <FaTruckFast /> },
+    { label: "TruckDashboard", icon: <SiGoogleanalytics /> },
+    { label: "Calculation", icon: <ImCalculator /> },
+    { label: "Trailers", icon: <IoTrailSignOutline /> },
+  ],
+  employee: [
+    { label: "Loads", icon: <FaCirclePlus /> },
+    { label: "Calculation", icon: <ImCalculator /> },
+  ],
+    driver: [
+    { label: "Loads", icon: <FaCirclePlus /> },
+  ],
+};

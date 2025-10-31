@@ -163,7 +163,7 @@ const Users = () => {
   // FIXME: Update User Role
   const handleUpdateRole = async (
     userId: string,
-    newRole: "admin" | "employee"
+    newRole: "admin" | "employee" | "driver"
   ) => {
     if (!token) {
       router.replace("/");
@@ -376,7 +376,7 @@ const Users = () => {
         />
       </div>
 
-      {/* Add User */}
+      {/* Add User */} 
       <div className="flex justify-end">
         <button
           onClick={() => setPopup(true)}

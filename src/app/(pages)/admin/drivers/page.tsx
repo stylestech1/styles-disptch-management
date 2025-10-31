@@ -50,44 +50,11 @@ import StatsCard from "@/components/ui/StatsCard";
 import { FaUserMinus } from "react-icons/fa";
 import { Dayjs } from "dayjs";
 import { useSearch } from "@/hook/useSearch";
+import { StatusChip, StyledTableCell, StyledTableRow } from "@/components/ui/TablesMUI";
 
 // ✅ Styled Table Components
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${theme.components?.MuiTableCell?.styleOverrides?.root}`]: {
-    borderBottom: `1px solid ${theme.palette.divider}`,
-  },
-  '&[class*="MuiTableCell-head"]': {
-    backgroundColor: "#f8fafc",
-    color: "#56677a",
-    fontSize: 14,
-  },
-  '&[class*="MuiTableCell-body"]': {
-    fontSize: 14,
-  },
-}));
-const StyledTableRow = styled(TableRow)(() => ({
-  "&:last-child td, &:last-child th": {
-    border: 0,
-  },
-  "&:hover": {
-    backgroundColor: "#fcf9fa",
-  },
-}));
-const StatusChip = ({ status }: { status: string }) => {
-  const getColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "available":
-        return "success";
-      case "busy":
-        return "error";
-      default:
-        return "default";
-    }
-  };
 
-  return <Chip label={status} color={getColor(status)} size="small" />;
-};
-
+ 
 const DriversPage = () => {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
@@ -128,7 +95,7 @@ const DriversPage = () => {
 
   const isLoading = driversLoading;
 
-  // Filter and Search loads
+  // Filter and Search loads 
   const { filteredData: searchedDrivers } = useSearch({
     data: displayDrivers,
     searchFields: ["driverId", "name", "phone", "email", 'licenseNumber'],

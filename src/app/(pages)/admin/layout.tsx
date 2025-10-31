@@ -75,9 +75,8 @@ export default function AdminLayout({
         className={`
         fixed md:relative z-50 w-80 h-full bg-gradient-to-b from-slate-800 to-slate-700 text-white
         transform transition-transform duration-300 ease-in-out
-        ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        }
+        ${isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+          }
         flex flex-col shadow-xl border-r border-slate-600
       `}
       >
@@ -106,45 +105,40 @@ export default function AdminLayout({
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {tabs.map((tab, i) => {
-            const link = `${base}/${tab.toLowerCase()}`;
+          {tabs.map(({ label, icon }, i) => {
+            const link = `${base}/${label.toLowerCase()}`;
             const active = pathname.startsWith(link);
+
             return (
               <Link
                 key={i}
                 href={link}
                 onClick={() => isMobile && setIsSidebarOpen(false)}
                 className={`
-                  flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all duration-200
-                  ${
-                    active
-                      ? "bg-emerald-500 text-white shadow-lg transform scale-[1.02]"
-                      : "text-slate-300 hover:bg-slate-600 hover:text-white hover:shadow-md"
+        flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all duration-200
+        ${active
+                    ? "bg-emerald-500 text-white shadow-lg transform scale-[1.02]"
+                    : "text-slate-300 hover:bg-slate-600 hover:text-white hover:shadow-md"
                   }
-                  group
-                `}
+        group
+      `}
               >
                 <span className="flex items-center gap-3">
-                  <div
-                    className={`w-1.5 h-1.5 rounded-full ${
-                      active
-                        ? "bg-white"
-                        : "bg-slate-400 group-hover:bg-emerald-200"
-                    }`}
-                  />
-                  {tab}
+                  {icon}
+                  <span>{label}</span>
                 </span>
+
                 <IoChevronForward
                   size={16}
-                  className={`transform transition-transform ${
-                    active
+                  className={`transform transition-transform ${active
                       ? "rotate-90 text-white"
                       : "text-slate-400 group-hover:text-slate-200"
-                  }`}
+                    }`}
                 />
               </Link>
             );
           })}
+
         </nav>
 
         {/* Logout Button */}

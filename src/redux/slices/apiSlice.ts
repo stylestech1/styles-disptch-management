@@ -337,6 +337,11 @@ export const apiSlice = api.injectEndpoints({
         `/api/v1/adminDashboard?page=${page}&limit=${limit}`,
       providesTags: ["Dispatchers"],
     }),
+    getAllUsers: builder.query({
+      query: ({ role , driver }) =>
+        `/api/v1/adminDashboard?role=driver`,
+      providesTags: ["Drivers"],
+    }),
 
     // Get User with Filter and Search
     getUserWithSearch: builder.query({
@@ -473,4 +478,5 @@ export const {
   useUpdateUserInfoMutation,
   // TODO: ----- Password -----
   useUpdateUserPasswordMutation,
+  useGetAllUsersQuery,
 } = apiSlice;

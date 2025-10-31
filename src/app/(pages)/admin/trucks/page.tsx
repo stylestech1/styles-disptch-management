@@ -12,7 +12,6 @@ import {
   Button,
   Table,
   TableBody,
-  TableCell,
   TableContainer,
   TableHead,
   TableRow,
@@ -20,8 +19,6 @@ import {
   Box,
   IconButton,
   Tooltip,
-  Chip,
-  styled,
   Typography,
   CircularProgress,
 } from "@mui/material";
@@ -44,43 +41,7 @@ import { FaUserLargeSlash } from "react-icons/fa6";
 import { Dayjs } from "dayjs";
 import { useSearch } from "@/hook/useSearch";
 import useError from "@/hook/useError";
-
-// Styled Table Components
-const StyledTableCell = styled(TableCell)(({ theme }) => ({
-  [`&.${theme.components?.MuiTableCell?.styleOverrides?.root}`]: {
-    borderBottom: `1px solid ${theme.palette.divider}`,
-  },
-  '&[class*="MuiTableCell-head"]': {
-    backgroundColor: "#f8fafc",
-    color: "#56677a",
-    fontSize: 14,
-  },
-  '&[class*="MuiTableCell-body"]': {
-    fontSize: 14,
-  },
-}));
-const StyledTableRow = styled(TableRow)(() => ({
-  "&:last-child td, &:last-child th": {
-    border: 0,
-  },
-  "&:hover": {
-    backgroundColor: "#fcf9fa",
-  },
-}));
-const StatusChip = ({ status }: { status: string }) => {
-  const getColor = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case "available":
-        return "success";
-      case "busy":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-
-  return <Chip label={status} color={getColor(status)} size="small" />;
-};
+import { StatusChip, StyledTableCell, StyledTableRow } from "@/components/ui/TablesMUI";
 
 /* ---------------- TrucksPage (parent) ---------------- */
 const TrucksPage: React.FC = () => {
@@ -165,7 +126,6 @@ const TrucksPage: React.FC = () => {
         : truck.assignedDriver;
     setFormData({
       id: truck.id,
-      truckId: truck.truckId,
       model: truck.model,
       plateNumber: truck.plateNumber,
       type: truck.type,

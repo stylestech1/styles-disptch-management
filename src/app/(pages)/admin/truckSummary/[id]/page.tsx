@@ -88,6 +88,12 @@ const TruckSummary = () => {
 
   const displayedData = searchInput ? searchedTruck : loadsData;
 
+  useEffect(() => {
+    if (id && !isFilterActive) {
+      fetchTruckSummary(Array.isArray(id) ? id[0] : id);
+    }
+  }, [id, isFilterActive, fetchTruckSummary]);
+
   // handling Errors
   useEffect(() => {
     if (summaryFilterError) {

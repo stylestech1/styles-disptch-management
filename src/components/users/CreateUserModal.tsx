@@ -184,6 +184,7 @@ const CreateUserModal = ({
               >
                 <option value="employee">Employee</option>
                 <option value="admin">Admin</option>
+                <option value="driver">Driver</option>
               </select>
             </div>
 

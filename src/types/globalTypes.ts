@@ -1,7 +1,7 @@
 import { TPlace } from "@/components/sections/LocationAutocomplete";
 import { Dayjs } from "dayjs";
 
-export type TUserRole = "admin" | "employee";
+export type TUserRole = "admin" | "employee" | "driver";
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
 export type TTruckType = "reefer" | "van";
@@ -19,6 +19,7 @@ export type TUser = {
   role: TUserRole;
   position: string;
   jobId: number;
+  driver?: string; 
 };
 export type TAuthState = {
   user: TUser | null;
@@ -70,6 +71,10 @@ export type TDriver = {
   hireDate: string;
   createdBy: string;
   pricePerMile: number;
+  currency: string; 
+  assignedTruck?: string; 
+  updatedBy?: string; 
+  user: TUser; 
 };
 export type TTruck = {
   id: string;
