@@ -34,7 +34,7 @@ import DateRangeFilter from "@/components/ui/Filter";
 import {
   useGetTruckByIdQuery,
   useLazyGetSpecificTruckSummaryQuery,
-  useLazyGetTruckSummaryWithFilterQuery,
+  useGetTruckSummaryWithFilterQuery,
 } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
 import { getErrorMessage } from "@/utils/getErrorMessage";
@@ -62,14 +62,15 @@ const TruckSummary = () => {
     fetchTruckSummary,
     { data: truckSummaryData, isLoading: summaryLoading },
   ] = useLazyGetSpecificTruckSummaryQuery();
-  const [
-    fetchTruckSummaryWithFilter,
-    {
-      data: truckSummaryFilterData,
-      isLoading: summaryFilterLoading,
-      error: summaryFilterError,
-    },
-  ] = useLazyGetTruckSummaryWithFilterQuery();
+  const {
+    data: truckSummaryFilterData,
+    isLoading: summaryFilterLoading,
+    error: summaryFilterError,
+  } = useGetTruckSummaryWithFilterQuery({
+    id: id as string,
+    from: fromDate ? fromDate.toISOString() : undefined,
+    to: toDate ? toDate.toISOString() : undefined,
+  });
 
   const profile = profileData?.data;
   const summaryData = isFilterActive
@@ -87,29 +88,6 @@ const TruckSummary = () => {
 
   const displayedData = searchInput ? searchedTruck : loadsData;
 
-  // ✅ Fetch truck summary on component mount
-  useEffect(() => {
-    if (id) {
-      fetchTruckSummary(id as string);
-    }
-  }, [id, fetchTruckSummary]);
-
-  // Filter
-  useEffect(() => {
-    if (hasAppliedFilter && id && (fromDate || toDate)) {
-      const fromDateString = fromDate?.toISOString();
-      const toDateString = toDate?.toISOString();
-
-      setIsFilterActive(true);
-
-      fetchTruckSummaryWithFilter({
-        id: id as string,
-        from: fromDateString,
-        to: toDateString,
-      });
-    }
-  }, [fromDate, toDate, id, fetchTruckSummaryWithFilter, hasAppliedFilter]);
-
   // handling Errors
   useEffect(() => {
     if (summaryFilterError) {
@@ -121,15 +99,18 @@ const TruckSummary = () => {
     }
   }, [summaryFilterError, setError]);
 
-  // Clear filter
+  // ✅ Clear Filter
   const handleClearFilter = () => {
     setFromDate(null);
     setToDate(null);
     setIsFilterActive(false);
+  };
 
-    if (id) {
-      fetchTruckSummary(id as string);
-    }
+  // ✅ Apply Filter
+  const handleApplyFilter = (from: Dayjs | null, to: Dayjs | null) => {
+    setFromDate(from);
+    setToDate(to);
+    setIsFilterActive(!!from || !!to);
   };
 
   // Status badge component
@@ -578,14 +559,7 @@ const TruckSummary = () => {
                     </button>
                   )}
                   {/* ✅ Filter */}
-                  <DateRangeFilter
-                    onApply={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    onFilterApplied={setHasAppliedFilter}
-                    onClear={handleClearFilter}
-                  />
+                  <DateRangeFilter onApply={handleApplyFilter} />
                 </div>
               </div>
             )}

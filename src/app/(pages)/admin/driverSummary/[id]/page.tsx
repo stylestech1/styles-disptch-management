@@ -32,52 +32,58 @@ import { Dayjs } from "dayjs";
 import DateRangeFilter from "@/components/ui/Filter";
 import {
   useGetDriverByIdQuery,
-  useLazyGetSpecificDriverSummaryQuery,
-  useLazyGetDriverSummaryWithFilterQuery,
+  useGetDriverSummaryWithFilterQuery,
 } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
 const DriverSummary = () => {
   const { id } = useParams();
-  // ✅ Search And Filter
+  const router = useRouter();
+  const { error, setError } = useError();
+
+  // ✅ Filter + Search
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [isFilterActive, setIsFilterActive] = useState(false);
-  const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
 
-  const router = useRouter();
-  const { error, setError } = useError();
+  // ✅ Profile Query
+  const { data: profileData, isLoading: profileLoading } =
+    useGetDriverByIdQuery(id as string, { skip: !id });
 
-  // ✅ RTK Query hooks
-  const { data: profileData, isLoading: profileLoading } = useGetDriverByIdQuery(
-    id as string,
-    {
-      skip: !id,
+  // ✅ Lazy Query for filtered data
+  const {
+    data: driverSummaryData,
+    isLoading: summaryLoading,
+    isFetching: summaryFetching,
+    error: summaryError,
+    refetch,
+  } = useGetDriverSummaryWithFilterQuery({
+    id: id as string,
+    from: fromDate ? fromDate.toISOString() : undefined,
+    to: toDate ? toDate.toISOString() : undefined,
+  });
+
+  // ✅ Error handling
+  useEffect(() => {
+    if (summaryError) {
+      const errorMessage = getErrorMessage(summaryError);
+      setError(errorMessage);
+      toast.error(errorMessage || "Failed to load summary ❌", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
     }
-  );
-  const [
-    fetchDriverSummary,
-    { data: driverSummaryData, isLoading: summaryLoading },
-  ] = useLazyGetSpecificDriverSummaryQuery();
-  const [
-    fetchDriverSummaryWithFilter,
-    {
-      data: driverSummaryFilterData,
-      isLoading: summaryFilterLoading,
-      error: summaryFilterError,
-    },
-  ] = useLazyGetDriverSummaryWithFilterQuery();
+  }, [summaryError, setError]);
 
   const profile = profileData?.data;
-  const summaryData = isFilterActive
-    ? driverSummaryFilterData
-    : driverSummaryData;
-  const loadsData: TLoads[] = (() => {
-    if (!summaryData?.data?.loads) return [];
-    return Array.isArray(summaryData.data.loads) ? summaryData.data.loads : [];
-  })();
+  const summaryData = driverSummaryData?.data;
+
+  // ✅ Search
+  const loadsData: TLoads[] = Array.isArray(summaryData?.loads)
+    ? summaryData.loads
+    : [];
+
   const { filteredData: searchedDriver } = useSearch<TLoads>({
     data: loadsData,
     searchFields: ["loadId", "truckId.truckId"],
@@ -86,49 +92,18 @@ const DriverSummary = () => {
 
   const displayedData = searchInput ? searchedDriver : loadsData;
 
-  // ✅ Fetch driver summary on component mount
-  useEffect(() => {
-    if (id) {
-      fetchDriverSummary(id as string);
-    }
-  }, [id, fetchDriverSummary]);
-
-  // Filter
-  useEffect(() => {
-    if (hasAppliedFilter && id && (fromDate || toDate)) {
-      const fromDateString = fromDate?.toISOString();
-      const toDateString = toDate?.toISOString();
-
-      setIsFilterActive(true);
-
-      fetchDriverSummaryWithFilter({
-        id: id as string,
-        from: fromDateString,
-        to: toDateString,
-      });
-    }
-  }, [fromDate, toDate, id, fetchDriverSummaryWithFilter, hasAppliedFilter]);
-
-  // handling Errors
-  useEffect(() => {
-    if (summaryFilterError) {
-      const errorMessage = getErrorMessage(summaryFilterError);
-      setError(errorMessage);
-      toast.error(errorMessage || "Loading failed ❌", {
-        style: { background: "#dc2626", color: "#fff" },
-      });
-    }
-  }, [summaryFilterError, setError]);
-
-  // Clear filter
+  // ✅ Clear Filter
   const handleClearFilter = () => {
     setFromDate(null);
     setToDate(null);
     setIsFilterActive(false);
+  };
 
-    if (id) {
-      fetchDriverSummary(id as string);
-    }
+  // ✅ Apply Filter
+  const handleApplyFilter = (from: Dayjs | null, to: Dayjs | null) => {
+    setFromDate(from);
+    setToDate(to);
+    setIsFilterActive(!!from || !!to);
   };
 
   // Status badge component
@@ -263,8 +238,11 @@ const DriverSummary = () => {
     </tr>
   );
 
-  const loading = profileLoading || summaryLoading || summaryFilterLoading;
-  if (loading) return <Loading />;
+  // ✅ Intelligent Loading
+  const isInitialLoading = profileLoading || (!summaryData && summaryLoading);
+  const isFiltering = summaryFetching && summaryData;
+
+  if (isInitialLoading) return <Loading />;
 
   return (
     <section className="container mx-auto p-6">
@@ -442,7 +420,7 @@ const DriverSummary = () => {
       )}
 
       {/* ✅ Financial Summary Section */}
-      {summaryData?.data && (
+      {summaryData && (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
           {/* Driver Summary Stats */}
           <div className="xl:col-span-3">
@@ -455,7 +433,7 @@ const DriverSummary = () => {
                       Total Loads
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.totalLoads}
+                      {summaryData.totalLoads}
                     </p>
                   </div>
                   <div className="p-2.5 bg-blue-50 rounded-lg">
@@ -472,7 +450,7 @@ const DriverSummary = () => {
                       Total Miles
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.totalMiles?.toLocaleString()}
+                      {summaryData.totalMiles?.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-2.5 bg-emerald-50 rounded-lg">
@@ -489,8 +467,8 @@ const DriverSummary = () => {
                       Total Earnings
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.currency}{" "}
-                      {summaryData.data.totalEarnings?.toLocaleString()}
+                      {summaryData.currency}{" "}
+                      {summaryData.totalEarnings?.toLocaleString()}
                     </p>
                   </div>
                   <div className="p-2.5 bg-amber-50 rounded-lg">
@@ -507,8 +485,8 @@ const DriverSummary = () => {
                       Avg Price/Mile
                     </p>
                     <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.currency}{" "}
-                      {summaryData.data.pricePerMile?.toFixed(2)}
+                      {summaryData.currency}{" "}
+                      {summaryData.pricePerMile?.toFixed(2)}
                     </p>
                   </div>
                   <div className="p-2.5 bg-red-50 rounded-lg">
@@ -519,7 +497,7 @@ const DriverSummary = () => {
             </div>
 
             {/* Period Info */}
-            {summaryData?.data && (
+            {summaryData && (
               <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
@@ -550,14 +528,7 @@ const DriverSummary = () => {
                     </button>
                   )}
                   {/* ✅ Filter */}
-                  <DateRangeFilter
-                    onApply={(from, to) => {
-                      setFromDate(from);
-                      setToDate(to);
-                    }}
-                    onFilterApplied={setHasAppliedFilter}
-                    onClear={handleClearFilter}
-                  />
+                  <DateRangeFilter onApply={handleApplyFilter} />
                 </div>
               </div>
             )}
@@ -577,7 +548,7 @@ const DriverSummary = () => {
                 </h3>
                 <p className="text-slate-500 text-sm">
                   Detailed breakdown of all loads assigned to this driver
-                  {(fromDate || toDate) && " (filtered)"}
+                  {isFilterActive && " (filtered)"}
                 </p>
               </div>
             </div>
@@ -589,19 +560,19 @@ const DriverSummary = () => {
               columns={driverSummaryColumns}
               data={displayedData}
               renderRow={renderDriverSummaryRow}
-              loading={loading}
+              loading={isInitialLoading}
             />
           ) : (
             <div className="px-4 py-12 text-center text-slate-500">
               <div className="flex flex-col items-center justify-center">
                 <div className="text-3xl mb-3">📦</div>
                 <div className="text-slate-600">
-                  {fromDate || toDate
+                  {isFilterActive
                     ? "No load records found for the selected date range"
                     : "No load records found"}
                 </div>
                 <div className="text-slate-400 text-sm mt-1">
-                  {fromDate || toDate
+                  {isFilterActive
                     ? "Please adjust your date filter"
                     : "There are no loads available for this driver"}
                 </div>
@@ -617,13 +588,13 @@ const DriverSummary = () => {
           <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
             <p className="text-sm text-slate-600">
               Showing {displayedData.length} loads
-              {(fromDate || toDate) && " (filtered)"}
+              {isFilterActive && " (filtered)"}
             </p>
           </div>
         </div>
       )}
 
-      {!profile && !loading && (
+      {!profile && !isInitialLoading && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
           <div className="text-4xl mb-4">👨‍💼</div>
           <h3 className="text-xl font-semibold text-slate-800 mb-2">
