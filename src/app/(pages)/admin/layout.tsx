@@ -127,14 +127,6 @@ export default function AdminLayout({
                   {icon}
                   <span>{label}</span>
                 </span>
-
-                <IoChevronForward
-                  size={16}
-                  className={`transform transition-transform ${active
-                      ? "rotate-90 text-white"
-                      : "text-slate-400 group-hover:text-slate-200"
-                    }`}
-                />
               </Link>
             );
           })}

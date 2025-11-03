@@ -370,7 +370,6 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               mb: 3,
               display: "flex",
               justifyContent: "flex-end",
-              p: 2,
               borderRadius: 2,
             }}
           >
@@ -395,7 +394,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                 boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
               }}
             >
-              Update Load Information
+              Update Load
             </Button>
           </Box>
 

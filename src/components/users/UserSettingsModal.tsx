@@ -4,6 +4,7 @@ import { IoClose, IoSettingsOutline } from "react-icons/io5";
 import { TDispatcher } from "@/types/globalTypes";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import toast from "react-hot-toast";
+import { FormControl, MenuItem, Select } from "@mui/material";
 
 interface UserSettingsModalProps {
   isOpen: boolean;
@@ -95,38 +96,42 @@ const UserSettingsModal = ({
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Role
               </label>
-              <select
-                value={tempUser.role}
-                onChange={(e) =>
-                  setTempUser({
-                    ...tempUser,
-                    role: e.target.value as "admin" | "employee",
-                  })
-                }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              >
-                <option value="employee">Employee</option>
-                <option value="admin">Admin</option>
-              </select>
+              <FormControl fullWidth>
+                <Select
+                  value={tempUser.role}
+                  onChange={(e) =>
+                    setTempUser({
+                      ...tempUser,
+                      role: e.target.value as "admin" | "employee",
+                    })
+                  }
+                  className="block w-full border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                >
+                  <MenuItem value={"employee"}>Employee</MenuItem>
+                  <MenuItem value={"admin"}>Admin</MenuItem>
+                </Select>
+              </FormControl>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-2">
                 Status
               </label>
-              <select
-                value={tempUser.status}
-                onChange={(e) =>
-                  setTempUser({
-                    ...tempUser,
-                    status: e.target.value as "active" | "deactive",
-                  })
-                }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              >
-                <option value="active">Active</option>
-                <option value="deactive">Deactive</option>
-              </select>
+              <FormControl fullWidth>
+                <Select
+                  value={tempUser.status}
+                  onChange={(e) =>
+                    setTempUser({
+                      ...tempUser,
+                      status: e.target.value as "active" | "deactive",
+                    })
+                  }
+                  className="block w-full border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                >
+                  <MenuItem value={"active"}>Active</MenuItem>
+                  <MenuItem value={"deactive"}>Deactive</MenuItem>
+                </Select>
+              </FormControl>
             </div>
           </div>
 

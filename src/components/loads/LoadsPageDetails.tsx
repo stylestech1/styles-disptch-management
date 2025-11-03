@@ -354,7 +354,7 @@ const LoadsPageDetails = () => {
               <IoSearch className="h-5 w-5 text-slate-400" />
             </div>
             <input
-              type="text"
+              type="search"
               placeholder="Search loads by its ID, or driver number"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
