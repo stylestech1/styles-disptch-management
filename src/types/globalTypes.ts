@@ -19,7 +19,7 @@ export type TUser = {
   role: TUserRole;
   position: string;
   jobId: number;
-  driver?: string; 
+  driver?: string;
 };
 export type TAuthState = {
   user: TUser | null;
@@ -71,10 +71,10 @@ export type TDriver = {
   hireDate: string;
   createdBy: string;
   pricePerMile: number;
-  currency: string; 
-  assignedTruck?: string; 
-  updatedBy?: string; 
-  user: TUser; 
+  currency: string;
+  assignedTruck?: string;
+  updatedBy?: string;
+  user: TUser;
 };
 export type TTruck = {
   id: string;
@@ -301,4 +301,61 @@ export interface UseSearchProps<T> {
   data: T[];
   searchFields: (keyof T | string)[];
   initialSearch?: string;
+}
+export interface CreateEditLoadModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  editingLoad?: TLoads | null;
+}
+export interface LoadDetailsTabProps {
+  allDistance: string;
+  price: string;
+  fees: string;
+  loadIDInp: string;
+  pickupAt: Dayjs | null;
+  completedAt: Dayjs | null;
+  arrivalAtShipper: Dayjs | null;
+  arrivalAtReceiver: Dayjs | null;
+  leftShipper: Dayjs | null;
+  leftReceiver: Dayjs | null;
+  pricePerMile: number | null;
+  isEditing: boolean;
+  destinations: (TPlace | null)[];
+  selectedDocuments: File[];
+  uploadError: string;
+  isDragging: boolean;
+  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
+  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
+  onRemoveFile: (index: number) => void;
+  onPriceChange: (value: string) => void;
+  onFeesChange: (value: string) => void;
+  onLoadIDChange: (value: string) => void;
+  onPickupAtChange: (value: Dayjs | null) => void;
+  onCompletedAtChange: (value: Dayjs | null) => void;
+  onArrivalAtShipperChange: (value: Dayjs | null) => void;
+  onArrivalAtReceiverChange: (value: Dayjs | null) => void;
+  onLeftShipperChange: (value: Dayjs | null) => void;
+  onLeftReceiverChange: (value: Dayjs | null) => void;
+  isTabValid: boolean;
+  onPrevTab: () => void;
+  onNextTab: () => void;
+}
+export interface AssignmentTabProps {
+  isEditing: boolean;
+  editingLoad: TLoads | null;
+  driverId: string;
+  truckId: string;
+  truckType: string;
+  truckTemp: string;
+  onDriverIdChange: (value: string) => void;
+  onTruckIdChange: (value: string) => void;
+  onTruckTypeChange: (value: string) => void;
+  onTruckTempChange: (value: string) => void;
+  isTabValid: boolean;
+  onPrevTab: () => void;
+  onSubmit: (e: React.FormEvent) => void;
+  isLoading: boolean;
 }

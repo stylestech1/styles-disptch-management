@@ -40,10 +40,12 @@ import DateRangeFilter from "@/components/ui/Filter";
 // Utils
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { useSearch } from "@/hook/useSearch";
+import { RootState, useAppSelector } from "@/redux/store";
 
 const LoadsPageDetails = () => {
   const [page, setPage] = useState(1);
-  const router = useRouter(); 
+  const router = useRouter();
+  const userRole = useAppSelector((state: RootState) => state.auth.user?.role);
 
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
@@ -126,11 +128,17 @@ const LoadsPageDetails = () => {
       <tr
         key={index}
         className="hover:bg-slate-50 transition-colors group cursor-pointer"
-        onClick={() =>
-          router.push(
-            `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
-          )
-        }
+        onClick={() => {
+          if (userRole === "admin") {
+            router.push(
+              `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
+            );
+          } else if (userRole === "employee") {
+            router.push(
+              `/dispatchers/loadDetails/${encodeURIComponent(loadItem.loadId)}`
+            );
+          }
+        }}
       >
         {/* Load ID */}
         <td className="p-4 text-center">
@@ -225,9 +233,19 @@ const LoadsPageDetails = () => {
                 className="relative cursor-pointer hover:scale-110 transition-transform group/note"
                 onClick={(e) => {
                   e.stopPropagation();
-                  router.push(
-                    `/admin/loadDetails/${loadItem.loadId}?tab=comments`
-                  );
+                  if (userRole === "admin") {
+                    router.push(
+                      `/admin/loadDetails/${encodeURIComponent(
+                        loadItem.loadId
+                      )}`
+                    );
+                  } else if (userRole === "employee") {
+                    router.push(
+                      `/dispatchers/loadDetails/${encodeURIComponent(
+                        loadItem.loadId
+                      )}`
+                    );
+                  }
                 }}
                 title={`${commentsCount} comment(s) - Click to view`}
               >

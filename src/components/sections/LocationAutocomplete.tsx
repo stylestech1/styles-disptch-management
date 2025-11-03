@@ -1,4 +1,5 @@
 "use client";
+import { Button, TextField } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 
 export type TPlace = {
@@ -53,7 +54,7 @@ const LocationAutocomplete = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSelecting, setIsSelecting] = useState(false);
-  const [shouldSearch, setShouldSearch] = useState(true); 
+  const [shouldSearch, setShouldSearch] = useState(true);
 
   useEffect(() => {
     if (value?.display_name && value.display_name !== input) {
@@ -148,7 +149,7 @@ const LocationAutocomplete = ({
     }, 400);
 
     return () => clearTimeout(timeout);
-  }, [input, isSelecting, shouldSearch]); 
+  }, [input, isSelecting, shouldSearch]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -172,12 +173,12 @@ const LocationAutocomplete = ({
     setSuggestions([]);
     setShowSuggestions(false);
     setIsSelecting(false);
-    setShouldSearch(true); 
+    setShouldSearch(true);
   };
 
   const handleSelectPlace = (place: TPlace) => {
     setIsSelecting(true);
-    setShouldSearch(false); 
+    setShouldSearch(false);
 
     setValue(place);
     setInput(place.display_name);
@@ -196,8 +197,8 @@ const LocationAutocomplete = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInput(newValue);
-    setShouldSearch(true); 
-    
+    setShouldSearch(true);
+
     if (newValue.length >= 2) {
       setShowSuggestions(true);
     } else {
@@ -223,7 +224,7 @@ const LocationAutocomplete = ({
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape' || e.key === 'Tab') {
+    if (e.key === "Escape" || e.key === "Tab") {
       setShowSuggestions(false);
     }
   };
@@ -234,33 +235,49 @@ const LocationAutocomplete = ({
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <label className="block mb-1 font-medium">{label} <span className="text-red-500">*</span></label>
-      <div className="relative">
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={handleInputChange}
-          onFocus={handleInputFocus}
-          onBlur={handleInputBlur}
-          onKeyDown={handleInputKeyDown}
-          placeholder={placeholder || "Enter address, city, state or ZIP"}
-          className="border p-2 rounded w-full pr-10 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-        />
-
-        {input && (
-          <button
-            type="button"
-            onClick={clearValue}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
-          >
-            ✕
-          </button>
-        )}
+      <label className="block mb-1 font-medium">
+        {label} <span className="text-red-500">*</span>
+      </label>
+      <div className="flex items-end gap-5">
+        <div className="relative flex items-end gap-4 w-full">
+          <TextField
+            inputRef={inputRef}
+            type="text"
+            value={input}
+            onChange={handleInputChange}
+            onFocus={handleInputFocus}
+            onBlur={handleInputBlur}
+            onKeyDown={handleInputKeyDown}
+            placeholder={placeholder || "Enter address, city, state or ZIP"}
+            variant="outlined"
+            fullWidth
+            size="small"
+            className="bg-white rounded-lg"
+            slotProps={{
+              input: {
+                endAdornment: input && (
+                  <Button
+                    onClick={clearValue}
+                    type="button"
+                    variant="text"
+                    size="small"
+                    sx={{
+                      minWidth: 0,
+                      padding: 0.5,
+                      color: "red",
+                    }}
+                  >
+                    ✕
+                  </Button>
+                ),
+              },
+            }}
+          />
+        </div>
       </div>
 
       {loading && (
-        <div className="absolute top-full left-0 bg-white border p-2 w-full z-50 shadow-lg rounded-b">
+        <div className="absolute top-17 left-0 bg-white border p-2 w-full z-50 shadow-lg rounded-b">
           <div className="flex items-center justify-center">
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
             Searching...
@@ -269,7 +286,7 @@ const LocationAutocomplete = ({
       )}
 
       {!loading && showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute top-full left-0 bg-white border w-full max-h-60 overflow-auto z-50 shadow-lg rounded-b">
+        <ul className="absolute top-17 left-0 bg-white border w-full max-h-60 overflow-auto z-50 shadow-lg rounded-b">
           {suggestions.map((s) => (
             <li
               key={s.place_id}
@@ -296,7 +313,7 @@ const LocationAutocomplete = ({
         showSuggestions &&
         suggestions.length === 0 &&
         input.length >= 2 && (
-          <div className="absolute top-full left-0 bg-white border p-3 w-full z-50 shadow-lg rounded-b text-gray-500">
+          <div className="absolute top-17 left-0 bg-white border p-3 w-full z-50 shadow-lg rounded-b text-gray-500">
             No locations found. Try a different search term.
           </div>
         )}

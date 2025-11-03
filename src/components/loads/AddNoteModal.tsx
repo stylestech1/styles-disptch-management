@@ -5,23 +5,33 @@ import { useAddNoteMutation, useGetLoadsQuery } from "@/redux/slices/apiSlice";
 import { TLoads } from "@/types/globalTypes";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import {
+  Button,
+  FormControl,
+  MenuItem,
+  Select,
+  TextField,
+} from "@mui/material";
 
 interface AddNoteModalProps {
   isOpen: boolean;
   onClose: () => void;
-  load: TLoads
+  load: TLoads;
 }
 
-const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) => {
-  const [selectedLoadIdForNote, setSelectedLoadIdForNote] = useState(load?.id || "");
-  const [addingNote, setAddingNote] = useState("");
-  const [noteType, setNoteType] = useState<"dispatcher" | "driver">(
-    "dispatcher"
+const AddNoteModal: React.FC<AddNoteModalProps> = ({
+  isOpen,
+  onClose,
+  load,
+}) => {
+  const [selectedLoadIdForNote, setSelectedLoadIdForNote] = useState(
+    load?.id || ""
   );
-
+  const [addingNote, setAddingNote] = useState("");
+  const [noteType, setNoteType] = useState<"load" | "driver">("load");
 
   // using useGetLoadsQuery instead of useSelector
-  const { refetch } = useGetLoadsQuery({ page: 1, limit: 10 })
+  const { refetch } = useGetLoadsQuery({ page: 1, limit: 10 });
   const [addNote, { isLoading: addingNoteLoading }] = useAddNoteMutation();
 
   const handleNotes = async (e: React.FormEvent) => {
@@ -59,7 +69,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
 
   const handleClose = () => {
     setAddingNote("");
-    setNoteType("dispatcher");
+    setNoteType("load");
     onClose();
   };
 
@@ -76,11 +86,10 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
           <label className="block text-sm font-medium text-slate-700 mb-2 ">
             Load ID
           </label>
-          <input
-            type="text"
-            readOnly
-            value={load?.loadId || 'N/A'}
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-slate-100"
+          <TextField
+            aria-readonly
+            value={load?.loadId || "N/A"}
+            className="block w-full px-3 py-3 cursor-not-allowed border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-slate-100"
           />
         </div>
 
@@ -89,17 +98,16 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Note Type
           </label>
-          <select
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors cursor-pointer"
-            value={noteType}
-            onChange={(e) =>
-              setNoteType(e.target.value as "dispatcher" | "driver")
-            }
-            required
-          >
-            <option value="dispatcher">Load Note</option>
-            <option value="driver">Driver Note</option>
-          </select>
+          <FormControl fullWidth>
+            <Select
+              labelId="demo-simple-select-label"
+              value={noteType}
+              onChange={(e) => setNoteType(e.target.value as "load" | "driver")}
+            >
+              <MenuItem value={"load"}>Load Note</MenuItem>
+              <MenuItem value={"driver"}>Driver Note</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         {/* Note Text */}
@@ -107,19 +115,19 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Note
           </label>
-          <textarea
+          <TextField
             value={addingNote}
             onChange={(e) => setAddingNote(e.target.value)}
-            cols={30}
             rows={5}
             className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
             placeholder="Enter your note here..."
-            required
-          ></textarea>
+            multiline
+          />
         </div>
 
         {/* Submit */}
-        <button
+        <Button
+          variant="contained"
           type="submit"
           disabled={addingNoteLoading}
           className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -132,9 +140,9 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({ isOpen, onClose, load }) =>
           ) : (
             "Add Note"
           )}
-        </button>
+        </Button>
       </form>
-    </Modal >
+    </Modal>
   );
 };
 

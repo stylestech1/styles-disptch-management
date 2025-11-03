@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
-import dayjs, { Dayjs } from "dayjs";
+import dayjs from "dayjs";
 import LocationAutocomplete, {
   TPlace,
 } from "@/components/sections/LocationAutocomplete";
@@ -19,7 +19,6 @@ import {
   IoCheckmark,
   IoCash,
   IoKey,
-  IoInformationCircle,
 } from "react-icons/io5";
 import { RxUpdate } from "react-icons/rx";
 import {
@@ -59,21 +58,31 @@ import {
   useUpdateLoadsMutation,
 } from "@/redux/slices/apiSlice";
 import { RootState } from "@/redux/store";
-import { TDriver, TLoads, TTruck, TTruckType } from "@/types/globalTypes";
+import {
+  AssignmentTabProps,
+  CreateEditLoadModalProps,
+  LoadDetailsTabProps,
+  TDriver,
+  TLoads,
+  TTruck,
+  TTruckType,
+} from "@/types/globalTypes";
 import toast from "react-hot-toast";
 import { MdError, MdPictureAsPdf } from "react-icons/md";
+import {
+  Alert,
+  Button,
+  InputAdornment,
+  Tab,
+  Tabs,
+  TextField,
+} from "@mui/material";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
   () => import("@/components/ui/GoogleMapsLoader")
 );
 const LazyMapWithRoute = lazy(() => import("@/components/ui/MapWithRoute"));
-
-interface CreateEditLoadModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  editingLoad?: TLoads | null;
-}
 
 const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   isOpen,
@@ -642,53 +651,67 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       size="xl"
     >
       <div className="flex flex-col h-full">
-        {/* Tabs Navigation */}
-        <div className="border-b border-slate-200">
-          <nav className="flex space-x-8">
-            <button
-              type="button"
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 1
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-              }`}
-              onClick={() => dispatch(setActiveTab(1))}
-            >
+        {/* MUI Tabs Navigation */}
+        <Tabs
+          value={activeTab}
+          onChange={(event, newValue) => dispatch(setActiveTab(newValue))}
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontSize: "0.875rem",
+              fontWeight: 500,
+              minHeight: "64px",
+            },
+          }}
+        >
+          <Tab
+            value={1}
+            label={
               <span className="flex items-center">
                 <IoLocationOutline className="mr-2" />
                 Locations
               </span>
-            </button>
-            <button
-              type="button"
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 2
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-              }`}
-              onClick={() => dispatch(setActiveTab(2))}
-            >
+            }
+            sx={{
+              color: activeTab === 1 ? "#10b981" : "#64748b",
+              "&.Mui-selected": {
+                color: "#10b981",
+              },
+            }}
+          />
+          <Tab
+            value={2}
+            label={
               <span className="flex items-center">
                 <IoDocumentText className="mr-2" />
                 Load Details
               </span>
-            </button>
-            <button
-              type="button"
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 3
-                  ? "border-emerald-500 text-emerald-600"
-                  : "border-transparent text-slate-500 hover:text-slate-700 hover:border-slate-300"
-              }`}
-              onClick={() => dispatch(setActiveTab(3))}
-            >
+            }
+            sx={{
+              color: activeTab === 2 ? "#10b981" : "#64748b",
+              "&.Mui-selected": {
+                color: "#10b981",
+              },
+            }}
+          />
+          <Tab
+            value={3}
+            label={
               <span className="flex items-center">
                 <IoCar className="mr-2" />
                 Ride
               </span>
-            </button>
-          </nav>
-        </div>
+            }
+            sx={{
+              color: activeTab === 3 ? "#10b981" : "#64748b",
+              "&.Mui-selected": {
+                color: "#10b981",
+              },
+            }}
+          />
+        </Tabs>
 
         <form onSubmit={handleCreateLoad} className="flex-1 overflow-auto p-4">
           {/* Tab 1: Locations */}
@@ -696,34 +719,34 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
             <div>
               {/* Information Message */}
               {allDistance && (
-                <div className="mb-5 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <div className="flex items-start gap-2">
-                    <IoInformationCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <div>
-                      <h4 className="text-md font-medium text-blue-800">
-                        Route Distance Information
-                      </h4>
-                      <p className="text-sm text-blue-700 mt-1">
-                        Total distance calculated from {dho ? "DHO" : "Origin"}{" "}
-                        through all destinations:{" "}
-                        <strong>{allDistance} miles</strong>
+                <Alert
+                  severity="success"
+                  className="mb-5 p-3 border border-green-600"
+                >
+                  <div>
+                    <h4 className="text-md font-medium text-green-800">
+                      Route Distance Information
+                    </h4>
+                    <p className="text-sm text-green-700 mt-1">
+                      Total distance calculated from {dho ? "DHO" : "Origin"}{" "}
+                      through all destinations:{" "}
+                      <strong>{allDistance} miles</strong>
+                    </p>
+                    {dho && origin && (
+                      <p className="text-sm text-green-600 mt-1">
+                        • DHO to Origin:{" "}
+                        {dhoToOriginDistance?.toFixed(2) || "0"} miles
                       </p>
-                      {dho && origin && (
-                        <p className="text-sm text-blue-600 mt-1">
-                          • DHO to Origin:{" "}
-                          {dhoToOriginDistance?.toFixed(2) || "0"} miles
-                        </p>
-                      )}
-                      {destinations.filter((d) => d !== null).length > 0 && (
-                        <p className="text-sm text-blue-600">
-                          • Including{" "}
-                          {destinations.filter((d) => d !== null).length}{" "}
-                          destination(s)
-                        </p>
-                      )}
-                    </div>
+                    )}
+                    {destinations.filter((d) => d !== null).length > 0 && (
+                      <p className="text-sm text-green-600">
+                        • Including{" "}
+                        {destinations.filter((d) => d !== null).length}{" "}
+                        destination(s)
+                      </p>
+                    )}
                   </div>
-                </div>
+                </Alert>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -749,7 +772,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         DHO to Origin Distance
                       </label>
                       <div className="relative">
-                        <input
+                        <TextField
                           type="text"
                           value={
                             dhoToOriginDistance
@@ -757,7 +780,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                               : ""
                           }
                           className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                          readOnly
+                          aria-readonly
                           placeholder="Distance will auto-calculate"
                         />
                       </div>
@@ -768,13 +791,13 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         Average Time To Pickup
                       </label>
                       <div className="relative">
-                        <input
+                        <TextField
                           type="text"
                           value={
                             averageTime ? `${formatTime(averageTime)}` : ""
                           }
                           className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
-                          readOnly
+                          aria-readonly
                           placeholder="Time will auto-calculate"
                         />
                       </div>
@@ -787,14 +810,15 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                       <label className="block text-sm font-medium text-slate-700">
                         Destinations <span className="text-red-500">*</span>
                       </label>
-                      <button
+                      <Button
+                        variant="contained"
                         type="button"
                         onClick={handleAddDestination}
                         className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
                       >
                         <IoAdd size={16} />
                         Add Destination
-                      </button>
+                      </Button>
                     </div>
 
                     {destinations.map((destination, index) => (
@@ -870,7 +894,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                   type="button"
                   onClick={() => dispatch(setActiveTab(2))}
                   disabled={!isTab1Valid()}
-                  className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+                  className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
                     isTab1Valid()
                       ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                       : "bg-slate-300 text-slate-500 cursor-not-allowed"
@@ -965,47 +989,9 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     </Modal>
   );
 };
-
 export default CreateEditLoadModal;
 
 // Load Details Tab Component
-interface LoadDetailsTabProps {
-  allDistance: string;
-  price: string;
-  fees: string;
-  loadIDInp: string;
-  pickupAt: Dayjs | null;
-  completedAt: Dayjs | null;
-  arrivalAtShipper: Dayjs | null;
-  arrivalAtReceiver: Dayjs | null;
-  leftShipper: Dayjs | null;
-  leftReceiver: Dayjs | null;
-  pricePerMile: number | null;
-  isEditing: boolean;
-  destinations: (TPlace | null)[];
-  selectedDocuments: File[];
-  uploadError: string;
-  isDragging: boolean;
-  onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDragOver: (e: React.DragEvent<HTMLDivElement>) => void;
-  onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
-  onRemoveFile: (index: number) => void;
-  onPriceChange: (value: string) => void;
-  onFeesChange: (value: string) => void;
-  onLoadIDChange: (value: string) => void;
-  onPickupAtChange: (value: Dayjs | null) => void;
-  onCompletedAtChange: (value: Dayjs | null) => void;
-  onArrivalAtShipperChange: (value: Dayjs | null) => void;
-  onArrivalAtReceiverChange: (value: Dayjs | null) => void;
-  onLeftShipperChange: (value: Dayjs | null) => void;
-  onLeftReceiverChange: (value: Dayjs | null) => void;
-  isTabValid: boolean;
-  onPrevTab: () => void;
-  onNextTab: () => void;
-}
-
 const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   allDistance,
   price,
@@ -1053,16 +1039,22 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
             Calculated All Distance
           </label>
           <div className="relative">
-            <input
+            <TextField
+              aria-readonly
               type="text"
               value={allDistance ? `${allDistance} miles` : "Calculating..."}
               className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-              readOnly
               placeholder="Auto-calculating total distance..."
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IoCheckmark className="h-5 w-5 text-green-600" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <IoCheckmark className="h-5 w-5 text-green-600" />
-            </div>
           </div>
           {allDistance && (
             <p className="text-xs text-slate-500 mt-1">
@@ -1076,17 +1068,23 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Total Price <span className="text-red-500">*</span>
           </label>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IoCash className="h-5 w-5 text-slate-400" />
-            </div>
-            <input
+          <div>
+            <TextField
               type="text"
               value={price}
               onChange={(e) => onPriceChange(e.target.value)}
               className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
               placeholder="0.00"
               required
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoCash className="h-5 w-5 text-slate-400" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           </div>
         </div>
@@ -1096,7 +1094,8 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
             Price Per Mile
           </label>
           <div className="relative">
-            <input
+            <TextField
+              aria-readonly
               type="text"
               value={
                 pricePerMile !== null &&
@@ -1106,11 +1105,17 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                   : "$0.000"
               }
               className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-              readOnly
+              placeholder="Auto-calculating total distance..."
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IoCash className="h-5 w-5 text-slate-400" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
-            <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <IoCash className="h-5 w-5 text-slate-400" />
-            </div>
           </div>
           {pricePerMile !== null &&
             !isNaN(pricePerMile) &&
@@ -1126,15 +1131,22 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
             Fees Number
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IoCash className="h-5 w-5 text-slate-400" />
-            </div>
-            <input
+            <TextField
               type="text"
               value={fees}
               onChange={(e) => onFeesChange(e.target.value)}
               className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              placeholder="115"
+              placeholder="0.00"
+              required
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoCash className="h-5 w-5 text-slate-400" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           </div>
         </div>
@@ -1144,16 +1156,22 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
             Load Id <span className="text-red-500">*</span>
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IoKey className="h-5 w-5 text-slate-400" />
-            </div>
-            <input
+            <TextField
               type="text"
               value={loadIDInp}
               onChange={(e) => onLoadIDChange(e.target.value)}
               className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-              placeholder="A101"
+              placeholder="0.00"
               required
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <IoKey className="h-5 w-5 text-slate-400" />
+                    </InputAdornment>
+                  ),
+                },
+              }}
             />
           </div>
         </div>
@@ -1363,13 +1381,14 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                           </p>
                         </div>
                       </div>
-                      <button
+                      <Button
+                        variant="contained"
                         type="button"
                         onClick={() => onRemoveFile(index)}
                         className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
                       >
                         <IoClose size={16} />
-                      </button>
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -1383,7 +1402,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
         <button
           type="button"
           onClick={onPrevTab}
-          className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+          className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
         >
           <IoArrowBack size={16} />
           Back
@@ -1392,7 +1411,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
           type="button"
           onClick={onNextTab}
           disabled={!isTabValid}
-          className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+          className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
             isTabValid
               ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
               : "bg-slate-300 text-slate-500 cursor-not-allowed"
@@ -1406,24 +1425,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   );
 };
 
-// Assignment Tab Component 
-interface AssignmentTabProps {
-  isEditing: boolean;
-  editingLoad: TLoads | null;
-  driverId: string;
-  truckId: string;
-  truckType: string;
-  truckTemp: string;
-  onDriverIdChange: (value: string) => void;
-  onTruckIdChange: (value: string) => void;
-  onTruckTypeChange: (value: string) => void;
-  onTruckTempChange: (value: string) => void;
-  isTabValid: boolean;
-  onPrevTab: () => void;
-  onSubmit: (e: React.FormEvent) => void;
-  isLoading: boolean;
-}
-
+// Assignment Tab Component
 const AssignmentTab: React.FC<AssignmentTabProps> = ({
   isEditing,
   editingLoad,
@@ -1455,15 +1457,22 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               Driver <span className="text-green-600">✓ Assigned</span>
             </label>
             <div className="relative">
-              <input
+              <TextField
+                aria-readonly
                 type="text"
                 value={editingLoad?.driverId?.name || "No driver assigned"}
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
-                readOnly
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+                placeholder="Auto-calculating total distance..."
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IoCheckmark className="h-5 w-5 text-green-600" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <IoCheckmark className="h-5 w-5 text-green-600" />
-              </div>
             </div>
             {editingLoad?.driverId?.phone && (
               <p className="text-xs text-slate-500 mt-1">
@@ -1478,7 +1487,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               Truck Type <span className="text-green-600">✓ Assigned</span>
             </label>
             <div className="relative">
-              <input
+              <TextField
+                aria-readonly
                 type="text"
                 value={
                   editingLoad?.truckType
@@ -1488,12 +1498,18 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
                       }`
                     : "No type assigned"
                 }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
-                readOnly
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+                placeholder="Auto-calculating total distance..."
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IoCheckmark className="h-5 w-5 text-green-600" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <IoCheckmark className="h-5 w-5 text-green-600" />
-              </div>
             </div>
           </div>
 
@@ -1503,19 +1519,26 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               Truck <span className="text-green-600">✓ Assigned</span>
             </label>
             <div className="relative">
-              <input
+              <TextField
+                aria-readonly
                 type="text"
                 value={
                   editingLoad?.truckId
                     ? `${editingLoad.truckId.model} (${editingLoad.truckId.plateNumber})`
                     : "No truck assigned"
                 }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
-                readOnly
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+                placeholder="Auto-calculating total distance..."
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IoCheckmark className="h-5 w-5 text-green-600" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <IoCheckmark className="h-5 w-5 text-green-600" />
-              </div>
             </div>
             {editingLoad?.truckId && (
               <p className="text-xs text-slate-500 mt-1">
@@ -1530,45 +1553,52 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               Temperature <span className="text-green-600">✓ Set</span>
             </label>
             <div className="relative">
-              <input
+              <TextField
+                aria-readonly
                 type="text"
                 value={
                   editingLoad?.truckTemp
                     ? `${editingLoad.truckTemp}°C`
                     : "Not set"
                 }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 font-medium cursor-not-allowed"
-                readOnly
+                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+                placeholder="Auto-calculating total distance..."
+                slotProps={{
+                  input: {
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IoCheckmark className="h-5 w-5 text-green-600" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
               />
-              <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-                <IoCheckmark className="h-5 w-5 text-green-600" />
-              </div>
             </div>
           </div>
         </div>
 
         {/* Information Message */}
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-start gap-3">
-            <IoInformationCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
-            <div>
-              <h4 className="text-sm font-medium text-blue-800">
-                Driver & Truck Information
-              </h4>
-              <p className="text-sm text-blue-700 mt-1">
-                Driver and truck assignments cannot be modified for existing
-                loads. This ensures consistency in load tracking and driver
-                assignments.
-              </p>
-            </div>
+        <Alert
+          severity="info"
+          className="p-4 bg-blue-50 border border-blue-200 rounded-lg"
+        >
+          <div className="flex flex-col items-start gap-1">
+            <h4 className="text-md font-medium">
+              Driver & Truck Information
+            </h4>
+            <p className="text-sm">
+              Driver and truck assignments cannot be modified for existing
+              loads. This ensures consistency in load tracking and driver
+              assignments.
+            </p>
           </div>
-        </div>
+        </Alert>
 
         <div className="flex justify-between pt-4">
           <button
             type="button"
             onClick={onPrevTab}
-            className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+            className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
           >
             <IoArrowBack size={16} />
             Back
@@ -1576,7 +1606,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
           <button
             type="submit"
             disabled={!isTabValid || isLoading}
-            className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+            className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
               isTabValid && !isLoading
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                 : "bg-slate-300 text-slate-500 cursor-not-allowed"
@@ -1692,7 +1722,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         <button
           type="button"
           onClick={onPrevTab}
-          className="flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+          className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
         >
           <IoArrowBack size={16} />
           Back
@@ -1700,7 +1730,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         <button
           type="submit"
           disabled={!isTabValid || isLoading}
-          className={`flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+          className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
             isTabValid && !isLoading
               ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
               : "bg-slate-300 text-slate-500 cursor-not-allowed"

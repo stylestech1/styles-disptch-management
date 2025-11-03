@@ -57,6 +57,10 @@ import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 import UpdateStatusModal from "@/components/loads/UpdateStatusModal";
 import { IoRefresh } from "react-icons/io5";
 
+interface LoadInfoProps  {
+  loadId: string | undefined
+}
+
 // handling Tabs
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
@@ -74,9 +78,8 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-const LoadDetailsPage = () => {
-  const { id } = useParams();
-  const loadId = Array.isArray(id) ? id[0] : id;
+const LoadInfo = ({loadId} : LoadInfoProps) => {
+  
   const [tabValue, setTabValue] = useState(0);
   const [viewNoteDialog, setViewNoteDialog] = useState(false);
   const [selectedNote, setSelectedNote] = useState<TComments | null>(null);
@@ -1486,4 +1489,4 @@ const LoadDetailsPage = () => {
   );
 };
 
-export default LoadDetailsPage;
+export default LoadInfo;
