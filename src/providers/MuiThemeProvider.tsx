@@ -1,19 +1,28 @@
 "use client";
-import { RootState, useAppSelector } from "@/redux/store";
-import { createMuiThemeFromPalette } from "@/theme/themeFactory";
-import { CssBaseline, ThemeProvider } from "@mui/material";
-import { useMemo } from "react";
+import { useSelector } from "react-redux";
+import { ThemeProvider, createTheme } from "@mui/material/styles";
+import { CssBaseline } from "@mui/material";
+import { RootState } from "@/redux/store";
 
-const MuiThemeProvider = ({ children }: { children: React.ReactNode }) => {
-  const palette = useAppSelector((state: RootState) => state.palette.palette);
-  const theme = useMemo(() => createMuiThemeFromPalette(palette), [palette]);
+export default function MuiThemeProvider({ children }: { children: React.ReactNode }) {
+  const theme = useSelector((state: RootState) => state.palette);
+
+  const muiTheme = createTheme({
+    palette: {
+      primary: { main: theme.primary },
+      secondary: { main: theme.secondary },
+      background: { default: theme.background },
+      text: { primary: theme.text },
+    },
+    typography: {
+      h1: { color: theme.title, fontWeight: 700 },
+    },
+  });
 
   return (
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={muiTheme}>
       <CssBaseline />
       {children}
     </ThemeProvider>
   );
-};
-
-export default MuiThemeProvider;
+}

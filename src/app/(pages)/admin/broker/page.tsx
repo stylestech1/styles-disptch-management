@@ -1,9 +1,9 @@
 import React from 'react'
 
-const Trailers = () => {
+const Broker = () => {
   return (
-    <div>Trailers</div>
+    <div>Broker</div>
   )
 }
 
-export default Trailers
+export default Broker

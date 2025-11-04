@@ -3,6 +3,7 @@ import { PiUsersFill } from "react-icons/pi";
 import { ImCalculator } from "react-icons/im";
 import {
   IoPeopleOutline,
+  IoSettingsSharp,
 } from "react-icons/io5";
 import { SiGoogleanalytics } from "react-icons/si";
 import { MdOutlineCommentBank } from "react-icons/md";
@@ -22,6 +23,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     { label: "TruckDashboard", icon: <SiGoogleanalytics /> },
     { label: "Calculation", icon: <ImCalculator /> },
     { label: "Broker", icon: <MdOutlineCommentBank /> },
+    { label: "Settings", icon: <IoSettingsSharp /> },
   ],
   employee: [
     { label: "Loads", icon: <FaCirclePlus /> },
