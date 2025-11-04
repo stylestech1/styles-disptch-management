@@ -33,6 +33,14 @@ import UserSettingsModal from "@/components/users/UserSettingsModal";
 import CreateUserModal from "@/components/users/CreateUserModal";
 import { Dayjs } from "dayjs";
 import { useSearch } from "@/hook/useSearch";
+import {
+  alpha,
+  Box,
+  Button,
+  InputAdornment,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 const Users = () => {
   const [popup, setPopup] = useState(false);
@@ -49,6 +57,7 @@ const Users = () => {
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
   const { error, setError } = useError();
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   // RTK Querys
   const {
@@ -116,19 +125,12 @@ const Users = () => {
   }, [page, token]);
 
   // Filter and Search loads
-    const {
-      filteredData: searchedDispatchers,
-    } = useSearch({
-      data: dispatchers,
-      searchFields: [
-        "jobId",
-        "name",
-        "phone",
-        "email",
-      ],
-      initialSearch: searchInput,
-    });
-    const tableData = searchInput ? searchedDispatchers : dispatchers;
+  const { filteredData: searchedDispatchers } = useSearch({
+    data: dispatchers,
+    searchFields: ["jobId", "name", "phone", "email"],
+    initialSearch: searchInput,
+  });
+  const tableData = searchInput ? searchedDispatchers : dispatchers;
 
   // FIXME: Create User
   const handleCreateUser = async (userData: {
@@ -326,12 +328,19 @@ const Users = () => {
   return (
     <section className="relative p-6">
       {/* Title */}
-      <div className="flex flex-col xl:items-start xl:justify-between gap-2">
-        <Titles>Dispatcher Management</Titles>
-        <p className="text-slate-600 text-md">
+      <Box
+        component="div"
+        className="flex flex-col xl:items-start xl:justify-between gap-1"
+      >
+        <Typography
+          sx={{ color: theme.text, fontSize: "45px", fontWeight: "bold" }}
+        >
+          Dispatcher Management
+        </Typography>
+        <Typography sx={{ color: alpha(theme.text, 0.7), fontSize: "16px" }}>
           Manage your dispatch team members and their access
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Stats Summary */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
@@ -339,8 +348,7 @@ const Users = () => {
           title="Total Dispatchers"
           value={dispatchers.length || 0}
           icon={IoPerson}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={loading}
         />
 
@@ -348,8 +356,7 @@ const Users = () => {
           title="Active"
           value={dispatchers.filter((d: TDispatcher) => d.active).length}
           icon={IoBriefcase}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={loading}
         />
 
@@ -359,8 +366,7 @@ const Users = () => {
             dispatchers.filter((d: TDispatcher) => d.role === "admin").length
           }
           icon={IoKey}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={loading}
         />
 
@@ -370,42 +376,85 @@ const Users = () => {
             dispatchers.filter((d: TDispatcher) => d.role === "employee").length
           }
           icon={IoPerson}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={loading}
         />
       </div>
 
-      {/* Add User */} 
-      <div className="flex justify-end">
-        <button
+      {/* Add User */}
+      <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+        <Button
           onClick={() => setPopup(true)}
+          variant="contained"
+          startIcon={<IoAdd size={22} />}
           disabled={loading}
-          className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
+          sx={{
+            py: 1.5,
+            px: 4,
+            fontWeight: "bold",
+            fontSize: "1rem",
+            borderRadius: 2,
+            textTransform: "none",
+            width: { xs: "100%", lg: "auto" },
+            background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
+            color: "#fff",
+            "&:hover": {
+              background: `linear-gradient(to right, ${theme.secondary}, ${theme.primary})`,
+            },
+            transition: "all 0.3s ease",
+          }}
         >
-          <IoAdd size={25} />
-          {loading ? "Loading..." : "Add User"}
-        </button>
-      </div>
+          New User
+        </Button>
+      </Box>
 
       <Toaster position="top-right" reverseOrder={false} />
 
-      {/* Search */}
-      <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm my-10">
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <IoSearch className="h-5 w-5 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search by Name, Phone, Email or Job ID"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            disabled={loading}
-          />
-        </div>
-      </div>
+      {/* Search & Filter */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", lg: "row" },
+          alignItems: "end",
+          gap: 2,
+          p: 2,
+          my: 5,
+          border: `1px solid ${theme.primary}33`,
+          borderRadius: 2,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          backgroundColor: theme.background,
+        }}
+      >
+        {/* Search */}
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search loads by ID or driver number"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IoSearch size={20} color="#9ca3af" />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 1,
+              backgroundColor: "#fff",
+              "& fieldset": { borderColor: "#e5e7eb" },
+              "&:hover fieldset": { borderColor: theme.primary },
+              "&.Mui-focused fieldset": { borderColor: theme.primary },
+            },
+            "& input": {
+              color: theme.text,
+            },
+          }}
+        />
+      </Box>
 
       {error && (
         <div className="mb-6">
@@ -423,7 +472,7 @@ const Users = () => {
           renderRow={renderDispatcherRow}
           loading={loading}
         />
-      ) : ( 
+      ) : (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           <div className="px-4 py-12 text-center text-slate-500">
             <div className="flex flex-col items-center justify-center">

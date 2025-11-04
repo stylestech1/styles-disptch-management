@@ -1,6 +1,6 @@
 "use client";
 import { Card, CardContent, Typography, Box } from "@mui/material";
-import { alpha } from "@mui/material/styles";
+import { alpha } from "@mui/material";
 import { IconType } from "react-icons";
 import { RootState, useAppSelector } from "@/redux/store";
 
