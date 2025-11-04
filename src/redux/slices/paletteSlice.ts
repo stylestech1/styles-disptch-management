@@ -30,7 +30,7 @@ const redPalette: Palette = {
 const initialState: Palette = bluePalette;
 
 const paletteSlice = createSlice({
-  name: "theme",
+  name: "palette",
   initialState,
   reducers: {
     setPalette(state, action: PayloadAction<Palette>) {

@@ -1,4 +1,19 @@
-import { ReactNode } from "react";
+"use client";
+import React, { ReactNode } from "react";
+import {
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  TableCell,
+  TableContainer,
+  Paper,
+  Box,
+  Typography,
+  Skeleton,
+  alpha,
+} from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
 
 export type AlignType = "left" | "center" | "right";
 
@@ -22,85 +37,121 @@ export interface DataTableProps<T> {
 const DataTable = <T,>({
   columns,
   data,
-  renderRow,  
+  renderRow,
   emptyState,
   loading = false,
   className = "",
 }: DataTableProps<T>) => {
+
+  const theme = useAppSelector((state: RootState) => state.palette)
+
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
+      <Paper
+        elevation={1}
+        sx={{
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          overflow: "hidden",
+          bgcolor: "background.paper",
+        }}
+        className={className}
+      >
+        <TableContainer>
+          <Table size="small">
+            <TableHead sx={{ bgcolor: "action.hover" }}>
+              <TableRow>
                 {columns.map((column) => (
-                  <th
+                  <TableCell
                     key={column.key}
-                    className={`p-4 font-medium text-slate-600 text-${column.align || "center"}`}
+                    align={column.align || "center"}
+                    sx={{ fontWeight: 600, color: "text.secondary" }}
                   >
                     {column.header}
-                  </th>
+                  </TableCell>
                 ))}
-              </tr>
-            </thead>
-            <tbody>
+              </TableRow>
+            </TableHead>
+            <TableBody>
               {[...Array(5)].map((_, index) => (
-                <tr key={index} className="border-b border-slate-200 animate-pulse">
-                  {columns.map((column) => (
-                    <td key={column.key} className="p-4">
-                      <div className="h-4 bg-slate-200 rounded"></div>
-                    </td>
+                <TableRow key={index}>
+                  {columns.map((col) => (
+                    <TableCell key={col.key}>
+                      <Skeleton variant="rectangular" height={20} />
+                    </TableCell>
                   ))}
-                </tr>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
     );
   }
 
   const defaultEmptyState = (
-    <tr>
-      <td colSpan={columns.length} className="px-4 py-12 text-center text-slate-500">
-        <div className="flex flex-col items-center justify-center">
-          <div className="text-3xl mb-3">📦</div>
-          <div className="text-slate-600">No records found</div>
-          <div className="text-slate-400 text-sm mt-1">
+    <TableRow>
+      <TableCell
+        colSpan={columns.length}
+        align="center"
+        sx={{ py: 6, color: "text.secondary" }}
+      >
+        <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+          <Typography variant="h4">📦</Typography>
+          <Typography variant="body1">No records found</Typography>
+          <Typography variant="body2" color="text.disabled">
             Get started by creating your first record
-          </div>
-        </div>
-      </td>
-    </tr>
+          </Typography>
+        </Box>
+      </TableCell>
+    </TableRow>
   );
 
   return (
-    <div className={`bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden ${className}`}>
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="bg-slate-50 border-b border-slate-200">
-            <tr>
+    <Paper
+      elevation={1}
+      sx={{
+        borderRadius: 2,
+        border: "1px solid",
+        borderColor: "divider",
+        overflowX: "auto",
+        bgcolor: "background.paper",
+      }}
+      className={className}
+    >
+      <TableContainer>
+        <Table size="small">
+          <TableHead sx={{ bgcolor: "action.hover"}}>
+            <TableRow>
               {columns.map((column) => (
-                <th
+                <TableCell
                   key={column.key}
-                  className={`p-4 font-medium text-slate-600 text-${column.align || "center"}`}
-                  style={column.width ? { width: column.width } : {}}
+                  align={column.align || "center"}
+                  sx={{
+                    fontWeight: 600,
+                    color: theme.primary,
+                    borderBottom: 1,
+                    borderColor: theme.primary,
+                    backgroundColor: alpha(theme.primary, 0.1),
+                    width: column.width,
+                    py:2
+                  }}
                 >
                   {column.header}
-                </th>
+                </TableCell>
               ))}
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200">
-            {data.length > 0 
+            </TableRow>
+          </TableHead>
+
+          <TableBody>
+            {data.length > 0
               ? data.map((item, index) => renderRow(item, index))
-              : (emptyState || defaultEmptyState)
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
+              : emptyState || defaultEmptyState}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Paper>
   );
 };
 

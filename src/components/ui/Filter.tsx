@@ -5,6 +5,8 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs, { Dayjs } from "dayjs";
 import { useSearchParams } from "next/navigation";
+import { alpha, Button } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
 
 type DateRangeFilterProps = {
   onApply?: (from: Dayjs | null, to: Dayjs | null) => void;
@@ -27,6 +29,8 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
       key: "selection",
     },
   ]);
+
+  const theme = useAppSelector((state: RootState) => state.palette)
 
   // ✅ Load initial values from URL if available
   useEffect(() => {
@@ -96,12 +100,29 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
   return (
     <div className="relative inline-block">
-      <button
+      <Button
         onClick={() => setShowPicker(!showPicker)}
-        className="w-[260px] md:w-[320px] lg:w-[250px] max-w-full text-left cursor-pointer px-4 py-2 bg-[#eff6ff] border border-slate-200 rounded-md text-slate-800 hover:border-blue-500 hover:text-blue-600 transition-all"
+        sx={{
+          width: { xs: 260, md: 320, lg: 250 },
+          maxWidth: "100%",
+          textAlign: "left",
+          cursor: "pointer",
+          fontSize: '16px',
+          py: 1.6,
+          backgroundColor: alpha(theme.primary, 0.1),
+          border: `1px solid ${theme.primary}`, 
+          borderRadius: "4px",
+          color: theme.primary, 
+          textTransform: "none", 
+          transition: "all 0.2s ease",
+          "&:hover": {
+            color: '#fff', 
+            backgroundColor: theme.primary, 
+          },
+        }}
       >
         {label}
-      </button>
+      </Button>
 
       {showPicker && (
         <div className="absolute top-12 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-4 w-[370px]">

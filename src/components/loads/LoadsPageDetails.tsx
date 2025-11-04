@@ -5,7 +5,6 @@ import Loading from "@/components/ui/Loading";
 import Pagination from "@/components/ui/Pagination";
 import StatsCard from "@/components/ui/StatsCard";
 import StatusBadge from "@/components/ui/StatusBadge";
-import Titles from "@/components/ui/Titles";
 import { loadColumns } from "@/data/loadTables";
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
@@ -36,7 +35,15 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { Dayjs } from "dayjs";
 import DateRangeFilter from "@/components/ui/Filter";
-
+import {
+  alpha,
+  Box,
+  Button,
+  InputAdornment,
+  TableRow,
+  TextField,
+  Typography,
+} from "@mui/material";
 // Utils
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import { useSearch } from "@/hook/useSearch";
@@ -46,6 +53,7 @@ const LoadsPageDetails = () => {
   const [page, setPage] = useState(1);
   const router = useRouter();
   const userRole = useAppSelector((state: RootState) => state.auth.user?.role);
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
@@ -125,9 +133,14 @@ const LoadsPageDetails = () => {
     const commentsCount = loadItem.comments?.length || 0;
 
     return (
-      <tr
+      <TableRow
+        sx={{
+          "&:hover": {
+            backgroundColor: alpha(theme.primary, 0.05),
+          },
+        }}
         key={index}
-        className="hover:bg-slate-50 transition-colors group cursor-pointer"
+        className="transition-colors group cursor-pointer"
         onClick={() => {
           if (userRole === "admin") {
             router.push(
@@ -249,9 +262,9 @@ const LoadsPageDetails = () => {
                 }}
                 title={`${commentsCount} comment(s) - Click to view`}
               >
-                <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-blue-600 transition-colors">
+                <Box sx={{backgroundColor: theme.primary}} className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-blue-600 transition-colors">
                   <IoChatbubbleEllipses size={16} className="text-white" />
-                </div>
+                </Box>
 
                 <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center shadow-sm">
                   <span className="text-xs text-white font-bold">
@@ -280,7 +293,7 @@ const LoadsPageDetails = () => {
             )}
           </div>
         </td>
-      </tr>
+      </TableRow>
     );
   };
 
@@ -289,13 +302,20 @@ const LoadsPageDetails = () => {
       {/* Header */}
       <div className="space-y-6 mb-10">
         {/* Title */}
-        <div className="flex flex-col xl:items-start xl:justify-between gap-2">
-          <Titles>Load Management</Titles>
-          <p className="text-slate-600 text-md">
+        <Box
+          component="div"
+          className="flex flex-col xl:items-start xl:justify-between gap-1"
+        >
+          <Typography
+            sx={{ color: theme.text, fontSize: "45px", fontWeight: "bold" }}
+          >
+            Load Management
+          </Typography>
+          <Typography sx={{ color: alpha(theme.text, 0.7), fontSize: "16px" }}>
             Manage and track all your shipments and deliveries in one place.
             Monitor status, assign drivers, and update load information.
-          </p>
-        </div>
+          </Typography>
+        </Box>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
@@ -303,82 +323,121 @@ const LoadsPageDetails = () => {
             title="Total Loads"
             value={allLoads.length || 0}
             icon={IoCar}
-            iconColor="text-blue-600"
-            bgColor="bg-blue-50"
+            iconColor={theme.primary}
           />
 
           <StatsCard
             title="Pending"
             value={load.filter((l: TLoads) => l.status === "pending").length}
             icon={IoTime}
-            iconColor="text-blue-600"
-            bgColor="bg-blue-50"
+            iconColor={theme.primary}
           />
 
           <StatsCard
             title="In Transit"
             value={load.filter((l: TLoads) => l.status === "in_transit").length}
             icon={IoNavigate}
-            iconColor="text-blue-600"
-            bgColor="bg-blue-50"
+            iconColor={theme.primary}
           />
 
           <StatsCard
             title="Delivered"
             value={load.filter((l: TLoads) => l.status === "delivered").length}
             icon={IoCheckmark}
-            iconColor="text-blue-600"
-            bgColor="bg-blue-50"
+            iconColor={theme.primary}
           />
         </div>
 
         {/* Button */}
-        <div className="flex justify-end">
-          <button
+        <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+          <Button
             onClick={() => {
               setEditingLoad(null);
               setShowCreateEditModal(true);
             }}
-            className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
+            variant="contained"
+            startIcon={<IoAdd size={22} />}
+            sx={{
+              py: 1.5,
+              px: 4,
+              fontWeight: "bold",
+              fontSize: "1rem",
+              borderRadius: 2,
+              textTransform: "none",
+              width: { xs: "100%", lg: "auto" },
+              background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
+              color: "#fff",
+              "&:hover": {
+                background: `linear-gradient(to right, ${theme.secondary}, ${theme.primary})`,
+              },
+              transition: "all 0.3s ease",
+            }}
           >
-            <IoAdd size={25} />
             New Load
-          </button>
-        </div>
+          </Button>
+        </Box>
 
         {/* Search & Filter */}
-        <div className="w-full flex flex-col lg:flex-row items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm mt-10">
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", lg: "row" },
+            alignItems: "end",
+            gap: 2,
+            p: 2,
+            mt: 5,
+            border: `1px solid ${theme.primary}33`,
+            borderRadius: 2,
+            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+            backgroundColor: theme.background,
+          }}
+        >
           {/* Search */}
-          <div className="relative w-full lg:w-[80%]">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <IoSearch className="h-5 w-5 text-slate-400" />
-            </div>
-            <input
-              type="search"
-              placeholder="Search loads by its ID, or driver number"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            />
-          </div>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder="Search loads by ID or driver number"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <IoSearch size={20} color="#9ca3af" />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{
+              width: { xs: "100%", lg: "80%" },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 1,
+                backgroundColor: "#fff",
+                "& fieldset": { borderColor: "#e5e7eb" },
+                "&:hover fieldset": { borderColor: theme.primary },
+                "&.Mui-focused fieldset": { borderColor: theme.primary },
+              },
+              "& input": {
+                color: theme.text,
+              },
+            }}
+          />
 
           {/* Filter */}
           <DateRangeFilter
             onApply={(from, to) => {
               if (!from || !to) {
-                // ✅ clear filter
                 setIsFiltered(false);
                 setFromDate(null);
                 setToDate(null);
               } else {
-                // ✅ apply filter
                 setIsFiltered(true);
                 setFromDate(from);
                 setToDate(to);
               }
             }}
           />
-        </div>
+        </Box>
       </div>
 
       <Toaster position="top-right" />

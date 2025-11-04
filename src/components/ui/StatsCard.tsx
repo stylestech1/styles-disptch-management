@@ -1,11 +1,14 @@
+"use client";
+import { Card, CardContent, Typography, Box } from "@mui/material";
+import { alpha } from "@mui/material/styles";
 import { IconType } from "react-icons";
+import { RootState, useAppSelector } from "@/redux/store";
 
 interface StatsCardProps {
   title: string;
   value: string | number;
   icon: IconType;
   iconColor?: string;
-  bgColor?: string;
   trend?: {
     value: number;
     isPositive: boolean;
@@ -17,48 +20,96 @@ const StatsCard = ({
   title,
   value,
   icon: Icon,
-  iconColor = "text-blue-600",
-  bgColor = "bg-blue-50",
+  iconColor,
   trend,
   loading = false,
 }: StatsCardProps) => {
+  const theme = useAppSelector((state: RootState) => state.palette);
+
+  const primaryColor = iconColor || theme.primary;
+  const bgColor = alpha(primaryColor, 0.1);
+
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 animate-pulse">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2 flex-1">
-            <div className="h-4 bg-slate-200 rounded w-1/2"></div>
-            <div className="h-6 bg-slate-200 rounded w-1/3"></div>
-          </div>
-          <div className={`p-2 ${bgColor} rounded-lg`}>
-            <div className="h-5 w-5 bg-slate-200 rounded"></div>
-          </div>
-        </div>
-      </div>
+      <Card
+        variant="outlined"
+        sx={{
+          borderRadius: 3,
+          borderColor: "#e2e8f0",
+          p: 2,
+          boxShadow: 1,
+          opacity: 0.6,
+        }}
+      >
+        <CardContent>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Box flex={1}>
+              <Box sx={{ width: "50%", height: 14, bgcolor: "#e2e8f0", mb: 1 }} />
+              <Box sx={{ width: "30%", height: 18, bgcolor: "#e2e8f0" }} />
+            </Box>
+            <Box sx={{ p: 1.5, bgcolor: bgColor, borderRadius: 2 }}>
+              <Box sx={{ width: 24, height: 24, bgcolor: "#e2e8f0", borderRadius: "50%" }} />
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-slate-500 text-sm font-bold">{title}</p>
-          <p className="text-2xl font-bold text-slate-800 mt-1">{value}</p>
-          {trend && (
-            <div
-              className={`text-xs font-medium mt-1 ${
-                trend.isPositive ? "text-emerald-600" : "text-red-600"
-              }`}
-            >
-              {trend.isPositive ? "↗" : "↘"} {Math.abs(trend.value)}%
-            </div>
-          )}
-        </div>
-        <div className={`p-2 ${bgColor} rounded-lg`}>
-          <Icon size={20} className={iconColor} />
-        </div>
-      </div>
-    </div>
+    <Card
+      variant="outlined"
+      sx={{
+        borderRadius: 3,
+        borderColor: "#e2e8f0",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        transition: "all 0.3s ease",
+        "&:hover": { boxShadow: "0 3px 8px rgba(0,0,0,0.1)" },
+      }}
+    >
+      <CardContent>
+        <Box display="flex" alignItems="center" justifyContent="space-between">
+          <Box>
+            <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
+              {title}
+            </Typography>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mt: 0.5 }}>
+              {value}
+            </Typography>
+            {trend && (
+              <Typography
+                variant="caption"
+                sx={{
+                  mt: 0.5,
+                  display: "block",
+                  color: trend.isPositive ? "success.main" : "error.main",
+                  fontWeight: 500,
+                }}
+              >
+                {trend.isPositive ? "↗" : "↘"} {Math.abs(trend.value)}%
+              </Typography>
+            )}
+          </Box>
+
+          <Box
+            sx={{
+              p: 1.5,
+              bgcolor: bgColor,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <Icon size={22} color={primaryColor} />
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
   );
 };
 
