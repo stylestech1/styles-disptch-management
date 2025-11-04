@@ -98,7 +98,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
     <div className="relative inline-block">
       <button
         onClick={() => setShowPicker(!showPicker)}
-        className="w-[250px] max-w-full text-left cursor-pointer px-4 py-2 bg-[#eff6ff] border border-slate-200 rounded-md text-slate-800 hover:border-blue-500 hover:text-blue-600 transition-all"
+        className="w-[260px] md:w-[320px] lg:w-[250px] max-w-full text-left cursor-pointer px-4 py-2 bg-[#eff6ff] border border-slate-200 rounded-md text-slate-800 hover:border-blue-500 hover:text-blue-600 transition-all"
       >
         {label}
       </button>

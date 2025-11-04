@@ -347,9 +347,9 @@ const LoadsPageDetails = () => {
         </div>
 
         {/* Search & Filter */}
-        <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm mt-10">
+        <div className="w-full flex flex-col lg:flex-row items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm mt-10">
           {/* Search */}
-          <div className="relative w-[80%]">
+          <div className="relative w-full lg:w-[80%]">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <IoSearch className="h-5 w-5 text-slate-400" />
             </div>

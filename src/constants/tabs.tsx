@@ -3,10 +3,9 @@ import { PiUsersFill } from "react-icons/pi";
 import { ImCalculator } from "react-icons/im";
 import {
   IoPeopleOutline,
-  IoTrailSignOutline,
 } from "react-icons/io5";
 import { SiGoogleanalytics } from "react-icons/si";
-
+import { MdOutlineCommentBank } from "react-icons/md";
 import { TUserRole } from "@/types/globalTypes";
 
 type TabItem = {
@@ -22,7 +21,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     { label: "Trucks", icon: <FaTruckFast /> },
     { label: "TruckDashboard", icon: <SiGoogleanalytics /> },
     { label: "Calculation", icon: <ImCalculator /> },
-    { label: "Trailers", icon: <IoTrailSignOutline /> },
+    { label: "Broker", icon: <MdOutlineCommentBank /> },
   ],
   employee: [
     { label: "Loads", icon: <FaCirclePlus /> },

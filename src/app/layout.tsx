@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import "./globals.css";
 // Importing Provider in RTK
-import  { Providers } from "@/redux/provider";
+import { Providers } from "@/redux/provider";
 import { Toaster } from "react-hot-toast";
 // Fonts
 import { Roboto } from "next/font/google";
+import MuiThemeProvider from "@/providers/MuiThemeProvider";
 
 const roboto = Roboto({
   subsets: ["latin"],
-  weight: ["400", "500", "700"], 
+  weight: ["400", "500", "700"],
   display: "swap",
 });
 
@@ -23,14 +24,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en"> 
-      <body
-        className={`${roboto.className} antialiased`}
-      >
+    <html lang="en">
+      <body className={`${roboto.className} antialiased`}>
         <Providers>
-          {children}
-          <Toaster position="top-right" reverseOrder={false} />
-
+          <MuiThemeProvider>
+            {children}
+            <Toaster position="top-right" reverseOrder={false} />
+          </MuiThemeProvider>
         </Providers>
       </body>
     </html>

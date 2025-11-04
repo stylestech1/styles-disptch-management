@@ -8,6 +8,7 @@ import {
   TTruckWithSummary,
 } from "@/types/globalTypes";
 import { api } from "../api/baseApi";
+import { TPaletteConfig } from "@/theme/palettes";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -126,7 +127,7 @@ export const apiSlice = api.injectEndpoints({
         if (params.length) url += `?${params.join("&")}`;
         return url;
       },
-      providesTags: ['Drivers'],
+      providesTags: ["Drivers"],
     }),
 
     // 🔹 Get driver summary
@@ -160,7 +161,10 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // 🔹 Update driver
-    updateDriver: builder.mutation<{ data: TDriver }, { id: string; body: Partial<TDriver> }>({
+    updateDriver: builder.mutation<
+      { data: TDriver },
+      { id: string; body: Partial<TDriver> }
+    >({
       query: ({ id, body }) => ({
         url: `/api/v1/drivers/${id}`,
         method: "PATCH",
@@ -200,12 +204,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-            ...result.data.data.map((t: TTruck) => ({
-              type: "Trucks" as const,
-              id: t.id,
-            })),
-            { type: "Trucks", id: "LIST" },
-          ]
+              ...result.data.data.map((t: TTruck) => ({
+                type: "Trucks" as const,
+                id: t.id,
+              })),
+              { type: "Trucks", id: "LIST" },
+            ]
           : [{ type: "Trucks", id: "LIST" }],
       keepUnusedDataFor: 60 * 60,
     }),
@@ -237,12 +241,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-            ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
-              type: "Trucks" as const,
-              id: t.id,
-            })),
-            { type: "TruckSummary", id: "LIST" },
-          ]
+              ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
+                type: "Trucks" as const,
+                id: t.id,
+              })),
+              { type: "TruckSummary", id: "LIST" },
+            ]
           : [{ type: "TruckSummary", id: "LIST" }],
       keepUnusedDataFor: 60 * 60,
     }),
@@ -338,8 +342,7 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Dispatchers"],
     }),
     getAllUsers: builder.query({
-      query: ({ role , driver }) =>
-        `/api/v1/adminDashboard?role=driver`,
+      query: ({ role, driver }) => `/api/v1/adminDashboard?role=driver`,
       providesTags: ["Drivers"],
     }),
 
@@ -427,6 +430,20 @@ export const apiSlice = api.injectEndpoints({
       }),
       invalidatesTags: ["Users"],
     }),
+
+    // ! ========== Palette Themes ============
+    getPalette: builder.query<TPaletteConfig, void>({
+      query: () => `/api/v1/palette`,
+      providesTags: ["Palette"],
+    }),
+    updatePalette: builder.mutation<TPaletteConfig, TPaletteConfig>({
+      query: (palette) => ({
+        url: "/api/v1/palette",
+        method: "POST",
+        body: palette,
+      }),
+      invalidatesTags: ["Palette"],
+    }),
   }),
 });
 
@@ -479,4 +496,7 @@ export const {
   // TODO: ----- Password -----
   useUpdateUserPasswordMutation,
   useGetAllUsersQuery,
+  // TODO: ----- Palette -----
+  useGetPaletteQuery,
+  useUpdatePaletteMutation,
 } = apiSlice;

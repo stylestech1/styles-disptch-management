@@ -26,8 +26,6 @@ import { useGetTruckSummaryQuery } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
 import { StyledTableCell, TableSkeleton } from "@/components/ui/TablesMUI";
 
-
-
 // Memoized Truck Row Component
 const TruckRow = React.memo(
   ({

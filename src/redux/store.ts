@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { configureStore, combineReducers } from "@reduxjs/toolkit";
 import { persistReducer, persistStore } from "redux-persist";
 import { useDispatch, useSelector } from "react-redux";
@@ -7,13 +7,14 @@ import authSlice from "./slices/authSlice";
 import loadsFormSlice from "./slices/loadsFormSlice";
 import modalsSlice from "./slices/modalsSlice";
 import uiSlice from "./slices/uiSlice";
+import paletteSlice from "./slices/paletteSlice";
 import { apiSlice } from "./slices/apiSlice";
 import { googleMapsApi } from "./slices/googleMapsSlice";
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"], 
+  whitelist: ["auth"],
 };
 
 // combine reducers
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
   loadsForm: loadsFormSlice,
   modals: modalsSlice,
   ui: uiSlice,
+  palette: paletteSlice,
   [apiSlice.reducerPath]: apiSlice.reducer,
   [googleMapsApi.reducerPath]: googleMapsApi.reducer,
 });
