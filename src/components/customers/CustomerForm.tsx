@@ -61,7 +61,7 @@ export const CustomerForm = ({
     isLoading: usersLoading,
     error: usersError,
     refetch,
-  } = useGetCustomersQuery({
+  } = useGetCustomersQuery(undefined, {
     skip: !token,
   });
 
