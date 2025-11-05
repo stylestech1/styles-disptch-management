@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
   AppBar,
@@ -18,6 +17,7 @@ import {
   useMediaQuery,
   Avatar,
   CircularProgress,
+  Link,
 } from "@mui/material";
 import {
   IoLogOutOutline,
@@ -29,6 +29,7 @@ import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
+import { FaCircle } from "react-icons/fa6";
 
 const DRAWER_WIDTH = 260;
 
@@ -85,15 +86,36 @@ export default function AdminLayout({
             <Typography variant="subtitle1" fontWeight={600} noWrap>
               {user.name}
             </Typography>
-            <Typography
-              variant="body2"
-              sx={{
-                color: theme.palette.text.secondary,
-                textTransform: "capitalize",
-              }}
-            >
-              {user.role}
-            </Typography>
+            <div className="flex items-center gap-2">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  textTransform: "capitalize",
+                }}
+              >
+                {user.role}
+              </Typography>
+              <Typography
+                sx={{
+                  textTransform: "capitalize",
+                  fontSize: "5px",
+                }}
+              >
+                <FaCircle />
+              </Typography>
+              <Link
+                href="settings"
+                underline="hover"
+                sx={{
+                  color: theme.palette.primary.main,
+                  textTransform: "capitalize",
+                  fontSize: "12px",
+                }}
+              >
+                settings
+              </Link>
+            </div>
           </Box>
         </Box>
       </Box>
@@ -163,7 +185,7 @@ export default function AdminLayout({
         onClose={() => setIsSidebarOpen(false)}
         ModalProps={{ keepMounted: true }}
         sx={{
-          zIndex: theme => theme.zIndex.drawer + 2,
+          zIndex: (theme) => theme.zIndex.drawer + 2,
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
