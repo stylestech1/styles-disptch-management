@@ -1,7 +1,7 @@
 "use client";
 import React, { useCallback, useState } from "react";
 import Erros from "@/components/ui/Erros";
-import { useAppSelector } from "@/redux/store";
+import { RootState, useAppSelector } from "@/redux/store";
 import { TTruck } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
@@ -56,6 +56,7 @@ const TrucksPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
   const { error, setError } = useError();
+  const theme = useAppSelector((state: RootState) => state.palette)
 
   // RTK Query
   const {
@@ -265,8 +266,7 @@ const TrucksPage: React.FC = () => {
           title="Total Trucks"
           value={tableData.length || 0}
           icon={FaTruck}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={isLoading}
         />
 
@@ -276,8 +276,7 @@ const TrucksPage: React.FC = () => {
             tableData.filter((d: TTruck) => d.status === "available").length
           }
           icon={FaUserCheck}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={isLoading}
         />
 
@@ -285,8 +284,7 @@ const TrucksPage: React.FC = () => {
           title="Busy"
           value={tableData.filter((d: TTruck) => d.status === "busy").length}
           icon={FaUserMinus}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={isLoading}
         />
 
@@ -296,8 +294,7 @@ const TrucksPage: React.FC = () => {
             tableData.filter((d: TTruck) => d.status === "inactive").length
           }
           icon={FaUserLargeSlash}
-          iconColor="text-blue-600"
-          bgColor="bg-blue-50"
+          iconColor={theme.primary}
           loading={isLoading}
         />
       </div>
