@@ -333,11 +333,11 @@ const Users = () => {
         className="flex flex-col xl:items-start xl:justify-between gap-1"
       >
         <Typography
-          sx={{ color: theme.text, fontSize: "45px", fontWeight: "bold" }}
+          sx={{ color: theme.currentPalette.text, fontSize: "45px", fontWeight: "bold" }}
         >
           Dispatcher Management
         </Typography>
-        <Typography sx={{ color: alpha(theme.text, 0.7), fontSize: "16px" }}>
+        <Typography sx={{ color: alpha(theme.currentPalette.text, 0.7), fontSize: "16px" }}>
           Manage your dispatch team members and their access
         </Typography>
       </Box>
@@ -348,7 +348,7 @@ const Users = () => {
           title="Total Dispatchers"
           value={dispatchers.length || 0}
           icon={IoPerson}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={loading}
         />
 
@@ -356,7 +356,7 @@ const Users = () => {
           title="Active"
           value={dispatchers.filter((d: TDispatcher) => d.active).length}
           icon={IoBriefcase}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={loading}
         />
 
@@ -366,7 +366,7 @@ const Users = () => {
             dispatchers.filter((d: TDispatcher) => d.role === "admin").length
           }
           icon={IoKey}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={loading}
         />
 
@@ -376,7 +376,7 @@ const Users = () => {
             dispatchers.filter((d: TDispatcher) => d.role === "employee").length
           }
           icon={IoPerson}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={loading}
         />
       </div>
@@ -396,10 +396,10 @@ const Users = () => {
             borderRadius: 2,
             textTransform: "none",
             width: { xs: "100%", lg: "auto" },
-            background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
+            background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
             color: "#fff",
             "&:hover": {
-              background: `linear-gradient(to right, ${theme.secondary}, ${theme.primary})`,
+              background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
             },
             transition: "all 0.3s ease",
           }}
@@ -419,10 +419,10 @@ const Users = () => {
           gap: 2,
           p: 2,
           my: 5,
-          border: `1px solid ${theme.primary}33`,
+          border: `1px solid ${theme.currentPalette.primary}33`,
           borderRadius: 2,
           boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          backgroundColor: theme.background,
+          backgroundColor: theme.currentPalette.background,
         }}
       >
         {/* Search */}
@@ -446,11 +446,11 @@ const Users = () => {
               borderRadius: 1,
               backgroundColor: "#fff",
               "& fieldset": { borderColor: "#e5e7eb" },
-              "&:hover fieldset": { borderColor: theme.primary },
-              "&.Mui-focused fieldset": { borderColor: theme.primary },
+              "&:hover fieldset": { borderColor: theme.currentPalette.primary },
+              "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
             },
             "& input": {
-              color: theme.text,
+              color: theme.currentPalette.text,
             },
           }}
         />

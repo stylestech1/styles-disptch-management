@@ -20,10 +20,10 @@ export default function Loading() {
         size={50}
         thickness={5}
         sx={{
-          color: theme.primary,
+          color: theme.currentPalette.primary,
         }}
       />
-      <Typography variant="h6" color={theme.primary}>
+      <Typography variant="h6" color={theme.currentPalette.primary}>
         Loading...
       </Typography>
     </Box>

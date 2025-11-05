@@ -266,7 +266,7 @@ const TrucksPage: React.FC = () => {
           title="Total Trucks"
           value={tableData.length || 0}
           icon={FaTruck}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
 
@@ -276,7 +276,7 @@ const TrucksPage: React.FC = () => {
             tableData.filter((d: TTruck) => d.status === "available").length
           }
           icon={FaUserCheck}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
 
@@ -284,7 +284,7 @@ const TrucksPage: React.FC = () => {
           title="Busy"
           value={tableData.filter((d: TTruck) => d.status === "busy").length}
           icon={FaUserMinus}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
 
@@ -294,7 +294,7 @@ const TrucksPage: React.FC = () => {
             tableData.filter((d: TTruck) => d.status === "inactive").length
           }
           icon={FaUserLargeSlash}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
       </div>
