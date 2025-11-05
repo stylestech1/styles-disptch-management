@@ -8,7 +8,7 @@ import {
   TTruckWithSummary,
 } from "@/types/globalTypes";
 import { api } from "../api/baseApi";
-import { TPaletteConfig } from "@/theme/palettes";
+import { TPaletteConfig } from "@/types/themeType";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
