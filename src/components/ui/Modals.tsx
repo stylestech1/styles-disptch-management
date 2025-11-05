@@ -29,7 +29,7 @@ const Modal = ({
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
+    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-1000! p-4">
       <div
         className={`relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto`}
       >

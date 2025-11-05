@@ -433,21 +433,32 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // ! ========== Palette Themes ============
+
     getPalette: builder.query<TPaletteConfig, void>({
-      query: () => `/api/v1/palette`,
+      query: () => `/api/v1/ui-settings/palette`,
       providesTags: ["Palette"],
     }),
-    updatePalette: builder.mutation<TPaletteConfig, TPaletteConfig>({
+
+    createPalette: builder.mutation<TPaletteConfig, TPaletteConfig>({
       query: (palette) => ({
-        url: "/api/v1/palette",
+        url: "/api/v1/ui-settings/palette",
         method: "POST",
         body: palette,
       }),
       invalidatesTags: ["Palette"],
     }),
 
+    updatePalette: builder.mutation<TPaletteConfig, TPaletteConfig>({
+      query: (body) => ({
+        url: "/api/v1/ui-settings/palette",
+        method: "PATCH",
+        body: body,
+      }),
+      invalidatesTags: ["Palette"],
+    }),
+
     // ! ========== Customer Methods ==========
-    
+
     getCustomers: builder.query({
       query: () => `/api/v1/customers`,
       providesTags: ["Customers"],
@@ -474,7 +485,7 @@ export const apiSlice = api.injectEndpoints({
         method: "POST",
         body,
       }),
-      invalidatesTags: ['Customers'],
+      invalidatesTags: ["Customers"],
     }),
 
     // 🔹 Update driver
@@ -543,6 +554,7 @@ export const {
   useGetAllUsersQuery,
   // TODO: ----- Palette -----
   useGetPaletteQuery,
+  useCreatePaletteMutation,
   useUpdatePaletteMutation,
   // TODO: ----- Customer -----
   useGetCustomersQuery,

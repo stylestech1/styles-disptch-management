@@ -1,5 +1,16 @@
-import { Palette } from "@/types/themeType";
+import { Palette, TPaletteConfig } from "@/types/themeType";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
+
+
+// Convert Backend format to Frontend
+const backendToFrontendPalette = (backendPalette: TPaletteConfig) : Palette => ({
+  mode: backendPalette.mode,
+  primary: backendPalette.primary.main,
+  secondary: backendPalette.secondary.main,
+  background: backendPalette.background.default,
+  text: backendPalette.text.primary,
+  // title: backendPalette.title
+})
 
 const bluePalette: Palette = {
   mode: "blue",

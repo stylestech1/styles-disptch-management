@@ -26,6 +26,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
   employee: [
     { label: "Loads", icon: <FaCirclePlus /> },
     { label: "Calculation", icon: <ImCalculator /> },
+    { label: "Customers", icon: <RiCustomerService2Fill /> },
   ],
   driver: [{ label: "Loads", icon: <FaCirclePlus /> }],
 };

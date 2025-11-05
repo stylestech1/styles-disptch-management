@@ -7,21 +7,24 @@ export type Palette = {
   title?: string;
 };
 export type TPaletteConfig = {
-  mode?: "light" | "dark";
+  _id?: string;
+  mode: string;
   primary: {
     main: string;
-    contrastText?: string;
+    contrastText: string;
   };
   secondary: {
     main: string;
-    contrastText?: string;
+    contrastText: string;
   };
   background: {
-    default?: string;
-    paper?: string;
+    default: string;
+    paper: string;
   };
   text: {
-    primary?: string;
-    secondary?: string;
+    primary: string;
+    secondary: string;
   };
+  createdAt?: string;
+  updatedAt?: string;
 };

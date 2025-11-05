@@ -31,7 +31,7 @@ import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
 import { FaCircle } from "react-icons/fa6";
 
-const DRAWER_WIDTH = 260;
+const DRAWER_WIDTH = 300;
 
 export default function AdminLayout({
   children,
@@ -39,7 +39,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("md")); // >= md -> desktop
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md")); 
   const pathname = usePathname();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const dispatch = useAppDispatch();
@@ -72,6 +72,7 @@ export default function AdminLayout({
         height: "100%",
         display: "flex",
         flexDirection: "column",
+        overflow: 'hidden',
         bgcolor: theme.palette.background.paper,
         color: theme.palette.text.primary,
       }}
@@ -185,7 +186,7 @@ export default function AdminLayout({
         onClose={() => setIsSidebarOpen(false)}
         ModalProps={{ keepMounted: true }}
         sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 2,
+          zIndex: (theme) => theme.zIndex.drawer + 1,
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",

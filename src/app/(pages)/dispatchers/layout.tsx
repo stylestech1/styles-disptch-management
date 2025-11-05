@@ -1,50 +1,58 @@
 "use client";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
-import { TABS_CONFIG } from "@/constants/tabs";
-import { logout } from "@/redux/slices/authSlice";
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Drawer,
+  List,
+  ListItemButton,
+  ListItemText,
+  ListItemIcon,
+  Typography,
+  Box,
+  Divider,
+  Button,
+  useTheme,
+  useMediaQuery,
+  Avatar,
+  CircularProgress,
+  Link,
+} from "@mui/material";
 import {
   IoLogOutOutline,
   IoPersonCircleOutline,
-  IoChevronForward,
   IoMenu,
-  IoClose,
 } from "react-icons/io5";
 import { useState, useEffect } from "react";
+import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
+import { logout } from "@/redux/slices/authSlice";
+import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
 
-export default function DispatchersLayout({
+const DRAWER_WIDTH = 300;
+
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const theme = useTheme();
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md")); 
   const pathname = usePathname();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const dispatch = useAppDispatch();
   const router = useRouter();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
-  // Google Hook
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(isDesktop);
+
+  // Google hook
   const isGoogleMapsLoaded = useGoogleMaps();
 
-  // Detect screen size
+  // Sync sidebar when breakpoint changes
   useEffect(() => {
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth >= 768) {
-        setIsSidebarOpen(true);
-      } else {
-        setIsSidebarOpen(false);
-      }
-    };
-
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, []);
+    setIsSidebarOpen(isDesktop);
+  }, [isDesktop]);
 
   if (!user) return null;
 
@@ -56,141 +64,186 @@ export default function DispatchersLayout({
     router.replace("/");
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const SidebarContent = (
+    <Box
+      sx={{
+        width: DRAWER_WIDTH,
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        bgcolor: theme.palette.background.paper,
+        color: theme.palette.text.primary,
+      }}
+    >
+      {/* User Header */}
+      <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
+        <Box display="flex" alignItems="center" gap={2}>
+          <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+            <IoPersonCircleOutline />
+          </Avatar>
+          <Box>
+            <Typography variant="subtitle1" fontWeight={600} noWrap>
+              {user.name}
+            </Typography>
+            <div className="flex items-center gap-2">
+              <Typography
+                variant="body2"
+                sx={{
+                  color: theme.palette.text.secondary,
+                  textTransform: "capitalize",
+                }}
+              >
+                {user.role}
+              </Typography>
+            </div>
+          </Box>
+        </Box>
+      </Box>
+
+      {/* Navigation */}
+      <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
+        {tabs.map(({ label, icon }, i) => {
+          const link = `${base}/${label.toLowerCase()}`;
+          const active = pathname.startsWith(link);
+          return (
+            <ListItemButton
+              key={i}
+              component={Link}
+              href={link}
+              onClick={() => !isDesktop && setIsSidebarOpen(false)}
+              sx={{
+                borderRadius: 2,
+                mx: 1,
+                my: 0.5,
+                backgroundColor: active
+                  ? theme.palette.primary.main
+                  : "transparent",
+                color: active
+                  ? theme.palette.primary.contrastText || "#fff"
+                  : theme.palette.text.primary,
+                "&:hover": {
+                  backgroundColor: active
+                    ? theme.palette.primary.dark
+                    : theme.palette.action.hover,
+                },
+              }}
+            >
+              <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
+              <ListItemText primary={label} />
+            </ListItemButton>
+          );
+        })}
+      </List>
+
+      {/* Logout */}
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <Button
+          fullWidth
+          startIcon={<IoLogOutOutline />}
+          variant="contained"
+          color="secondary"
+          onClick={handleLogout}
+          sx={{
+            borderRadius: 2,
+            textTransform: "none",
+            py: 1,
+          }}
+        >
+          Logout
+        </Button>
+      </Box>
+    </Box>
+  );
 
   return (
-    <section className="flex h-screen bg-slate-50">
-      {/* Mobile Overlay */}
-      {isMobile && isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900 bg-opacity-40 z-40 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={`
-        fixed md:relative z-50 w-80 h-full bg-gradient-to-b from-slate-800 to-slate-700 text-white
-        transform transition-transform duration-300 ease-in-out
-        ${
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-        }
-        flex flex-col shadow-xl border-r border-slate-600
-      `}
+    <Box sx={{ display: "flex", height: "100vh" }}>
+      {/* Sidebar Drawer */}
+      <Drawer
+        variant={isDesktop ? "permanent" : "temporary"}
+        open={isSidebarOpen}
+        onClose={() => setIsSidebarOpen(false)}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          zIndex: (theme) => theme.zIndex.drawer + 2,
+          "& .MuiDrawer-paper": {
+            width: DRAWER_WIDTH,
+            boxSizing: "border-box",
+            bgcolor: theme.palette.background.default,
+            borderRight: `1px solid ${theme.palette.divider}`,
+            boxShadow: isDesktop ? "none" : undefined,
+          },
+        }}
       >
-        {/* Header */}
-        <div className="p-6 border-b border-slate-600">
-          <div className="flex justify-between items-center">
-            <Link
-              href={`${base}/${user.id}`}
-              className="flex items-center gap-3"
-            >
-              <div className="p-2 bg-slate-700 rounded-xl">
-                <IoPersonCircleOutline size={24} className="text-slate-300" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h2 className="font-semibold text-lg truncate text-slate-100">
-                  {user?.name}
-                </h2>
-                <p className="text-slate-400 text-sm capitalize">{user.role}</p>
-              </div>
-            </Link>
-            <button
-              onClick={toggleSidebar}
-              className="md:hidden p-2 hover:bg-slate-600 rounded-lg transition-colors text-slate-300"
-            >
-              <IoClose size={20} />
-            </button>
-          </div>
-        </div>
+        {SidebarContent}
+      </Drawer>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {tabs.map(({ label, icon }, i) => {
-            const link = `${base}/${label.toLowerCase()}`;
-            const active = pathname.startsWith(link);
-
-            return (
-              <Link
-                key={i}
-                href={link}
-                onClick={() => isMobile && setIsSidebarOpen(false)}
-                className={`
-        flex items-center justify-between px-4 py-3 rounded-xl font-medium transition-all duration-200
-        ${
-          active
-            ? "bg-emerald-500 text-white shadow-lg transform scale-[1.02]"
-            : "text-slate-300 hover:bg-slate-600 hover:text-white hover:shadow-md"
-        }
-        group
-      `}
-              >
-                <span className="flex items-center gap-3">
-                  {icon}
-                  <span>{label}</span>
-                </span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Logout Button */}
-        <div className="p-4 border-t border-slate-600">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl font-medium
-                     bg-slate-600 hover:bg-slate-500 text-slate-200 transition-all duration-200
-                     hover:shadow-md hover:text-white"
+      {/* Main content area */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          ml: isDesktop ? `${DRAWER_WIDTH}px` : 0,
+          width: isDesktop ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+          bgcolor: theme.palette.background.default,
+        }}
+      >
+        {!isDesktop && (
+          <AppBar
+            position="fixed"
+            sx={{
+              backgroundColor: theme.palette.background.paper,
+              color: theme.palette.text.primary,
+              boxShadow: 1,
+              zIndex: (t) => t.zIndex.drawer + 1,
+            }}
           >
-            <IoLogOutOutline size={20} />
-            Logout
-          </button>
-        </div>
-      </div>
+            <Toolbar>
+              <IconButton
+                edge="start"
+                onClick={() => setIsSidebarOpen(true)}
+                sx={{ mr: 2 }}
+                aria-label="open menu"
+              >
+                <IoMenu size={22} />
+              </IconButton>
+            </Toolbar>
+          </AppBar>
+        )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Bar */}
-        <header className="bg-white shadow-sm border-b border-slate-200">
-          <div className="flex items-center justify-between p-4">
-            <button
-              onClick={toggleSidebar}
-              className="p-2 rounded-lg bg-white border border-slate-200 hover:bg-slate-50 
-                       transition-colors shadow-sm md:hidden text-slate-600"
+        {!isDesktop && <Box sx={theme.mixins.toolbar} />}
+
+        {/* Page content */}
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "auto",
+            p: { xs: 3, md: 4 },
+          }}
+        >
+          {isGoogleMapsLoaded ? (
+            children
+          ) : (
+            <Box
+              sx={{
+                height: "60vh",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
             >
-              <IoMenu size={20} />
-            </button>
-            <div className="flex-1 md:flex-none">
-              <h1 className="text-xl font-semibold text-slate-800 text-center md:text-left">
-                Styles Dispatch System EG
-              </h1>
-            </div>
-            <div className="w-9 md:hidden"></div>
-          </div>
-        </header>
-
-        {/* Page Content */}
-        <main className="flex-1 overflow-auto p-4 md:p-6 bg-slate-50">
-          <div className="max-w-7xl mx-auto">
-            {isGoogleMapsLoaded ? (
-              children
-            ) : (
-              <div className="flex items-center justify-center h-64">
-                <div className="text-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
-                  <p className="mt-4 text-slate-600">Loading Google Maps...</p>
-                  <p className="text-sm text-slate-500 mt-2">
-                    Please wait while we load the maps
-                  </p>
-                </div>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
-    </section>
+              <CircularProgress color="primary" />
+              <Typography sx={{ mt: 2, color: theme.palette.text.secondary }}>
+                Loading Google Maps...
+              </Typography>
+            </Box>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 }
