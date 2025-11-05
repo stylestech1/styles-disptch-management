@@ -2,9 +2,9 @@ import { Palette, TPaletteConfig } from "@/types/themeType";
 import { PaletteMode } from "@mui/material";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-const bluePalette: Palette = {
+const defaultPalette: Palette = {
   mode: "light",
-  customName: "Blue",
+  customName: "Default",
   primary: "#1E56A0",
   secondary: "#266DCB",
   background: "#FBFDFE",
@@ -12,26 +12,18 @@ const bluePalette: Palette = {
   title: "#1E56A0",
 };
 
-const redPalette: Palette = {
-  mode: "light", 
-  customName: "Red",
-  primary: "#B10C2E",
-  secondary: "#6E0715",
-  background: "#F6F6F6",
-  text: "#2E2E2E",
-  title: "#B10C2E",
-};
-
 interface PaletteState {
   currentPalette: Palette;
   customPalettes: Palette[];
   isLoading: boolean;
+  error: string | null;
 }
 
 const initialState: PaletteState = {
-  currentPalette: bluePalette,
+  currentPalette: defaultPalette,
   customPalettes: [],
   isLoading: false,
+  error: null,
 };
 
 const paletteSlice = createSlice({
@@ -41,31 +33,41 @@ const paletteSlice = createSlice({
     setPalette(state, action: PayloadAction<Palette>) {
       state.currentPalette = action.payload;
     },
-    switchPalette(state, action: PayloadAction<"blue" | "red">) {
-      state.currentPalette = action.payload === "blue" ? bluePalette : redPalette;
+    setCustomePalettes(state, action: PayloadAction<Palette[]>) {
+      state.customPalettes = action.payload;
     },
-    addCustomPalette(state, action: PayloadAction<Palette>) {
+    addCustomePalette(state, action: PayloadAction<Palette>) {
       state.customPalettes = state.customPalettes.filter(
-        p => p.customName !== action.payload.customName
+        (p) =>
+          p._id !== action.payload._id &&
+          p.customName !== action.payload.customName
       );
       state.customPalettes.push(action.payload);
     },
     removeCustomPalette(state, action: PayloadAction<string>) {
       state.customPalettes = state.customPalettes.filter(
-        p => p.customName !== action.payload
+        (p) => p._id !== action.payload && p.customName !== action.payload
       );
     },
     setPaletteMode(state, action: PayloadAction<PaletteMode>) {
       state.currentPalette.mode = action.payload;
+    },
+    setLoadingPalette(state, action: PayloadAction<boolean>) {
+      state.isLoading = action.payload;
+    },
+    setErrorPalette(state, action: PayloadAction<string | null>) {
+      state.error = action.payload;
     },
   },
 });
 
 export const {
   setPalette,
-  switchPalette,
-  addCustomPalette,
+  setCustomePalettes,
+  addCustomePalette,
   removeCustomPalette,
   setPaletteMode,
+  setLoadingPalette,
+  setErrorPalette
 } = paletteSlice.actions;
 export default paletteSlice.reducer;

@@ -1,6 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TCustomer } from "@/types/globalTypes";
 import Titles from "@/components/ui/Titles";
@@ -26,8 +25,8 @@ import Pagination from "@/components/ui/Pagination";
 import {
   useCreateCustomerMutation,
   useGetCustomersQuery,
+  useGetCustomersWithPaginationQuery,
   useGetCustomerWithFilterQuery,
-  //   useGeTCustomersWithPaginationQuery,
   useUpdateCustomerMutation,
 } from "@/redux/slices/apiSlice";
 import useError from "@/hook/useError";
@@ -35,7 +34,6 @@ import StatsCard from "@/components/ui/StatsCard";
 import { Dayjs } from "dayjs";
 import { useSearch } from "@/hook/useSearch";
 import DataTable from "@/components/ui/DataTable";
-import { StatusChip } from "@/components/ui/TablesMUI";
 import { CustomerForm } from "./CustomerForm";
 import { customerColumns } from "@/data/customerTables";
 
@@ -54,11 +52,16 @@ const CustomerPage = () => {
 
   // 🔹 API Queries
   const {
+    data: allCustomersData,
+    isLoading: allCustomersLoading,
+    error: allCustomersError,
+  } = useGetCustomersQuery(undefined, {skip: !token})
+  const {
     data: customersData,
     isLoading: customersLoading,
     error: customerError,
     refetch,
-  } = useGetCustomersQuery({ skip: !token });
+  } = useGetCustomersWithPaginationQuery({ page, limit: 10 }, { skip: !token });
 
   const { data: filteredData } = useGetCustomerWithFilterQuery(
     {
@@ -78,7 +81,10 @@ const CustomerPage = () => {
   const displayCustomer = isFiltered
     ? filteredData?.customersData?.data || []
     : customersData?.data || [];
-  const pagination = customersData?.paginationResult || null;
+
+  const pagination = isFiltered
+    ? filteredData?.customersData?.paginationResult
+    : customersData?.paginationResult;
 
   const isLoading = customersLoading;
 
@@ -89,6 +95,14 @@ const CustomerPage = () => {
     initialSearch: searchInput,
   });
   const tableData = searchInput ? searchedCustomer : displayCustomer;
+
+  // StatsCard
+  const statsData = useMemo(() => {
+
+    return {
+      totalCustomers: tableData.length,
+    };
+  }, [tableData]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -320,7 +334,7 @@ const CustomerPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
         <StatsCard
           title="Total Customers"
-          value={tableData.length || 0}
+          value={statsData.totalCustomers}
           icon={IoPerson}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -390,7 +404,9 @@ const CustomerPage = () => {
               backgroundColor: "#fff",
               "& fieldset": { borderColor: "#e5e7eb" },
               "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-              "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
             "& input": {
               color: theme.currentPalette.text,

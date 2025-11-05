@@ -1,9 +1,9 @@
-// types/themeType.ts
 import { PaletteMode } from '@mui/material';
 
 export interface TPaletteConfig {
   _id?: string;
   mode: PaletteMode;
+  customName: string;
   primary: {
     main: string;
     contrastText: string;
@@ -20,11 +20,13 @@ export interface TPaletteConfig {
     primary: string;
     secondary: string;
   };
+  title: string
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface Palette {
+  _id?: string
   mode: PaletteMode;
   customName: string; 
   primary: string;

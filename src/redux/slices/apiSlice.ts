@@ -434,7 +434,7 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Palette Themes ============
 
-    getPalette: builder.query<TPaletteConfig, void>({
+    getPalette: builder.query<TPaletteConfig[], void>({
       query: () => `/api/v1/ui-settings/palette`,
       providesTags: ["Palette"],
     }),
@@ -459,10 +459,14 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Customer Methods ==========
 
-    getCustomers: builder.query({
+    getCustomers: builder.query<
+      { data: TCustomer[]; paginationResult?: TPagination },
+      void
+    >({
       query: () => `/api/v1/customers`,
       providesTags: ["Customers"],
     }),
+
     // Get Customer with Filter and Search
     getCustomerWithFilter: builder.query({
       query: ({ from, to }) => {
@@ -475,6 +479,16 @@ export const apiSlice = api.injectEndpoints({
         if (params.length) url += `?${params.join("&")}`;
         return url;
       },
+      providesTags: ["Customers"],
+    }),
+
+    // 🔹 Get all Customers with Pagination
+    getCustomersWithPagination: builder.query<
+      { data: TCustomer[]; paginationResult: TPagination },
+      { page: number; limit?: number }
+    >({
+      query: ({ page = 1, limit = 10 }) =>
+        `/api/v1/customers?page=${page}&limit=${limit}`,
       providesTags: ["Customers"],
     }),
 
@@ -559,6 +573,7 @@ export const {
   // TODO: ----- Customer -----
   useGetCustomersQuery,
   useGetCustomerWithFilterQuery,
+  useGetCustomersWithPaginationQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
 } = apiSlice;
