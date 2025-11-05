@@ -1187,7 +1187,6 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                 <DateTimePicker
                   value={pickupAt}
                   onChange={onPickupAtChange}
-                  disablePast
                   views={["year", "month", "day", "hours", "minutes"]}
                   slotProps={{
                     textField: {
@@ -1207,7 +1206,6 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                 <DateTimePicker
                   value={completedAt}
                   onChange={onCompletedAtChange}
-                  disablePast
                   views={["year", "month", "day", "hours", "minutes"]}
                   slotProps={{
                     textField: {
