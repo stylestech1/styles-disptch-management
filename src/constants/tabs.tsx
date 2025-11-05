@@ -1,10 +1,8 @@
 import { FaCirclePlus, FaTruckFast } from "react-icons/fa6";
 import { PiUsersFill } from "react-icons/pi";
 import { ImCalculator } from "react-icons/im";
-import {
-  IoPeopleOutline,
-  IoSettingsSharp,
-} from "react-icons/io5";
+import { IoPeopleOutline } from "react-icons/io5";
+import { RiCustomerService2Fill } from "react-icons/ri";
 import { SiGoogleanalytics } from "react-icons/si";
 import { MdOutlineCommentBank } from "react-icons/md";
 import { TUserRole } from "@/types/globalTypes";
@@ -16,20 +14,18 @@ type TabItem = {
 
 export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
   admin: [
-    { label: "Loads", icon: <FaCirclePlus/> },
+    { label: "Loads", icon: <FaCirclePlus /> },
     { label: "Users", icon: <IoPeopleOutline /> },
     { label: "Drivers", icon: <PiUsersFill /> },
     { label: "Trucks", icon: <FaTruckFast /> },
     { label: "TruckDashboard", icon: <SiGoogleanalytics /> },
     { label: "Calculation", icon: <ImCalculator /> },
     { label: "Broker", icon: <MdOutlineCommentBank /> },
-    { label: "Settings", icon: <IoSettingsSharp /> },
+    { label: "Customer", icon: <RiCustomerService2Fill /> },
   ],
   employee: [
     { label: "Loads", icon: <FaCirclePlus /> },
     { label: "Calculation", icon: <ImCalculator /> },
   ],
-    driver: [
-    { label: "Loads", icon: <FaCirclePlus /> },
-  ],
+  driver: [{ label: "Loads", icon: <FaCirclePlus /> }],
 };
