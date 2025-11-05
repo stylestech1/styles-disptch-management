@@ -1,3 +1,11 @@
+export type Palette = {
+  mode: string;
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+  title?: string;
+};
 export type TPaletteConfig = {
   mode?: "light" | "dark";
   primary: {

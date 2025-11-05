@@ -1,5 +1,5 @@
+import { TPaletteConfig } from "@/types/themeType";
 import { createTheme } from "@mui/material";
-import { TPaletteConfig } from "./palettes";
 
 export const createMuiThemeFromPalette = (p: TPaletteConfig) => 
     createTheme({

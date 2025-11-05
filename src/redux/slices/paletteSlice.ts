@@ -1,13 +1,5 @@
+import { Palette } from "@/types/themeType";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-
-type Palette = {
-  mode: "blue" | "red" | "custom";
-  primary: string;
-  secondary: string;
-  background: string;
-  text: string;
-  title: string;
-};
 
 const bluePalette: Palette = {
   mode: "blue",
