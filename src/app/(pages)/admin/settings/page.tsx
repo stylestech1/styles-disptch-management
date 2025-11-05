@@ -1,19 +1,38 @@
+// settings/page.tsx
 "use client";
-import { useDispatch, useSelector } from "react-redux";
-import { switchPalette, setPalette, addCustomPalette } from "@/redux/slices/paletteSlice";
-import { Box, Button, PaletteMode, TextField, Typography, FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { useState } from "react";
-import { RootState } from "@/redux/store";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+  Alert,
+  PaletteMode,
+} from "@mui/material";
 import { Palette } from "@/types/themeType";
+import { usePaletteManagement } from "@/hook/usePaletteManagement";
 import toast from "react-hot-toast";
 
 export default function Settings() {
-  const dispatch = useDispatch();
-  const { currentPalette, customPalettes } = useSelector((state: RootState) => state.palette);
+  const {
+    currentPalette,
+    customPalettes,
+    isLoading,
+    savePaletteToBackend,
+    applyPalette,
+    refreshPalettes,
+  } = usePaletteManagement();
 
   // Custom Palette State
-  const [custom, setCustom] = useState<Omit<Palette, 'mode'> & { mode: string }>({
-    mode: "light", // default value
+  const [custom, setCustom] = useState<
+    Omit<Palette, "mode"> & { mode: string }
+  >({
+    mode: "light",
     customName: "",
     primary: currentPalette.primary,
     secondary: currentPalette.secondary,
@@ -51,7 +70,10 @@ export default function Settings() {
         overflow: "hidden",
         cursor: "pointer",
         boxShadow: currentPalette.primary === primary ? 4 : 1,
-        border: currentPalette.primary === primary ? "2px solid #000" : "1px solid #ccc",
+        border:
+          currentPalette.primary === primary
+            ? "2px solid #000"
+            : "1px solid #ccc",
         "&:hover": { boxShadow: 4 },
       }}
     >
@@ -76,7 +98,7 @@ export default function Settings() {
     </Box>
   );
 
-  const handleSaveCustom = () => {
+  const handleSaveCustom = async () => {
     if (!custom.customName.trim()) {
       return toast.error("Please enter a name for your palette! ❌", {
         style: { background: "#dc2626", color: "#fff" },
@@ -90,7 +112,7 @@ export default function Settings() {
     }
 
     const newPalette: Palette = {
-      mode: custom.mode as PaletteMode, 
+      mode: custom.mode as PaletteMode,
       customName: custom.customName.trim(),
       primary: custom.primary,
       secondary: custom.secondary,
@@ -99,64 +121,97 @@ export default function Settings() {
       title: custom.title,
     };
 
-    // Save to custom palettes
-    dispatch(addCustomPalette(newPalette));
-    
-    // Apply the new palette
-    dispatch(setPalette(newPalette));
+    const savedPalette = await savePaletteToBackend(newPalette);
 
-    // Reset form
-    setCustom({
-      mode: "light",
-      customName: "",
-      primary: currentPalette.primary,
-      secondary: currentPalette.secondary,
-      background: currentPalette.background,
-      text: currentPalette.text,
-      title: currentPalette.title,
-    });
+    if (savedPalette) {
+      // Reset form
+      setCustom({
+        mode: "light",
+        customName: "",
+        primary: currentPalette.primary,
+        secondary: currentPalette.secondary,
+        background: currentPalette.background,
+        text: currentPalette.text,
+        title: currentPalette.title,
+      });
 
-    toast.success("Custom palette saved successfully! 🎨");
+      toast.success("Custom palette saved successfully! 🎨");
+    }
   };
 
   const handleApplyPalette = (palette: Palette) => {
-    dispatch(setPalette(palette));
-    toast.success(`Applied ${palette.customName} palette! 🎨`);
+    applyPalette(palette);
   };
+
+  // Default palettes
+  const defaultPalettes: Palette[] = [
+    {
+      mode: "light",
+      customName: "Blue",
+      primary: "#1E56A0",
+      secondary: "#266DCB",
+      background: "#FBFDFE",
+      text: "#333333",
+      title: "#1E56A0",
+    },
+    {
+      mode: "light",
+      customName: "Red",
+      primary: "#B10C2E",
+      secondary: "#6E0715",
+      background: "#F6F6F6",
+      text: "#2E2E2E",
+      title: "#B10C2E",
+    },
+  ];
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h5" sx={{ mb: 2 }}>
-        🎨 Select Palette
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Typography variant="h5">🎨 Select Palette</Typography>
+        <Button
+          variant="outlined"
+          onClick={refreshPalettes}
+          disabled={isLoading}
+        >
+          Refresh
+        </Button>
+      </Box>
+
+      {isLoading && (
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 2 }}>
+          <CircularProgress size={24} />
+        </Box>
+      )}
 
       {/* 🔹 Standard Palettes */}
       <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
-        <PaletteCardPreview
-          mode="light"
-          customName="Blue"
-          primary="#1E56A0"
-          secondary="#266DCB"
-          background="#FBFDFE"
-          text="#333"
-          title="#1E56A0"
-          onClick={() => dispatch(switchPalette("blue"))}
-        />
-        <PaletteCardPreview
-          mode="light"
-          customName="Red"
-          primary="#B10C2E"
-          secondary="#6E0715"
-          background="#F6F6F6"
-          text="#2E2E2E"
-          title="#B10C2E"
-          onClick={() => dispatch(switchPalette("red"))}
-        />
-
-        {/* Custom Palettes */}
-        {customPalettes.map((palette, index) => (
+        {/* Default Palettes */}
+        {defaultPalettes.map((palette, index) => (
           <PaletteCardPreview
-            key={index}
+            key={`default-${index}`}
+            mode={palette.mode}
+            customName={palette.customName}
+            primary={palette.primary}
+            secondary={palette.secondary}
+            background={palette.background}
+            text={palette.text}
+            title={palette.title}
+            onClick={() => handleApplyPalette(palette)}
+          />
+        ))}
+
+        {/* Custom Palettes from Backend */}
+        {customPalettes.map((palette) => (
+          <PaletteCardPreview
+            key={palette._id || palette.customName}
             mode={palette.mode}
             customName={palette.customName}
             primary={palette.primary}
@@ -182,7 +237,7 @@ export default function Settings() {
           size="small"
           sx={{ minWidth: 120 }}
         />
-        
+
         <FormControl size="small" sx={{ minWidth: 120 }}>
           <InputLabel>Mode</InputLabel>
           <Select
@@ -197,65 +252,125 @@ export default function Settings() {
 
         <TextField
           label="Primary"
+          type="color"
           value={custom.primary}
           onChange={(e) => setCustom({ ...custom, primary: e.target.value })}
           size="small"
           sx={{ minWidth: 120 }}
+          InputProps={{
+            startAdornment: (
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  backgroundColor: custom.primary,
+                  borderRadius: 1,
+                  mr: 1,
+                  border: "1px solid #ccc",
+                }}
+              />
+            ),
+          }}
         />
         <TextField
           label="Secondary"
+          type="color"
           value={custom.secondary}
           onChange={(e) => setCustom({ ...custom, secondary: e.target.value })}
           size="small"
           sx={{ minWidth: 120 }}
+          InputProps={{
+            startAdornment: (
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  backgroundColor: custom.secondary,
+                  borderRadius: 1,
+                  mr: 1,
+                  border: "1px solid #ccc",
+                }}
+              />
+            ),
+          }}
         />
         <TextField
           label="Background"
+          type="color"
           value={custom.background}
           onChange={(e) => setCustom({ ...custom, background: e.target.value })}
           size="small"
           sx={{ minWidth: 120 }}
+          InputProps={{
+            startAdornment: (
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  backgroundColor: custom.background,
+                  borderRadius: 1,
+                  mr: 1,
+                  border: "1px solid #ccc",
+                }}
+              />
+            ),
+          }}
         />
         <TextField
           label="Text"
+          type="color"
           value={custom.text}
           onChange={(e) => setCustom({ ...custom, text: e.target.value })}
           size="small"
           sx={{ minWidth: 120 }}
+          InputProps={{
+            startAdornment: (
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  backgroundColor: custom.text,
+                  borderRadius: 1,
+                  mr: 1,
+                  border: "1px solid #ccc",
+                }}
+              />
+            ),
+          }}
         />
         <TextField
           label="Title"
+          type="color"
           value={custom.title}
           onChange={(e) => setCustom({ ...custom, title: e.target.value })}
           size="small"
           sx={{ minWidth: 120 }}
+          InputProps={{
+            startAdornment: (
+              <Box
+                sx={{
+                  width: 20,
+                  height: 20,
+                  backgroundColor: custom.title,
+                  borderRadius: 1,
+                  mr: 1,
+                  border: "1px solid #ccc",
+                }}
+              />
+            ),
+          }}
         />
       </Box>
 
-      <Button variant="contained" sx={{ mt: 2 }} onClick={handleSaveCustom}>
-        Save Custom Palette
+      <Button
+        variant="contained"
+        sx={{ mt: 2 }}
+        onClick={handleSaveCustom}
+        disabled={isLoading}
+        startIcon={isLoading ? <CircularProgress size={16} /> : null}
+      >
+        {isLoading ? "Saving..." : "Save Custom Palette"}
       </Button>
-
-      {/* 🔹 Mode Switch */}
-      {/* <Box sx={{ mt: 4 }}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          Theme Mode
-        </Typography>
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Button 
-            variant={currentPalette.mode === "light" ? "contained" : "outlined"}
-            onClick={() => dispatch(setPalette({ ...currentPalette, mode: "light" }))}
-          >
-            Light Mode
-          </Button>
-          <Button 
-            variant={currentPalette.mode === "dark" ? "contained" : "outlined"}
-            onClick={() => dispatch(setPalette({ ...currentPalette, mode: "dark" }))}
-          >
-            Dark Mode
-          </Button>
-        </Box>
-      </Box> */}
     </Box>
   );
 }

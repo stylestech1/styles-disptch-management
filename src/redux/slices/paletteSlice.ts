@@ -1,4 +1,5 @@
 import { Palette, TPaletteConfig } from "@/types/themeType";
+import { TPaletteConfigToPalette } from "@/utils/helperPalette";
 import { PaletteMode } from "@mui/material";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
@@ -58,6 +59,14 @@ const paletteSlice = createSlice({
     setErrorPalette(state, action: PayloadAction<string | null>) {
       state.error = action.payload;
     },
+    loadPalettesFromBackend(state, action: PayloadAction<TPaletteConfig[]>) {
+      const palettes = action.payload.map(TPaletteConfigToPalette);
+      state.customPalettes = palettes;
+      
+      if (palettes.length > 0) {
+        state.currentPalette = palettes[0];
+      }
+    },
   },
 });
 
@@ -68,6 +77,7 @@ export const {
   removeCustomPalette,
   setPaletteMode,
   setLoadingPalette,
-  setErrorPalette
+  setErrorPalette,
+  loadPalettesFromBackend
 } = paletteSlice.actions;
 export default paletteSlice.reducer;
