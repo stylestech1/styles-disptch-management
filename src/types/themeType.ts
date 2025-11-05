@@ -1,14 +1,9 @@
-export type Palette = {
-  mode: string;
-  primary: string;
-  secondary: string;
-  background: string;
-  text: string;
-  title?: string;
-};
-export type TPaletteConfig = {
+// types/themeType.ts
+import { PaletteMode } from '@mui/material';
+
+export interface TPaletteConfig {
   _id?: string;
-  mode: string;
+  mode: PaletteMode;
   primary: {
     main: string;
     contrastText: string;
@@ -27,4 +22,14 @@ export type TPaletteConfig = {
   };
   createdAt?: string;
   updatedAt?: string;
-};
+}
+
+export interface Palette {
+  mode: PaletteMode;
+  customName: string; 
+  primary: string;
+  secondary: string;
+  background: string;
+  text: string;
+  title: string;
+}

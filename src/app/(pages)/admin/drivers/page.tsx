@@ -273,7 +273,7 @@ const DriversPage = () => {
       <TableRow
         sx={{
           "&:hover": {
-            backgroundColor: alpha(theme.primary, 0.05),
+            backgroundColor: alpha(theme.currentPalette.primary, 0.05),
           },
         }}
         key={index}
@@ -345,7 +345,7 @@ const DriversPage = () => {
                 }}
                 sx={{ 
                   '&:hover': { 
-                    backgroundColor: alpha(theme.primary, 0.1) 
+                    backgroundColor: alpha(theme.currentPalette.primary, 0.1) 
                   } 
                 }}
               >
@@ -363,7 +363,7 @@ const DriversPage = () => {
                 }}
                 sx={{ 
                   '&:hover': { 
-                    backgroundColor: alpha(theme.primary, 0.1) 
+                    backgroundColor: alpha(theme.currentPalette.primary, 0.1) 
                   } 
                 }}
               >
@@ -428,7 +428,7 @@ const DriversPage = () => {
           title="Total Drivers"
           value={tableData.length || 0}
           icon={IoPerson}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
 
@@ -438,7 +438,7 @@ const DriversPage = () => {
             tableData.filter((d: TDriver) => d.status === "available").length
           }
           icon={FaUserCheck}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
 
@@ -446,7 +446,7 @@ const DriversPage = () => {
           title="Busy"
           value={tableData.filter((d: TDriver) => d.status === "busy").length}
           icon={FaUserMinus}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
 
@@ -456,7 +456,7 @@ const DriversPage = () => {
             tableData.filter((d: TDriver) => d.status === "inactive").length
           }
           icon={FaUserLargeSlash}
-          iconColor={theme.primary}
+          iconColor={theme.currentPalette.primary}
           loading={isLoading}
         />
       </div>
@@ -476,10 +476,10 @@ const DriversPage = () => {
             borderRadius: 2,
             textTransform: "none",
             width: { xs: "100%", lg: "auto" },
-            background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
+            background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
             color: "#fff",
             "&:hover": {
-              background: `linear-gradient(to right, ${theme.secondary}, ${theme.primary})`,
+              background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
             },
             transition: "all 0.3s ease",
           }}
@@ -497,10 +497,10 @@ const DriversPage = () => {
           gap: 2,
           p: 2,
           my: 5,
-          border: `1px solid ${theme.primary}33`,
+          border: `1px solid ${theme.currentPalette.primary}33`,
           borderRadius: 2,
           boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          backgroundColor: theme.background,
+          backgroundColor: theme.currentPalette.background,
         }}
       >
         <TextField
@@ -523,11 +523,11 @@ const DriversPage = () => {
               borderRadius: 1,
               backgroundColor: "#fff",
               "& fieldset": { borderColor: "#e5e7eb" },
-              "&:hover fieldset": { borderColor: theme.primary },
-              "&.Mui-focused fieldset": { borderColor: theme.primary },
+              "&:hover fieldset": { borderColor: theme.currentPalette.primary },
+              "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
             },
             "& input": {
-              color: theme.text,
+              color: theme.currentPalette.text,
             },
           }}
         />

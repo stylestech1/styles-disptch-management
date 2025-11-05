@@ -136,7 +136,7 @@ const LoadsPageDetails = () => {
       <TableRow
         sx={{
           "&:hover": {
-            backgroundColor: alpha(theme.primary, 0.05),
+            backgroundColor: alpha(theme.currentPalette.primary, 0.05),
           },
         }}
         key={index}
@@ -262,7 +262,7 @@ const LoadsPageDetails = () => {
                 }}
                 title={`${commentsCount} comment(s) - Click to view`}
               >
-                <Box sx={{backgroundColor: theme.primary}} className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-blue-600 transition-colors">
+                <Box sx={{backgroundColor: theme.currentPalette.primary}} className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-blue-600 transition-colors">
                   <IoChatbubbleEllipses size={16} className="text-white" />
                 </Box>
 
@@ -307,11 +307,11 @@ const LoadsPageDetails = () => {
           className="flex flex-col xl:items-start xl:justify-between gap-1"
         >
           <Typography
-            sx={{ color: theme.text, fontSize: "45px", fontWeight: "bold" }}
+            sx={{ color: theme.currentPalette.text, fontSize: "45px", fontWeight: "bold" }}
           >
             Load Management
           </Typography>
-          <Typography sx={{ color: alpha(theme.text, 0.7), fontSize: "16px" }}>
+          <Typography sx={{ color: alpha(theme.currentPalette.text, 0.7), fontSize: "16px" }}>
             Manage and track all your shipments and deliveries in one place.
             Monitor status, assign drivers, and update load information.
           </Typography>
@@ -323,28 +323,28 @@ const LoadsPageDetails = () => {
             title="Total Loads"
             value={allLoads.length || 0}
             icon={IoCar}
-            iconColor={theme.primary}
+            iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
             title="Pending"
             value={load.filter((l: TLoads) => l.status === "pending").length}
             icon={IoTime}
-            iconColor={theme.primary}
+            iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
             title="In Transit"
             value={load.filter((l: TLoads) => l.status === "in_transit").length}
             icon={IoNavigate}
-            iconColor={theme.primary}
+            iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
             title="Delivered"
             value={load.filter((l: TLoads) => l.status === "delivered").length}
             icon={IoCheckmark}
-            iconColor={theme.primary}
+            iconColor={theme.currentPalette.primary}
           />
         </div>
 
@@ -365,10 +365,10 @@ const LoadsPageDetails = () => {
               borderRadius: 2,
               textTransform: "none",
               width: { xs: "100%", lg: "auto" },
-              background: `linear-gradient(to right, ${theme.primary}, ${theme.secondary})`,
+              background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
               color: "#fff",
               "&:hover": {
-                background: `linear-gradient(to right, ${theme.secondary}, ${theme.primary})`,
+                background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
               },
               transition: "all 0.3s ease",
             }}
@@ -386,10 +386,10 @@ const LoadsPageDetails = () => {
             gap: 2,
             p: 2,
             mt: 5,
-            border: `1px solid ${theme.primary}33`,
+            border: `1px solid ${theme.currentPalette.primary}33`,
             borderRadius: 2,
             boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-            backgroundColor: theme.background,
+            backgroundColor: theme.currentPalette.background,
           }}
         >
           {/* Search */}
@@ -414,11 +414,11 @@ const LoadsPageDetails = () => {
                 borderRadius: 1,
                 backgroundColor: "#fff",
                 "& fieldset": { borderColor: "#e5e7eb" },
-                "&:hover fieldset": { borderColor: theme.primary },
-                "&.Mui-focused fieldset": { borderColor: theme.primary },
+                "&:hover fieldset": { borderColor: theme.currentPalette.primary },
+                "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
               },
               "& input": {
-                color: theme.text,
+                color: theme.currentPalette.text,
               },
             }}
           />

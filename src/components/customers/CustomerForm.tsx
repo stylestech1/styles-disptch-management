@@ -140,13 +140,13 @@ export const CustomerForm = ({
                   width: 32,
                   height: 32,
                   borderRadius: "50%",
-                  bgcolor: alpha(theme.primary, 0.1),
+                  bgcolor: alpha(theme.currentPalette.primary, 0.1),
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                 }}
               >
-                <IoAdd size={18} color={theme.primary} />
+                <IoAdd size={18} color={theme.currentPalette.primary} />
               </Box>
             )}
             <h3 className="text-xl font-semibold text-slate-800">
@@ -426,9 +426,9 @@ export const CustomerForm = ({
               borderRadius: 2,
               fontWeight: 500,
               color: "#fff",
-              background: theme.primary,
+              background: theme.currentPalette.primary,
               "&:hover": {
-                background: alpha(theme.primary, 0.85),
+                background: alpha(theme.currentPalette.primary, 0.85),
               },
             }}
           >

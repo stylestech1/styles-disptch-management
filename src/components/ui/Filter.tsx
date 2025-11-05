@@ -109,15 +109,15 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
           cursor: "pointer",
           fontSize: '16px',
           py: 1.6,
-          backgroundColor: alpha(theme.primary, 0.1),
-          border: `1px solid ${theme.primary}`, 
+          backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+          border: `1px solid ${theme.currentPalette.primary}`, 
           borderRadius: "4px",
-          color: theme.primary, 
+          color: theme.currentPalette.primary, 
           textTransform: "none", 
           transition: "all 0.2s ease",
           "&:hover": {
             color: '#fff', 
-            backgroundColor: theme.primary, 
+            backgroundColor: theme.currentPalette.primary, 
           },
         }}
       >

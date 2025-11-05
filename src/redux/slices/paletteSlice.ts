@@ -1,19 +1,10 @@
 import { Palette, TPaletteConfig } from "@/types/themeType";
+import { PaletteMode } from "@mui/material";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-
-// Convert Backend format to Frontend
-const backendToFrontendPalette = (backendPalette: TPaletteConfig) : Palette => ({
-  mode: backendPalette.mode,
-  primary: backendPalette.primary.main,
-  secondary: backendPalette.secondary.main,
-  background: backendPalette.background.default,
-  text: backendPalette.text.primary,
-  // title: backendPalette.title
-})
-
 const bluePalette: Palette = {
-  mode: "blue",
+  mode: "light",
+  customName: "Blue",
   primary: "#1E56A0",
   secondary: "#266DCB",
   background: "#FBFDFE",
@@ -22,7 +13,8 @@ const bluePalette: Palette = {
 };
 
 const redPalette: Palette = {
-  mode: "red",
+  mode: "light", 
+  customName: "Red",
   primary: "#B10C2E",
   secondary: "#6E0715",
   background: "#F6F6F6",
@@ -30,20 +22,51 @@ const redPalette: Palette = {
   title: "#B10C2E",
 };
 
-const initialState: Palette = bluePalette;
+interface PaletteState {
+  currentPalette: Palette;
+  customPalettes: Palette[];
+  isLoading: boolean;
+}
+
+const initialState: PaletteState = {
+  currentPalette: bluePalette,
+  customPalettes: [],
+  isLoading: false,
+};
 
 const paletteSlice = createSlice({
   name: "palette",
   initialState,
   reducers: {
     setPalette(state, action: PayloadAction<Palette>) {
-      return action.payload;
+      state.currentPalette = action.payload;
     },
     switchPalette(state, action: PayloadAction<"blue" | "red">) {
-      return action.payload === "blue" ? bluePalette : redPalette;
+      state.currentPalette = action.payload === "blue" ? bluePalette : redPalette;
+    },
+    addCustomPalette(state, action: PayloadAction<Palette>) {
+      // Remove existing palette with same customName if exists
+      state.customPalettes = state.customPalettes.filter(
+        p => p.customName !== action.payload.customName
+      );
+      state.customPalettes.push(action.payload);
+    },
+    removeCustomPalette(state, action: PayloadAction<string>) {
+      state.customPalettes = state.customPalettes.filter(
+        p => p.customName !== action.payload
+      );
+    },
+    setPaletteMode(state, action: PayloadAction<PaletteMode>) {
+      state.currentPalette.mode = action.payload;
     },
   },
 });
 
-export const { setPalette, switchPalette } = paletteSlice.actions;
+export const {
+  setPalette,
+  switchPalette,
+  addCustomPalette,
+  removeCustomPalette,
+  setPaletteMode,
+} = paletteSlice.actions;
 export default paletteSlice.reducer;

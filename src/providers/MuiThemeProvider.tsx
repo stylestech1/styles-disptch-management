@@ -10,18 +10,31 @@ export default function MuiThemeProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const theme = useSelector((state: RootState) => state.palette);
+  const { currentPalette } = useSelector((state: RootState) => state.palette);
 
   const muiTheme = useMemo(() => {
     return createTheme({
       palette: {
-        primary: { main: theme.primary },
-        secondary: { main: theme.secondary },
-        background: { default: theme.background },
-        text: { primary: theme.text },
+        mode: currentPalette.mode,
+        primary: { 
+          main: currentPalette.primary,
+          contrastText: "#FFFFFF"
+        },
+        secondary: { 
+          main: currentPalette.secondary,
+          contrastText: "#FFFFFF" 
+        },
+        background: { 
+          default: currentPalette.background,
+          paper: "#FFFFFF" 
+        },
+        text: { 
+          primary: currentPalette.text,
+          secondary: "#666666"
+        },
       },
     });
-  }, [theme]);
+  }, [currentPalette]);
 
   return (
     <ThemeProvider theme={muiTheme}>

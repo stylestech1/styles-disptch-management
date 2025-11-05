@@ -138,10 +138,10 @@ const DataTable = <T,>({
                   align={column.align || "center"}
                   sx={{
                     fontWeight: 600,
-                    color: theme.primary,
+                    color: theme.currentPalette.primary,
                     borderBottom: 1,
-                    borderColor: theme.primary,
-                    backgroundColor: alpha(theme.primary, 0.1),
+                    borderColor: theme.currentPalette.primary,
+                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
                     width: column.width,
                     py:2
                   }}

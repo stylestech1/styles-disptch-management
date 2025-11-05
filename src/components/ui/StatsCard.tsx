@@ -26,7 +26,7 @@ const StatsCard = ({
 }: StatsCardProps) => {
   const theme = useAppSelector((state: RootState) => state.palette);
 
-  const primaryColor = iconColor || theme.primary;
+  const primaryColor = iconColor || theme.currentPalette.primary;
   const bgColor = alpha(primaryColor, 0.1);
 
   if (loading) {
