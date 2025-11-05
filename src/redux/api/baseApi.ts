@@ -23,6 +23,7 @@ export const api = createApi({
     "TruckSummary",
     "DriverSummary",
     "Palette",
+    "Customers",
   ],
   endpoints: () => ({}),
 });

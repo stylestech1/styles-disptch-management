@@ -1,4 +1,5 @@
 import {
+  TCustomer,
   TDriver,
   TLoadSummary,
   TPagination,
@@ -444,6 +445,50 @@ export const apiSlice = api.injectEndpoints({
       }),
       invalidatesTags: ["Palette"],
     }),
+
+    // ! ========== Customer Methods ==========
+    
+    getCustomers: builder.query({
+      query: () => `/api/v1/customers`,
+      providesTags: ["Customers"],
+    }),
+    // Get Customer with Filter and Search
+    getCustomerWithFilter: builder.query({
+      query: ({ from, to }) => {
+        let url = `/api/v1/customers`;
+        const params = [];
+
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
+
+        if (params.length) url += `?${params.join("&")}`;
+        return url;
+      },
+      providesTags: ["Customers"],
+    }),
+
+    // 🔹 Create Customer
+    createCustomer: builder.mutation<{ data: TCustomer }, Partial<TCustomer>>({
+      query: (body) => ({
+        url: `/api/v1/customers`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ['Customers'],
+    }),
+
+    // 🔹 Update driver
+    updateCustomer: builder.mutation<
+      { data: TCustomer },
+      { id: string; body: Partial<TCustomer> }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/v1/customers/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Customers"],
+    }),
   }),
 });
 
@@ -499,4 +544,9 @@ export const {
   // TODO: ----- Palette -----
   useGetPaletteQuery,
   useUpdatePaletteMutation,
+  // TODO: ----- Customer -----
+  useGetCustomersQuery,
+  useGetCustomerWithFilterQuery,
+  useCreateCustomerMutation,
+  useUpdateCustomerMutation,
 } = apiSlice;

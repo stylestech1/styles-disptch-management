@@ -21,7 +21,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     { label: "TruckDashboard", icon: <SiGoogleanalytics /> },
     { label: "Calculation", icon: <ImCalculator /> },
     { label: "Broker", icon: <MdOutlineCommentBank /> },
-    { label: "Customer", icon: <RiCustomerService2Fill /> },
+    { label: "Customers", icon: <RiCustomerService2Fill /> },
   ],
   employee: [
     { label: "Loads", icon: <FaCirclePlus /> },

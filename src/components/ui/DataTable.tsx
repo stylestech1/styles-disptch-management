@@ -14,6 +14,7 @@ import {
   alpha,
 } from "@mui/material";
 import { RootState, useAppSelector } from "@/redux/store";
+import { usePathname } from "next/navigation";
 
 export type AlignType = "left" | "center" | "right";
 
@@ -44,6 +45,7 @@ const DataTable = <T,>({
 }: DataTableProps<T>) => {
 
   const theme = useAppSelector((state: RootState) => state.palette)
+  const pathname = usePathname()
 
   if (loading) {
     return (
@@ -98,7 +100,13 @@ const DataTable = <T,>({
         sx={{ py: 6, color: "text.secondary" }}
       >
         <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
-          <Typography variant="h4">📦</Typography>
+          {
+            pathname.endsWith('customers') ? (
+              <Typography variant="h4">🤵</Typography>
+            ): (
+              <Typography variant="h4">📦</Typography>
+            )
+          }
           <Typography variant="body1">No records found</Typography>
           <Typography variant="body2" color="text.disabled">
             Get started by creating your first record

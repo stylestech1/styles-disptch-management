@@ -206,6 +206,19 @@ export type TTrucksSummaryResponse = {
     totalSummary: TTruckSummary;
   };
 };
+export type TCustomer = {
+  id: string
+  customerId: string
+  name: string
+  email: string
+  phone: string
+  address: string
+  feedback: string
+  type: '' | 'shipper' | 'receiver'
+  addedBy: string
+  createdAt: string
+  updatedAt: string
+}
 export interface RTKError {
   data?: {
     message?: string;
