@@ -170,19 +170,19 @@ const TruckDashboard = () => {
 
   const { filteredData: searchedTrucks } = useSearch({
     data: allTrucksData?.data?.trucksSummary || [],
-    searchFields: [
-      "truckId",
-      "model", 
-      "plateNumber",
-    ],
+    searchFields: ["truckId", "model", "plateNumber"],
     initialSearch: searchInput,
   });
 
-  const displayTrucks = searchInput ? searchedTrucks : (allTrucksData?.data?.trucksSummary || []);
+  const displayTrucks = searchInput
+    ? searchedTrucks
+    : allTrucksData?.data?.trucksSummary || [];
 
   // chart data
   const chartData = useMemo(() => {
-    const trucksWithSummaries = displayTrucks.filter((truck: TTruck & { summary?: TTruckSummary }) => truck.summary);
+    const trucksWithSummaries = displayTrucks.filter(
+      (truck: TTruck & { summary?: TTruckSummary }) => truck.summary
+    );
 
     if (trucksWithSummaries.length === 0) return null;
 
@@ -309,22 +309,22 @@ const TruckDashboard = () => {
           </Box>
         )}
       </Box>
-    {/* Search Bar -*/}
-          <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm mb-8">
-            <div className="relative w-full">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <IoSearch className="h-5 w-5 text-slate-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Search by Plate Number"
-                value={searchInput}
-                onChange={handleSearchChange}
-                className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                disabled={trucksLoading}
-              />
-            </div>
+      {/* Search Bar -*/}
+      <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm mb-8">
+        <div className="relative w-full">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <IoSearch className="h-5 w-5 text-slate-400" />
           </div>
+          <input
+            type="text"
+            placeholder="Search by Plate Number"
+            value={searchInput}
+            onChange={handleSearchChange}
+            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+            disabled={trucksLoading}
+          />
+        </div>
+      </div>
       {/* Table Section */}
       <TableContainer
         component={Paper}
@@ -342,11 +342,11 @@ const TruckDashboard = () => {
           },
           "&::-webkit-scrollbar-thumb": {
             background: muiTheme.palette.grey[400],
-            borderRadius: 4, 
+            borderRadius: 4,
           },
         }}
       >
-        <Table sx={{ minWidth: 800 }}> 
+        <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
               <StyledTableCell>#</StyledTableCell>

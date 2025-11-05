@@ -45,7 +45,6 @@ const paletteSlice = createSlice({
       state.currentPalette = action.payload === "blue" ? bluePalette : redPalette;
     },
     addCustomPalette(state, action: PayloadAction<Palette>) {
-      // Remove existing palette with same customName if exists
       state.customPalettes = state.customPalettes.filter(
         p => p.customName !== action.payload.customName
       );

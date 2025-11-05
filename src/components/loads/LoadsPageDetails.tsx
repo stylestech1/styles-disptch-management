@@ -9,7 +9,7 @@ import { loadColumns } from "@/data/loadTables";
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
 import { TLoads } from "@/types/globalTypes";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 import {
   IoAdd,
@@ -123,6 +123,19 @@ const LoadsPageDetails = () => {
     initialSearch: searchInput,
   });
   const tableData = searchInput ? searchedLoads : load;
+
+  // StatsCard
+   const statsData = useMemo(() => {
+    const currentData = tableData; 
+    const totalData = allLoads
+    
+    return {
+      totalLoads: (searchInput || isFiltered) ? currentData.length : totalData.length,
+      pending: currentData.filter((l: TLoads) => l.status === "pending").length,
+      inTransit: currentData.filter((l: TLoads) => l.status === "in_transit").length,
+      delivered: currentData.filter((l: TLoads) => l.status === "delivered").length,
+    };
+  }, [tableData, allLoads, searchInput, isFiltered]);
 
   // TODO: set loading
   if (loading) return <Loading />;
@@ -321,28 +334,28 @@ const LoadsPageDetails = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
           <StatsCard
             title="Total Loads"
-            value={allLoads.length || 0}
+            value={statsData.totalLoads}
             icon={IoCar}
             iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
             title="Pending"
-            value={load.filter((l: TLoads) => l.status === "pending").length}
+            value={statsData.pending}
             icon={IoTime}
             iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
             title="In Transit"
-            value={load.filter((l: TLoads) => l.status === "in_transit").length}
+            value={statsData.inTransit}
             icon={IoNavigate}
             iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
             title="Delivered"
-            value={load.filter((l: TLoads) => l.status === "delivered").length}
+            value={statsData.delivered}
             icon={IoCheckmark}
             iconColor={theme.currentPalette.primary}
           />

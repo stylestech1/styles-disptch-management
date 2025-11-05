@@ -308,8 +308,8 @@ export const CustomerForm = ({
                         message: "Address must be at least 3 characters",
                       },
                       maxLength: {
-                        value: 50,
-                        message: "Address must be less than 50 characters",
+                        value: 250,
+                        message: "Address must be less than 250 characters",
                       },
                     }}
                     render={({ field }) => (

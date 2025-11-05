@@ -4,7 +4,7 @@ import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   IoAdd,
   IoSearch,
@@ -66,12 +66,9 @@ const Users = () => {
     isLoading: loading,
     isFetching,
     refetch,
-  } = useGetAllDispatchersQuery(
-    { page, limit: 10 },
-    {
-      skip: !token,
-    }
-  );
+  } = useGetAllDispatchersQuery({
+    skip: !token,
+  });
   const { data: filteredData } = useGetUserWithSearchQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
@@ -131,6 +128,21 @@ const Users = () => {
     initialSearch: searchInput,
   });
   const tableData = searchInput ? searchedDispatchers : dispatchers;
+
+  // StatsCard
+  const statsData = useMemo(() => {
+    const currentData = tableData;
+
+    return {
+      totalLoads:
+        searchInput || isFiltered ? currentData.length : dispatchersData?.data?.length || 0,
+      active: currentData.filter((u: TDispatcher) => u.active).length,
+      admin: currentData.filter((u: TDispatcher) => u.role === "admin").length,
+      employee: currentData.filter(
+        (u: TDispatcher) => u.role === "employee" || u.role === "driver"
+      ).length,
+    };
+  }, [tableData, dispatchersData, searchInput, isFiltered]);
 
   // FIXME: Create User
   const handleCreateUser = async (userData: {
@@ -333,11 +345,20 @@ const Users = () => {
         className="flex flex-col xl:items-start xl:justify-between gap-1"
       >
         <Typography
-          sx={{ color: theme.currentPalette.text, fontSize: "45px", fontWeight: "bold" }}
+          sx={{
+            color: theme.currentPalette.text,
+            fontSize: "45px",
+            fontWeight: "bold",
+          }}
         >
           Dispatcher Management
         </Typography>
-        <Typography sx={{ color: alpha(theme.currentPalette.text, 0.7), fontSize: "16px" }}>
+        <Typography
+          sx={{
+            color: alpha(theme.currentPalette.text, 0.7),
+            fontSize: "16px",
+          }}
+        >
           Manage your dispatch team members and their access
         </Typography>
       </Box>
@@ -346,7 +367,7 @@ const Users = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
         <StatsCard
           title="Total Dispatchers"
-          value={dispatchers.length || 0}
+          value={statsData.totalLoads}
           icon={IoPerson}
           iconColor={theme.currentPalette.primary}
           loading={loading}
@@ -354,7 +375,7 @@ const Users = () => {
 
         <StatsCard
           title="Active"
-          value={dispatchers.filter((d: TDispatcher) => d.active).length}
+          value={statsData.active}
           icon={IoBriefcase}
           iconColor={theme.currentPalette.primary}
           loading={loading}
@@ -362,9 +383,7 @@ const Users = () => {
 
         <StatsCard
           title="Admins"
-          value={
-            dispatchers.filter((d: TDispatcher) => d.role === "admin").length
-          }
+          value={statsData.admin}
           icon={IoKey}
           iconColor={theme.currentPalette.primary}
           loading={loading}
@@ -372,9 +391,7 @@ const Users = () => {
 
         <StatsCard
           title="Employees"
-          value={
-            dispatchers.filter((d: TDispatcher) => d.role === "employee").length
-          }
+          value={statsData.employee}
           icon={IoPerson}
           iconColor={theme.currentPalette.primary}
           loading={loading}
@@ -447,7 +464,9 @@ const Users = () => {
               backgroundColor: "#fff",
               "& fieldset": { borderColor: "#e5e7eb" },
               "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-              "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
             "& input": {
               color: theme.currentPalette.text,

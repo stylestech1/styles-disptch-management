@@ -1,5 +1,6 @@
 import { TDriver, TUser } from "@/types/globalTypes";
 import {
+  alpha,
   Box,
   Button,
   Chip,
@@ -29,6 +30,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { RootState, useAppSelector } from "@/redux/store";
 
 interface DriverFormData {
   name: string;
@@ -58,7 +60,8 @@ export const DriverForm = ({
   editMode: boolean;
   isLoading: boolean;
 }) => {
-  // Use RTK Query to fetch users with driver role
+  const theme = useAppSelector((state: RootState) => state.palette);
+
   const {
     data: usersData,
     isLoading: usersLoading,
@@ -395,7 +398,10 @@ export const DriverForm = ({
                         label="Hire Date *"
                         value={field.value ? dayjs(field.value) : null}
                         onChange={(date) =>
-                          handleFieldChange("hireDate", date ? date.toISOString() : "")
+                          handleFieldChange(
+                            "hireDate",
+                            date ? date.toISOString() : ""
+                          )
                         }
                         slotProps={{
                           textField: {
@@ -596,10 +602,21 @@ export const DriverForm = ({
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
+            fullWidth
             disabled={isLoading || usersLoading}
-            className="w-full py-3 mt-5 cursor-pointer rounded-md bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium"
+            sx={{
+              mt: 2,
+              py: 1.5,
+              borderRadius: 2,
+              fontWeight: 500,
+              color: "#fff",
+              background: theme.currentPalette.primary,
+              "&:hover": {
+                background: alpha(theme.currentPalette.primary, 0.85),
+              },
+            }}
           >
             {isLoading
               ? editMode
@@ -608,7 +625,7 @@ export const DriverForm = ({
               : editMode
               ? "Save Changes"
               : "Create Driver"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>

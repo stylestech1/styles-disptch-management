@@ -13,12 +13,15 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
+  alpha,
+  Button,
   FormControl,
   InputAdornment,
   MenuItem,
   Select,
   TextField,
 } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
 
 interface CreateUserModalProps {
   isOpen: boolean;
@@ -53,6 +56,7 @@ const CreateUserModal = ({
 }: CreateUserModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   const {
     register,
@@ -334,11 +338,11 @@ const CreateUserModal = ({
                 {showPassword ? <FaEyeSlash size={18} /> : <FaEye size={18} />}
               </button>
             </div>
-              {errors.password && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.password.message}
-                </p>
-              )}
+            {errors.password && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.password.message}
+              </p>
+            )}
           </div>
 
           <div>
@@ -381,21 +385,31 @@ const CreateUserModal = ({
                 )}
               </button>
             </div>
-              {errors.passwordConfirmation && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.passwordConfirmation.message}
-                </p>
-              )}
+            {errors.passwordConfirmation && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.passwordConfirmation.message}
+              </p>
+            )}
           </div>
 
-          <button
+          <Button
             type="submit"
+            fullWidth
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
+            sx={{
+              mt: 2,
+              py: 1.5,
+              borderRadius: 2,
+              fontWeight: 500,
+              color: "#fff",
+              background: theme.currentPalette.primary,
+              "&:hover": {
+                background: alpha(theme.currentPalette.primary, 0.85),
+              },
+            }}
           >
-            <IoAdd size={18} />
-            {isLoading ? "Creating..." : "Create User"}
-          </button>
+            {isLoading ? "Save Changes" : "Create User"}
+          </Button>
         </form>
       </div>
     </div>

@@ -2,7 +2,7 @@
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
 import { TLoads, TStatusLoad } from "@/types/globalTypes";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
@@ -20,6 +20,7 @@ import {
   IoPersonOutline,
   IoArrowBack,
   IoRefreshOutline,
+  IoWalk,
 } from "react-icons/io5";
 import { FaMoneyBillWave } from "react-icons/fa";
 import useError from "@/hook/useError";
@@ -38,6 +39,9 @@ import {
 } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import StatsCard from "@/components/ui/StatsCard";
+import { RootState, useAppSelector } from "@/redux/store";
+import { MdOutlineCancelPresentation } from "react-icons/md";
 
 const TruckSummary = () => {
   const { id } = useParams();
@@ -50,6 +54,7 @@ const TruckSummary = () => {
 
   const router = useRouter();
   const { error, setError } = useError();
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   // ✅ RTK Query hooks
   const { data: profileData, isLoading: profileLoading } = useGetTruckByIdQuery(
@@ -85,8 +90,19 @@ const TruckSummary = () => {
     searchFields: ["loadId", "driverId.name"],
     initialSearch: searchInput,
   });
-
   const displayedData = searchInput ? searchedTruck : loadsData;
+
+  // ✅ StatsCard Data
+  const statsData = useMemo(() => {
+    const currentData = displayedData;
+
+    return {
+      totalLoads: currentData.length,
+      totalMiles: currentData.filter((load: TLoads) => load.distanceMiles).length,
+      totalPrice: currentData.filter((load: TLoads) => load.totalPrice).length,
+      cancelled: currentData.filter((load: TLoads) => load.cancelledAt).length,
+    };
+  }, [displayedData]);
 
   useEffect(() => {
     if (id && !isFilterActive) {
@@ -450,122 +466,40 @@ const TruckSummary = () => {
         </div>
       )}
 
-      {/* ✅ Financial Summary Section */}
-      {summaryData?.data && (
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-8">
-          {/* Truck Summary Stats */}
-          <div className="xl:col-span-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-              {/* Total Loads Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-500 text-sm font-medium mb-1">
-                      Total Loads
-                    </p>
-                    <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.totalLoads}
-                    </p>
-                  </div>
-                  <div className="p-2.5 bg-blue-50 rounded-lg">
-                    <IoStatsChart size={20} className="text-blue-600" />
-                  </div>
-                </div>
-              </div>
+      {/* ✅ Stats Cards Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatsCard
+          title="Total Loads"
+          value={statsData.totalLoads}
+          icon={IoStatsChart}
+          iconColor={theme.currentPalette.primary}
+          loading={loading}
+        />
 
-              {/* Total Miles Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-500 text-sm font-medium mb-1">
-                      Total Miles
-                    </p>
-                    <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.totalMiles?.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="p-2.5 bg-emerald-50 rounded-lg">
-                    <IoNavigate size={20} className="text-emerald-600" />
-                  </div>
-                </div>
-              </div>
+        <StatsCard
+          title="Total Miles"
+          value={statsData.totalMiles}
+          icon={IoWalk}
+          iconColor={theme.currentPalette.primary}
+          loading={loading}
+        />
 
-              {/* Total Revenue Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-500 text-sm font-medium mb-1">
-                      Total Revenue
-                    </p>
-                    <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.currency}{" "}
-                      {summaryData.data.totalRevenue?.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="p-2.5 bg-amber-50 rounded-lg">
-                    <IoCashOutline size={20} className="text-amber-600" />
-                  </div>
-                </div>
-              </div>
+        <StatsCard
+          title="Total Price"
+          value={statsData.totalPrice}
+          icon={FaMoneyBillWave}
+          iconColor={theme.currentPalette.primary}
+          loading={loading}
+        />
 
-              {/* Net Profit Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-slate-500 text-sm font-medium mb-1">
-                      Net Profit
-                    </p>
-                    <p className="text-2xl font-bold text-slate-800">
-                      {summaryData.data.currency}{" "}
-                      {summaryData.data.netProfit?.toLocaleString()}
-                    </p>
-                  </div>
-                  <div className="p-2.5 bg-red-50 rounded-lg">
-                    <FaMoneyBillWave size={20} className="text-red-500" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Period Info */}
-            {summaryData?.data && (
-              <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
-                  <div className="flex items-center gap-2">
-                    <IoCalendarOutline size={14} className="flex-shrink-0" />
-                    <span>Period: </span>
-                    <span className="font-medium text-slate-700">
-                      {isFilterActive
-                        ? `${
-                            fromDate ? fromDate.format("YYYY-MM-DD") : "Any"
-                          } to ${toDate ? toDate.format("YYYY-MM-DD") : "Any"}`
-                        : "All time"}
-                    </span>
-                    {(fromDate || toDate) && (
-                      <span className="text-xs text-blue-500 ml-2">
-                        ({displayedData.length} loads)
-                      </span>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {isFilterActive && (
-                    <button
-                      onClick={handleClearFilter}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
-                    >
-                      <IoRefreshOutline size={16} />
-                      Clear Filter
-                    </button>
-                  )}
-                  {/* ✅ Filter */}
-                  <DateRangeFilter onApply={handleApplyFilter} />
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+        <StatsCard
+          title="Cancelled Loads"
+          value={statsData.cancelled}
+          icon={MdOutlineCancelPresentation}
+          iconColor={theme.currentPalette.primary}
+          loading={loading}
+        />
+      </div>
 
       {/* ✅ Loads Table Section */}
       {displayedData && (
