@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IoAdd,
   IoPerson,
@@ -36,6 +36,7 @@ interface CreateUserModalProps {
     passwordConfirmation: string;
   }) => Promise<void>;
   isLoading?: boolean;
+  closeOnOutsideClick?: boolean;
 }
 
 interface UserFormData {
@@ -53,10 +54,12 @@ const CreateUserModal = ({
   onClose,
   onSubmit,
   isLoading = false,
+  closeOnOutsideClick = true,
 }: CreateUserModalProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const theme = useAppSelector((state: RootState) => state.palette);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -99,11 +102,43 @@ const CreateUserModal = ({
     onClose();
   };
 
+  // closing popup
+  useEffect(() => {
+    const handleBodyScroll = (shouldPrevent: boolean) => {
+      document.body.style.overflow = shouldPrevent ? "hidden" : "unset";
+    };
+
+    handleBodyScroll(isOpen);
+    return () => handleBodyScroll(false);
+  }, [isOpen]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && isOpen) onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onClose]);
+
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (
+          closeOnOutsideClick &&
+          modalRef.current &&
+          !modalRef.current.contains(e.target as Node)
+        ) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
+    >
+      <div
+        ref={modalRef}
+        className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-slate-800 flex items-center gap-1">
             <IoAdd size={20} />
@@ -309,7 +344,7 @@ const CreateUserModal = ({
                   minLength: {
                     value: 6,
                     message: "Password must be at least 6 characters",
-                  }
+                  },
                 })}
                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.password ? "border-red-500" : "border-slate-300"
