@@ -186,7 +186,7 @@ export default function AdminLayout({
         onClose={() => setIsSidebarOpen(false)}
         ModalProps={{ keepMounted: true }}
         sx={{
-          zIndex: (theme) => theme.zIndex.drawer + 1,
+          zIndex: (theme) => isDesktop ? theme.zIndex.drawer - 1200 : theme.zIndex.modal + 1,
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
@@ -219,7 +219,7 @@ export default function AdminLayout({
               backgroundColor: theme.palette.background.paper,
               color: theme.palette.text.primary,
               boxShadow: 1,
-              zIndex: (t) => t.zIndex.drawer + 1,
+              zIndex: (t) => t.zIndex.drawer - 1100,
             }}
           >
             <Toolbar>

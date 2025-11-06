@@ -72,7 +72,10 @@ import { MdError, MdPictureAsPdf } from "react-icons/md";
 import {
   Alert,
   Button,
+  FormControl,
   InputAdornment,
+  MenuItem,
+  Select,
   Tab,
   Tabs,
   TextField,
@@ -806,15 +809,15 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
                   {/* Destinations Section */}
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-sm font-medium text-slate-700">
+                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+                      <label className="block text-sm font-medium text-slate-700 mb-2 md:mb-0">
                         Destinations <span className="text-red-500">*</span>
                       </label>
                       <Button
                         variant="contained"
                         type="button"
                         onClick={handleAddDestination}
-                        className="flex items-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                        className="flex items-center w-full md:w-fit gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
                       >
                         <IoAdd size={16} />
                         Add Destination
@@ -853,7 +856,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         <p className="text-gray-500 font-medium">
                           No destinations added yet
                         </p>
-                        <p className="text-gray-400 text-sm mt-1">
+                        <p className="text-gray-400 text-sm px-3 mt-1">
                           You must add at least one destination to continue
                         </p>
                       </div>
@@ -1581,9 +1584,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
           className="p-4 bg-blue-50 border border-blue-200 rounded-lg"
         >
           <div className="flex flex-col items-start gap-1">
-            <h4 className="text-md font-medium">
-              Driver & Truck Information
-            </h4>
+            <h4 className="text-md font-medium">Driver & Truck Information</h4>
             <p className="text-sm">
               Driver and truck assignments cannot be modified for existing
               loads. This ensures consistency in load tracking and driver
@@ -1634,61 +1635,76 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Driver <span className="text-red-500">*</span>
           </label>
-          <select
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            value={driverId}
-            onChange={(e) => onDriverIdChange(e.target.value)}
-            required
-          >
-            <option value="">Select Driver</option>
-            {drivers.map((d: TDriver, i: number) => (
-              <option key={i} value={d.id}>
-                {d.name} ({d.driverId})
-              </option>
-            ))}
-          </select>
+          <FormControl fullWidth>
+            <Select
+              labelId="demo-simple-select-label"
+              value={driverId}
+              displayEmpty
+              required
+              onChange={(e) => onDriverIdChange(e.target.value)}
+            >
+              <MenuItem value="" disabled>
+                Select Driver
+              </MenuItem>
+              {drivers.map((d: TDriver, i: number) => (
+                <MenuItem key={i} value={d.id}>
+                  {d.name} ({d.driverId})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Truck Type <span className="text-red-500">*</span>
           </label>
-          <select
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            value={truckType}
-            onChange={(e) => onTruckTypeChange(e.target.value as TTruckType)}
-            required
-          >
-            <option value="">Select Type</option>
-            <option value="reefer">Reefer</option>
-            <option value="van">Van</option>
-          </select>
+          <FormControl fullWidth>
+            <Select
+              labelId="demo-simple-select-label"
+              displayEmpty
+              required
+              value={truckType}
+              onChange={(e) => onTruckTypeChange(e.target.value as TTruckType)}
+            >
+              <MenuItem value="" disabled>
+                Select Type
+              </MenuItem>
+              <MenuItem value={"reefer"}>Reefer</MenuItem>
+              <MenuItem value={"van"}>Van</MenuItem>
+            </Select>
+          </FormControl>
         </div>
 
         <div>
           <label className="block text-sm font-medium text-slate-700 mb-2">
             Truck <span className="text-red-500">*</span>
           </label>
-          <select
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-            value={truckId}
-            onChange={(e) => onTruckIdChange(e.target.value)}
-            required
-            disabled={!truckType}
-          >
-            <option value="">Select Truck</option>
-            {Array.isArray(trucks?.data) ? (
-              trucks.data
-                .filter((t: TTruck) => !truckType || t.type === truckType)
-                .map((t: TTruck, i: number) => (
-                  <option key={i} value={t.id}>
-                    {t.model} ({t.plateNumber}) - {t.type}
-                  </option>
-                ))
-            ) : (
-              <option disabled>No trucks available</option>
-            )}
-          </select>
+          <FormControl fullWidth>
+            <Select
+              labelId="demo-simple-select-label"
+              displayEmpty
+              required
+              value={truckId}
+              onChange={(e) => onTruckIdChange(e.target.value)}
+              disabled={!truckType}
+            >
+              <MenuItem value="" disabled>
+                Select Truck
+              </MenuItem>
+              {Array.isArray(trucks?.data) ? (
+                trucks.data
+                  .filter((t: TTruck) => !truckType || t.type === truckType)
+                  .map((t: TTruck, i: number) => (
+                    <MenuItem key={i} value={t.id}>
+                      {t.model} ({t.plateNumber}) - {t.type}
+                    </MenuItem>
+                  ))
+              ) : (
+                <MenuItem disabled>No trucks available</MenuItem>
+              )}
+            </Select>
+          </FormControl>
         </div>
 
         <div>
@@ -1696,7 +1712,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
             Temperature{" "}
             {truckType === "reefer" && <span className="text-red-500">*</span>}
           </label>
-          <input
+          <TextField
             type="number"
             value={truckTemp}
             onChange={(e) => onTruckTempChange(e.target.value)}
@@ -1720,7 +1736,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         <button
           type="button"
           onClick={onPrevTab}
-          className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
+          className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
         >
           <IoArrowBack size={16} />
           Back
@@ -1728,7 +1744,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         <button
           type="submit"
           disabled={!isTabValid || isLoading}
-          className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
+          className={`uppercase flex items-center gap-2 py-2 px-6 text-sm rounded-lg font-medium transition-colors ${
             isTabValid && !isLoading
               ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
               : "bg-slate-300 text-slate-500 cursor-not-allowed"

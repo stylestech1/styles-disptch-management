@@ -93,7 +93,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
     ? dayjs(dateRange[0].startDate).format("MMM D, YYYY")
     : "";
   const to = dateRange?.[0]?.endDate
-    ? dayjs(dateRange[0].endDate).format("MMM D, YYYY")
+    ? dayjs(dateRange[0].endDate).subtract(1, 'day').format("MMM D, YYYY")
     : "";
 
   const label = from && to ? `${from} → ${to}` : "Date";

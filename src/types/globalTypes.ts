@@ -30,6 +30,24 @@ export type TDocument = {
   downloadLink: string;
   name?: string;
 };
+export type TLoadsForm = {
+  dho: string;
+  origin: string;
+  destinations: string;
+  price: string;
+  fees: string;
+  loadIDInp: string;
+  pickupAt: string;
+  completedAt: string;
+  arrivalAtShipper: string;
+  arrivalAtReceiver: string;
+  leftShipper: string;
+  leftReceiver: string;
+  driverId: string;
+  truckId: string;
+  truckType: TTruckType;
+  truckTemp: string;
+};
 export type TLoads = {
   id?: string;
   loadId: string;

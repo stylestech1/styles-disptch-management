@@ -11,7 +11,6 @@ import {
   Select,
   MenuItem,
   CircularProgress,
-  Alert,
   PaletteMode,
 } from "@mui/material";
 import { Palette } from "@/types/themeType";

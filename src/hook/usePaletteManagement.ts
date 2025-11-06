@@ -32,19 +32,16 @@ export const usePaletteManagement = () => {
   const [createPalette, { isLoading: isCreating }] = useCreatePaletteMutation();
   const [updatePalette, { isLoading: isUpdating }] = useUpdatePaletteMutation();
 
-  // تحميل البيانات من الـ backend عند التحميل
   useEffect(() => {
     if (backendPalettes.length > 0) {
       dispatch(loadPalettesFromBackend(backendPalettes));
     }
   }, [backendPalettes, dispatch]);
 
-  // تحديث حالة الـ loading
   useEffect(() => {
     dispatch(setLoadingPalette(isLoadingQuery || isCreating || isUpdating));
   }, [isLoadingQuery, isCreating, isUpdating, dispatch]);
 
-  // معالجة الأخطاء
   useEffect(() => {
     if (queryError) {
       const errorMessage = "Failed to load palettes from server";
@@ -53,7 +50,6 @@ export const usePaletteManagement = () => {
     }
   }, [queryError, dispatch]);
 
-  // حفظ الـ palette إلى الـ backend
   const savePaletteToBackend = async (palette: Palette): Promise<Palette | null> => {
     try {
       const paletteConfig = paletteToPaletteConfig(palette);
@@ -80,13 +76,11 @@ export const usePaletteManagement = () => {
     }
   };
 
-  // تطبيق palette
   const applyPalette = (palette: Palette) => {
     dispatch(setPalette(palette));
     toast.success(`Applied ${palette.customName} palette! 🎨`);
   };
 
-  // إعادة تحميل البيانات من الـ backend
   const refreshPalettes = () => {
     refetchPalettes();
   };
