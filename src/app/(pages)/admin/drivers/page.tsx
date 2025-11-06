@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TDriver } from "@/types/globalTypes";
@@ -20,7 +20,6 @@ import {
   Dialog,
   Button,
   TableRow,
-  Paper,
   Box,
   IconButton,
   Tooltip,
@@ -37,6 +36,7 @@ import Pagination from "@/components/ui/Pagination";
 import {
   useCreateDriverMutation,
   useDeleteDriverMutation,
+  useGetAllDriversQuery,
   useGetDriversWithPaginationQuery,
   useGetDriverWithFilterQuery,
   useUpdateDriverMutation,
@@ -54,6 +54,7 @@ import { StatusChip } from "@/components/ui/TablesMUI";
 const DriversPage = () => {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
+  const token = useAppSelector((state) => state.auth.token);
   const { error, setError } = useError();
   const theme = useAppSelector((state: RootState) => state.palette);
 
@@ -71,7 +72,7 @@ const DriversPage = () => {
     isLoading: driversLoading,
     error: driverError,
     refetch,
-  } = useGetDriversWithPaginationQuery();
+  } = useGetDriversWithPaginationQuery({ page, limit: 10 }, { skip: !token });
   const { data: filteredData } = useGetDriverWithFilterQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
@@ -79,6 +80,7 @@ const DriversPage = () => {
     },
     { skip: !isFiltered }
   );
+  const { data: allDriversData } = useGetAllDriversQuery();
 
   // 🔹 API Mutations
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
@@ -87,8 +89,8 @@ const DriversPage = () => {
   const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
   const displayDrivers = isFiltered
-    ? filteredData?.driversData?.data || []
-    : driversData?.data || [];
+    ? filteredData?.data || []
+    : allDriversData?.data || [];
   const pagination = driversData?.paginationResult || null;
 
   const isLoading = driversLoading;
@@ -100,6 +102,20 @@ const DriversPage = () => {
     initialSearch: searchInput,
   });
   const tableData = searchInput ? searchedDrivers : displayDrivers;
+
+  // StatsCard
+  const statsData = useMemo(() => {
+    const currentData = tableData;
+
+    return {
+      totalLoads: currentData.length,
+      available: currentData.filter((d: TDriver) => d.status === "available")
+        .length,
+      busy: currentData.filter((d: TDriver) => d.status === "busy").length,
+      inactive: currentData.filter((d: TDriver) => d.status === "inactive")
+        .length,
+    };
+  }, [tableData]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -343,10 +359,10 @@ const DriversPage = () => {
                   e.stopPropagation();
                   handleViewStats(driver.id);
                 }}
-                sx={{ 
-                  '&:hover': { 
-                    backgroundColor: alpha(theme.currentPalette.primary, 0.1) 
-                  } 
+                sx={{
+                  "&:hover": {
+                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                  },
                 }}
               >
                 <IoStatsChart size={16} />
@@ -361,10 +377,10 @@ const DriversPage = () => {
                   e.stopPropagation();
                   handleEditClick(driver);
                 }}
-                sx={{ 
-                  '&:hover': { 
-                    backgroundColor: alpha(theme.currentPalette.primary, 0.1) 
-                  } 
+                sx={{
+                  "&:hover": {
+                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                  },
                 }}
               >
                 <IoPencil size={16} />
@@ -379,10 +395,10 @@ const DriversPage = () => {
                   e.stopPropagation();
                   handleDelete(driver.id, driver.driverId);
                 }}
-                sx={{ 
-                  '&:hover': { 
-                    backgroundColor: alpha('#dc2626', 0.1) 
-                  } 
+                sx={{
+                  "&:hover": {
+                    backgroundColor: alpha("#dc2626", 0.1),
+                  },
                 }}
               >
                 <IoTrash size={16} />
@@ -426,7 +442,7 @@ const DriversPage = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
         <StatsCard
           title="Total Drivers"
-          value={tableData.length || 0}
+          value={statsData.totalLoads}
           icon={IoPerson}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -434,9 +450,7 @@ const DriversPage = () => {
 
         <StatsCard
           title="Available"
-          value={
-            tableData.filter((d: TDriver) => d.status === "available").length
-          }
+          value={statsData.available}
           icon={FaUserCheck}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -444,7 +458,7 @@ const DriversPage = () => {
 
         <StatsCard
           title="Busy"
-          value={tableData.filter((d: TDriver) => d.status === "busy").length}
+          value={statsData.busy}
           icon={FaUserMinus}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -452,9 +466,7 @@ const DriversPage = () => {
 
         <StatsCard
           title="Inactive"
-          value={
-            tableData.filter((d: TDriver) => d.status === "inactive").length
-          }
+          value={statsData.inactive}
           icon={FaUserLargeSlash}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -524,7 +536,9 @@ const DriversPage = () => {
               backgroundColor: "#fff",
               "& fieldset": { borderColor: "#e5e7eb" },
               "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-              "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
             "& input": {
               color: theme.currentPalette.text,
@@ -548,13 +562,15 @@ const DriversPage = () => {
       />
 
       {/* Pagination */}
-      <Pagination
-        pagination={pagination}
-        page={page}
-        setPage={setPage}
-        pageSize={10}
-        showInfo={true}
-      />
+      {!isFiltered && !searchInput && pagination && tableData.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+          pageSize={10}
+          showInfo={false}
+        />
+      )}
 
       {/* Driver Form Modal */}
       <DriverForm

@@ -97,12 +97,15 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Drivers"],
     }),
 
+    // Get User has driver role
+    getUserDriverRole: builder.query({
+      query: (arg: void) => `/api/v1/adminDashboard&role=driver`,
+      providesTags: ["Drivers"],
+    }),
+
     // 🔹 Get all drivers with Pagination
-    getDriversWithPagination: builder.query<
-      { data: TDriver[]; paginationResult: TPagination },
-      number | void
-    >({
-      query: (page = 1) => `/api/v1/drivers?page=${page}`,
+    getDriversWithPagination: builder.query({
+      query: ({ page = 1, limit = 10 }) => `/api/v1/drivers?page=${page}&limit=${limit}`,
       providesTags: ["Drivers"],
     }),
 
@@ -119,7 +122,7 @@ export const apiSlice = api.injectEndpoints({
     // Get Driver with Filter and Search
     getDriverWithFilter: builder.query({
       query: ({ from, to }) => {
-        let url = `/api/v1/drivers`;
+        let url = `/api/v1/drivers?limit=50`;
         const params = [];
 
         if (from) params.push(`from=${from}`);
@@ -352,7 +355,7 @@ export const apiSlice = api.injectEndpoints({
     // Get User with Filter and Search
     getUserWithSearch: builder.query({
       query: ({ from, to }) => {
-        let url = `/api/v1/adminDashboard?limit=50`; 
+        let url = `/api/v1/adminDashboard?limit=50`;
         const params = [];
 
         if (from) params.push(`from=${from}`);
@@ -532,6 +535,7 @@ export const {
   useUploadDocumentsMutation,
   // TODO: ----- Drivers -----
   useGetDriversQuery,
+  useGetUserDriverRoleQuery,
   useGetDriversWithPaginationQuery,
   useGetAllDriversQuery,
   useGetDriverWithFilterQuery,

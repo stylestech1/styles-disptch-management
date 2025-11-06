@@ -24,7 +24,7 @@ import {
   IoMail,
   IoPerson,
 } from "react-icons/io5";
-import { useGetAllUsersQuery } from "@/redux/slices/apiSlice";
+import { useGetUserDriverRoleQuery } from "@/redux/slices/apiSlice";
 import { useForm, Controller } from "react-hook-form";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
@@ -67,10 +67,7 @@ export const DriverForm = ({
     isLoading: usersLoading,
     error: usersError,
     refetch,
-  } = useGetAllUsersQuery({
-    role: "driver",
-    driver: "true",
-  });
+  } = useGetUserDriverRoleQuery();
 
   //  react-hook-form
   const {
@@ -147,9 +144,9 @@ export const DriverForm = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             {!editMode && (
-              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                <IoAdd className="text-emerald-600" size={18} />
-              </div>
+              <Box sx={{bgcolor: alpha(theme.currentPalette.secondary, 0.3)}} className="w-8 h-8 rounded-full flex items-center justify-center">
+                <IoAdd size={18} />
+              </Box>
             )}
             <h3 className="text-xl font-semibold text-slate-800">
               {editMode ? "Edit Driver" : "Add New Driver"}
