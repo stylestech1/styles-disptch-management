@@ -90,14 +90,14 @@ const DriversPage = () => {
 
   const displayDrivers = isFiltered
     ? filteredData?.data || []
-    : allDriversData?.data || [];
-  const pagination = driversData?.paginationResult || null;
+    : driversData?.data || [];
+  const pagination = isFiltered ? null : driversData?.paginationResult || null;
 
   const isLoading = driversLoading;
 
   // Filter and Search loads
   const { filteredData: searchedDrivers } = useSearch({
-    data: displayDrivers,
+    data: allDriversData?.data || [],
     searchFields: ["driverId", "name", "phone", "email", "licenseNumber"],
     initialSearch: searchInput,
   });
@@ -105,7 +105,7 @@ const DriversPage = () => {
 
   // StatsCard
   const statsData = useMemo(() => {
-    const currentData = tableData;
+    const currentData = allDriversData?.data || [];
 
     return {
       totalLoads: currentData.length,

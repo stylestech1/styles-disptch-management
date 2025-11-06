@@ -14,7 +14,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   IoAdd,
   IoCalendar,
@@ -61,13 +61,16 @@ export const DriverForm = ({
   isLoading: boolean;
 }) => {
   const theme = useAppSelector((state: RootState) => state.palette);
+  const token = useAppSelector((state: RootState) => state.auth.token);
+  const [searchedUser, setSearchedUser] = useState<TUser | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
 
   const {
     data: usersData,
     isLoading: usersLoading,
     error: usersError,
     refetch,
-  } = useGetUserDriverRoleQuery();
+  } = useGetUserDriverRoleQuery({ skip: !token });
 
   //  react-hook-form
   const {
@@ -77,6 +80,7 @@ export const DriverForm = ({
     reset,
     setValue,
     trigger,
+    watch,
   } = useForm<DriverFormData>({
     defaultValues: {
       name: "",
@@ -90,6 +94,8 @@ export const DriverForm = ({
     },
     mode: "onChange",
   });
+
+  const emailValue = watch("email");
 
   // when updating data
   useEffect(() => {
@@ -108,9 +114,45 @@ export const DriverForm = ({
       refetch();
       if (!editMode) {
         reset();
+        setSearchedUser(null);
       }
     }
   }, [open, refetch, editMode, reset]);
+
+  // Handling User Email Searching
+  useEffect(() => {
+    const searchUserByEmail = async () => {
+      if (emailValue && emailValue.includes("@")) {
+        setIsSearching(true);
+
+        setTimeout(() => {
+          const users = usersData?.data || [];
+          const foundUser = users.find(
+            (user: TUser) =>
+              user.email.toLowerCase() === emailValue.toLowerCase()
+          );
+
+          setSearchedUser(foundUser || null);
+
+          if (foundUser) {
+            setValue("user", foundUser.id);
+            handleFieldChange("user", foundUser.id);
+          } else {
+            setValue("user", "");
+            handleFieldChange("user", "");
+          }
+
+          setIsSearching(false);
+        }, 500);
+      } else {
+        setSearchedUser(null);
+        setValue("user", "");
+        handleFieldChange("user", "");
+      }
+    };
+
+    searchUserByEmail();
+  }, [emailValue, usersData]);
 
   // Extract users from response
   const users = usersData?.data || [];
@@ -144,7 +186,10 @@ export const DriverForm = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             {!editMode && (
-              <Box sx={{bgcolor: alpha(theme.currentPalette.secondary, 0.3)}} className="w-8 h-8 rounded-full flex items-center justify-center">
+              <Box
+                sx={{ bgcolor: alpha(theme.currentPalette.secondary, 0.3) }}
+                className="w-8 h-8 rounded-full flex items-center justify-center"
+              >
                 <IoAdd size={18} />
               </Box>
             )}
@@ -197,12 +242,14 @@ export const DriverForm = ({
                         helperText={errors.name?.message as string}
                         size="medium"
                         placeholder="John Doe"
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <IoPerson className="text-slate-400" />
-                            </InputAdornment>
-                          ),
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <IoPerson className="text-slate-400" />
+                              </InputAdornment>
+                            ),
+                          },
                         }}
                         onChange={(e) =>
                           handleFieldChange("name", e.target.value)
@@ -234,12 +281,14 @@ export const DriverForm = ({
                         helperText={errors.email?.message as string}
                         size="medium"
                         placeholder="john.doe@example.com"
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <IoMail className="text-slate-400" />
-                            </InputAdornment>
-                          ),
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <IoMail className="text-slate-400" />
+                              </InputAdornment>
+                            ),
+                          },
                         }}
                         onChange={(e) =>
                           handleFieldChange("email", e.target.value)
@@ -274,12 +323,14 @@ export const DriverForm = ({
                         helperText={errors.phone?.message as string}
                         size="medium"
                         placeholder="+1234567890"
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <IoCall className="text-slate-400" />
-                            </InputAdornment>
-                          ),
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <IoCall className="text-slate-400" />
+                              </InputAdornment>
+                            ),
+                          },
                         }}
                         onChange={(e) =>
                           handleFieldChange("phone", e.target.value)
@@ -321,12 +372,14 @@ export const DriverForm = ({
                         helperText={errors.licenseNumber?.message as string}
                         size="medium"
                         placeholder="DL123456789"
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <IoCash className="text-slate-400" />
-                            </InputAdornment>
-                          ),
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <IoCash className="text-slate-400" />
+                              </InputAdornment>
+                            ),
+                          },
                         }}
                         onChange={(e) =>
                           handleFieldChange("licenseNumber", e.target.value)
@@ -363,12 +416,14 @@ export const DriverForm = ({
                         helperText={errors.pricePerMile?.message as string}
                         size="medium"
                         inputProps={{ min: 0, step: 0.1 }}
-                        InputProps={{
-                          startAdornment: (
-                            <InputAdornment position="start">
-                              <IoCash className="text-slate-400" />
-                            </InputAdornment>
-                          ),
+                        slotProps={{
+                          input: {
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <IoCash className="text-slate-400" />
+                              </InputAdornment>
+                            ),
+                          },
                         }}
                         onChange={(e) =>
                           handleFieldChange(
@@ -405,12 +460,14 @@ export const DriverForm = ({
                             fullWidth: true,
                             error: !!errors.hireDate,
                             helperText: errors.hireDate?.message as string,
-                            InputProps: {
-                              startAdornment: (
-                                <InputAdornment position="start">
-                                  <IoCalendar className="text-slate-400" />
-                                </InputAdornment>
-                              ),
+                            slotProps: {
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <IoCalendar className="text-slate-400" />
+                                  </InputAdornment>
+                                ),
+                              },
                             },
                           },
                         }}
@@ -490,112 +547,53 @@ export const DriverForm = ({
                 </h4>
               </div>
               <Divider sx={{ mb: 3 }} />
-              <Controller
-                name="user"
-                control={control}
-                rules={{ required: "User selection is required" }}
-                render={({ field }) => (
-                  <FormControl fullWidth size="medium" error={!!errors.user}>
-                    <InputLabel>Select User *</InputLabel>
-                    <Select
-                      {...field}
-                      label="Select User *"
-                      error={!!errors.user}
-                      disabled={usersLoading}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <IoPerson className="text-slate-400" />
-                        </InputAdornment>
-                      }
-                      onChange={(e) =>
-                        handleFieldChange("user", e.target.value)
-                      }
-                    >
-                      {usersLoading ? (
-                        <MenuItem disabled>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <CircularProgress size={16} />
-                            <Typography>Loading users...</Typography>
-                          </Box>
-                        </MenuItem>
-                      ) : usersError ? (
-                        <MenuItem disabled>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <Typography color="error">
-                              {usersError
-                                ? "Error loading users"
-                                : "No users found"}
-                            </Typography>
-                          </Box>
-                        </MenuItem>
-                      ) : users.length === 0 ? (
-                        <MenuItem disabled>
-                          <Typography>No drivers found</Typography>
-                        </MenuItem>
-                      ) : (
-                        users.map((user: TUser) => (
-                          <MenuItem key={user.id} value={user.id}>
-                            <Box
-                              sx={{
-                                display: "flex",
-                                alignItems: "center",
-                                gap: 1,
-                              }}
-                            >
-                              <Chip
-                                label={user.active ? "Active" : "Inactive"}
-                                color={user.active ? "success" : "default"}
-                                size="small"
-                              />
-                              <Box>
-                                <Typography variant="body2" fontWeight="medium">
-                                  {user.name}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {user.email} • {user.jobId}
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </MenuItem>
-                        ))
-                      )}
-                    </Select>
-                    {errors.user && (
-                      <Typography
-                        variant="caption"
-                        color="error"
-                        sx={{ display: "block" }}
-                      >
-                        {errors.user.message as string}
-                      </Typography>
-                    )}
-                  </FormControl>
+
+              <div className="mb-5">
+                <TextField
+                  fullWidth
+                  label="Assigned User"
+                  value={
+                    searchedUser
+                      ? `${searchedUser.name} (${searchedUser.email})`
+                      : "No user assigned"
+                  }
+                  InputProps={{
+                    readOnly: true,
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IoPerson className="text-slate-400" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchedUser ? (
+                      <InputAdornment position="end">
+                        <Chip
+                          label={searchedUser.active ? "Active" : "Inactive"}
+                          color={searchedUser.active ? "success" : "default"}
+                          size="small"
+                        />
+                      </InputAdornment>
+                    ) : null,
+                  }}
+                />
+                {searchedUser && searchedUser.jobId && (
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 1, display: "block" }}
+                  >
+                    {searchedUser.role} - ({searchedUser.jobId})
+                  </Typography>
                 )}
-              />
-              {!usersLoading && !usersError && users.length > 0 && (
                 <Typography
                   variant="caption"
                   color="text.secondary"
                   sx={{ mt: 1, display: "block" }}
                 >
-                  Found {users.length} driver(s)
+                  {searchedUser
+                    ? "User will be automatically assigned to this driver"
+                    : "Enter a valid email above to assign a user"}
                 </Typography>
-              )}
+              </div>
             </div>
           </div>
 

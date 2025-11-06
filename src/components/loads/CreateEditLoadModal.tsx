@@ -652,6 +652,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
           : "Create New Load"
       }
       size="xl"
+      closeOnOutsideClick={false}
     >
       <div className="flex flex-col h-full">
         {/* MUI Tabs Navigation */}

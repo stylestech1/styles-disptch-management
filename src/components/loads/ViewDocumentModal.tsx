@@ -210,6 +210,7 @@ const getFileNameFromLink = (link: string): string => {
       onClose={handleClose}
       title={`View Documents - (${selectedLoad?.loadId || "N/A"})`}
       size="md"
+      closeOnOutsideClick={false}
     >
       <div className="space-y-4 max-h-96 overflow-y-auto">
         {documentLoading ? (

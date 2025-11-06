@@ -98,6 +98,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
       onClose={handleClose}
       title="Update Load Status"
       size="md"
+      closeOnOutsideClick={false}
     >
       <form onSubmit={handleUpdateLoadStatus} className="space-y-4">
         <div>

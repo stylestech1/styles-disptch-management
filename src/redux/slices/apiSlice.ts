@@ -99,7 +99,12 @@ export const apiSlice = api.injectEndpoints({
 
     // Get User has driver role
     getUserDriverRole: builder.query({
-      query: (arg: void) => `/api/v1/adminDashboard&role=driver`,
+      query: (email) => {
+        const url = `/api/v1/adminDashboard?limit=50`
+        const params = []
+        if(email) params.push(`&email=${email}`)
+        return url
+      },
       providesTags: ["Drivers"],
     }),
 

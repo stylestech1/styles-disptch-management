@@ -79,6 +79,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
       onClose={handleClose}
       title={noteType === "driver" ? "Add Driver Note" : "Add Load Note"}
       size="md"
+      closeOnOutsideClick={false}
     >
       <form onSubmit={handleNotes} className="space-y-4">
         {/* Load ID */}

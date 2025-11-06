@@ -25,6 +25,7 @@ const ViewAppointmentsModal: React.FC<ViewAppointmentsModalProps> = ({
       onClose={onClose}
       title={`All Appointments - (${selectedLoad?.loadId || 'N/A'})`}
       size="xl"
+      closeOnOutsideClick={false}
     >
       <div className="overflow-y-auto">
         {selectedLoad ? (

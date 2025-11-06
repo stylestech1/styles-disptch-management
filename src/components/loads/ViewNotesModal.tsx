@@ -1,10 +1,10 @@
-import { useEffect } from 'react';
-import Modal from '@/components/ui/Modals';
-import { useGetNotesQuery } from '@/redux/slices/apiSlice';
-import { TComments, TLoads } from '@/types/globalTypes';
-import { CiStickyNote } from 'react-icons/ci';
-import { IoAdd } from 'react-icons/io5';
-import { MdEdit } from 'react-icons/md';
+import { useEffect } from "react";
+import Modal from "@/components/ui/Modals";
+import { useGetNotesQuery } from "@/redux/slices/apiSlice";
+import { TComments, TLoads } from "@/types/globalTypes";
+import { CiStickyNote } from "react-icons/ci";
+import { IoAdd } from "react-icons/io5";
+import { MdEdit } from "react-icons/md";
 
 interface ViewNotesModalProps {
   isOpen: boolean;
@@ -13,17 +13,17 @@ interface ViewNotesModalProps {
   onAddNote: () => void;
 }
 
-const ViewNotesModal: React.FC<ViewNotesModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  selectedLoad, 
-  onAddNote 
+const ViewNotesModal: React.FC<ViewNotesModalProps> = ({
+  isOpen,
+  onClose,
+  selectedLoad,
+  onAddNote,
 }) => {
-  const { 
-    data: notesData, 
-    isLoading: notesLoading, 
-    refetch: refetchNotes 
-  } = useGetNotesQuery(selectedLoad?.id || '', {
+  const {
+    data: notesData,
+    isLoading: notesLoading,
+    refetch: refetchNotes,
+  } = useGetNotesQuery(selectedLoad?.id || "", {
     skip: !selectedLoad?.id,
   });
 
@@ -48,8 +48,9 @@ const ViewNotesModal: React.FC<ViewNotesModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={`All Notes - (${selectedLoad?.loadId || 'N/A'})`}
+      title={`All Notes - (${selectedLoad?.loadId || "N/A"})`}
       size="md"
+      closeOnOutsideClick={false}
     >
       <div className="space-y-4 max-h-96 overflow-y-auto relative">
         {notesLoading ? (
@@ -68,21 +69,21 @@ const ViewNotesModal: React.FC<ViewNotesModalProps> = ({
                 </span>
                 <span className="text-xs text-slate-500">
                   {new Date(note.createdAt).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}{' '}
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}{" "}
                   - {new Date(note.createdAt).toLocaleDateString()}
                 </span>
               </div>
               <div className="mb-3">
                 <span
                   className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                    note.type === 'dispatcher'
-                      ? 'bg-blue-100 text-blue-700'
-                      : 'bg-amber-100 text-amber-700'
+                    note.type === "dispatcher"
+                      ? "bg-blue-100 text-blue-700"
+                      : "bg-amber-100 text-amber-700"
                   }`}
                 >
-                  {note.type === 'dispatcher' ? 'Load Note' : 'Driver Note'}
+                  {note.type === "dispatcher" ? "Load Note" : "Driver Note"}
                 </span>
               </div>
 
@@ -110,8 +111,8 @@ const ViewNotesModal: React.FC<ViewNotesModalProps> = ({
               No Notes Found
             </h4>
             <p className="text-slate-500 text-sm max-w-xs">
-              There are no notes for this load yet. Add the first note to
-              track important information.
+              There are no notes for this load yet. Add the first note to track
+              important information.
             </p>
             <button
               onClick={handleAddNoteClick}
