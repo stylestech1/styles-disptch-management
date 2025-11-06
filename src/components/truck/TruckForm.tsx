@@ -14,7 +14,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useMemo, useEffect } from "react";
+import React, { useMemo, useEffect, useRef, useState } from "react";
 import { IoClose, IoPerson, IoAdd } from "react-icons/io5";
 import { useForm, Controller } from "react-hook-form";
 
@@ -28,6 +28,7 @@ export type TruckFormProps = {
   isLoading: boolean;
   allDrivers: TDriver[];
   allTrucks: TTruck[];
+  closeOnOutsideClick?: boolean;
 };
 
 interface TruckFormData {
@@ -54,7 +55,47 @@ export const TruckForm = React.memo(function TruckFormComp(
     isLoading,
     allDrivers,
     allTrucks,
+    closeOnOutsideClick = true,
   } = props;
+
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
+
+  // closing popup
+  useEffect(() => {
+    const handleBodyScroll = (shouldPrevent: boolean) => {
+      document.body.style.overflow = shouldPrevent ? "hidden" : "unset";
+    };
+
+    handleBodyScroll(open);
+    return () => handleBodyScroll(false);
+  }, [open]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && open && !isSelectOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open, onClose, isSelectOpen]);
+
+  useEffect(() => {
+    const checkSelectState = () => {
+      const selectMenus = document.querySelectorAll('.MuiMenu-paper, .MuiPopover-root');
+      const isOpen = Array.from(selectMenus).some(menu => {
+        const style = window.getComputedStyle(menu);
+        return style.display !== 'none' && style.visibility !== 'hidden';
+      });
+      setIsSelectOpen(isOpen);
+    };
+
+    const interval = setInterval(checkSelectState, 100);
+    
+    return () => clearInterval(interval);
+  }, [open]);
 
   // react-hook-form
   const {
@@ -147,12 +188,11 @@ export const TruckForm = React.memo(function TruckFormComp(
 
   // Handle year input change
   const handleYearChange = async (value: string) => {
-  const numValue = value === "" ? 0 : Number(value); 
-  setValue("year", numValue);
-  await trigger("year");
-  onChange("year", numValue);
-};
-
+    const numValue = value === "" ? 0 : Number(value);
+    setValue("year", numValue);
+    await trigger("year");
+    onChange("year", numValue);
+  };
 
   // Reset form when closing
   const handleClose = () => {
@@ -163,8 +203,23 @@ export const TruckForm = React.memo(function TruckFormComp(
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (
+          closeOnOutsideClick &&
+          modalRef.current &&
+          !modalRef.current.contains(e.target as Node) &&
+          !isSelectOpen
+        ) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
+    >
+      <div
+        ref={modalRef}
+        className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -237,11 +292,6 @@ export const TruckForm = React.memo(function TruckFormComp(
                   control={control}
                   rules={{
                     required: "Plate number is required",
-                    pattern: {
-                      value: /^[A-Z0-9-]+$/,
-                      message:
-                        "Plate number can only contain letters, numbers, and hyphens",
-                    },
                     minLength: {
                       value: 3,
                       message: "Plate number must be at least 3 characters",

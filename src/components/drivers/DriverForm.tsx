@@ -51,7 +51,7 @@ export const DriverForm = ({
   onSubmit,
   editMode,
   isLoading,
-  closeOnOutsideClick= true
+  closeOnOutsideClick = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -60,13 +60,14 @@ export const DriverForm = ({
   onSubmit: () => void;
   editMode: boolean;
   isLoading: boolean;
-  closeOnOutsideClick?: boolean
+  closeOnOutsideClick?: boolean;
 }) => {
   const theme = useAppSelector((state: RootState) => state.palette);
   const token = useAppSelector((state: RootState) => state.auth.token);
   const [searchedUser, setSearchedUser] = useState<TUser | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   const {
     data: usersData,
@@ -112,11 +113,31 @@ export const DriverForm = ({
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && open) onClose();
+      if (event.key === "Escape" && open && !isSelectOpen) {
+        onClose();
+      }
     };
+
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [open, onClose]);
+  }, [open, onClose, isSelectOpen]);
+
+  useEffect(() => {
+    const checkSelectState = () => {
+      const selectMenus = document.querySelectorAll(
+        ".MuiMenu-paper, .MuiPopover-root"
+      );
+      const isOpen = Array.from(selectMenus).some((menu) => {
+        const style = window.getComputedStyle(menu);
+        return style.display !== "none" && style.visibility !== "hidden";
+      });
+      setIsSelectOpen(isOpen);
+    };
+
+    const interval = setInterval(checkSelectState, 100);
+
+    return () => clearInterval(interval);
+  }, [open]);
 
   // when updating data
   useEffect(() => {
@@ -206,7 +227,8 @@ export const DriverForm = ({
         if (
           closeOnOutsideClick &&
           modalRef.current &&
-          !modalRef.current.contains(e.target as Node)
+          !modalRef.current.contains(e.target as Node) &&
+          !isSelectOpen
         ) {
           onClose();
         }

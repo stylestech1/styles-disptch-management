@@ -60,6 +60,7 @@ const CreateUserModal = ({
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const theme = useAppSelector((state: RootState) => state.palette);
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   const {
     register,
@@ -114,11 +115,31 @@ const CreateUserModal = ({
 
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isOpen) onClose();
+      if (event.key === "Escape" && isOpen && !isSelectOpen) {
+        onClose();
+      }
     };
+
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isSelectOpen]);
+
+  useEffect(() => {
+    const checkSelectState = () => {
+      const selectMenus = document.querySelectorAll(
+        ".MuiMenu-paper, .MuiPopover-root"
+      );
+      const isOpen = Array.from(selectMenus).some((menu) => {
+        const style = window.getComputedStyle(menu);
+        return style.display !== "none" && style.visibility !== "hidden";
+      });
+      setIsSelectOpen(isOpen);
+    };
+
+    const interval = setInterval(checkSelectState, 100);
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -128,7 +149,8 @@ const CreateUserModal = ({
         if (
           closeOnOutsideClick &&
           modalRef.current &&
-          !modalRef.current.contains(e.target as Node)
+          !modalRef.current.contains(e.target as Node) &&
+          !isSelectOpen
         ) {
           onClose();
         }

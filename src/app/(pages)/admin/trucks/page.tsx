@@ -21,6 +21,8 @@ import {
   Tooltip,
   Typography,
   CircularProgress,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
@@ -41,7 +43,11 @@ import { FaUserLargeSlash } from "react-icons/fa6";
 import { Dayjs } from "dayjs";
 import { useSearch } from "@/hook/useSearch";
 import useError from "@/hook/useError";
-import { StatusChip, StyledTableCell, StyledTableRow } from "@/components/ui/TablesMUI";
+import {
+  StatusChip,
+  StyledTableCell,
+  StyledTableRow,
+} from "@/components/ui/TablesMUI";
 
 /* ---------------- TrucksPage (parent) ---------------- */
 const TrucksPage: React.FC = () => {
@@ -56,14 +62,14 @@ const TrucksPage: React.FC = () => {
   const [page, setPage] = useState(0);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
   const { error, setError } = useError();
-  const theme = useAppSelector((state: RootState) => state.palette)
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   // RTK Query
   const {
     data: trucksData,
     isLoading,
     refetch,
-  } = useGetTrucksWithSearchQuery({ page: page + 1 });
+  } = useGetTrucksWithSearchQuery({ page, limit: 10 });
   const { data: allTrucksData } = useGetAllTrucksQuery({ skip: !token });
   const { data: driversData } = useGetAllDriversQuery();
   const { data: filteredData } = useGetTruckWithSearchQuery(
@@ -300,33 +306,78 @@ const TrucksPage: React.FC = () => {
       </div>
 
       {/* Add Button */}
-      <div className="flex justify-end">
-        <button
+      <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+        <Button
           onClick={handleOpenAdd}
           disabled={isLoading}
-          className="flex items-center justify-center gap-2 py-3 px-8 cursor-pointer text-white bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 transition-colors duration-200 rounded-lg font-bold text-lg whitespace-nowrap w-full lg:w-auto"
+          variant="contained"
+          startIcon={<IoAdd size={22} />}
+          sx={{
+            py: 1.5,
+            px: 4,
+            fontWeight: "bold",
+            fontSize: "1rem",
+            borderRadius: 2,
+            textTransform: "none",
+            width: { xs: "100%", lg: "auto" },
+            background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+            color: "#fff",
+            "&:hover": {
+              background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+            },
+            transition: "all 0.3s ease",
+          }}
         >
-          <IoAdd size={25} />
-          {isLoading ? "Loading..." : "Add Truck"}
-        </button>
-      </div>
+          Add Truck
+        </Button>
+      </Box>
 
-      {/* Search */}
-      <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm my-10">
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <IoSearch className="h-5 w-5 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search by Truck Id, Model, Plate Number, Driver ID, or Driver name"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            disabled={isLoading}
-          />
-        </div>
-      </div>
+      {/* Search & Filter */}
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: { xs: "column", lg: "row" },
+          alignItems: "end",
+          gap: 2,
+          p: 2,
+          my: 5,
+          border: `1px solid ${theme.currentPalette.primary}33`,
+          borderRadius: 2,
+          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+          backgroundColor: theme.currentPalette.background,
+        }}
+      >
+        <TextField
+          fullWidth
+          variant="outlined"
+          placeholder="Search drivers by ID, name, phone, email, or license number"
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position="start">
+                  <IoSearch size={20} color="#9ca3af" />
+                </InputAdornment>
+              ),
+            },
+          }}
+          sx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 1,
+              backgroundColor: "#fff",
+              "& fieldset": { borderColor: "#e5e7eb" },
+              "&:hover fieldset": { borderColor: theme.currentPalette.primary },
+              "&.Mui-focused fieldset": {
+                borderColor: theme.currentPalette.primary,
+              },
+            },
+            "& input": {
+              color: theme.currentPalette.text,
+            },
+          }}
+        />
+      </Box>
 
       {error && (
         <div className="mb-6">

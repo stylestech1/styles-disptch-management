@@ -100,17 +100,18 @@ export const apiSlice = api.injectEndpoints({
     // Get User has driver role
     getUserDriverRole: builder.query({
       query: (email) => {
-        const url = `/api/v1/adminDashboard?limit=50`
-        const params = []
-        if(email) params.push(`&email=${email}`)
-        return url
+        const url = `/api/v1/adminDashboard?limit=50`;
+        const params = [];
+        if (email) params.push(`&email=${email}`);
+        return url;
       },
       providesTags: ["Drivers"],
     }),
 
     // 🔹 Get all drivers with Pagination
     getDriversWithPagination: builder.query({
-      query: ({ page = 1, limit = 10 }) => `/api/v1/drivers?page=${page}&limit=${limit}`,
+      query: ({ page = 1, limit = 10 }) =>
+        `/api/v1/drivers?page=${page}&limit=${limit}`,
       providesTags: ["Drivers"],
     }),
 
@@ -200,27 +201,10 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // Get trucks with pagination
-    getTrucksWithSearch: builder.query<
-      { data: { data: TTruck[]; paginationResult?: TPagination } },
-      { page?: number; search?: string }
-    >({
-      query: ({ page = 1, search } = {}) => {
-        const params = new URLSearchParams();
-        params.set("page", String(page));
-        if (search && search.trim().length) params.set("search", search.trim());
-        return `/api/v1/trucks?${params.toString()}`;
-      },
-      providesTags: (result) =>
-        result
-          ? [
-              ...result.data.data.map((t: TTruck) => ({
-                type: "Trucks" as const,
-                id: t.id,
-              })),
-              { type: "Trucks", id: "LIST" },
-            ]
-          : [{ type: "Trucks", id: "LIST" }],
-      keepUnusedDataFor: 60 * 60,
+    getTrucksWithSearch: builder.query({
+      query: ({ page = 1, limit = 10 }) =>
+        `/api/v1/trucks?page=${page}&limit=${limit}`,
+      providesTags: ["Trucks"],
     }),
 
     // Get All Trucks for Search
