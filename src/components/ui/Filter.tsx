@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DateRange, Range, RangeKeyDict } from "react-date-range";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
@@ -31,6 +31,21 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   ]);
 
   const theme = useAppSelector((state: RootState) => state.palette)
+  const pickerRef = useRef<HTMLDivElement>(null)
+
+  // Close when clicking everywher
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+        setShowPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // ✅ Load initial values from URL if available
   useEffect(() => {
@@ -99,7 +114,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   const label = from && to ? `${from} → ${to}` : "Date";
 
   return (
-    <div className="relative inline-block">
+    <div className="relative inline-block" ref={pickerRef}>
       <Button
         onClick={() => setShowPicker(!showPicker)}
         sx={{
