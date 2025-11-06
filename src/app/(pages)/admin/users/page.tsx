@@ -138,7 +138,7 @@ const Users = () => {
 
     return {
       totalLoads: currentData.length, 
-      active: currentData.filter((u: TDispatcher) => u.active).length,
+      driver: currentData.filter((u: TDispatcher) => u.role === 'driver').length,
       admin: currentData.filter((u: TDispatcher) => u.role === "admin").length,
       employee: currentData.filter(
         (u: TDispatcher) => u.role === "employee" || u.role === "driver"
@@ -392,8 +392,8 @@ const Users = () => {
         />
 
         <StatsCard
-          title="Active"
-          value={statsData.active}
+          title="Drivers"
+          value={statsData.driver}
           icon={IoBriefcase}
           iconColor={theme.currentPalette.primary}
           loading={loading}

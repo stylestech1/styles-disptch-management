@@ -14,7 +14,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IoAdd,
   IoCalendar,
@@ -51,6 +51,7 @@ export const DriverForm = ({
   onSubmit,
   editMode,
   isLoading,
+  closeOnOutsideClick= true
 }: {
   open: boolean;
   onClose: () => void;
@@ -59,11 +60,13 @@ export const DriverForm = ({
   onSubmit: () => void;
   editMode: boolean;
   isLoading: boolean;
+  closeOnOutsideClick?: boolean
 }) => {
   const theme = useAppSelector((state: RootState) => state.palette);
   const token = useAppSelector((state: RootState) => state.auth.token);
   const [searchedUser, setSearchedUser] = useState<TUser | null>(null);
   const [isSearching, setIsSearching] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const {
     data: usersData,
@@ -96,6 +99,24 @@ export const DriverForm = ({
   });
 
   const emailValue = watch("email");
+
+  // closing popup
+  useEffect(() => {
+    const handleBodyScroll = (shouldPrevent: boolean) => {
+      document.body.style.overflow = shouldPrevent ? "hidden" : "unset";
+    };
+
+    handleBodyScroll(open);
+    return () => handleBodyScroll(false);
+  }, [open]);
+
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && open) onClose();
+    };
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open, onClose]);
 
   // when updating data
   useEffect(() => {
@@ -180,8 +201,22 @@ export const DriverForm = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (
+          closeOnOutsideClick &&
+          modalRef.current &&
+          !modalRef.current.contains(e.target as Node)
+        ) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
+    >
+      <div
+        ref={modalRef}
+        className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
