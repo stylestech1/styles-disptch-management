@@ -25,7 +25,6 @@ import {
   IoPerson,
 } from "react-icons/io5";
 import {
-  useGetAllUsersQuery,
   useGetCustomersQuery,
 } from "@/redux/slices/apiSlice";
 import { useForm, Controller } from "react-hook-form";
