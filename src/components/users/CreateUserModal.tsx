@@ -309,12 +309,7 @@ const CreateUserModal = ({
                   minLength: {
                     value: 6,
                     message: "Password must be at least 6 characters",
-                  },
-                  pattern: {
-                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-                    message:
-                      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
-                  },
+                  }
                 })}
                 className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.password ? "border-red-500" : "border-slate-300"

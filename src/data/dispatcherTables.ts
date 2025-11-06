@@ -1,7 +1,7 @@
 import { Column } from "@/components/ui/DataTable";
 
 export const dispatcherColumns: Column[] = [
-  { key: "index", header: "#", align: "left" },
+  { key: "id", header: "ID", align: "left" },
   { key: "name", header: "Name", align: "left" },
   { key: "email", header: "Email", align: "left" },
   { key: "phone", header: "Phone", align: "left" },

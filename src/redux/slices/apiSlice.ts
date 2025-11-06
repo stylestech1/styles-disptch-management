@@ -336,27 +336,29 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Users Methods [adminDashboard] ==========
 
-    // Get All Users
+    // Get All Users with Pagination
     getAllDispatchers: builder.query({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/adminDashboard?page=${page}&limit=${limit}`,
       providesTags: ["Dispatchers"],
     }),
-    getAllUsers: builder.query({
-      query: ({ role, driver }) => `/api/v1/adminDashboard?role=driver`,
-      providesTags: ["Drivers"],
+
+    // Get All Users without Pagination
+    getAllUsersNoPagination: builder.query({
+      query: () => `/api/v1/adminDashboard?limit=50`,
+      providesTags: ["Dispatchers"],
     }),
 
     // Get User with Filter and Search
     getUserWithSearch: builder.query({
       query: ({ from, to }) => {
-        let url = `/api/v1/adminDashboard`;
+        let url = `/api/v1/adminDashboard?limit=50`; 
         const params = [];
 
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
 
-        if (params.length) url += `?${params.join("&")}`;
+        if (params.length) url += `&${params.join("&")}`;
         return url;
       },
       providesTags: ["Dispatchers"],
@@ -556,6 +558,7 @@ export const {
   useGetNotesQuery,
   // TODO: ----- Users-----
   useGetAllDispatchersQuery,
+  useGetAllUsersNoPaginationQuery,
   useGetUserWithSearchQuery,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
@@ -565,7 +568,6 @@ export const {
   useUpdateUserInfoMutation,
   // TODO: ----- Password -----
   useUpdateUserPasswordMutation,
-  useGetAllUsersQuery,
   // TODO: ----- Palette -----
   useGetPaletteQuery,
   useCreatePaletteMutation,

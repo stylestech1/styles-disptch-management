@@ -1,7 +1,6 @@
 "use client";
 import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
-import Titles from "@/components/ui/Titles";
 import { RootState, useAppSelector } from "@/redux/store";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -12,6 +11,7 @@ import {
   IoBriefcase,
   IoKey,
   IoSettingsOutline,
+  IoClose,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import { TDispatcher } from "@/types/globalTypes";
@@ -27,6 +27,7 @@ import {
   useActivateUserMutation,
   useDeactivateUserMutation,
   useGetUserWithSearchQuery,
+  useGetAllUsersNoPaginationQuery,
 } from "@/redux/slices/apiSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import UserSettingsModal from "@/components/users/UserSettingsModal";
@@ -66,9 +67,8 @@ const Users = () => {
     isLoading: loading,
     isFetching,
     refetch,
-  } = useGetAllDispatchersQuery({
-    skip: !token,
-  });
+  } = useGetAllDispatchersQuery({ page, limit: 10 });
+
   const { data: filteredData } = useGetUserWithSearchQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
@@ -76,6 +76,8 @@ const Users = () => {
     },
     { skip: !isFiltered }
   );
+
+  const { data: allUsersData } = useGetAllUsersNoPaginationQuery({skip: !token});
 
   // RTK Mutation
   const [createUser, { isLoading: creatingUser }] = useCreateUserMutation();
@@ -86,11 +88,11 @@ const Users = () => {
     useDeactivateUserMutation();
 
   // Export Data
-
   const dispatchers = isFiltered
-    ? filteredData?.dispatchersData?.data || []
+    ? filteredData?.data || []
     : dispatchersData?.data || [];
-  const pagination = dispatchersData?.paginationResult || null;
+  
+  const pagination = isFiltered ? null : dispatchersData?.paginationResult || null;
 
   // Token Checking
   useEffect(() => {
@@ -127,22 +129,38 @@ const Users = () => {
     searchFields: ["jobId", "name", "phone", "email"],
     initialSearch: searchInput,
   });
+  
   const tableData = searchInput ? searchedDispatchers : dispatchers;
 
-  // StatsCard
+  // StatsCard 
   const statsData = useMemo(() => {
-    const currentData = tableData;
+    const currentData = allUsersData?.data || []; 
 
     return {
-      totalLoads:
-        searchInput || isFiltered ? currentData.length : dispatchersData?.data?.length || 0,
+      totalLoads: currentData.length, 
       active: currentData.filter((u: TDispatcher) => u.active).length,
       admin: currentData.filter((u: TDispatcher) => u.role === "admin").length,
       employee: currentData.filter(
         (u: TDispatcher) => u.role === "employee" || u.role === "driver"
       ).length,
     };
-  }, [tableData, dispatchersData, searchInput, isFiltered]);
+  }, [allUsersData]);
+
+  const handleClearFilter = () => {
+    setIsFiltered(false);
+    setFromDate(null);
+    setToDate(null);
+    setSearchInput("");
+    setPage(1);
+  };
+
+  useEffect(() => {
+    if (searchInput) {
+      setIsFiltered(true);
+    } else if (!fromDate && !toDate) {
+      setIsFiltered(false);
+    }
+  }, [searchInput, fromDate, toDate]);
 
   // FIXME: Create User
   const handleCreateUser = async (userData: {
@@ -267,7 +285,7 @@ const Users = () => {
       className="hover:bg-slate-50 transition-colors group"
     >
       {/* # */}
-      <td className="p-4 text-slate-600 font-medium">{index + 1}</td>
+      <td className="p-4 text-slate-600 font-medium">{dispatcher.jobId}</td>
 
       {/* Name */}
       <td className="p-4">
@@ -446,7 +464,7 @@ const Users = () => {
         <TextField
           fullWidth
           variant="outlined"
-          placeholder="Search loads by ID or driver number"
+          placeholder="Search users by name, email, phone, or job ID"
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           slotProps={{
@@ -473,7 +491,43 @@ const Users = () => {
             },
           }}
         />
+
+        {/* Clear Filter Button */}
+        {(isFiltered || searchInput) && (
+          <Button
+            variant="outlined"
+            onClick={handleClearFilter}
+            startIcon={<IoClose size={18} />}
+            sx={{
+              textTransform: "none",
+              borderRadius: 1,
+              borderColor: theme.currentPalette.primary,
+              color: theme.currentPalette.primary,
+              "&:hover": {
+                borderColor: theme.currentPalette.secondary,
+                backgroundColor: alpha(theme.currentPalette.primary, 0.04),
+              },
+            }}
+          >
+            Clear Filters
+          </Button>
+        )}
       </Box>
+
+      {/* Table Info */}
+      {dispatchers.length > 0 && (
+        <div className="mb-4 text-slate-600 text-sm">
+          {isFiltered ? (
+            <span>
+              Showing {tableData.length} users (all matching results)
+            </span>
+          ) : (
+            <span>
+              Showing {(page - 1) * 10 + 1} to {Math.min(page * 10, pagination?.total || 0)} of {pagination?.total || 0} users
+            </span>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="mb-6">
@@ -489,7 +543,7 @@ const Users = () => {
           columns={dispatcherColumns}
           data={tableData}
           renderRow={renderDispatcherRow}
-          loading={loading}
+          loading={loading || isFetching}
         />
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
@@ -500,7 +554,7 @@ const Users = () => {
                 {loading ? "Loading dispatchers..." : "No dispatchers found"}
               </div>
               <div className="text-slate-400 text-sm mt-1">
-                {searchInput
+                {searchInput || isFiltered
                   ? "Try adjusting your search terms"
                   : "Get started by adding your first dispatcher"}
               </div>
@@ -537,13 +591,13 @@ const Users = () => {
       />
 
       {/* Pagination */}
-      {pagination && dispatchers.length > 0 && (
+      {!isFiltered && pagination && dispatchers.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}
           setPage={setPage}
           pageSize={10}
-          showInfo={true}
+          showInfo={false} 
         />
       )}
     </section>
