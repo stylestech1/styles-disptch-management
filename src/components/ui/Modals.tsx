@@ -1,6 +1,5 @@
 "use client";
-
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 
 interface ModalProps {
@@ -23,7 +22,9 @@ const Modal = ({
   closeOnOutsideClick = true,
 }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
+  // closing popup
   useEffect(() => {
     const handleBodyScroll = (shouldPrevent: boolean) => {
       document.body.style.overflow = shouldPrevent ? "hidden" : "unset";
@@ -32,14 +33,32 @@ const Modal = ({
     handleBodyScroll(isOpen);
     return () => handleBodyScroll(false);
   }, [isOpen]);
-
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && isOpen) onClose();
+      if (event.key === "Escape" && isOpen && !isSelectOpen) {
+        onClose();
+      }
     };
+
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, isSelectOpen]);
+  useEffect(() => {
+    const checkSelectState = () => {
+      const selectMenus = document.querySelectorAll(
+        ".MuiMenu-paper, .MuiPopover-root"
+      );
+      const isOpen = Array.from(selectMenus).some((menu) => {
+        const style = window.getComputedStyle(menu);
+        return style.display !== "none" && style.visibility !== "hidden";
+      });
+      setIsSelectOpen(isOpen);
+    };
+
+    const interval = setInterval(checkSelectState, 100);
+
+    return () => clearInterval(interval);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -57,7 +76,8 @@ const Modal = ({
         if (
           closeOnOutsideClick &&
           modalRef.current &&
-          !modalRef.current.contains(e.target as Node)
+          !modalRef.current.contains(e.target as Node) &&
+          !isSelectOpen
         ) {
           onClose();
         }

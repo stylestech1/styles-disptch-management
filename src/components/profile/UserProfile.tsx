@@ -5,7 +5,7 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
-import { IoKeyOutline } from "react-icons/io5";
+import { IoKeyOutline, IoMail, IoPerson } from "react-icons/io5";
 import {
   IoPersonCircleOutline,
   IoMailOutline,
@@ -26,7 +26,8 @@ import {
 import { useRouter } from "next/navigation";
 import { setError, clearError } from "@/redux/slices/uiSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
-import { alpha, Button } from "@mui/material";
+import { alpha, Button, FormControl, IconButton, InputAdornment, InputLabel, OutlinedInput, TextField } from "@mui/material";
+import Modal from "../ui/Modals";
 
 const UserProfile = () => {
   const [popup, setPopup] = useState(false);
@@ -178,7 +179,7 @@ const UserProfile = () => {
             sx={{
               borderRadius: 2,
               fontWeight: 500,
-              py:1,
+              py: 1,
               color: theme.currentPalette.primary,
               borderColor: theme.currentPalette.primary,
               "&:hover": {
@@ -197,7 +198,7 @@ const UserProfile = () => {
             sx={{
               borderRadius: 2,
               fontWeight: 500,
-              py:1,
+              py: 1,
               color: theme.currentPalette.background,
               background: theme.currentPalette.primary,
               "&:hover": {
@@ -297,198 +298,233 @@ const UserProfile = () => {
       </div>
 
       {/* Update Profile Popup */}
-      {popup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">
-                Update Profile
-              </h3>
-              <button
-                onClick={() => setPopup(false)}
-                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
+      <Modal
+        isOpen={popup}
+        onClose={() => setPopup(false)}
+        title={"Update Profile"}
+        size="md"
+        closeOnOutsideClick={false}
+      >
+        <form onSubmit={handleUpdateProfile} className="space-y-4">
+          <div className="mt-5">
+            <div className="relative">
+              <TextField
+                fullWidth
+                label="Full Name"
+                size="medium"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                placeholder="Enter full name"
+                required
                 disabled={updatingUser}
-              >
-                <IoClose size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleUpdateProfile} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Full Name
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoPersonOutline className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Enter full name"
-                    required
-                    disabled={updatingUser}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Email Address
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoMailOutline className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Enter email address"
-                    required
-                    disabled={updatingUser}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Phone Number
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoCallOutline className="h-5 w-5 text-slate-400" />
-                  </div>
-                  <input
-                    type="text"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleInputChange}
-                    className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Enter phone number"
-                    required
-                    disabled={updatingUser}
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setPopup(false)}
-                  className="flex-1 py-3 px-4 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
-                  disabled={updatingUser}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  disabled={updatingUser}
-                >
-                  {updatingUser ? (
-                    <>
-                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      Updating...
-                    </>
-                  ) : (
-                    <>
-                      <IoRefresh size={18} />
-                      Update Profile
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-
-            {/* Read-only fields info */}
-            <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-              <h4 className="text-sm font-medium text-slate-700 mb-2">Note:</h4>
-              <p className="text-xs text-slate-600">
-                Role, Position, and Status cannot be changed from this form.
-                Please contact administrator for these changes.
-              </p>
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IoPersonOutline className="h-5 w-5 text-slate-400" />{" "}
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
             </div>
           </div>
+
+          <div>
+            <div className="relative">
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                name="email"
+                size="medium"
+                value={formData.email}
+                onChange={handleInputChange}
+                disabled={updatingUser}
+                required
+                placeholder="Enter email address"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IoMailOutline className="h-5 w-5 text-slate-400" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="relative">
+              <TextField
+                fullWidth
+                label="Phone"
+                name="phone"
+                size="medium"
+                placeholder="Enter phone number"
+                value={formData.phone}
+                onChange={handleInputChange}
+                disabled={updatingUser}
+                required
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <IoCallOutline className="h-5 w-5 text-slate-400" />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <Button
+              type="submit"
+              fullWidth
+              onClick={() => setPopup(false)}
+              className="flex-1 py-3 px-4 border border-slate-300 text-slate-700 hover:bg-slate-50 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2"
+              disabled={updatingUser}
+              variant="outlined"
+              sx={{
+                mt: 2,
+                py: 1.5,
+                borderRadius: 2,
+                fontWeight: 500,
+                color: theme.currentPalette.primary,
+                borderColor: theme.currentPalette.primary,
+                "&:hover": {
+                  color: theme.currentPalette.background,
+                  background: alpha(theme.currentPalette.primary, 0.85),
+                },
+              }}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              type="submit"
+              fullWidth
+              className="flex-1 flex items-center justify-center gap-2 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={updatingUser}
+              sx={{
+                mt: 2,
+                py: 1.5,
+                borderRadius: 2,
+                fontWeight: 500,
+                color: theme.currentPalette.background,
+                background: theme.currentPalette.primary,
+                "&:hover": {
+                  background: alpha(theme.currentPalette.primary, 0.85),
+                },
+              }}
+            >
+              {updatingUser ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <IoRefresh size={18} />
+                  Update Profile
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+
+        {/* Read-only fields info */}
+        <div className="mt-6 p-4 bg-slate-50 rounded-lg">
+          <h4 className="text-sm font-medium text-slate-700 mb-2">Note:</h4>
+          <p className="text-xs text-slate-600">
+            Role, Position, and Status cannot be changed from this form. Please
+            contact administrator for these changes.
+          </p>
         </div>
-      )}
+      </Modal>
 
       {/* Update Password Popup */}
-      {changePasswordPopup && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-          <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-semibold text-slate-800">
-                Change Password
-              </h3>
-              <button
-                onClick={() => setChangePasswordPopup(false)}
-                className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
-              >
-                <IoClose size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleChangePassword} className="space-y-4">
-              {["currentPassword", "newPassword", "newPasswordConfirm"].map(
-                (key) => (
-                  <div key={key} className="relative">
-                    <label className="block text-sm font-medium text-slate-700 mb-2 capitalize">
-                      {key.replace(/([A-Z])/g, " $1")}
-                    </label>
-                    <div className="relative">
-                      <input
-                        type={
-                          showPassword[key as keyof typeof showPassword]
-                            ? "text"
-                            : "password"
-                        }
-                        value={passwordData[key as keyof typeof passwordData]}
-                        onChange={(e) =>
-                          setPasswordData({
-                            ...passwordData,
-                            [key]: e.target.value,
-                          })
-                        }
-                        className="block w-full px-3 py-3 pr-10 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
-                        required
-                      />
-                      <button
-                        type="button"
+      <Modal
+        isOpen={changePasswordPopup}
+        onClose={() => setChangePasswordPopup(false)}
+        title={"Change Password"}
+        size="md"
+        closeOnOutsideClick={false}
+      >
+        <form onSubmit={handleChangePassword} className="space-y-4 mt-5">
+          {["currentPassword", "newPassword", "newPasswordConfirm"].map(
+            (key) => (
+              <FormControl key={key} fullWidth sx={{ mb: 2 }}>
+                <InputLabel sx={{ textTransform: "capitalize" }}>
+                  {key.replace(/([A-Z])/g, " $1")}
+                </InputLabel>
+                <OutlinedInput
+                  type={
+                    showPassword[key as keyof typeof showPassword]
+                      ? "text"
+                      : "password"
+                  }
+                  value={passwordData[key as keyof typeof passwordData]}
+                  onChange={(e) =>
+                    setPasswordData({
+                      ...passwordData,
+                      [key]: e.target.value,
+                    })
+                  }
+                  endAdornment={
+                    <InputAdornment position="end">
+                      <IconButton
                         onClick={() =>
                           setShowPassword((prev) => ({
                             ...prev,
                             [key]: !prev[key as keyof typeof showPassword],
                           }))
                         }
-                        className="cursor-pointer absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                        edge="end"
+                        sx={{
+                          color: "grey.400",
+                          "&:hover": { color: "grey.600" },
+                        }}
                       >
                         {showPassword[key as keyof typeof showPassword] ? (
                           <FaEyeSlash size={18} />
                         ) : (
                           <FaEye size={18} />
                         )}
-                      </button>
-                    </div>
-                  </div>
-                )
-              )}
+                      </IconButton>
+                    </InputAdornment>
+                  }
+                  label={key.replace(/([A-Z])/g, " $1")}
+                  required
+                />
+              </FormControl>
+            )
+          )}
 
-              <button
-                type="submit"
-                className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all"
-              >
-                Update Password
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+          <Button
+            type="submit"
+            className="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition-all"
+            sx={{
+              mt: 2,
+              py: 1.5,
+              borderRadius: 2,
+              fontWeight: 500,
+              color: theme.currentPalette.background,
+              background: theme.currentPalette.primary,
+              "&:hover": {
+                background: alpha(theme.currentPalette.primary, 0.85),
+              },
+            }}
+          >
+            Update Password
+          </Button>
+        </form>
+      </Modal>
     </section>
   );
 };
