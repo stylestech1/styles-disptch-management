@@ -3,7 +3,9 @@
 import { TTruck, TDriver } from "@/types/globalTypes";
 import {
   Alert,
+  alpha,
   Box,
+  Button,
   Chip,
   Divider,
   FormControl,
@@ -17,6 +19,7 @@ import {
 import React, { useMemo, useEffect, useRef, useState } from "react";
 import { IoClose, IoPerson, IoAdd } from "react-icons/io5";
 import { useForm, Controller } from "react-hook-form";
+import { RootState, useAppSelector } from "@/redux/store";
 
 export type TruckFormProps = {
   open: boolean;
@@ -60,6 +63,7 @@ export const TruckForm = React.memo(function TruckFormComp(
 
   const modalRef = useRef<HTMLDivElement>(null);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   // closing popup
   useEffect(() => {
@@ -238,9 +242,12 @@ export const TruckForm = React.memo(function TruckFormComp(
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             {!editMode && (
-              <div className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                <IoAdd className="text-emerald-600" size={18} />
-              </div>
+              <Box
+                sx={{ bgcolor: alpha(theme.currentPalette.secondary, 0.3) }}
+                className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center"
+              >
+                <IoAdd size={18} />
+              </Box>
             )}
             <h3 className="text-xl font-semibold text-slate-800">
               {editMode ? "Edit Truck" : "Add New Truck"}
@@ -524,12 +531,16 @@ export const TruckForm = React.memo(function TruckFormComp(
                       {...field}
                       labelId="driver-assignment-label"
                       label="Assigned Driver"
+                      displayEmpty
                       onChange={(e) =>
                         handleFieldChange("assignedDriver", e.target.value)
                       }
                       startAdornment={
-                        <InputAdornment position="start">
-                          <IoPerson className="text-emerald-600" />
+                        <InputAdornment
+                          sx={{ color: theme.currentPalette.primary }}
+                          position="start"
+                        >
+                          <IoPerson />
                         </InputAdornment>
                       }
                       sx={{
@@ -540,7 +551,7 @@ export const TruckForm = React.memo(function TruckFormComp(
                         marginBottom: "8px",
                       }}
                     >
-                      <MenuItem value="">
+                      <MenuItem value="" disabled>
                         <Box
                           sx={{ display: "flex", alignItems: "center", gap: 1 }}
                         >
@@ -557,9 +568,12 @@ export const TruckForm = React.memo(function TruckFormComp(
                         availableUnassignedDrivers.map((driver) => (
                           <MenuItem key={driver.id} value={driver.id}>
                             <div className="flex items-center gap-3 w-full">
-                              <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                              <Box
+                                sx={{ bgcolor: theme.currentPalette.primary }}
+                                className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm"
+                              >
                                 {driver.name?.charAt(0)?.toUpperCase() || "D"}
-                              </div>
+                              </Box>
                               <div className="flex-1 min-w-0">
                                 <p className="font-medium text-slate-900 truncate">
                                   {driver.name}
@@ -576,11 +590,11 @@ export const TruckForm = React.memo(function TruckFormComp(
                               </div>
                               <Chip
                                 label="Available"
-                                color="success"
                                 size="small"
                                 sx={{
                                   fontSize: "0.625rem",
                                   height: 20,
+                                  color: theme.currentPalette.primary,
                                   "& .MuiChip-label": { px: 1 },
                                 }}
                               />
@@ -631,11 +645,16 @@ export const TruckForm = React.memo(function TruckFormComp(
 
                     {availableUnassignedDrivers.length > 0 && (
                       <div className="flex justify-between mt-2 px-1 mb-2">
-                        <span className="text-xs text-emerald-600 font-medium">
+                        <Typography
+                          sx={{
+                            color: theme.currentPalette.primary,
+                            fontSize: "14px",
+                          }}
+                        >
                           {availableUnassignedDrivers.length} available
                           unassigned driver
                           {availableUnassignedDrivers.length !== 1 ? "s" : ""}
-                        </span>
+                        </Typography>
                         <span className="text-xs text-slate-500">
                           Total: {allDrivers.length} drivers
                         </span>
@@ -706,10 +725,21 @@ export const TruckForm = React.memo(function TruckFormComp(
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
+            fullWidth
             disabled={isLoading}
-            className="w-full py-3 mt-5 cursor-pointer rounded-md bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-medium"
+            sx={{
+              mt: 2,
+              py: 1.5,
+              borderRadius: 2,
+              fontWeight: 500,
+              color: "#fff",
+              background: theme.currentPalette.primary,
+              "&:hover": {
+                background: alpha(theme.currentPalette.primary, 0.85),
+              },
+            }}
           >
             {isLoading
               ? editMode
@@ -718,7 +748,7 @@ export const TruckForm = React.memo(function TruckFormComp(
               : editMode
               ? "Save Changes"
               : "Create Truck"}
-          </button>
+          </Button>
         </form>
       </div>
     </div>
