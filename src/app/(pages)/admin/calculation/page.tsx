@@ -183,10 +183,8 @@ const useRateCalculation = (
     }
   }, [totalDistance]);
 
-  const handleCalc = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-
+  useEffect(
+    () => {
       const dhNum = Number(dh);
       const loadMilesNum = Number(loadMiles);
       const rateNum = Number(rate);
@@ -226,7 +224,6 @@ const useRateCalculation = (
     rate,
     setRate,
     calc,
-    handleCalc,
     clearCalculation,
   };
 };
@@ -340,7 +337,6 @@ const Calculation = () => {
     rate,
     setRate,
     calc,
-    handleCalc,
     clearCalculation,
   } = useRateCalculation(dhoToOriginDistance, totalDistance);
 
@@ -451,7 +447,7 @@ const Calculation = () => {
                 </Tooltip>
               </Box>
 
-              <Box component="form" onSubmit={handleCalc}>
+              <Box>
                 <Grid container spacing={3} sx={{ mb: 4 }}>
                   <Grid size={{ xs: 12, md: 4 }}>
                     <TextField
@@ -528,24 +524,6 @@ const Calculation = () => {
                   alignItems="center"
                   flexWrap="wrap"
                 >
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    size="large"
-                    startIcon={<Calculate />}
-                    sx={{
-                      borderRadius: 2,
-                      px: 4,
-                      py: 1.5,
-                      minWidth: 140,
-                      [muiTheme.breakpoints.down("md")]: {
-                        width: "100%",
-                      },
-                    }}
-                  >
-                    Calculate
-                  </Button>
-
                   {/* Result */}
                   <TextField
                     label="Price Per Mile"
