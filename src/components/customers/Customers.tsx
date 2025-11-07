@@ -94,11 +94,13 @@ const CustomerPage = () => {
   // StatsCard
   const statsData = useMemo(() => {
     const currentData = allCustomersData?.data || [];
-
     return {
-      totalCustomers: currentData.length,
+      totalCustomers:
+        searchInput || isFiltered
+          ? currentData.length
+          : allCustomersData.data.length,
     };
-  }, [allCustomersData]);
+  }, [allCustomersData, searchInput, isFiltered]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
