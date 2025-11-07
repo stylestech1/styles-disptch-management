@@ -38,9 +38,9 @@ interface TruckFormData {
   model: string;
   plateNumber: string;
   type: string;
-  year: number;
-  capacity: number;
-  fuelPerMile: number;
+  year: string;
+  capacity: string;
+  fuelPerMile: string;
   assignedDriver: string;
   status: string;
 }
@@ -116,9 +116,9 @@ export const TruckForm = React.memo(function TruckFormComp(
       model: "",
       plateNumber: "",
       type: "",
-      year: 2019,
-      capacity: 0,
-      fuelPerMile: 0,
+      year: '',
+      capacity: '',
+      fuelPerMile: '',
       assignedDriver: "",
       status: "",
     },
@@ -174,9 +174,9 @@ export const TruckForm = React.memo(function TruckFormComp(
         model: "",
         plateNumber: "",
         type: "",
-        year: 2019,
-        capacity: 0,
-        fuelPerMile: 0,
+        year: '',
+        capacity: '',
+        fuelPerMile: '',
         assignedDriver: "",
         status: "",
       });
@@ -186,7 +186,7 @@ export const TruckForm = React.memo(function TruckFormComp(
   // Handle field change with validation
   const handleFieldChange = async (
     field: keyof TruckFormData,
-    value: string | number
+    value: string
   ) => {
     setValue(field, value as never);
     await trigger(field);
@@ -198,7 +198,7 @@ export const TruckForm = React.memo(function TruckFormComp(
     field: keyof TruckFormData,
     value: string
   ) => {
-    const numValue = value === "" ? 0 : Number(value);
+    const numValue = value === "" ? 0 : value;
     setValue(field, numValue as never);
     await trigger(field);
     onChange(field as keyof TTruck, numValue as TTruck[keyof TTruck]);
@@ -206,10 +206,9 @@ export const TruckForm = React.memo(function TruckFormComp(
 
   // Handle year input change
   const handleYearChange = async (value: string) => {
-    const numValue = value === "" ? 0 : Number(value);
-    setValue("year", numValue);
+    setValue("year", value);
     await trigger("year");
-    onChange("year", numValue);
+    onChange("year", value);
   };
 
   // Reset form when closing
@@ -406,7 +405,7 @@ export const TruckForm = React.memo(function TruckFormComp(
                       {...field}
                       fullWidth
                       label="Year *"
-                      type="number"
+                      type="text"
                       error={!!errors.year}
                       helperText={errors.year?.message}
                       size="medium"
@@ -451,7 +450,7 @@ export const TruckForm = React.memo(function TruckFormComp(
                       {...field}
                       fullWidth
                       label="Capacity (kg) *"
-                      type="number"
+                      type="text"
                       error={!!errors.capacity}
                       helperText={errors.capacity?.message}
                       size="medium"
@@ -491,7 +490,7 @@ export const TruckForm = React.memo(function TruckFormComp(
                       {...field}
                       fullWidth
                       label="Fuel Per Mile *"
-                      type="number"
+                      type="text"
                       error={!!errors.fuelPerMile}
                       helperText={errors.fuelPerMile?.message}
                       size="medium"

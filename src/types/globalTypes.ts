@@ -99,14 +99,14 @@ export type TTruck = {
   truckId: number;
   plateNumber: string;
   model: string;
-  year: number;
-  capacity: number;
+  year: string;
+  capacity: string;
   status: TStatusDriver;
   createdBy: string;
   updatedBy: string;
   assignedDriver?: string | { name: string; driverId: number; id: string };
   type: TTruckType;
-  fuelPerMile: number;
+  fuelPerMile: string;
   insuranceCost: number;
   repairCost: number;
   summary?: TTruckSummary;
