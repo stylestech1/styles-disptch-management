@@ -26,6 +26,7 @@ import {
 import { useRouter } from "next/navigation";
 import { setError, clearError } from "@/redux/slices/uiSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import { alpha, Button } from "@mui/material";
 
 const UserProfile = () => {
   const [popup, setPopup] = useState(false);
@@ -52,6 +53,7 @@ const UserProfile = () => {
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
   const error = useAppSelector((state: RootState) => state.ui.error);
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   const {
     data: userData,
@@ -171,21 +173,43 @@ const UserProfile = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-4">
-          <button
+          <Button
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              fontWeight: 500,
+              py:1,
+              color: theme.currentPalette.primary,
+              borderColor: theme.currentPalette.primary,
+              "&:hover": {
+                color: theme.currentPalette.background,
+                background: alpha(theme.currentPalette.primary, 0.85),
+              },
+            }}
             onClick={openUpdatePopup}
-            className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
+            className="flex items-center gap-2 py-5 px-5 cursor-pointer text-white bg-blue-600 hover:bg-blue-700 transition-colors rounded-lg shadow-sm font-medium"
           >
             <IoRefresh size={18} />
             Update Profile
-          </button>
+          </Button>
 
-          <button
+          <Button
+            sx={{
+              borderRadius: 2,
+              fontWeight: 500,
+              py:1,
+              color: theme.currentPalette.background,
+              background: theme.currentPalette.primary,
+              "&:hover": {
+                background: alpha(theme.currentPalette.primary, 0.85),
+              },
+            }}
             onClick={() => setChangePasswordPopup(true)}
-            className="flex items-center gap-2 py-3 px-5 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
+            className="flex items-center gap-2 py-5 px-5 cursor-pointer text-white bg-emerald-600 hover:bg-emerald-700 transition-colors rounded-lg shadow-sm font-medium"
           >
             <IoKeyOutline size={18} />
             Change Password
-          </button>
+          </Button>
         </div>
       </div>
 
