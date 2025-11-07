@@ -98,7 +98,8 @@ const TruckSummary = () => {
 
     return {
       totalLoads: currentData.length,
-      totalMiles: currentData.filter((load: TLoads) => load.distanceMiles).length,
+      totalMiles: currentData.filter((load: TLoads) => load.distanceMiles)
+        .length,
       totalPrice: currentData.filter((load: TLoads) => load.totalPrice).length,
       cancelled: currentData.filter((load: TLoads) => load.cancelledAt).length,
     };
@@ -426,7 +427,9 @@ const TruckSummary = () => {
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                   <span className="text-slate-600">Capacity Category</span>
                   <span className="font-semibold text-slate-800">
-                    {profile.capacity >= 20000 ? "Heavy Duty" : "Medium Duty"}
+                    {Number(profile.capacity) >= 20000
+                      ? "Heavy Duty"
+                      : "Medium Duty"}
                   </span>
                 </div>
               </div>
@@ -501,9 +504,46 @@ const TruckSummary = () => {
         />
       </div>
 
+      {/* Period Info */}
+      {summaryData && (
+        <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
+            <div className="flex items-center gap-2">
+              <IoCalendarOutline size={14} className="flex-shrink-0" />
+              <span>Period: </span>
+              <span className="font-medium text-slate-700">
+                {isFilterActive
+                  ? `${fromDate ? fromDate.format("YYYY-MM-DD") : "Any"} to ${
+                      toDate ? toDate.format("YYYY-MM-DD") : "Any"
+                    }`
+                  : "All time"}
+              </span>
+              {(fromDate || toDate) && (
+                <span className="text-xs text-blue-500 ml-2">
+                  ({displayedData.length} loads)
+                </span>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {isFilterActive && (
+              <button
+                onClick={handleClearFilter}
+                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
+              >
+                <IoRefreshOutline size={16} />
+                Clear Filter
+              </button>
+            )}
+            {/* ✅ Filter */}
+            <DateRangeFilter onApply={handleApplyFilter} />
+          </div>
+        </div>
+      )}
+
       {/* ✅ Loads Table Section */}
       {displayedData && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="mt-10 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
           {/* Header */}
           <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
