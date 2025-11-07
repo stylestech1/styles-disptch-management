@@ -1,4 +1,3 @@
-// settings/page.tsx
 "use client";
 import { useState } from "react";
 import {
@@ -39,6 +38,8 @@ export default function Settings() {
     text: currentPalette.text,
     title: currentPalette.title,
   });
+
+  console.log(custom)
 
   // Palette Color Preview Component
   const PaletteCardPreview = ({
