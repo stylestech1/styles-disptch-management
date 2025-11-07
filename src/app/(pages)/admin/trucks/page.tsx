@@ -32,7 +32,7 @@ import {
   useDeleteTruckMutation,
   useGetAllDriversQuery,
   useGetAllTrucksQuery,
-  useGetTrucksWithSearchQuery,
+  useGetTrucksWithPaginationQuery,
   useGetTruckWithSearchQuery,
   useUpdateTruckMutation,
 } from "@/redux/slices/apiSlice";
@@ -69,7 +69,7 @@ const TrucksPage: React.FC = () => {
     data: trucksData,
     isLoading,
     refetch,
-  } = useGetTrucksWithSearchQuery({ page, limit: 10 });
+  } = useGetTrucksWithPaginationQuery({ page, limit: 10 }, { skip: !token });
   const { data: allTrucksData } = useGetAllTrucksQuery({ skip: !token });
   const { data: driversData } = useGetAllDriversQuery();
   const { data: filteredData } = useGetTruckWithSearchQuery(
@@ -86,11 +86,14 @@ const TrucksPage: React.FC = () => {
   const [deleteTruck, { isLoading: isDeleting }] = useDeleteTruckMutation();
 
   // convenient exposures
-  const trucks = isFiltered
+  const displayTrucks = isFiltered
     ? filteredData?.data?.data || []
-    : trucksData?.data || [];
-  const allTrucks = allTrucksData?.data || [];
-  const pagination = trucksData?.paginationResult || allTrucksData?.paginationResult || null;
+    : trucksData?.data?.data || [];
+  const allTrucks = allTrucksData?.data?.data || [];
+  const pagination =
+    trucksData?.data?.paginationResult ||
+    allTrucksData?.data?.paginationResult ||
+    null;
   const allDrivers = driversData?.data || [];
 
   // Filter and Search loads
@@ -105,21 +108,21 @@ const TrucksPage: React.FC = () => {
     ],
     initialSearch: searchInput,
   });
-  const tableData = searchInput ? searchedTrucks : trucks;
+  const tableData = searchInput ? searchedTrucks : displayTrucks;
 
   // StatsCard
-    const statsData = useMemo(() => {
-      const currentData = allTrucks;
-  
-      return {
-        totalLoads: currentData.length,
-        available: currentData.filter((t: TTruck) => t.status === "available")
-          .length,
-        busy: currentData.filter((t: TTruck) => t.status === "busy").length,
-        inactive: currentData.filter((t: TTruck) => t.status === "inactive")
-          .length,
-      };
-    }, [tableData]);
+  const statsData = useMemo(() => {
+    const currentData = allTrucks;
+
+    return {
+      totalLoads: currentData.length,
+      available: currentData.filter((t: TTruck) => t.status === "available")
+        .length,
+      busy: currentData.filter((t: TTruck) => t.status === "busy").length,
+      inactive: currentData.filter((t: TTruck) => t.status === "inactive")
+        .length,
+    };
+  }, [allTrucks]);
 
   // Modal states
   const [open, setOpen] = useState(false);

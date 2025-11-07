@@ -201,7 +201,7 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // Get trucks with pagination
-    getTrucksWithSearch: builder.query({
+    getTrucksWithPagination: builder.query({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/trucks?page=${page}&limit=${limit}`,
       providesTags: ["Trucks"],
@@ -216,7 +216,7 @@ export const apiSlice = api.injectEndpoints({
     // Get Truck with Filter and Search
     getTruckWithSearch: builder.query({
       query: ({ from, to }) => {
-        let url = `/api/v1/trucks`;
+        let url = `/api/v1/trucks?limit=50`;
         const params = [];
 
         if (from) params.push(`from=${from}`);
@@ -536,7 +536,7 @@ export const {
   useDeleteDriverMutation,
   // TODO: ----- Trucks -----
   useGetTrucksQuery,
-  useGetTrucksWithSearchQuery,
+  useGetTrucksWithPaginationQuery,
   useGetAllTrucksQuery,
   useGetTruckSummaryQuery,
   useGetTruckWithSearchQuery,
