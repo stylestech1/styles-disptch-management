@@ -77,7 +77,13 @@ export default function AdminLayout({
     >
       {/* User Header */}
       <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
-        <Box display="flex" alignItems="center" gap={2}>
+        <Link
+          href={`${base}/${user.id}`}
+          display="flex"
+          alignItems="center"
+          gap={2}
+          underline="none"
+        >
           <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
             <IoPersonCircleOutline />
           </Avatar>
@@ -97,7 +103,7 @@ export default function AdminLayout({
               </Typography>
             </div>
           </Box>
-        </Box>
+        </Link>
       </Box>
 
       {/* Navigation */}

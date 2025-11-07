@@ -29,7 +29,8 @@ import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
-import { FaCircle } from "react-icons/fa6";
+import { FaBrush, FaCircle } from "react-icons/fa6";
+import { PiPaintBrushBroad } from "react-icons/pi";
 
 const DRAWER_WIDTH = 300;
 
@@ -39,7 +40,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("md")); 
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
   const pathname = usePathname();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const dispatch = useAppDispatch();
@@ -72,14 +73,20 @@ export default function AdminLayout({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        overflow: 'hidden',
+        overflow: "hidden",
         bgcolor: theme.palette.background.paper,
         color: theme.palette.text.primary,
       }}
     >
       {/* User Header */}
       <Box sx={{ p: 3, borderBottom: `1px solid ${theme.palette.divider}` }}>
-        <Box display="flex" alignItems="center" gap={2}>
+        <Link
+          href={`${base}/${user.id}`}
+          display="flex"
+          alignItems="center"
+          gap={2}
+          underline="none"
+        >
           <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
             <IoPersonCircleOutline />
           </Avatar>
@@ -97,28 +104,9 @@ export default function AdminLayout({
               >
                 {user.role}
               </Typography>
-              <Typography
-                sx={{
-                  textTransform: "capitalize",
-                  fontSize: "5px",
-                }}
-              >
-                <FaCircle />
-              </Typography>
-              <Link
-                href="settings"
-                underline="hover"
-                sx={{
-                  color: theme.palette.primary.main,
-                  textTransform: "capitalize",
-                  fontSize: "12px",
-                }}
-              >
-                settings
-              </Link>
             </div>
           </Box>
-        </Box>
+        </Link>
       </Box>
 
       {/* Navigation */}
@@ -158,7 +146,22 @@ export default function AdminLayout({
 
       {/* Logout */}
       <Divider />
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, display: "flex", gap: 2, flexDirection: "column" }}>
+        {user.role === "admin" && (
+          <Button
+            component={Link}
+            href="settings"
+            fullWidth
+            startIcon={<PiPaintBrushBroad />}
+            variant="outlined"
+            sx={{
+              color: theme.palette.primary.main,
+              textTransform: "capitalize",
+            }}
+          >
+            settings
+          </Button>
+        )}
         <Button
           fullWidth
           startIcon={<IoLogOutOutline />}
@@ -186,7 +189,8 @@ export default function AdminLayout({
         onClose={() => setIsSidebarOpen(false)}
         ModalProps={{ keepMounted: true }}
         sx={{
-          zIndex: (theme) => isDesktop ? theme.zIndex.drawer - 1200 : theme.zIndex.modal + 1,
+          zIndex: (theme) =>
+            isDesktop ? theme.zIndex.drawer - 1200 : theme.zIndex.modal + 1,
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
