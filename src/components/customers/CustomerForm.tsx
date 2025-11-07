@@ -1,37 +1,27 @@
-import { TCustomer, TUser } from "@/types/globalTypes";
+"use client";
+import { TCustomer } from "@/types/globalTypes";
 import {
   alpha,
   Box,
   Button,
-  Chip,
-  CircularProgress,
   Divider,
   FormControl,
   InputAdornment,
-  InputLabel,
   MenuItem,
   Select,
   TextField,
   Typography,
 } from "@mui/material";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IoAdd,
-  IoCalendar,
   IoCall,
-  IoCash,
   IoClose,
   IoMail,
   IoPerson,
 } from "react-icons/io5";
-import {
-  useGetCustomersQuery,
-} from "@/redux/slices/apiSlice";
+import { useGetAllCustomersQuery } from "@/redux/slices/apiSlice";
 import { useForm, Controller } from "react-hook-form";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import dayjs from "dayjs";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { RootState, useAppSelector } from "@/redux/store";
 
 export const CustomerForm = ({
@@ -42,6 +32,7 @@ export const CustomerForm = ({
   onSubmit,
   editMode,
   isLoading,
+  closeOnOutsideClick = true,
 }: {
   open: boolean;
   onClose: () => void;
@@ -50,17 +41,20 @@ export const CustomerForm = ({
   onSubmit: () => void;
   editMode: boolean;
   isLoading: boolean;
+  closeOnOutsideClick?: boolean;
 }) => {
   const token = useAppSelector((state: RootState) => state.auth.token);
   const theme = useAppSelector((state: RootState) => state.palette);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
-  // Use RTK Query to fetch users with Customer role
+  // Use RTK Query to fetch customer with Customer role
   const {
-    data: usersData,
-    isLoading: usersLoading,
-    error: usersError,
+    data: customerData,
+    isLoading: customerLoading,
+    error: customerError,
     refetch,
-  } = useGetCustomersQuery(undefined, {
+  } = useGetAllCustomersQuery({
     skip: !token,
   });
 
@@ -84,6 +78,42 @@ export const CustomerForm = ({
     mode: "onSubmit",
   });
 
+  // closing popup
+  useEffect(() => {
+    const handleBodyScroll = (shouldPrevent: boolean) => {
+      document.body.style.overflow = shouldPrevent ? "hidden" : "unset";
+    };
+
+    handleBodyScroll(open);
+    return () => handleBodyScroll(false);
+  }, [open]);
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && open && !isSelectOpen) {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [open, onClose, isSelectOpen]);
+  useEffect(() => {
+    const checkSelectState = () => {
+      const selectMenus = document.querySelectorAll(
+        ".MuiMenu-paper, .MuiPopover-root"
+      );
+      const isOpen = Array.from(selectMenus).some((menu) => {
+        const style = window.getComputedStyle(menu);
+        return style.display !== "none" && style.visibility !== "hidden";
+      });
+      setIsSelectOpen(isOpen);
+    };
+
+    const interval = setInterval(checkSelectState, 100);
+
+    return () => clearInterval(interval);
+  }, [open]);
+
   // when updating data
   useEffect(() => {
     if (formData) {
@@ -95,7 +125,7 @@ export const CustomerForm = ({
     }
   }, [formData, setValue]);
 
-  // Refetch users when component opens
+  // Refetch customer when component opens
   useEffect(() => {
     if (open) {
       refetch();
@@ -128,8 +158,23 @@ export const CustomerForm = ({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+    <div
+      onClick={(e) => {
+        if (
+          closeOnOutsideClick &&
+          modalRef.current &&
+          !modalRef.current.contains(e.target as Node) &&
+          !isSelectOpen
+        ) {
+          onClose();
+        }
+      }}
+      className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
+    >
+      <div
+        ref={modalRef}
+        className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+      >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -418,7 +463,7 @@ export const CustomerForm = ({
           <Button
             type="submit"
             fullWidth
-            disabled={isLoading || usersLoading}
+            disabled={isLoading || customerLoading}
             sx={{
               mt: 2,
               py: 1.5,

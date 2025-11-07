@@ -24,7 +24,7 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {
   useCreateCustomerMutation,
-  useGetCustomersQuery,
+  useGetAllCustomersQuery,
   useGetCustomersWithPaginationQuery,
   useGetCustomerWithFilterQuery,
   useUpdateCustomerMutation,
@@ -52,17 +52,12 @@ const CustomerPage = () => {
 
   // 🔹 API Queries
   const {
-    data: allCustomersData,
-    isLoading: allCustomersLoading,
-    error: allCustomersError,
-  } = useGetCustomersQuery(undefined, {skip: !token})
-  const {
     data: customersData,
     isLoading: customersLoading,
     error: customerError,
     refetch,
   } = useGetCustomersWithPaginationQuery({ page, limit: 10 }, { skip: !token });
-
+  const { data: allCustomersData } = useGetAllCustomersQuery({ skip: !token });
   const { data: filteredData } = useGetCustomerWithFilterQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
@@ -83,14 +78,14 @@ const CustomerPage = () => {
     : customersData?.data || [];
 
   const pagination = isFiltered
-    ? filteredData?.customersData?.paginationResult
-    : customersData?.paginationResult;
+    ? null
+    : customersData?.paginationResult || null;
 
   const isLoading = customersLoading;
 
   // Filter and Search loads
   const { filteredData: searchedCustomer } = useSearch({
-    data: displayCustomer,
+    data: allCustomersData?.data || [],
     searchFields: ["customerId", "name", "phone", "email"],
     initialSearch: searchInput,
   });
@@ -98,11 +93,12 @@ const CustomerPage = () => {
 
   // StatsCard
   const statsData = useMemo(() => {
+    const currentData = allCustomersData?.data || [];
 
     return {
-      totalCustomers: tableData.length,
+      totalCustomers: currentData.length,
     };
-  }, [tableData]);
+  }, [allCustomersData]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -430,13 +426,15 @@ const CustomerPage = () => {
       />
 
       {/* Pagination */}
-      <Pagination
-        pagination={pagination}
-        page={page}
-        setPage={setPage}
-        pageSize={10}
-        showInfo={true}
-      />
+      {!isFiltered && !searchInput && pagination && tableData.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+          pageSize={10}
+          showInfo={true}
+        />
+      )}
 
       {/* Driver Form Modal */}
       <CustomerForm

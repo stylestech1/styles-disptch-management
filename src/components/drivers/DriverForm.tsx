@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Divider,
   FormControl,
   InputAdornment,
@@ -110,7 +109,6 @@ export const DriverForm = ({
     handleBodyScroll(open);
     return () => handleBodyScroll(false);
   }, [open]);
-
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && open && !isSelectOpen) {
@@ -121,7 +119,6 @@ export const DriverForm = ({
     document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [open, onClose, isSelectOpen]);
-
   useEffect(() => {
     const checkSelectState = () => {
       const selectMenus = document.querySelectorAll(
@@ -195,9 +192,6 @@ export const DriverForm = ({
 
     searchUserByEmail();
   }, [emailValue, usersData]);
-
-  // Extract users from response
-  const users = usersData?.data || [];
 
   // Handle form submission
   const onSubmitForm = (data: DriverFormData) => {
