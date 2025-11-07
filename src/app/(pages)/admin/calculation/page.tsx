@@ -28,6 +28,7 @@ import {
   Tooltip,
   IconButton,
   Fade,
+  alpha,
 } from "@mui/material";
 import {
   Calculate,
@@ -49,6 +50,7 @@ import {
   calculateFullRouteDistance,
 } from "@/utils/googleDistanceCalculator";
 import { muiTheme } from "@/theme/theme";
+import { RootState, useAppSelector } from "@/redux/store";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
@@ -183,31 +185,30 @@ const useRateCalculation = (
     }
   }, [totalDistance]);
 
-  useEffect(
-    () => {
-      const dhNum = Number(dh);
-      const loadMilesNum = Number(loadMiles);
-      const rateNum = Number(rate);
+  useEffect(() => {
+    const dhNum = Number(dh);
+    const loadMilesNum = Number(loadMiles);
+    const rateNum = Number(rate);
 
-      if (isNaN(dhNum) || isNaN(loadMilesNum) || isNaN(rateNum)) {
-        toast.error("Please enter valid numbers to calculate", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-        return;
-      }
+    if (dh === "" || loadMiles === "" || rate === "") return;
 
-      if (loadMilesNum + dhNum === 0) {
-        toast.error("Total miles cannot be zero", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-        return;
-      }
+    if (isNaN(dhNum) || isNaN(loadMilesNum) || isNaN(rateNum)) {
+      toast.error("Please enter valid numbers to calculate", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+      return;
+    }
 
-      const result = rateNum / (loadMilesNum + dhNum);
-      setCalc(Number(result.toFixed(3)));
-    },
-    [dh, loadMiles, rate]
-  );
+    if (loadMilesNum + dhNum === 0) {
+      toast.error("Total miles cannot be zero", {
+        style: { background: "#dc2626", color: "#fff" },
+      });
+      return;
+    }
+
+    const result = rateNum / (loadMilesNum + dhNum);
+    setCalc(Number(result.toFixed(3)));
+  }, [dh, loadMiles, rate]);
 
   const clearCalculation = useCallback(() => {
     setDh("");
@@ -318,6 +319,8 @@ const Calculation = () => {
   const [dho, setDho] = useState<TPlace | null>(null);
   const [origin, setOrigin] = useState<TPlace | null>(null);
   const [destinations, setDestinations] = useState<(TPlace | null)[]>([null]);
+  const theme = useAppSelector((state: RootState) => state.palette);
+  const [resetKey, setResetKey] = useState(0);
 
   const {
     dhoToOriginDistance,
@@ -381,6 +384,16 @@ const Calculation = () => {
     [destinations]
   );
 
+  // Reset All Button
+  const resetAllBtn = useCallback(() => {
+    setDho(null);
+    setOrigin(null);
+    setDestinations([null]);
+    clearCalculation();
+    setResetKey((prev) => prev + 1);
+    toast.success("All inputs reset successfully");
+  }, [clearCalculation]);
+
   // FIXME: Handle map location changes
   const handleMapLocationChange = useCallback(
     (
@@ -402,13 +415,40 @@ const Calculation = () => {
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
       {/* Header */}
-      <Box sx={{ mb: 6 }}>
-        <Titles>Calculation & Route Planning</Titles>
-        <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-          Calculate rates and plan your routes with real-time distance
-          measurements
-        </Typography>
-      </Box>
+      <Stack
+        sx={{
+          mb: 6,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "start",
+          flexDirection: "row",
+        }}
+      >
+        <Box>
+          <Titles>Calculation & Route Planning</Titles>
+          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
+            Calculate rates and plan your routes with real-time distance
+            measurements
+          </Typography>
+        </Box>
+        <Button
+          sx={{
+            width: "10%",
+            mt: 2,
+            py: 1.5,
+            borderRadius: 2,
+            fontWeight: 500,
+            color: "#fff",
+            background: theme.currentPalette.primary,
+            "&:hover": {
+              background: alpha(theme.currentPalette.primary, 0.85),
+            },
+          }}
+          onClick={resetAllBtn}
+        >
+          Reset All
+        </Button>
+      </Stack>
 
       <Grid container spacing={4}>
         {/* Left Column - Forms and Calculations */}
@@ -713,6 +753,7 @@ const Calculation = () => {
             <Stack spacing={3}>
               {/* DHO Input */}
               <LocationAutocomplete
+                key={`dho-${resetKey}`}
                 label="DHO (Driver Home Origin)"
                 value={dho}
                 setValue={setDho}
@@ -721,6 +762,7 @@ const Calculation = () => {
 
               {/* Origin Input */}
               <LocationAutocomplete
+                key={`origin-${resetKey}`}
                 label="Pick Up (Origin)"
                 value={origin}
                 setValue={setOrigin}
@@ -798,14 +840,14 @@ const Calculation = () => {
                 <Stack spacing={2}>
                   {destinations.map((destination, index) => (
                     <Stack
-                      key={index}
+                      key={`dest-stack-${index}-${resetKey}`}
                       direction="row"
                       spacing={1}
                       alignItems="flex-end"
                     >
                       <Box sx={{ flex: 1 }}>
                         <LocationAutocomplete
-                          label={`Destination ${index + 1}`}
+                          label={`Destination-${index}-${resetKey}`}
                           value={destination}
                           setValue={(place) =>
                             handleUpdateDestination(index, place)
