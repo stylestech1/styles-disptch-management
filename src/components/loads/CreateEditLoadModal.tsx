@@ -1714,21 +1714,24 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
             {truckType === "reefer" && <span className="text-red-500">*</span>}
           </label>
           <TextField
+            fullWidth
             type="number"
             value={truckTemp}
             onChange={(e) => onTruckTempChange(e.target.value)}
-            className={`${
-              Array.isArray(trucks) &&
-              trucks.find((t: TTruck) => t.id === truckId)?.type !== "reefer"
-                ? "cursor-not-allowed"
-                : ""
-            } block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors`}
             placeholder="-10"
             disabled={
               !truckId ||
-              (Array.isArray(trucks) &&
-                trucks.find((t: TTruck) => t.id === truckId)?.type !== "reefer")
+              (Array.isArray(trucks.data) &&
+                trucks.data
+                  .find((t: TTruck) => t.id === String(truckId))
+                  ?.type?.toLowerCase() !== "reefer")
             }
+            sx={{
+              "& .MuiInputBase-root.Mui-disabled": {
+                cursor: "not-allowed",
+                backgroundColor: "#f5f5f5",
+              },
+            }}
           />
         </div>
       </div>

@@ -84,16 +84,18 @@ export const TruckForm = React.memo(function TruckFormComp(
 
   useEffect(() => {
     const checkSelectState = () => {
-      const selectMenus = document.querySelectorAll('.MuiMenu-paper, .MuiPopover-root');
-      const isOpen = Array.from(selectMenus).some(menu => {
+      const selectMenus = document.querySelectorAll(
+        ".MuiMenu-paper, .MuiPopover-root"
+      );
+      const isOpen = Array.from(selectMenus).some((menu) => {
         const style = window.getComputedStyle(menu);
-        return style.display !== 'none' && style.visibility !== 'hidden';
+        return style.display !== "none" && style.visibility !== "hidden";
       });
       setIsSelectOpen(isOpen);
     };
 
     const interval = setInterval(checkSelectState, 100);
-    
+
     return () => clearInterval(interval);
   }, [open]);
 
@@ -163,6 +165,18 @@ export const TruckForm = React.memo(function TruckFormComp(
       onChange(field, value as TTruck[keyof TTruck]);
     });
     onSubmit();
+    if (!editMode) {
+      reset({
+        model: "",
+        plateNumber: "",
+        type: "",
+        year: 2019,
+        capacity: 0,
+        fuelPerMile: 0,
+        assignedDriver: "",
+        status: "",
+      });
+    }
   };
 
   // Handle field change with validation

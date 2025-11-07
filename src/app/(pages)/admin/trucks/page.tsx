@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import Erros from "@/components/ui/Erros";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TTruck } from "@/types/globalTypes";
@@ -59,7 +59,7 @@ const TrucksPage: React.FC = () => {
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
   const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(0);
+  const [page, setPage] = useState(1);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
   const { error, setError } = useError();
   const theme = useAppSelector((state: RootState) => state.palette);
@@ -87,15 +87,15 @@ const TrucksPage: React.FC = () => {
 
   // convenient exposures
   const trucks = isFiltered
-    ? filteredData?.trucksData?.data?.data || []
-    : trucksData?.data?.data || [];
-  const allTrucks = allTrucksData?.data?.data || [];
-  const pagination = allTrucksData?.data?.paginationResult || null;
+    ? filteredData?.data?.data || []
+    : trucksData?.data || [];
+  const allTrucks = allTrucksData?.data || [];
+  const pagination = trucksData?.paginationResult || allTrucksData?.paginationResult || null;
   const allDrivers = driversData?.data || [];
 
   // Filter and Search loads
   const { filteredData: searchedTrucks } = useSearch({
-    data: trucks,
+    data: allTrucks,
     searchFields: [
       "truckId",
       "model",
@@ -106,6 +106,20 @@ const TrucksPage: React.FC = () => {
     initialSearch: searchInput,
   });
   const tableData = searchInput ? searchedTrucks : trucks;
+
+  // StatsCard
+    const statsData = useMemo(() => {
+      const currentData = allTrucks;
+  
+      return {
+        totalLoads: currentData.length,
+        available: currentData.filter((t: TTruck) => t.status === "available")
+          .length,
+        busy: currentData.filter((t: TTruck) => t.status === "busy").length,
+        inactive: currentData.filter((t: TTruck) => t.status === "inactive")
+          .length,
+      };
+    }, [tableData]);
 
   // Modal states
   const [open, setOpen] = useState(false);
@@ -270,7 +284,7 @@ const TrucksPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
         <StatsCard
           title="Total Trucks"
-          value={tableData.length || 0}
+          value={statsData.totalLoads}
           icon={FaTruck}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -278,9 +292,7 @@ const TrucksPage: React.FC = () => {
 
         <StatsCard
           title="Available"
-          value={
-            tableData.filter((d: TTruck) => d.status === "available").length
-          }
+          value={statsData.available}
           icon={FaUserCheck}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -288,7 +300,7 @@ const TrucksPage: React.FC = () => {
 
         <StatsCard
           title="Busy"
-          value={tableData.filter((d: TTruck) => d.status === "busy").length}
+          value={statsData.busy}
           icon={FaUserMinus}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
@@ -296,9 +308,7 @@ const TrucksPage: React.FC = () => {
 
         <StatsCard
           title="Inactive"
-          value={
-            tableData.filter((d: TTruck) => d.status === "inactive").length
-          }
+          value={statsData.inactive}
           icon={FaUserLargeSlash}
           iconColor={theme.currentPalette.primary}
           loading={isLoading}
