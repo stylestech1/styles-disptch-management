@@ -92,12 +92,16 @@ const LoadsPageDetails = () => {
       to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
     },
     { skip: !isFiltered }
-  );
+  )
 
   // responses
   const load = isFiltered ? filteredData?.data || [] : loadsData?.data || [];
   const allLoads = allLoadsData?.data || [];
-  const pagination = loadsData?.paginationResult || null;
+  const pagination = isFiltered ? null : loadsData?.paginationResult || null;
+
+  console.log('load', load)
+  console.log('allLoads', allLoads)
+  console.log('pagination', pagination)
 
   // Handling Loading
   useEffect(() => {
@@ -118,7 +122,7 @@ const LoadsPageDetails = () => {
 
   // Filter and Search loads
   const { filteredData: searchedLoads } = useSearch({
-    data: searchInput ? allLoads : load,
+    data: allLoads || [],
     searchFields: ["loadId", "driverId.phone"],
     initialSearch: searchInput,
   });
@@ -126,19 +130,17 @@ const LoadsPageDetails = () => {
 
   // StatsCard
   const statsData = useMemo(() => {
-    const currentData = tableData;
-    const totalData = allLoads;
+    const currentData = allLoads;
 
     return {
-      totalLoads:
-        searchInput || isFiltered ? currentData.length : totalData.length,
+      totalLoads: currentData.length,
       pending: currentData.filter((l: TLoads) => l.status === "pending").length,
       inTransit: currentData.filter((l: TLoads) => l.status === "in_transit")
         .length,
       delivered: currentData.filter((l: TLoads) => l.status === "delivered")
         .length,
     };
-  }, [tableData, allLoads, searchInput, isFiltered]);
+  }, [tableData]);
 
   // TODO: set loading
   if (loading) return <Loading />;
@@ -496,13 +498,15 @@ const LoadsPageDetails = () => {
       />
 
       {/* Pagination */}
-      <Pagination
-        pagination={pagination}
-        page={page}
-        setPage={setPage}
-        pageSize={10}
-        showInfo={true}
-      />
+      {!isFiltered && !searchInput && pagination && tableData.length > 0 && (
+        <Pagination
+          pagination={pagination}
+          page={page}
+          setPage={setPage}
+          pageSize={10}
+          showInfo={true}
+        />
+      )}
 
       {/* Modal Components */}
       <CreateEditLoadModal
