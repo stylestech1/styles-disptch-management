@@ -1605,9 +1605,9 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
           </button>
           <button
             type="submit"
-            disabled={!isTabValid || isLoading}
+            disabled={isLoading}
             className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
-              isTabValid && !isLoading
+              !isLoading
                 ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
                 : "bg-slate-300 text-slate-500 cursor-not-allowed"
             }`}

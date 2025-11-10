@@ -39,8 +39,6 @@ export default function Settings() {
     title: currentPalette.title,
   });
 
-  console.log(custom)
-
   // Palette Color Preview Component
   const PaletteCardPreview = ({
     mode,

@@ -125,15 +125,18 @@ const LoadsPageDetails = () => {
   const tableData = searchInput ? searchedLoads : load;
 
   // StatsCard
-   const statsData = useMemo(() => {
-    const currentData = tableData; 
-    const totalData = allLoads
-    
+  const statsData = useMemo(() => {
+    const currentData = tableData;
+    const totalData = allLoads;
+
     return {
-      totalLoads: (searchInput || isFiltered) ? currentData.length : totalData.length,
+      totalLoads:
+        searchInput || isFiltered ? currentData.length : totalData.length,
       pending: currentData.filter((l: TLoads) => l.status === "pending").length,
-      inTransit: currentData.filter((l: TLoads) => l.status === "in_transit").length,
-      delivered: currentData.filter((l: TLoads) => l.status === "delivered").length,
+      inTransit: currentData.filter((l: TLoads) => l.status === "in_transit")
+        .length,
+      delivered: currentData.filter((l: TLoads) => l.status === "delivered")
+        .length,
     };
   }, [tableData, allLoads, searchInput, isFiltered]);
 
@@ -141,9 +144,25 @@ const LoadsPageDetails = () => {
   if (loading) return <Loading />;
 
   // TODO: Table
-  const renderLoadRow = (loadItem: TLoads, index: number) => {
+  const renderLoadRow = (loadItem: TLoads) => {
     const hasComments = loadItem.comments && loadItem.comments.length > 0;
     const commentsCount = loadItem.comments?.length || 0;
+
+    const navigateToLoadDetails = (e?: React.MouseEvent) => {
+      if (e) {
+        e.stopPropagation();
+      }
+
+      if (userRole === "admin") {
+        router.push(
+          `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
+        );
+      } else if (userRole === "employee") {
+        router.push(
+          `/dispatchers/loadDetails/${encodeURIComponent(loadItem.loadId)}`
+        );
+      }
+    };
 
     return (
       <TableRow
@@ -152,19 +171,9 @@ const LoadsPageDetails = () => {
             backgroundColor: alpha(theme.currentPalette.primary, 0.05),
           },
         }}
-        key={index}
+        key={loadItem.loadId}
         className="transition-colors group cursor-pointer"
-        onClick={() => {
-          if (userRole === "admin") {
-            router.push(
-              `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
-            );
-          } else if (userRole === "employee") {
-            router.push(
-              `/dispatchers/loadDetails/${encodeURIComponent(loadItem.loadId)}`
-            );
-          }
-        }}
+        onClick={navigateToLoadDetails}
       >
         {/* Load ID */}
         <td className="p-4 text-center">
@@ -275,7 +284,10 @@ const LoadsPageDetails = () => {
                 }}
                 title={`${commentsCount} comment(s) - Click to view`}
               >
-                <Box sx={{backgroundColor: theme.currentPalette.primary}} className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-blue-600 transition-colors">
+                <Box
+                  sx={{ backgroundColor: theme.currentPalette.primary }}
+                  className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-blue-600 transition-colors"
+                >
                   <IoChatbubbleEllipses size={16} className="text-white" />
                 </Box>
 
@@ -320,11 +332,20 @@ const LoadsPageDetails = () => {
           className="flex flex-col xl:items-start xl:justify-between gap-1"
         >
           <Typography
-            sx={{ color: theme.currentPalette.text, fontSize: "45px", fontWeight: "bold" }}
+            sx={{
+              color: theme.currentPalette.text,
+              fontSize: "45px",
+              fontWeight: "bold",
+            }}
           >
             Load Management
           </Typography>
-          <Typography sx={{ color: alpha(theme.currentPalette.text, 0.7), fontSize: "16px" }}>
+          <Typography
+            sx={{
+              color: alpha(theme.currentPalette.text, 0.7),
+              fontSize: "16px",
+            }}
+          >
             Manage and track all your shipments and deliveries in one place.
             Monitor status, assign drivers, and update load information.
           </Typography>
@@ -427,8 +448,12 @@ const LoadsPageDetails = () => {
                 borderRadius: 1,
                 backgroundColor: "#fff",
                 "& fieldset": { borderColor: "#e5e7eb" },
-                "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-                "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
+                "&:hover fieldset": {
+                  borderColor: theme.currentPalette.primary,
+                },
+                "&.Mui-focused fieldset": {
+                  borderColor: theme.currentPalette.primary,
+                },
               },
               "& input": {
                 color: theme.currentPalette.text,

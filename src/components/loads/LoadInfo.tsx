@@ -56,9 +56,10 @@ import { RxUpdate } from "react-icons/rx";
 import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 import UpdateStatusModal from "@/components/loads/UpdateStatusModal";
 import { IoRefresh } from "react-icons/io5";
+import { RootState, useAppSelector } from "@/redux/store";
 
-interface LoadInfoProps  {
-  loadId: string | undefined
+interface LoadInfoProps {
+  loadId: string | undefined;
 }
 
 // handling Tabs
@@ -78,13 +79,13 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-const LoadInfo = ({loadId} : LoadInfoProps) => {
-  
+const LoadInfo = ({ loadId }: LoadInfoProps) => {
   const [tabValue, setTabValue] = useState(0);
   const [viewNoteDialog, setViewNoteDialog] = useState(false);
   const [selectedNote, setSelectedNote] = useState<TComments | null>(null);
   const [notes, setNotes] = useState<TComments[]>([]);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   const {
     data,
@@ -123,46 +124,18 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
   if (loadLoading) return <Loading />;
 
   // Set Data
-  const load = data?.data?.[0];
-  console.log(load);
+  const load = data?.data.find((item: TLoads) => item.loadId === loadId);
   if (!load) return <Erros message="No load details found for this ID." />;
   const allNotes = [...notes, ...(load.comments || [])];
 
-  // MUI Styles
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "pending":
-        return "warning";
-      case "completed":
-        return "success";
-      case "in-progress":
-        return "info";
-      case "cancelled":
-        return "error";
-      default:
-        return "default";
-    }
-  };
-  const colorPalette = {
-    primary: "#1976d2",
-    secondary: "#6c757d",
-    success: "#2e7d32",
-    warning: "#ed6c02",
-    error: "#d32f2f",
-    background: "#f8f9fa",
-    surface: "#ffffff",
-    textPrimary: "#212121",
-    textSecondary: "#757575",
-    border: "#e0e0e0",
-  };
   const InfoCard = ({ title, icon, children }: InfoCardProps) => (
     <Card
       variant="outlined"
       sx={{
         height: "100%",
-        border: `1px solid ${colorPalette.border}`,
+        border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
         borderRadius: 2,
-        bgcolor: colorPalette.surface,
+        bgcolor: theme.currentPalette.background,
         transition: "all 0.2s ease",
         boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
         "&:hover": {
@@ -175,21 +148,21 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
         <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 3 }}>
           <Box
             sx={{
-              color: colorPalette.primary,
+              color: theme.currentPalette.primary,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               width: 40,
               height: 40,
               borderRadius: "50%",
-              bgcolor: alpha(colorPalette.primary, 0.1),
+              bgcolor: alpha(theme.currentPalette.primary, 0.1),
             }}
           >
             {icon}
           </Box>
           <Typography
             variant="h6"
-            color={colorPalette.textPrimary}
+            color={theme.currentPalette.primary}
             fontWeight="600"
           >
             {title}
@@ -209,7 +182,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
       >
         <Box
           sx={{
-            color: colorPalette.textSecondary,
+            color: theme.currentPalette.secondary,
             mt: 0.2,
           }}
         >
@@ -219,14 +192,14 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
           <Typography
             variant="body2"
             fontWeight="500"
-            color={colorPalette.textPrimary}
+            color={theme.currentPalette.title}
             gutterBottom
           >
             {primary}
           </Typography>
           <Typography
             variant="body2"
-            color={colorPalette.textSecondary}
+            color={theme.currentPalette.text}
             sx={{ lineHeight: 1.4 }}
           >
             {secondary}
@@ -237,15 +210,15 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
   );
 
   return (
-    <Box sx={{ p: 3, bgcolor: colorPalette.background, minHeight: "100vh" }}>
+    <Box sx={{ minHeight: "100vh" }}>
       {/* Header */}
       <Paper
         elevation={0}
         sx={{
           p: 4,
           mb: 3,
-          bgcolor: colorPalette.surface,
-          border: `1px solid ${colorPalette.border}`,
+          bgcolor: theme.currentPalette.background,
+          border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
           borderRadius: 2,
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
@@ -260,7 +233,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               variant="h4"
               component="h1"
               gutterBottom
-              color={colorPalette.textPrimary}
+              color={theme.currentPalette.text}
               fontWeight="700"
             >
               Load ({load.loadId})
@@ -268,14 +241,17 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
             <Stack direction="row" spacing={2} alignItems="center">
               <Chip
                 label={load.status.toUpperCase()}
-                color={getStatusColor(load.status)}
                 variant="outlined"
                 sx={{
                   fontWeight: 600,
                   borderWidth: 1.5,
+                  color: theme.currentPalette.primary,
                 }}
               />
-              <Typography variant="body2" color={colorPalette.textSecondary}>
+              <Typography
+                variant="body2"
+                color={theme.currentPalette.secondary}
+              >
                 Created by {load.createdBy}
               </Typography>
             </Stack>
@@ -283,12 +259,12 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
           <Box textAlign="right">
             <Typography
               variant="h4"
-              color={colorPalette.primary}
+              color={theme.currentPalette.primary}
               fontWeight="700"
             >
               ${load.totalPrice}
             </Typography>
-            <Typography variant="body2" color={colorPalette.textSecondary}>
+            <Typography variant="body2" color={theme.currentPalette.secondary}>
               {load.currency}
             </Typography>
           </Box>
@@ -301,8 +277,8 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
         sx={{
           width: "100%",
           overflow: "hidden",
-          bgcolor: colorPalette.surface,
-          border: `1px solid ${colorPalette.border}`,
+          bgcolor: theme.currentPalette.background,
+          border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
           borderRadius: 2,
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
@@ -312,8 +288,8 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
           onChange={handleTabChange}
           aria-label="load details tabs"
           sx={{
-            borderBottom: `1px solid ${colorPalette.border}`,
-            bgcolor: colorPalette.surface,
+            borderBottom: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+            bgcolor: theme.currentPalette.background,
             px: 2,
           }}
           indicatorColor="primary"
@@ -327,9 +303,9 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               fontWeight: 500,
               py: 2,
               minHeight: 64,
-              color: colorPalette.textSecondary,
+              color: theme.currentPalette.secondary,
               "&.Mui-selected": {
-                color: colorPalette.primary,
+                color: theme.currentPalette.primary,
               },
             }}
           />
@@ -341,9 +317,9 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               fontWeight: 500,
               py: 2,
               minHeight: 64,
-              color: colorPalette.textSecondary,
+              color: theme.currentPalette.secondary,
               "&.Mui-selected": {
-                color: colorPalette.primary,
+                color: theme.currentPalette.primary,
               },
             }}
           />
@@ -355,9 +331,9 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               fontWeight: 500,
               py: 2,
               minHeight: 64,
-              color: colorPalette.textSecondary,
+              color: theme.currentPalette.secondary,
               "&.Mui-selected": {
-                color: colorPalette.primary,
+                color: theme.currentPalette.secondary,
               },
             }}
           />
@@ -408,13 +384,13 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                     primary="Origin"
                     secondary={load.origin}
                   />
-                  <Divider sx={{ borderColor: colorPalette.border }} />
+                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                   <InfoItem
                     icon={<LocationOn fontSize="small" />}
                     primary="DHO"
                     secondary={load.DHO}
                   />
-                  <Divider sx={{ borderColor: colorPalette.border }} />
+                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                   <InfoItem
                     icon={<LocationOn fontSize="small" />}
                     primary="Destination"
@@ -437,13 +413,13 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                     primary="Pickup Time"
                     secondary={new Date(load.pickupAt).toLocaleString()}
                   />
-                  <Divider sx={{ borderColor: colorPalette.border }} />
+                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                   <InfoItem
                     icon={<Schedule fontSize="small" />}
                     primary="Completed At"
                     secondary={new Date(load.completedAt).toLocaleString()}
                   />
-                  <Divider sx={{ borderColor: colorPalette.border }} />
+                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                   <InfoItem
                     icon={<AttachMoney fontSize="small" />}
                     primary="Price Details"
@@ -465,13 +441,13 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                       primary="Driver Name"
                       secondary={load.driverId.name}
                     />
-                    <Divider sx={{ borderColor: colorPalette.border }} />
+                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                     <InfoItem
                       icon={<Phone fontSize="small" />}
                       primary="Phone Number"
                       secondary={load.driverId.phone}
                     />
-                    <Divider sx={{ borderColor: colorPalette.border }} />
+                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Driver ID"
@@ -481,7 +457,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                 ) : (
                   <Typography
                     variant="body2"
-                    color={colorPalette.textSecondary}
+                    color={theme.currentPalette.secondary}
                     textAlign="center"
                     py={3}
                   >
@@ -501,19 +477,19 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                       primary="Truck Model"
                       secondary={load.truckId.model}
                     />
-                    <Divider sx={{ borderColor: colorPalette.border }} />
+                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Plate Number"
                       secondary={load.truckId.plateNumber}
                     />
-                    <Divider sx={{ borderColor: colorPalette.border }} />
+                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Truck Type"
                       secondary={load.truckType}
                     />
-                    <Divider sx={{ borderColor: colorPalette.border }} />
+                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Temperature"
@@ -523,7 +499,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                 ) : (
                   <Typography
                     variant="body2"
-                    color={colorPalette.textSecondary}
+                    color={theme.currentPalette.secondary}
                     textAlign="center"
                     py={3}
                   >
@@ -551,9 +527,12 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                                 alignItems: "center",
                                 gap: 2,
                                 textDecoration: "none",
-                                color: colorPalette.textPrimary,
+                                color: theme.currentPalette.primary,
                                 "&:hover": {
-                                  color: colorPalette.primary,
+                                  color: alpha(
+                                    theme.currentPalette.primary,
+                                    0.8
+                                  ),
                                   textDecoration: "underline",
                                 },
                               }}
@@ -566,14 +545,16 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                           ) : (
                             <Typography
                               variant="body2"
-                              color={colorPalette.textSecondary}
+                              color={theme.currentPalette.secondary}
                             >
                               No link available
                             </Typography>
                           )}
                         </ListItem>
                         {i < load.documents.length - 1 && (
-                          <Divider sx={{ borderColor: colorPalette.border }} />
+                          <Divider
+                            sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                          />
                         )}
                       </Box>
                     ))}
@@ -581,7 +562,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                 ) : (
                   <Typography
                     variant="body2"
-                    color={colorPalette.textSecondary}
+                    color={theme.currentPalette.secondary}
                     textAlign="center"
                     py={3}
                   >
@@ -600,7 +581,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               <Card
                 variant="outlined"
                 sx={{
-                  border: `1px solid ${colorPalette.border}`,
+                  border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}
@@ -616,21 +597,21 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                     <Stack direction="row" alignItems="center" spacing={2}>
                       <Box
                         sx={{
-                          color: colorPalette.primary,
+                          color: theme.currentPalette.primary,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           width: 40,
                           height: 40,
                           borderRadius: "50%",
-                          bgcolor: alpha(colorPalette.primary, 0.1),
+                          bgcolor: alpha(theme.currentPalette.primary, 0.1),
                         }}
                       >
                         <Description />
                       </Box>
                       <Typography
                         variant="h6"
-                        color={colorPalette.textPrimary}
+                        color={theme.currentPalette.primary}
                         fontWeight="600"
                       >
                         Previous Notes ({allNotes.length})
@@ -642,9 +623,9 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                       variant="contained"
                       startIcon={<MdEdit size={16} />}
                       sx={{
-                        bgcolor: colorPalette.primary,
+                        bgcolor: theme.currentPalette.primary,
                         "&:hover": {
-                          bgcolor: alpha(colorPalette.primary, 0.9),
+                          bgcolor: alpha(theme.currentPalette.primary, 0.9),
                         },
                         fontWeight: 600,
                         borderRadius: 2,
@@ -668,10 +649,16 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                             <Stack spacing={1.5} sx={{ width: "100%" }}>
                               <Box
                                 sx={{
-                                  bgcolor: alpha(colorPalette.primary, 0.03),
+                                  bgcolor: alpha(
+                                    theme.currentPalette.primary,
+                                    0.03
+                                  ),
                                   p: 2,
                                   borderRadius: 1,
-                                  border: `1px solid ${colorPalette.border}`,
+                                  border: `1px solid ${alpha(
+                                    theme.currentPalette.text,
+                                    0.1
+                                  )}`,
                                   position: "relative",
                                 }}
                               >
@@ -685,9 +672,10 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                                     position: "absolute",
                                     top: 8,
                                     right: 8,
-                                    color: colorPalette.primary,
+                                    color: theme.currentPalette.primary,
                                     "&:hover": {
-                                      backgroundColor: colorPalette.primary,
+                                      backgroundColor:
+                                        theme.currentPalette.primary,
                                       color: "white",
                                     },
                                   }}
@@ -702,7 +690,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                               >
                                 <Typography
                                   variant="caption"
-                                  color={colorPalette.textSecondary}
+                                  color={theme.currentPalette.secondary}
                                 >
                                   {comment.createdAt
                                     ? `Added on ${new Date(
@@ -713,7 +701,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                                 {comment.addedBy && (
                                   <Typography
                                     variant="caption"
-                                    color={colorPalette.primary}
+                                    color={theme.currentPalette.primary}
                                     fontWeight="500"
                                   >
                                     By: {comment.addedBy}
@@ -724,7 +712,10 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                           </ListItem>
                           {index < allNotes.length - 1 && (
                             <Divider
-                              sx={{ my: 1, borderColor: colorPalette.border }}
+                              sx={{
+                                my: 1,
+                                borderColor: alpha(theme.currentPalette.text, 0.2),
+                              }}
                             />
                           )}
                         </Box>
@@ -735,14 +726,14 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                       <Note
                         sx={{
                           fontSize: 48,
-                          color: colorPalette.textSecondary,
+                          color: theme.currentPalette.secondary,
                           mb: 2,
                           opacity: 0.5,
                         }}
                       />
                       <Typography
                         variant="body2"
-                        color={colorPalette.textSecondary}
+                        color={theme.currentPalette.secondary}
                       >
                         No notes available yet
                       </Typography>
@@ -762,9 +753,9 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               variant="contained"
               startIcon={<IoRefresh size={18} />}
               sx={{
-                bgcolor: colorPalette.primary,
+                bgcolor: theme.currentPalette.primary,
                 "&:hover": {
-                  bgcolor: alpha(colorPalette.primary, 0.9),
+                  bgcolor: alpha(theme.currentPalette.primary, 0.9),
                   transform: "translateY(-1px)",
                 },
                 fontWeight: 600,
@@ -785,7 +776,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               <Card
                 variant="outlined"
                 sx={{
-                  border: `1px solid ${colorPalette.border}`,
+                  border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}
@@ -799,21 +790,21 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                   >
                     <Box
                       sx={{
-                        color: colorPalette.primary,
+                        color: theme.currentPalette.primary,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         width: 40,
                         height: 40,
                         borderRadius: "50%",
-                        bgcolor: alpha(colorPalette.primary, 0.1),
+                        bgcolor: alpha(theme.currentPalette.primary, 0.1),
                       }}
                     >
                       <Schedule />
                     </Box>
                     <Typography
                       variant="h6"
-                      color={colorPalette.textPrimary}
+                      color={theme.currentPalette.primary}
                       fontWeight="600"
                     >
                       Appointments Timeline
@@ -830,7 +821,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                           : "info"
                       }
                       icon={<CalendarToday />}
-                      sx={{ borderColor: colorPalette.border }}
+                      sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                     >
                       <Stack spacing={1}>
                         <Typography variant="subtitle1" fontWeight="600">
@@ -856,7 +847,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocationOn />}
-                        sx={{ borderColor: colorPalette.border }}
+                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -876,7 +867,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocalShipping />}
-                        sx={{ borderColor: colorPalette.border }}
+                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -896,7 +887,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocationOn />}
-                        sx={{ borderColor: colorPalette.border }}
+                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -916,7 +907,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocalShipping />}
-                        sx={{ borderColor: colorPalette.border }}
+                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -941,7 +932,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                           : "warning"
                       }
                       icon={<CalendarToday />}
-                      sx={{ borderColor: colorPalette.border }}
+                      sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                     >
                       <Stack spacing={1}>
                         <Typography variant="subtitle1" fontWeight="600">
@@ -981,7 +972,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                         variant="outlined"
                         severity="error"
                         icon={<Schedule />}
-                        sx={{ borderColor: colorPalette.border }}
+                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -1012,7 +1003,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                         <Alert
                           variant="outlined"
                           severity="info"
-                          sx={{ borderColor: colorPalette.border }}
+                          sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
                         >
                           <Typography variant="body2">
                             No appointments scheduled for this load yet.
@@ -1029,7 +1020,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               <Card
                 variant="outlined"
                 sx={{
-                  border: `1px solid ${colorPalette.border}`,
+                  border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}
@@ -1043,21 +1034,21 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                   >
                     <Box
                       sx={{
-                        color: colorPalette.primary,
+                        color: theme.currentPalette.primary,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         width: 40,
                         height: 40,
                         borderRadius: "50%",
-                        bgcolor: alpha(colorPalette.primary, 0.1),
+                        bgcolor: alpha(theme.currentPalette.primary, 0.1),
                       }}
                     >
                       <Schedule />
                     </Box>
                     <Typography
                       variant="h6"
-                      color={colorPalette.textPrimary}
+                      color={theme.currentPalette.primary}
                       fontWeight="600"
                     >
                       Appointment Summary
@@ -1069,7 +1060,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                     <Box>
                       <Typography
                         variant="subtitle2"
-                        color={colorPalette.textSecondary}
+                        color={theme.currentPalette.secondary}
                         gutterBottom
                       >
                         NEXT APPOINTMENT
@@ -1079,19 +1070,19 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                           <Typography
                             variant="body1"
                             fontWeight="600"
-                            color={colorPalette.primary}
+                            color={theme.currentPalette.primary}
                           >
                             Pickup At
                           </Typography>
                           <Typography
                             variant="body2"
-                            color={colorPalette.textPrimary}
+                            color={theme.currentPalette.primary}
                           >
                             {new Date(load.pickupAt).toLocaleDateString()}
                           </Typography>
                           <Typography
                             variant="caption"
-                            color={colorPalette.textSecondary}
+                            color={theme.currentPalette.secondary}
                           >
                             {new Date(load.pickupAt).toLocaleTimeString()}
                           </Typography>
@@ -1099,20 +1090,20 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                       ) : (
                         <Typography
                           variant="body2"
-                          color={colorPalette.textSecondary}
+                          color={theme.currentPalette.secondary}
                         >
                           No upcoming appointments
                         </Typography>
                       )}
                     </Box>
 
-                    <Divider sx={{ borderColor: colorPalette.border }} />
+                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
 
                     {/* Status Overview */}
                     <Box>
                       <Typography
                         variant="subtitle2"
-                        color={colorPalette.textSecondary}
+                        color={theme.currentPalette.secondary}
                         gutterBottom
                       >
                         STATUS OVERVIEW
@@ -1180,7 +1171,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
               <Card
                 variant="outlined"
                 sx={{
-                  border: `1px solid ${colorPalette.border}`,
+                  border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}
@@ -1194,21 +1185,21 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                   >
                     <Box
                       sx={{
-                        color: colorPalette.primary,
+                        color: theme.currentPalette.primary,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         width: 40,
                         height: 40,
                         borderRadius: "50%",
-                        bgcolor: alpha(colorPalette.primary, 0.1),
+                        bgcolor: alpha(theme.currentPalette.primary, 0.1),
                       }}
                     >
                       <LocalShipping />
                     </Box>
                     <Typography
                       variant="h6"
-                      color={colorPalette.textPrimary}
+                      color={theme.currentPalette.primary}
                       fontWeight="600"
                     >
                       Delivery By Dispatcher At
@@ -1226,9 +1217,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                               width: 20,
                               height: 20,
                               borderRadius: "50%",
-                              bgcolor: load.pickupAt
-                                ? colorPalette.success
-                                : colorPalette.border,
+                              bgcolor: theme.currentPalette.text,
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
@@ -1259,10 +1248,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                               width: 20,
                               height: 20,
                               borderRadius: "50%",
-                              bgcolor:
-                                load.leftShipper || load.arrivalAtReceiver
-                                  ? colorPalette.success
-                                  : colorPalette.border,
+                              bgcolor: theme.currentPalette.text,
                             }}
                           />
                           <Typography
@@ -1284,9 +1270,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                               width: 20,
                               height: 20,
                               borderRadius: "50%",
-                              bgcolor: load.deliveredAt
-                                ? colorPalette.success
-                                : colorPalette.border,
+                              bgcolor: theme.currentPalette.text,
                             }}
                           />
                           <Typography
@@ -1305,7 +1289,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                       <Alert
                         variant="outlined"
                         severity="success"
-                        sx={{ mt: 2, borderColor: colorPalette.border }}
+                        sx={{ mt: 2, borderColor: alpha(theme.currentPalette.text, 0.2) }}
                       >
                         <Typography variant="body2">
                           Load was successfully delivered on{" "}
@@ -1336,8 +1320,8 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
       >
         <DialogTitle
           sx={{
-            bgcolor: colorPalette.background,
-            borderBottom: `1px solid ${colorPalette.border}`,
+            bgcolor: theme.currentPalette.background,
+            borderBottom: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
           }}
         >
           <Stack
@@ -1348,7 +1332,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
             <Typography
               variant="h5"
               fontWeight="600"
-              color={colorPalette.textPrimary}
+              color={theme.currentPalette.primary}
             >
               Note Details
             </Typography>
@@ -1357,14 +1341,14 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
             </IconButton>
           </Stack>
         </DialogTitle>
-        <DialogContent sx={{ p: 3, bgcolor: colorPalette.surface }}>
+        <DialogContent sx={{ p: 3, bgcolor: theme.currentPalette.background }}>
           {selectedNote && (
             <Stack spacing={3}>
               <Box>
                 <Typography
                   variant="subtitle1"
                   fontWeight="600"
-                  color={colorPalette.textSecondary}
+                  color={theme.currentPalette.secondary}
                   gutterBottom
                 >
                   Note Content
@@ -1373,8 +1357,8 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                   variant="outlined"
                   sx={{
                     p: 2,
-                    bgcolor: colorPalette.background,
-                    borderColor: colorPalette.border,
+                    bgcolor: theme.currentPalette.background,
+                    borderColor: alpha(theme.currentPalette.text, 0.2),
                   }}
                 >
                   <Typography variant="body1">
@@ -1388,12 +1372,15 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                   <Typography
                     variant="subtitle1"
                     fontWeight="600"
-                    color={colorPalette.textSecondary}
+                    color={theme.currentPalette.secondary}
                     gutterBottom
                   >
                     Added By
                   </Typography>
-                  <Typography variant="body1" color={colorPalette.textPrimary}>
+                  <Typography
+                    variant="body1"
+                    color={theme.currentPalette.primary}
+                  >
                     {selectedNote?.addedBy || "Unknown"}
                   </Typography>
                 </Grid>
@@ -1402,12 +1389,15 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                   <Typography
                     variant="subtitle1"
                     fontWeight="600"
-                    color={colorPalette.textSecondary}
+                    color={theme.currentPalette.secondary}
                     gutterBottom
                   >
                     Created Date
                   </Typography>
-                  <Typography variant="body1" color={colorPalette.textPrimary}>
+                  <Typography
+                    variant="body1"
+                    color={theme.currentPalette.primary}
+                  >
                     {selectedNote.createdAt
                       ? new Date(selectedNote.createdAt).toLocaleString()
                       : "Unknown date"}
@@ -1419,7 +1409,7 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
                     <Typography
                       variant="subtitle1"
                       fontWeight="600"
-                      color={colorPalette.textSecondary}
+                      color={theme.currentPalette.secondary}
                       gutterBottom
                     >
                       Note Type
@@ -1439,17 +1429,17 @@ const LoadInfo = ({loadId} : LoadInfoProps) => {
         <DialogActions
           sx={{
             p: 3,
-            bgcolor: colorPalette.background,
-            borderTop: `1px solid ${colorPalette.border}`,
+            bgcolor: theme.currentPalette.background,
+            borderTop: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
           }}
         >
           <Button
             onClick={handleCloseNoteDialog}
             variant="contained"
             sx={{
-              bgcolor: colorPalette.primary,
+              bgcolor: theme.currentPalette.primary,
               "&:hover": {
-                bgcolor: alpha(colorPalette.primary, 0.9),
+                bgcolor: alpha(theme.currentPalette.primary, 0.9),
               },
             }}
           >
