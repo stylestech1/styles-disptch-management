@@ -3,7 +3,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TDriver } from "@/types/globalTypes";
-import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
 import Erros from "@/components/ui/Erros";
@@ -11,7 +10,6 @@ import {
   IoAdd,
   IoPencil,
   IoTrash,
-  IoSearch,
   IoStatsChart,
   IoPerson,
 } from "react-icons/io5";
@@ -25,20 +23,19 @@ import {
   Tooltip,
   Chip,
   Typography,
-  TextField,
-  InputAdornment,
   alpha,
+  SxProps,
 } from "@mui/material";
 
-import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {
   useCreateDriverMutation,
   useDeleteDriverMutation,
-  useGetAllDriversQuery,
   useGetDriversWithPaginationQuery,
   useGetDriverWithFilterQuery,
+  useLazyGetDriverByDriverIdQuery,
+  useLazyGetDriverByIdQuery,
   useUpdateDriverMutation,
 } from "@/redux/slices/apiSlice";
 import { DriverForm } from "@/components/drivers/DriverForm";
@@ -46,15 +43,16 @@ import useError from "@/hook/useError";
 import StatsCard from "@/components/ui/StatsCard";
 import { FaUserMinus } from "react-icons/fa";
 import { Dayjs } from "dayjs";
-import { useSearch } from "@/hook/useSearch";
 import DataTable from "@/components/ui/DataTable";
 import { driverColumns } from "@/data/driverTables";
 import { StatusChip } from "@/components/ui/TablesMUI";
+import { useSearchSubmit } from "@/hook/useSearchSubmit";
+import { setLoading } from "@/redux/slices/uiSlice";
+import SearchInput from "@/components/ui/SearchInput";
 
 const DriversPage = () => {
   const router = useRouter();
   const user = useAppSelector((state) => state.auth.user);
-  const token = useAppSelector((state) => state.auth.token);
   const { error, setError } = useError();
   const theme = useAppSelector((state: RootState) => state.palette);
 
@@ -62,7 +60,6 @@ const DriversPage = () => {
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
 
@@ -71,16 +68,47 @@ const DriversPage = () => {
     data: driversData,
     isLoading: driversLoading,
     error: driverError,
-    refetch,
-  } = useGetDriversWithPaginationQuery({ page, limit: 10 }, { skip: !token });
+    refetch: refetchDrivers,
+  } = useGetDriversWithPaginationQuery(
+    { page, limit: 10 },
+    { refetchOnFocus: false }
+  );
+
   const { data: filteredData } = useGetDriverWithFilterQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
       to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+      page,
+      limit: 10,
     },
     { skip: !isFiltered }
   );
-  const { data: allDriversData } = useGetAllDriversQuery();
+  const [
+    triggerSearchQuery,
+    {
+      data: driverByIdData,
+      isLoading: driverByIdLoading,
+      error: driverByIdError,
+      reset: resetSearchQuery,
+    },
+  ] = useLazyGetDriverByDriverIdQuery();
+
+  // Search Hook
+  const searchHook = useSearchSubmit({
+    onSearch: (term) => {
+      setPage(1);
+      if (term.trim()) {
+        triggerSearchQuery(term);
+      }
+    },
+    onReset: () => {
+      setPage(1);
+      resetSearchQuery();
+      refetchDrivers();
+    },
+  });
+
+  const { searchTerm, isSearching } = searchHook;
 
   // 🔹 API Mutations
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
@@ -88,34 +116,36 @@ const DriversPage = () => {
   const [deleteDriver] = useDeleteDriverMutation();
   const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
-  const displayDrivers = isFiltered
-    ? filteredData?.data || []
-    : driversData?.data || [];
-  const pagination = isFiltered ? null : driversData?.paginationResult || null;
+  const driver = useMemo(() => {
+    if (isSearching && Array.isArray(driverByIdData?.data)) {
+      return driverByIdData.data.flat();
+    }
+    if (isFiltered && filteredData?.data) {
+      return filteredData.data;
+    }
+    return driversData?.data || [];
+  }, [isSearching, isFiltered, driverByIdData, filteredData, driversData]);
 
-  const isLoading = driversLoading;
+  const pagination = isFiltered
+    ? filteredData?.paginationResult || null
+    : driversData?.paginationResult || null;
 
-  // Filter and Search loads
-  const { filteredData: searchedDrivers } = useSearch({
-    data: allDriversData?.data || [],
-    searchFields: ["driverId", "name", "phone", "email", "licenseNumber"],
-    initialSearch: searchInput,
-  });
-  const tableData = searchInput ? searchedDrivers : displayDrivers;
+  // Loading state
+  useEffect(() => {
+    setLoading(driversLoading && !driversData);
+  }, [driversLoading, driversData]);
 
-  // StatsCard
+  // Stats cards
   const statsData = useMemo(() => {
-    const currentData = allDriversData?.data || [];
-
+    if (!driver || driver.length === 0)
+      return { totalDrivers: 0, available: 0, busy: 0, inactive: 0 };
     return {
-      totalLoads: currentData.length,
-      available: currentData.filter((d: TDriver) => d.status === "available")
-        .length,
-      busy: currentData.filter((d: TDriver) => d.status === "busy").length,
-      inactive: currentData.filter((d: TDriver) => d.status === "inactive")
-        .length,
+      totalDrivers: driver.length,
+      available: driver.filter((d: TDriver) => d.status === "available").length,
+      busy: driver.filter((d: TDriver) => d.status === "busy").length,
+      inactive: driver.filter((d: TDriver) => d.status === "inactive").length,
     };
-  }, [tableData]);
+  }, [driver]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -174,17 +204,21 @@ const DriversPage = () => {
 
   // handling Errors
   useEffect(() => {
-    if (driverError) {
-      const errorMessage = getErrorMessage(driverError);
-      if (error !== errorMessage) {
-        setError(errorMessage);
-        toast.error(errorMessage || "Loading failed ❌", {
-          id: "driverError",
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
+    const currentError = driverError || driverByIdError;
+    if (currentError) {
+      const errorMessage = getErrorMessage(currentError);
+      setError(errorMessage);
+      toast.error(errorMessage || "Failed to load data ❌", {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+        duration: 4000,
+      });
     }
-  }, [driverError, setError, error]);
+  }, [driverError, driverByIdError, setError]);
 
   // ✅ Navigate to Driver Summary
   const handleViewStats = (id: string) => {
@@ -205,7 +239,6 @@ const DriversPage = () => {
       }).unwrap();
       toast.success("✅ Driver created successfully!");
       setOpen(false);
-      refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Creating driver failed ❌");
@@ -234,7 +267,6 @@ const DriversPage = () => {
       }).unwrap();
       toast.success("✅ Driver updated successfully!");
       setOpen(false);
-      refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Updating driver failed ❌");
@@ -266,7 +298,6 @@ const DriversPage = () => {
       toast.success(
         `✅ Driver #${driverToDelete.driverId} deleted successfully!`
       );
-      refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Deleting driver failed ❌");
@@ -284,15 +315,20 @@ const DriversPage = () => {
   };
 
   // ✅ Render Table Row - Similar to LoadsPage
-  const renderDriverRow = (driver: TDriver, index: number) => {
+  const renderDriverRow = (driver: TDriver) => {
+    // Styles
+    const tableRowSx: SxProps = {
+      "&:hover": {
+        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
+
     return (
       <TableRow
-        sx={{
-          "&:hover": {
-            backgroundColor: alpha(theme.currentPalette.primary, 0.05),
-          },
-        }}
-        key={index}
+        sx={tableRowSx}
+        key={driver.id || driver.driverId}
         className="transition-colors group"
       >
         {/* Driver ID */}
@@ -410,159 +446,160 @@ const DriversPage = () => {
     );
   };
 
-  if (isLoading) return <Loading />;
+  // Loading state
+  const isInitialLoading = driverByIdLoading && !driversData;
+  if (isInitialLoading) return <Loading />;
 
+  // Container styles
+  const containerSx: SxProps = {
+    backgroundColor: theme.currentPalette.background,
+    minHeight: "100vh",
+    p: 3,
+  };
+  const headerContainerSx: SxProps = {
+    mb: 4,
+  };
+  const searchFilterContainerSx: SxProps = {
+    display: "flex",
+    flexDirection: { xs: "column", lg: "row" },
+    alignItems: "end",
+    gap: 2,
+    p: 3,
+    my: 5,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
+    borderRadius: 1,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    backgroundColor: theme.currentPalette.background,
+  };
+  const newLoadButtonSx: SxProps = {
+    py: 1.5,
+    px: 4,
+    fontWeight: "bold",
+    fontSize: "1rem",
+    borderRadius: 2,
+    textTransform: "none",
+    width: { xs: "100%", lg: "auto" },
+    background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+    color: "#fff",
+    "&:hover": {
+      background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+      transform: "translateY(-1px)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    },
+    transition: "all 0.3s ease",
+  };
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={containerSx}>
       <Toaster position="top-right" />
 
       {/* Title */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 4,
-          [muiTheme.breakpoints.down("md")]: {
-            flexDirection: "column",
-            gap: 2,
-            alignItems: "stretch",
-          },
-        }}
-      >
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <Titles>Driver Management</Titles>
-          <p className="text-slate-600 text-md">
-            Manage your driver team members and their access
-          </p>
-        </Box>
+      <Box sx={headerContainerSx}>
+        <Typography
+          sx={{
+            color: theme.currentPalette.text,
+            fontSize: { xs: "2rem", md: "2.5rem", lg: "3rem" },
+            fontWeight: "bold",
+            mb: 1,
+          }}
+        >
+          Driver Management
+        </Typography>
+        <Typography
+          sx={{
+            color: alpha(theme.currentPalette.text, 0.7),
+            fontSize: "1rem",
+            maxWidth: "600px",
+            lineHeight: 1.6,
+          }}
+        >
+          Manage your driver team members and their access
+        </Typography>
       </Box>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
-        <StatsCard
-          title="Total Drivers"
-          value={statsData.totalLoads}
-          icon={IoPerson}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
+      <Box sx={{ mt: 4, mb: 5 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
+          <StatsCard
+            title="Total Drivers"
+            value={statsData.totalDrivers}
+            icon={IoPerson}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Available"
-          value={statsData.available}
-          icon={FaUserCheck}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
+          <StatsCard
+            title="Available"
+            value={statsData.available}
+            icon={FaUserCheck}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Busy"
-          value={statsData.busy}
-          icon={FaUserMinus}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
+          <StatsCard
+            title="Busy"
+            value={statsData.busy}
+            icon={FaUserMinus}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Inactive"
-          value={statsData.inactive}
-          icon={FaUserLargeSlash}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
-      </div>
+          <StatsCard
+            title="Inactive"
+            value={statsData.inactive}
+            icon={FaUserLargeSlash}
+            iconColor={theme.currentPalette.primary}
+          />
+        </div>
+      </Box>
 
       {/* Add Button */}
-      <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+      <Box display="flex" justifyContent="end" sx={{ mt: 3 }}>
         <Button
           onClick={handleOpenAdd}
-          disabled={isLoading}
           variant="contained"
           startIcon={<IoAdd size={22} />}
-          sx={{
-            py: 1.5,
-            px: 4,
-            fontWeight: "bold",
-            fontSize: "1rem",
-            borderRadius: 2,
-            textTransform: "none",
-            width: { xs: "100%", lg: "auto" },
-            background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
-            color: "#fff",
-            "&:hover": {
-              background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
-            },
-            transition: "all 0.3s ease",
-          }}
+          sx={newLoadButtonSx}
         >
           Add Driver
         </Button>
       </Box>
 
       {/* Search & Filter */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", lg: "row" },
-          alignItems: "end",
-          gap: 2,
-          p: 2,
-          my: 5,
-          border: `1px solid ${theme.currentPalette.primary}33`,
-          borderRadius: 2,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          backgroundColor: theme.currentPalette.background,
-        }}
-      >
-        <TextField
-          fullWidth
-          variant="outlined"
+      <Box sx={searchFilterContainerSx}>
+        {/* Search */}
+        <SearchInput
+          searchHook={searchHook}
           placeholder="Search drivers by ID, name, phone, email, or license number"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IoSearch size={20} color="#9ca3af" />
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{
+          fullWidth
+          showClearButton
+          sx={{ width: "100%" }}
+          inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
+              borderRadius: 2,
               backgroundColor: "#fff",
-              "& fieldset": { borderColor: "#e5e7eb" },
-              "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.currentPalette.primary,
-              },
-            },
-            "& input": {
-              color: theme.currentPalette.text,
+              py: 0.5,
             },
           }}
         />
       </Box>
 
       {error && (
-        <div className="mb-6">
+        <Box sx={{ mb: 3 }}>
           <Erros message={error} />
-        </div>
+        </Box>
       )}
 
       {/* Table For Drivers - Using DataTable Component */}
       <DataTable
         columns={driverColumns}
-        data={tableData}
+        data={driver}
         renderRow={renderDriverRow}
-        loading={isLoading}
+        loading={
+          (isSearching && driverByIdLoading) ||
+          (isFiltered && filteredData) ||
+          (driversLoading && !driversData)
+        }
       />
 
       {/* Pagination */}
-      {!isFiltered && !searchInput && pagination && tableData.length > 0 && (
+      {!isFiltered && !isSearching && pagination && driver.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}

@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState, useCallback } from "react";
+import React, { useMemo, useCallback } from "react";
 import {
   Box,
   CircularProgress,
@@ -11,10 +11,11 @@ import {
   TableHead,
   TableRow,
   Typography,
-  styled,
   Skeleton,
+  SxProps,
+  alpha,
 } from "@mui/material";
-import { IoSearch, IoCar, IoStatsChart } from "react-icons/io5";
+import { IoCar, IoStatsChart } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TTruck, TTruckSummary, TTruckWithSummary } from "@/types/globalTypes";
@@ -25,6 +26,8 @@ import ChartSection from "@/components/ui/ChartSection";
 import { useGetTruckSummaryQuery } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
 import { StyledTableCell, TableSkeleton } from "@/components/ui/TablesMUI";
+import { useSearchSubmit } from "@/hook/useSearchSubmit";
+import SearchInput from "@/components/ui/SearchInput";
 
 // Memoized Truck Row Component
 const TruckRow = React.memo(
@@ -151,13 +154,20 @@ const TruckRow = React.memo(
     );
   }
 );
-
 TruckRow.displayName = "TruckRow";
 
 const TruckDashboard = () => {
-  const [searchInput, setSearchInput] = useState("");
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
+  const theme = useAppSelector((state: RootState) => state.palette);
+
+  const searchHook = useSearchSubmit();
+
+  const {
+    searchInput,
+    searchTerm,
+    isSearching,
+  } = searchHook;
 
   const {
     data: allTrucksData,
@@ -171,10 +181,10 @@ const TruckDashboard = () => {
   const { filteredData: searchedTrucks } = useSearch({
     data: allTrucksData?.data?.trucksSummary || [],
     searchFields: ["truckId", "model", "plateNumber"],
-    initialSearch: searchInput,
+    initialSearch: searchTerm,
   });
 
-  const displayTrucks = searchInput
+  const displayTrucks = isSearching
     ? searchedTrucks
     : allTrucksData?.data?.trucksSummary || [];
 
@@ -246,14 +256,6 @@ const TruckDashboard = () => {
     };
   }, [displayTrucks]);
 
-  // Event handlers
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchInput(e.target.value);
-    },
-    []
-  );
-
   const handleViewStats = useCallback(
     (_id: string) => {
       sessionStorage.setItem("truckDashboardSearch", searchInput);
@@ -285,12 +287,32 @@ const TruckDashboard = () => {
 
   const trucks = allTrucksData?.data?.trucksSummary || [];
 
+  // Container styles
+  const containerSx: SxProps = {
+    backgroundColor: theme.currentPalette.background,
+    minHeight: "100vh",
+    p: 3,
+  };
+  
+  const searchFilterContainerSx: SxProps = {
+    display: "flex",
+    flexDirection: { xs: "column", lg: "row" },
+    alignItems: "end",
+    gap: 2,
+    p: 3,
+    my: 3,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
+    borderRadius: 2,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    backgroundColor: theme.currentPalette.background,
+  };
+
   return (
-    <section className="relative p-6 mx-auto">
+    <Box sx={containerSx}>
       {/* Header */}
-      <Box className="flex justify-between items-start flex-col md:flex-row">
+      <Box className="flex justify-between items-start flex-col md:flex-row mb-6">
         <Box className="flex flex-col w-full">
-          <Box className="mb-8">
+          <Box className="mb-6">
             <Titles>Truck Dashboard</Titles>
             <Typography variant="body1" color="text.secondary" className="mt-2">
               {trucks.length > 0
@@ -309,22 +331,25 @@ const TruckDashboard = () => {
           </Box>
         )}
       </Box>
-      {/* Search Bar -*/}
-      <div className="w-full flex items-end gap-2 p-4 border border-gray-200 rounded-lg shadow-sm mb-8">
-        <div className="relative w-full">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <IoSearch className="h-5 w-5 text-slate-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search by Plate Number"
-            value={searchInput}
-            onChange={handleSearchChange}
-            className="block w-full pl-10 pr-3 py-2 border border-slate-200 rounded-sm bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-            disabled={trucksLoading}
-          />
-        </div>
-      </div>
+
+      {/* Search Bar باستخدام SearchInput */}
+      <Box sx={searchFilterContainerSx}>
+        <SearchInput
+          searchHook={searchHook}
+          placeholder="Search trucks by ID, model, or plate number"
+          fullWidth
+          showClearButton
+          sx={{ width: "100%" }}
+          inputSx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2,
+              backgroundColor: "#fff",
+              py: 0.5,
+            },
+          }}
+        />
+      </Box>
+
       {/* Table Section */}
       <TableContainer
         component={Paper}
@@ -380,7 +405,7 @@ const TruckDashboard = () => {
                 <TableRow>
                   <TableCell colSpan={11} align="center" sx={{ py: 6 }}>
                     <Typography variant="body1" color="text.secondary">
-                      {searchInput
+                      {isSearching
                         ? "No trucks match your search"
                         : "No trucks available"}
                     </Typography>
@@ -391,7 +416,7 @@ const TruckDashboard = () => {
           )}
         </Table>
       </TableContainer>
-    </section>
+    </Box>
   );
 };
 

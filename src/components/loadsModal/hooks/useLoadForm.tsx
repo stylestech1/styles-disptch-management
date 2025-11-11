@@ -35,7 +35,7 @@ import {
   setEditingLoad,
   resetForm,
 } from "@/redux/slices/loadsFormSlice";
-import { LoadFormState } from "@/types/loadsTyles";
+import { LoadsFormState } from "@/types/globalTypes";
 import { TPlace } from "@/components/sections/LocationAutocomplete";
 
 export const useLoadForm = (
@@ -54,14 +54,159 @@ export const useLoadForm = (
   // Initialize distance calculations
   const distanceCalculations = useDistanceCalculations();
 
-  // Load edit data when modal opens
+  // Function to create TPlace from string address
+  const createTPlaceFromAddress = (address: string): TPlace => {
+    return {
+      display_name: address,
+      lat: "0",
+      lon: "0", 
+      place_id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      address: {
+        [address]: address
+      }
+    };
+  };
+
+  // Function to load edit data into form
+  const loadEditData = useCallback((load: TLoads) => {
+    console.log('Loading edit data for load:', load.loadId);
+    console.log('Load destination data:', load.destination);
+    
+    // Reset form first to ensure clean state
+    dispatch(resetForm());
+    
+    // Load basic location data
+    if (load.origin) {
+      const originPlace = createTPlaceFromAddress(load.origin);
+      dispatch(setOrigin(originPlace));
+    }
+    
+    if (load.DHO) {
+      const dhoPlace = createTPlaceFromAddress(load.DHO);
+      dispatch(setDho(dhoPlace));
+    }
+    
+    // Load destinations - handle both string and TPlace formats
+    if (load.destination) {
+      console.log('Processing destinations:', load.destination);
+      
+      // If destination is a string, convert to array
+      let destArray: (string | TPlace)[] = [];
+      
+      if (typeof load.destination === 'string') {
+        destArray = [load.destination];
+      } else if (Array.isArray(load.destination)) {
+        destArray = load.destination;
+      } else {
+        destArray = [load.destination];
+      }
+      
+      console.log('Processed destinations array:', destArray);
+      
+      // Build array of TPlace objects
+      const newDestinations: TPlace[] = destArray.map((dest: string | TPlace) => {
+        let destinationPlace: TPlace;
+        
+        if (typeof dest === 'string') {
+          // If it's a string, convert it directly
+          destinationPlace = createTPlaceFromAddress(dest);
+        } else if (dest && typeof dest === 'object' && 'display_name' in dest) {
+          // If it's already a TPlace object, use it
+          destinationPlace = dest as TPlace;
+        } else {
+          // Handle other cases - extract address properly
+          const destObj = dest as TPlace;
+          let address: string;
+          
+          if (typeof destObj?.address === 'string') {
+            // address is a string
+            address = destObj.address;
+          } else if (typeof destObj?.address === 'object' && destObj.address) {
+            // address is an object, get first value
+            address = Object.values(destObj.address)[0] || destObj?.display_name || String(dest);
+          } else {
+            // fallback to display_name or string conversion
+            address = destObj?.display_name || String(dest);
+          }
+          
+          destinationPlace = createTPlaceFromAddress(address);
+        }
+        
+        return destinationPlace;
+      });
+      
+      // Set all destinations at once
+      dispatch(setDestinations(newDestinations));
+      
+      console.log('Final destinations set:', newDestinations);
+    }
+    
+    // Load pricing and details
+    if (load.totalPrice !== undefined && load.totalPrice !== null) {
+      dispatch(setPrice(load.totalPrice.toString()));
+    }
+    
+    if (load.feesNumber !== undefined && load.feesNumber !== null) {
+      dispatch(setFees(load.feesNumber.toString()));
+    }
+    
+    if (load.loadId) {
+      dispatch(setLoadIDInp(load.loadId));
+    }
+    
+    // Load dates
+    if (load.pickupAt) dispatch(setPickupAt(load.pickupAt));
+    if (load.completedAt) dispatch(setCompletedAt(load.completedAt));
+    if (load.arrivalAtShipper) dispatch(setArrivalAtShipper(load.arrivalAtShipper));
+    if (load.arrivalAtReceiver) dispatch(setArrivalAtReceiver(load.arrivalAtReceiver));
+    if (load.leftShipper) dispatch(setLeftShipper(load.leftShipper));
+    if (load.leftReceiver) dispatch(setLeftReceiver(load.leftReceiver));
+    
+    // Load assignment data
+    if (load.driverId) {
+      const driverIdValue = typeof load.driverId === 'object' ? load.driverId.id : load.driverId;
+      if (driverIdValue) dispatch(setDriverId(driverIdValue.toString()));
+    }
+    
+    if (load.truckId) {
+      const truckIdValue = typeof load.truckId === 'object' ? load.truckId.truckId : load.truckId;
+      if (truckIdValue) dispatch(setTruckId(truckIdValue.toString()));
+    }
+    
+    if (load.truckType) dispatch(setTruckType(load.truckType));
+    
+    if (load.truckTemp !== undefined && load.truckTemp !== null) {
+      dispatch(setTruckTemp(load.truckTemp.toString()));
+    }
+    
+    console.log('Edit data loaded successfully');
+  }, [dispatch]);
+
+  // Load edit data when modal opens or editingLoad changes
   useEffect(() => {
+    console.log('useLoadForm useEffect - editingLoad:', editingLoad);
+    
     if (editingLoad) {
+      console.log('Setting up edit mode for load:', editingLoad.loadId);
       dispatch(setIsEditing(true));
       dispatch(setEditingLoad(editingLoad));
-      // Here you would load the edit data into the form
+      
+      // Use setTimeout to ensure React has finished current render cycle
+      setTimeout(() => {
+        loadEditData(editingLoad);
+      }, 100);
+    } else {
+      console.log('Setting up create mode - resetting form');
+      dispatch(setIsEditing(false));
+      dispatch(setEditingLoad(null));
+      dispatch(resetForm());
     }
-  }, [editingLoad, dispatch]);
+  }, [editingLoad, dispatch, loadEditData]);
+
+  // Debug effect to log form state changes
+  useEffect(() => {
+    console.log('Form state updated - destinations:', formState.destinations);
+  }, [formState.destinations]);
 
   // Form validation functions
   const isTab1Valid = useMemo((): boolean => {
@@ -107,65 +252,9 @@ export const useLoadForm = (
     formState.truckId,
   ]);
 
-  // Form submission handler
-  const handleCreateLoad = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-
-      const errors = validateLoadForm(formState, !!editingLoad);
-      if (errors.length > 0) {
-        toast.error(errors[0]);
-        return;
-      }
-
-      try {
-        const formData = prepareFormData(
-          formState,
-          fileHandlers.selectedDocuments,
-          editingLoad
-        );
-
-        if (editingLoad) {
-          await updateLoad({ id: editingLoad.id, formData }).unwrap();
-          toast.success("Load updated ✅");
-        } else {
-          await createLoad(formData).unwrap();
-          toast.success("Load created ✅");
-        }
-
-        handleClose();
-      } catch (err: unknown) {
-        console.error("❌ Request failed:", err);
-        toast.error("Operation failed ❌");
-      }
-    },
-    [
-      formState,
-      editingLoad,
-      fileHandlers.selectedDocuments,
-      createLoad,
-      updateLoad,
-    ]
-  );
-
-  const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault();
-      // Handle form submission based on current tab
-      handleCreateLoad(e);
-    },
-    [handleCreateLoad]
-  );
-
-  const handleClose = useCallback(() => {
-    dispatch(resetForm());
-    fileHandlers.setSelectedDocuments([]);
-    onClose();
-  }, [dispatch, onClose, fileHandlers]);
-
-  // Prepare form data for API
-  const prepareFormData = (
-    formData: LoadFormState,
+  // Prepare form data for API - moved before useCallback that uses it
+  const prepareFormData = useCallback((
+    formData: LoadsFormState,
     documents: File[],
     editingLoad: TLoads | null
   ) => {
@@ -225,7 +314,64 @@ export const useLoadForm = (
     });
 
     return submitFormData;
-  };
+  }, [distanceCalculations.allDistance, distanceCalculations.pricePerMile]);
+
+  const handleClose = useCallback(() => {
+    dispatch(resetForm());
+    fileHandlers.setSelectedDocuments([]);
+    onClose();
+  }, [dispatch, onClose, fileHandlers]);
+
+  // Form submission handler
+  const handleCreateLoad = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      const errors = validateLoadForm(formState, !!editingLoad);
+      if (errors.length > 0) {
+        toast.error(errors[0]);
+        return;
+      }
+
+      try {
+        const formData = prepareFormData(
+          formState,
+          fileHandlers.selectedDocuments,
+          editingLoad
+        );
+
+        if (editingLoad && editingLoad.id) {
+          await updateLoad({ id: editingLoad.id, formData }).unwrap();
+          toast.success("Load updated ✅");
+        } else {
+          await createLoad(formData).unwrap();
+          toast.success("Load created ✅");
+        }
+
+        handleClose();
+      } catch (err: unknown) {
+        console.error("❌ Request failed:", err);
+        toast.error("Operation failed ❌");
+      }
+    },
+    [
+      formState,
+      editingLoad,
+      fileHandlers.selectedDocuments,
+      createLoad,
+      updateLoad,
+      handleClose,
+      prepareFormData,
+    ]
+  );
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      handleCreateLoad(e);
+    },
+    [handleCreateLoad]
+  );
 
   // Return the complete form API
   return {

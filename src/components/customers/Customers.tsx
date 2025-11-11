@@ -17,6 +17,8 @@ import {
   TextField,
   InputAdornment,
   alpha,
+  SxProps,
+  Typography,
 } from "@mui/material";
 
 import { muiTheme } from "@/theme/theme";
@@ -24,18 +26,20 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {
   useCreateCustomerMutation,
-  useGetAllCustomersQuery,
   useGetCustomersWithPaginationQuery,
   useGetCustomerWithFilterQuery,
+  useLazyGetCustomerByIdQuery,
   useUpdateCustomerMutation,
 } from "@/redux/slices/apiSlice";
 import useError from "@/hook/useError";
 import StatsCard from "@/components/ui/StatsCard";
 import { Dayjs } from "dayjs";
-import { useSearch } from "@/hook/useSearch";
 import DataTable from "@/components/ui/DataTable";
 import { CustomerForm } from "./CustomerForm";
 import { customerColumns } from "@/data/customerTables";
+import { useSearchSubmit } from "@/hook/useSearchSubmit";
+import { setLoading } from "@/redux/slices/uiSlice";
+import SearchInput from "../ui/SearchInput";
 
 const CustomerPage = () => {
   const user = useAppSelector((state) => state.auth.user);
@@ -47,7 +51,6 @@ const CustomerPage = () => {
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
 
   // 🔹 API Queries
@@ -55,16 +58,45 @@ const CustomerPage = () => {
     data: customersData,
     isLoading: customersLoading,
     error: customerError,
-    refetch,
-  } = useGetCustomersWithPaginationQuery({ page, limit: 10 }, { skip: !token });
-  const { data: allCustomersData } = useGetAllCustomersQuery({ skip: !token });
+    refetch: refetchCustomer,
+  } = useGetCustomersWithPaginationQuery(
+    { page, limit: 10 },
+    { refetchOnFocus: false }
+  );
+  const [
+    triggerSearchQuery,
+    {
+      data: customerByIdData,
+      isLoading: customerByIdLoading,
+      error: customerByIdError,
+      reset: resetSearchQuery,
+    },
+  ] = useLazyGetCustomerByIdQuery();
   const { data: filteredData } = useGetCustomerWithFilterQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
       to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+      page,
+      limit: 10,
     },
     { skip: !isFiltered }
   );
+
+  // Search Hook
+  const searchHook = useSearchSubmit({
+    onSearch: (term) => {
+      setPage(1);
+      if (term.trim()) {
+        triggerSearchQuery(term);
+      }
+    },
+    onReset: () => {
+      setPage(1);
+      resetSearchQuery();
+      refetchCustomer();
+    },
+  });
+  const { searchTerm, isSearching } = searchHook;
 
   // 🔹 API Mutations
   const [createCustomer, { isLoading: isCreating }] =
@@ -73,32 +105,32 @@ const CustomerPage = () => {
     useUpdateCustomerMutation();
   const [originalData, setOriginalData] = useState<Partial<TCustomer>>({});
 
-  const displayCustomer = isFiltered
-    ? filteredData?.customersData?.data || []
-    : customersData?.data || [];
+  const customer = useMemo(() => {
+    if (isSearching && Array.isArray(customerByIdData?.data)) {
+      return customerByIdData.data.flat();
+    }
+    if (isFiltered && filteredData?.data) {
+      return filteredData.data;
+    }
+    return customersData?.data || [];
+  }, [isSearching, isFiltered, customerByIdData, filteredData, customersData]);
 
   const pagination = isFiltered
-    ? null
+    ? filteredData?.paginationResult || null
     : customersData?.paginationResult || null;
 
-  const isLoading = customersLoading;
+  // Loading state
+  useEffect(() => {
+    setLoading(customersLoading && !customersData);
+  }, [customersLoading, customersData]);
 
-  // Filter and Search loads
-  const { filteredData: searchedCustomer } = useSearch({
-    data: allCustomersData?.data || [],
-    searchFields: ["customerId", "name", "phone", "email"],
-    initialSearch: searchInput,
-  });
-  const tableData = searchInput ? searchedCustomer : displayCustomer;
-
-  // StatsCard
+  // Stats cards
   const statsData = useMemo(() => {
-    const currentData = allCustomersData?.data || [];
-
+    if (!customer || customer.length === 0) return { totalCustomers: 0 };
     return {
-      totalCustomers: currentData.length,
+      totalCustomers: customer.length,
     };
-  }, [allCustomersData?.data]);
+  }, [customer]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -155,17 +187,21 @@ const CustomerPage = () => {
 
   // handling Errors
   useEffect(() => {
-    if (customerError) {
-      const errorMessage = getErrorMessage(customerError);
-      if (error !== errorMessage) {
-        setError(errorMessage);
-        toast.error(errorMessage || "Loading failed ❌", {
-          id: "customerError",
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
+    const currentError = customerError || customerByIdError;
+    if (currentError) {
+      const errorMessage = getErrorMessage(currentError);
+      setError(errorMessage);
+      toast.error(errorMessage || "Failed to load data ❌", {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+        duration: 4000,
+      });
     }
-  }, [customerError, setError, error]);
+  }, [customerError, customerByIdError, setError]);
 
   // ✅ Create Driver
   const handleCreate = async () => {
@@ -181,7 +217,6 @@ const CustomerPage = () => {
       }).unwrap();
       toast.success("✅ Customer created successfully!");
       setOpen(false);
-      refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Creating customer failed ❌");
@@ -210,7 +245,6 @@ const CustomerPage = () => {
       }).unwrap();
       toast.success("✅ Customer updated successfully!");
       setOpen(false);
-      refetch();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Updating customer failed ❌");
@@ -219,18 +253,22 @@ const CustomerPage = () => {
   };
 
   // ✅ Render Table Row - Similar to LoadsPage
-  const renderCustomerRow = (customer: TCustomer, index: number) => {
+  const renderCustomerRow = (customer: TCustomer) => {
+    // Styles
+    const tableRowSx: SxProps = {
+      "&:hover": {
+        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
     return (
       <TableRow
-        sx={{
-          "&:hover": {
-            backgroundColor: alpha(theme.currentPalette.primary, 0.05),
-          },
-        }}
-        key={index}
+        sx={tableRowSx}
+        key={customer.id || customer.customerId}
         className="transition-colors group"
       >
-        {/* Driver ID */}
+        {/* Customer ID */}
         <td className="p-4 text-center">
           <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
             {customer.customerId}
@@ -298,135 +336,138 @@ const CustomerPage = () => {
     );
   };
 
-  if (isLoading) return <Loading />;
+  // Loading state
+  const isInitialLoading = customerByIdLoading && !customersData;
+  if (isInitialLoading) return <Loading />;
 
+  // Container styles
+  const containerSx: SxProps = {
+    backgroundColor: theme.currentPalette.background,
+    minHeight: "100vh",
+    p: 3,
+  };
+  const headerContainerSx: SxProps = {
+    mb: 4,
+  };
+  const searchFilterContainerSx: SxProps = {
+    display: "flex",
+    flexDirection: { xs: "column", lg: "row" },
+    alignItems: "end",
+    gap: 2,
+    p: 3,
+    my: 5,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
+    borderRadius: 1,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    backgroundColor: theme.currentPalette.background,
+  };
+  const newLoadButtonSx: SxProps = {
+    py: 1.5,
+    px: 4,
+    fontWeight: "bold",
+    fontSize: "1rem",
+    borderRadius: 2,
+    textTransform: "none",
+    width: { xs: "100%", lg: "auto" },
+    background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+    color: "#fff",
+    "&:hover": {
+      background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+      transform: "translateY(-1px)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    },
+    transition: "all 0.3s ease",
+  };
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={containerSx}>
       <Toaster position="top-right" />
 
       {/* Title */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 4,
-          [muiTheme.breakpoints.down("md")]: {
-            flexDirection: "column",
-            gap: 2,
-            alignItems: "stretch",
-          },
-        }}
-      >
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <Titles>Customers Services</Titles>
-          <p className="text-slate-600 text-md">
-            Handle your customers with love
-          </p>
-        </Box>
+      <Box sx={headerContainerSx}>
+        <Typography
+          sx={{
+            color: theme.currentPalette.text,
+            fontSize: { xs: "2rem", md: "2.5rem", lg: "3rem" },
+            fontWeight: "bold",
+            mb: 1,
+          }}
+        >
+          Customers Services
+        </Typography>
+        <Typography
+          sx={{
+            color: alpha(theme.currentPalette.text, 0.7),
+            fontSize: "1rem",
+            maxWidth: "600px",
+            lineHeight: 1.6,
+          }}
+        >
+          Handle your customers with love
+        </Typography>
       </Box>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
-        <StatsCard
-          title="Total Customers"
-          value={statsData.totalCustomers}
-          icon={IoPerson}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
-      </div>
+      <Box sx={{ mt: 4, mb: 5 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
+          <StatsCard
+            title="Total Customers"
+            value={statsData.totalCustomers}
+            icon={IoPerson}
+            iconColor={theme.currentPalette.primary}
+          />
+        </div>
+      </Box>
 
       {/* Add Button */}
       <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
         <Button
           onClick={handleOpenAdd}
-          disabled={isLoading}
           variant="contained"
           startIcon={<IoAdd size={22} />}
-          sx={{
-            py: 1.5,
-            px: 4,
-            fontWeight: "bold",
-            fontSize: "1rem",
-            borderRadius: 2,
-            textTransform: "none",
-            width: { xs: "100%", lg: "auto" },
-            background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
-            color: "#fff",
-            "&:hover": {
-              background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
-            },
-            transition: "all 0.3s ease",
-          }}
+          sx={newLoadButtonSx}
         >
           Add Customer
         </Button>
       </Box>
 
       {/* Search & Filter */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", lg: "row" },
-          alignItems: "end",
-          gap: 2,
-          p: 2,
-          my: 5,
-          border: `1px solid ${theme.currentPalette.primary}33`,
-          borderRadius: 2,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          backgroundColor: theme.currentPalette.background,
-        }}
-      >
-        <TextField
-          fullWidth
-          variant="outlined"
+      <Box sx={searchFilterContainerSx}>
+        <SearchInput
+          searchHook={searchHook}
           placeholder="Search drivers by ID, name, phone, email, or license number"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IoSearch size={20} color="#9ca3af" />
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{
+          fullWidth
+          showClearButton
+          sx={{ width: "100%" }}
+          inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
+              borderRadius: 2,
               backgroundColor: "#fff",
-              "& fieldset": { borderColor: "#e5e7eb" },
-              "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.currentPalette.primary,
-              },
-            },
-            "& input": {
-              color: theme.currentPalette.text,
+              py: 0.5,
             },
           }}
         />
       </Box>
 
       {error && (
-        <div className="mb-6">
+        <Box sx={{ mb: 3 }}>
           <Erros message={error} />
-        </div>
+        </Box>
       )}
 
       {/* Table For Customer - Using DataTable Component */}
       <DataTable
         columns={customerColumns}
-        data={tableData}
+        data={customer}
         renderRow={renderCustomerRow}
-        loading={isLoading}
+        loading={
+          (isSearching && customerByIdLoading) ||
+          (isFiltered && filteredData) ||
+          (customersLoading && !customersData)
+        }
       />
 
       {/* Pagination */}
-      {!isFiltered && !searchInput && pagination && tableData.length > 0 && (
+      {!isFiltered && !isSearching && pagination && customer.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}

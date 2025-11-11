@@ -43,9 +43,8 @@ const DataTable = <T,>({
   loading = false,
   className = "",
 }: DataTableProps<T>) => {
-
-  const theme = useAppSelector((state: RootState) => state.palette)
-  const pathname = usePathname()
+  const theme = useAppSelector((state: RootState) => state.palette);
+  const pathname = usePathname();
 
   if (loading) {
     return (
@@ -62,25 +61,44 @@ const DataTable = <T,>({
       >
         <TableContainer>
           <Table size="small">
-            <TableHead sx={{ bgcolor: "action.hover" }}>
+            <TableHead
+              sx={{ bgcolor: alpha(theme.currentPalette.primary, 0.05) }}
+            >
               <TableRow>
                 {columns.map((column) => (
                   <TableCell
                     key={column.key}
                     align={column.align || "center"}
-                    sx={{ fontWeight: 600, color: "text.secondary" }}
+                    sx={{
+                      fontWeight: 600,
+                      color: theme.currentPalette.primary,
+                      borderBottom: 1,
+                      borderColor: alpha(theme.currentPalette.primary, 0.2),
+                      py: 2,
+                    }}
                   >
                     {column.header}
                   </TableCell>
                 ))}
               </TableRow>
             </TableHead>
+
             <TableBody>
-              {[...Array(5)].map((_, index) => (
-                <TableRow key={index}>
-                  {columns.map((col) => (
-                    <TableCell key={col.key}>
-                      <Skeleton variant="rectangular" height={20} />
+              {[...Array(6)].map((_, rowIndex) => (
+                <TableRow key={rowIndex}>
+                  {columns.map((col, colIndex) => (
+                    <TableCell key={col.key} align={col.align || "center"}>
+                      <Skeleton
+                        animation="wave"
+                        variant="rectangular"
+                        height={20}
+                        width={`${80 - colIndex * 5}%`}
+                        sx={{
+                          mx: "auto",
+                          borderRadius: 1,
+                          bgcolor: alpha(theme.currentPalette.primary, 0.15),
+                        }}
+                      />
                     </TableCell>
                   ))}
                 </TableRow>
@@ -100,13 +118,11 @@ const DataTable = <T,>({
         sx={{ py: 6, color: "text.secondary" }}
       >
         <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
-          {
-            pathname.endsWith('customers') ? (
-              <Typography variant="h4">🤵</Typography>
-            ): (
-              <Typography variant="h4">📦</Typography>
-            )
-          }
+          {pathname.endsWith("customers") ? (
+            <Typography variant="h4">🤵</Typography>
+          ) : (
+            <Typography variant="h4">📦</Typography>
+          )}
           <Typography variant="body1">No records found</Typography>
           <Typography variant="body2" color="text.disabled">
             Get started by creating your first record
@@ -130,7 +146,7 @@ const DataTable = <T,>({
     >
       <TableContainer>
         <Table size="small">
-          <TableHead sx={{ bgcolor: "action.hover"}}>
+          <TableHead sx={{ bgcolor: "action.hover" }}>
             <TableRow>
               {columns.map((column) => (
                 <TableCell
@@ -143,7 +159,7 @@ const DataTable = <T,>({
                     borderColor: theme.currentPalette.primary,
                     backgroundColor: alpha(theme.currentPalette.primary, 0.1),
                     width: column.width,
-                    py:2
+                    py: 2,
                   }}
                 >
                   {column.header}

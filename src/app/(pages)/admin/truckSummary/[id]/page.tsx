@@ -14,7 +14,6 @@ import {
   IoCheckmarkCircleOutline,
   IoStatsChart,
   IoNavigate,
-  IoCashOutline,
   IoTimeOutline,
   IoIdCardOutline,
   IoPersonOutline,
@@ -50,7 +49,6 @@ const TruckSummary = () => {
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [isFilterActive, setIsFilterActive] = useState(false);
-  const [hasAppliedFilter, setHasAppliedFilter] = useState(false);
 
   const router = useRouter();
   const { error, setError } = useError();
@@ -85,6 +83,8 @@ const TruckSummary = () => {
     if (!summaryData?.data?.loads) return [];
     return Array.isArray(summaryData.data.loads) ? summaryData.data.loads : [];
   })();
+
+  // console.log()
   const { filteredData: searchedTruck } = useSearch<TLoads>({
     data: loadsData,
     searchFields: ["loadId", "driverId.name"],

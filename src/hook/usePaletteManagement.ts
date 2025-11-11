@@ -12,14 +12,15 @@ import {
   setErrorPalette,
   loadPalettesFromBackend 
 } from "@/redux/slices/paletteSlice";
-import { Palette, TPaletteConfig } from "@/types/themeType";
+import { Palette } from "@/types/themeType";
 import { paletteToPaletteConfig, TPaletteConfigToPalette } from "@/utils/helperPalette";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 export const usePaletteManagement = () => {
   const dispatch = useDispatch();
   const { currentPalette, customPalettes } = useSelector((state: RootState) => state.palette);
+  const [localLoading, setLocalLoading] = useState(false);
 
   // RTK Query hooks
   const { 
@@ -39,8 +40,8 @@ export const usePaletteManagement = () => {
   }, [backendPalettes, dispatch]);
 
   useEffect(() => {
-    dispatch(setLoadingPalette(isLoadingQuery || isCreating || isUpdating));
-  }, [isLoadingQuery, isCreating, isUpdating, dispatch]);
+    dispatch(setLoadingPalette(isLoadingQuery || isCreating || isUpdating || localLoading));
+  }, [isLoadingQuery, isCreating, isUpdating, localLoading, dispatch]);
 
   useEffect(() => {
     if (queryError) {
@@ -51,44 +52,53 @@ export const usePaletteManagement = () => {
   }, [queryError, dispatch]);
 
   const savePaletteToBackend = async (palette: Palette): Promise<Palette | null> => {
+    setLocalLoading(true);
     try {
       const paletteConfig = paletteToPaletteConfig(palette);
       let result;
 
       if (palette._id) {
-        // Update existing palette
         result = await updatePalette(paletteConfig).unwrap();
       } else {
-        // Create new palette
         result = await createPalette(paletteConfig).unwrap();
       }
 
       const savedPalette = TPaletteConfigToPalette(result);
+      
       dispatch(addCustomePalette(savedPalette));
       dispatch(setPalette(savedPalette));
       
+      toast.success(`Palette "${savedPalette.customName}" saved successfully! 🎨`);
       return savedPalette;
     } catch (error) {
+      console.error('Save palette error:', error);
       const errorMessage = "Failed to save palette to server";
       dispatch(setErrorPalette(errorMessage));
       toast.error(errorMessage);
       return null;
+    } finally {
+      setLocalLoading(false);
     }
   };
 
   const applyPalette = (palette: Palette) => {
     dispatch(setPalette(palette));
-    toast.success(`Applied ${palette.customName} palette! 🎨`);
+    toast.success(`Applied "${palette.customName}" palette! 🎨`);
   };
 
-  const refreshPalettes = () => {
-    refetchPalettes();
+  const refreshPalettes = async () => {
+    try {
+      await refetchPalettes().unwrap();
+      toast.success("Palettes refreshed successfully! 🔄");
+    } catch{
+      toast.error("Failed to refresh palettes");
+    }
   };
 
   return {
     currentPalette,
     customPalettes,
-    isLoading: isLoadingQuery || isCreating || isUpdating,
+    isLoading: isLoadingQuery || isCreating || isUpdating || localLoading,
     savePaletteToBackend,
     applyPalette,
     refreshPalettes,

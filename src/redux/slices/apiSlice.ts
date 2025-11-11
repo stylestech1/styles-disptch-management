@@ -35,15 +35,14 @@ export const apiSlice = api.injectEndpoints({
 
     // Get Loads with Filter and Search
     getLoadsWithFilter: builder.query({
-      query: ({ from, to }) => {
-        let url = `/api/v1/loads`;
-        const params = [];
+      query: ({ from, to, page, limit }) => {
+        const params = [`page=${page}`, `limit=${limit}`];
 
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
 
-        if (params.length) url += `?${params.join("&")}`;
-        return url;
+        const queryString = params.join("&");
+        return `/api/v1/loads?${queryString}`;
       },
       providesTags: ["Loads"],
     }),
@@ -120,6 +119,14 @@ export const apiSlice = api.injectEndpoints({
       query: () => `/api/v1/drivers?limit=50`,
       providesTags: ["Drivers"],
     }),
+
+    // Get driver using Id
+    getDriverByDriverId: builder.query<{ data: TDriver }, string>({
+      query: (driverId) => `/api/v1/drivers?driverId=${driverId}`,
+      providesTags: (result, error, driverId) => [
+        { type: "Drivers", id: driverId },
+      ],
+    }),
     getDriverById: builder.query<{ data: TDriver }, string>({
       query: (id) => `/api/v1/drivers/${id}`,
       providesTags: ["Drivers"],
@@ -127,15 +134,14 @@ export const apiSlice = api.injectEndpoints({
 
     // Get Driver with Filter and Search
     getDriverWithFilter: builder.query({
-      query: ({ from, to }) => {
-        let url = `/api/v1/drivers?limit=50`;
-        const params = [];
+      query: ({ from, to, page, limit }) => {
+        const params = [`page=${page}`, `limit=${limit}`];
 
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
 
-        if (params.length) url += `?${params.join("&")}`;
-        return url;
+        const queryString = params.join("&");
+        return `/api/v1/drivers?${queryString}`;
       },
       providesTags: ["Drivers"],
     }),
@@ -143,14 +149,13 @@ export const apiSlice = api.injectEndpoints({
     // 🔹 Get driver summary
     getSpecificDriverSummary: builder.query<{ data: TLoadSummary }, string>({
       query: (id) => `/api/v1/summary/driver/${id}`,
-      providesTags: ["DriverSummary"],
+      providesTags: (result, error, id) => [
+        { type: "DriverSummary", id: id },
+      ],
     }),
 
     // 🔹 Get driver summary with date filter
-    getDriverSummaryWithFilter: builder.query<
-      { data: TLoadSummary },
-      { id: string; from?: string; to?: string }
-    >({
+    getDriverSummaryWithFilter: builder.query({
       query: ({ id, from, to }) => {
         const params = new URLSearchParams();
         if (from) params.append("from", from);
@@ -215,15 +220,14 @@ export const apiSlice = api.injectEndpoints({
 
     // Get Truck with Filter and Search
     getTruckWithSearch: builder.query({
-      query: ({ from, to }) => {
-        let url = `/api/v1/trucks?limit=50`;
-        const params = [];
+      query: ({ from, to, page, limit }) => {
+        const params = [`page=${page}`, `limit=${limit}`];
 
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
 
-        if (params.length) url += `?${params.join("&")}`;
-        return url;
+        const queryString = params.join("&");
+        return `/api/v1/drivers?${queryString}`;
       },
       providesTags: ["Trucks"],
     }),
@@ -266,11 +270,16 @@ export const apiSlice = api.injectEndpoints({
       keepUnusedDataFor: 60 * 60,
     }),
 
+    // ✅ Get single truck by TruckID
+    getTruckByTruckId: builder.query({
+      query: (truckId) => `/api/v1/trucks?truckId=${truckId}`,
+      providesTags: (result, error, truckId) => [{ type: "Trucks", truckId }],
+    }),
+
     // ✅ Get single truck by ID
-    getTruckById: builder.query<{ data: TTruck }, string>({
-      query: (id) => `/api/v1/trucks/${id}`,
+    getTruckById: builder.query({
+      query: (id) => `/api/v1/summary/truck/${id}`,
       providesTags: (result, error, id) => [{ type: "Trucks", id }],
-      keepUnusedDataFor: 60 * 60,
     }),
 
     // ✅ Create / Update / Delete
@@ -335,23 +344,24 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Dispatchers"],
     }),
 
-    // Get All Users without Pagination
-    getAllUsersNoPagination: builder.query({
-      query: () => `/api/v1/adminDashboard?limit=50`,
-      providesTags: ["Dispatchers"],
+    // Get Users Using Id
+    getUserById: builder.query({
+      query: (jobId) => `/api/v1/adminDashboard?jobId=${jobId}`,
+      providesTags: (result, error, jobId) => [
+        { type: "Dispatchers", id: jobId },
+      ],
     }),
 
     // Get User with Filter and Search
     getUserWithSearch: builder.query({
-      query: ({ from, to }) => {
-        let url = `/api/v1/adminDashboard?limit=50`;
-        const params = [];
+      query: ({ from, to, page, limit }) => {
+        const params = [`page=${page}`, `limit=${limit}`];
 
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
 
-        if (params.length) url += `&${params.join("&")}`;
-        return url;
+        const queryString = params.join("&");
+        return `/api/v1/adminDashboard?${queryString}`;
       },
       providesTags: ["Dispatchers"],
     }),
@@ -453,22 +463,23 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Customer Methods ==========
 
-    getAllCustomers: builder.query({
-      query: () => `/api/v1/customers?limit=50`,
-      providesTags: ["Customers"],
+    getCustomerById: builder.query({
+      query: (customerId) => `/api/v1/customers?customerId=${customerId}`,
+      providesTags: (result, error, customerId) => [
+        { type: "Customers", id: customerId },
+      ],
     }),
 
     // Get Customer with Filter and Search
     getCustomerWithFilter: builder.query({
-      query: ({ from, to }) => {
-        let url = `/api/v1/customers?limit=50`;
-        const params = [];
+      query: ({ from, to, page, limit }) => {
+        const params = [`page=${page}`, `limit=${limit}`];
 
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
 
-        if (params.length) url += `?${params.join("&")}`;
-        return url;
+        const queryString = params.join("&");
+        return `/api/v1/customers?${queryString}`;
       },
       providesTags: ["Customers"],
     }),
@@ -510,6 +521,7 @@ export const {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
   useGetLoadByIdQuery,
+  useLazyGetLoadByIdQuery,
   useCreateLoadsMutation,
   useUpdateLoadsMutation,
   useUpdateLoadsStatusMutation,
@@ -523,8 +535,13 @@ export const {
   useGetAllDriversQuery,
   useGetDriverWithFilterQuery,
   useGetDriverByIdQuery,
+  useGetDriverByDriverIdQuery,
+  useLazyGetDriverByIdQuery,
+  useLazyGetDriverByDriverIdQuery,
+  useGetSpecificDriverSummaryQuery,
   useLazyGetSpecificDriverSummaryQuery,
   useGetDriverSummaryWithFilterQuery,
+  useLazyGetDriverSummaryWithFilterQuery,
   useCreateDriverMutation,
   useUpdateDriverMutation,
   useDeleteDriverMutation,
@@ -537,6 +554,9 @@ export const {
   useLazyGetSpecificTruckSummaryQuery,
   useGetTruckSummaryWithFilterQuery,
   useGetTruckByIdQuery,
+  useGetTruckByTruckIdQuery,
+  useLazyGetTruckByIdQuery,
+  useLazyGetTruckByTruckIdQuery,
   useCreateTruckMutation,
   useUpdateTruckMutation,
   useDeleteTruckMutation,
@@ -545,7 +565,8 @@ export const {
   useGetNotesQuery,
   // TODO: ----- Users-----
   useGetAllDispatchersQuery,
-  useGetAllUsersNoPaginationQuery,
+  useGetUserByIdQuery,
+  useLazyGetUserByIdQuery,
   useGetUserWithSearchQuery,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
@@ -560,7 +581,8 @@ export const {
   useCreatePaletteMutation,
   useUpdatePaletteMutation,
   // TODO: ----- Customer -----
-  useGetAllCustomersQuery,
+  useGetCustomerByIdQuery,
+  useLazyGetCustomerByIdQuery,
   useGetCustomerWithFilterQuery,
   useGetCustomersWithPaginationQuery,
   useCreateCustomerMutation,

@@ -6,12 +6,10 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   IoAdd,
-  IoSearch,
   IoPerson,
   IoBriefcase,
   IoKey,
   IoSettingsOutline,
-  IoClose,
 } from "react-icons/io5";
 import toast, { Toaster } from "react-hot-toast";
 import { TDispatcher } from "@/types/globalTypes";
@@ -27,33 +25,34 @@ import {
   useActivateUserMutation,
   useDeactivateUserMutation,
   useGetUserWithSearchQuery,
-  useGetAllUsersNoPaginationQuery,
+  useLazyGetUserByIdQuery,
 } from "@/redux/slices/apiSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import UserSettingsModal from "@/components/users/UserSettingsModal";
 import CreateUserModal from "@/components/users/CreateUserModal";
 import { Dayjs } from "dayjs";
-import { useSearch } from "@/hook/useSearch";
+import { useSearchSubmit } from "@/hook/useSearchSubmit";
 import {
   alpha,
   Box,
   Button,
-  InputAdornment,
-  TextField,
+  SxProps,
+  TableRow,
   Typography,
 } from "@mui/material";
+import { setLoading } from "@/redux/slices/uiSlice";
+import SearchInput from "@/components/ui/SearchInput";
 
 const Users = () => {
+  const [page, setPage] = useState(1);
   const [popup, setPopup] = useState(false);
   const [popupSetting, setPopupSetting] = useState(false);
   const [selectedUser, setSelectedUser] = useState<TDispatcher | null>(null);
-  const [page, setPage] = useState(1);
 
   // ✅ Search And Filter
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
 
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -65,19 +64,45 @@ const Users = () => {
     data: dispatchersData,
     error: dispatchersError,
     isLoading: loading,
-    isFetching,
-    refetch,
-  } = useGetAllDispatchersQuery({ page, limit: 10 });
+    refetch: refetchLoads,
+  } = useGetAllDispatchersQuery({ page, limit: 10 }, { refetchOnFocus: false });
 
   const { data: filteredData } = useGetUserWithSearchQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
       to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+      page,
+      limit: 10,
     },
     { skip: !isFiltered }
   );
 
-  const { data: allUsersData } = useGetAllUsersNoPaginationQuery({skip: !token});
+  const [
+    triggerSearchQuery,
+    {
+      data: userByIdData,
+      isLoading: userByIdLoading,
+      error: userByIdError,
+      reset: resetSearchQuery,
+    },
+  ] = useLazyGetUserByIdQuery();
+
+  // Search Hook
+  const searchHook = useSearchSubmit({
+    onSearch: (term) => {
+      setPage(1);
+      if (term.trim()) {
+        triggerSearchQuery(term);
+      }
+    },
+    onReset: () => {
+      setPage(1);
+      resetSearchQuery();
+      refetchLoads();
+    },
+  });
+
+  const { searchTerm, isSearching } = searchHook;
 
   // RTK Mutation
   const [createUser, { isLoading: creatingUser }] = useCreateUserMutation();
@@ -87,80 +112,54 @@ const Users = () => {
   const [deactivateUser, { isLoading: deactivating }] =
     useDeactivateUserMutation();
 
-  // Export Data
-  const dispatchers = isFiltered
-    ? filteredData?.data || []
-    : dispatchersData?.data || [];
-  
-  const pagination = isFiltered ? null : dispatchersData?.paginationResult || null;
-
-  // Token Checking
-  useEffect(() => {
-    if (!token) {
-      router.replace("/");
-      return;
+  const user = useMemo(() => {
+    if (isSearching && Array.isArray(userByIdData?.data)) {
+      return userByIdData.data.flat();
     }
-  }, [token, router]);
+    if (isFiltered && filteredData?.data) {
+      return filteredData.data;
+    }
+    return dispatchersData?.data || [];
+  }, [isSearching, isFiltered, userByIdData, filteredData, dispatchersData]);
+
+  const pagination = isFiltered
+    ? filteredData?.paginationResult || null
+    : dispatchersData?.paginationResult || null;
+
+  // Loading state
+  useEffect(() => {
+    setLoading(loading && !dispatchersData);
+  }, [loading, dispatchersData]);
 
   // handling Errors
   useEffect(() => {
-    if (dispatchersError) {
-      const errorMessage = getErrorMessage(dispatchersError);
-      if (error !== errorMessage) {
-        setError(errorMessage);
-        toast.error(errorMessage || "Loading failed ❌", {
-          id: "dispatchersError",
-          style: { background: "#dc2626", color: "#fff" },
-        });
-      }
+    const currentError = dispatchersError || userByIdError;
+    if (currentError) {
+      const errorMessage = getErrorMessage(currentError);
+      setError(errorMessage);
+      toast.error(errorMessage || "Failed to load data ❌", {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+        duration: 4000,
+      });
     }
-  }, [dispatchersError, setError, error]);
+  }, [dispatchersError, userByIdError, setError]);
 
-  // Refetching when mounting or updating
-  useEffect(() => {
-    if (token) {
-      refetch();
-    }
-  }, [page, token]);
-
-  // Filter and Search loads
-  const { filteredData: searchedDispatchers } = useSearch({
-    data: dispatchers,
-    searchFields: ["jobId", "name", "phone", "email"],
-    initialSearch: searchInput,
-  });
-  
-  const tableData = searchInput ? searchedDispatchers : dispatchers;
-
-  // StatsCard 
+  // Stats cards
   const statsData = useMemo(() => {
-    const currentData = allUsersData?.data || []; 
-
+    if (!user || user.length === 0)
+      return { totalUsers: 0, drivers: 0, admins: 0, employees: 0 };
     return {
-      totalLoads: currentData.length, 
-      driver: currentData.filter((u: TDispatcher) => u.role === 'driver').length,
-      admin: currentData.filter((u: TDispatcher) => u.role === "admin").length,
-      employee: currentData.filter(
-        (u: TDispatcher) => u.role === "employee" || u.role === "driver"
-      ).length,
+      totalUsers: user.length,
+      drivers: user.filter((u: TDispatcher) => u.role === "driver").length,
+      admins: user.filter((u: TDispatcher) => u.role === "admin").length,
+      employees: user.filter((u: TDispatcher) => u.role === "employee").length,
     };
-  }, [allUsersData]);
-
-  const handleClearFilter = () => {
-    setIsFiltered(false);
-    setFromDate(null);
-    setToDate(null);
-    setSearchInput("");
-    setPage(1);
-  };
-
-  useEffect(() => {
-    if (searchInput) {
-      setIsFiltered(true);
-    } else if (!fromDate && !toDate) {
-      setIsFiltered(false);
-    }
-  }, [searchInput, fromDate, toDate]);
+  }, [user]);
 
   // FIXME: Create User
   const handleCreateUser = async (userData: {
@@ -182,9 +181,6 @@ const Users = () => {
         style: { background: "#16a34a", color: "#fff" },
       });
       setPopup(false);
-      setTimeout(() => {
-        refetch();
-      }, 500);
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Creating user failed ❌");
@@ -207,9 +203,6 @@ const Users = () => {
       toast.success(`Role updated to ${newRole} successfully!`, {
         style: { background: "#16a34a", color: "#fff" },
       });
-      setTimeout(() => {
-        refetch();
-      }, 500);
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Updating role failed ❌");
@@ -229,9 +222,6 @@ const Users = () => {
       toast.success("User activated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      setTimeout(() => {
-        refetch();
-      }, 500);
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Activating user failed ❌");
@@ -251,9 +241,6 @@ const Users = () => {
       toast.success("User deactivated successfully!", {
         style: { background: "#16a34a", color: "#fff" },
       });
-      setTimeout(() => {
-        refetch();
-      }, 500);
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Deactivating user failed ❌");
@@ -279,94 +266,146 @@ const Users = () => {
   };
 
   // TODO: Table
-  const renderDispatcherRow = (dispatcher: TDispatcher, index: number) => (
-    <tr
-      key={dispatcher.id}
-      className="hover:bg-slate-50 transition-colors group"
-    >
-      {/* # */}
-      <td className="p-4 text-slate-600 font-medium">{dispatcher.jobId}</td>
+  const renderDispatcherRow = (dispatcher: TDispatcher) => {
+    // Styles
+    const tableRowSx: SxProps = {
+      "&:hover": {
+        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
 
-      {/* Name */}
-      <td className="p-4">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
-            <IoPerson size={14} className="text-slate-600" />
+    return (
+      <TableRow
+        key={dispatcher.id || dispatcher.jobId}
+        sx={tableRowSx}
+        className="hover:bg-slate-50 transition-colors group"
+      >
+        {/* # */}
+        <td className="p-4 text-slate-600 font-medium">{dispatcher.jobId}</td>
+
+        {/* Name */}
+        <td className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center">
+              <IoPerson size={14} className="text-slate-600" />
+            </div>
+            <span className="font-medium text-slate-900">
+              {dispatcher.name}
+            </span>
           </div>
-          <span className="font-medium text-slate-900">{dispatcher.name}</span>
-        </div>
-      </td>
+        </td>
 
-      {/* Email */}
-      <td className="p-4 text-slate-700">{dispatcher.email}</td>
+        {/* Email */}
+        <td className="p-4 text-slate-700">{dispatcher.email}</td>
 
-      {/* Phone */}
-      <td className="p-4 text-slate-700">{dispatcher.phone}</td>
+        {/* Phone */}
+        <td className="p-4 text-slate-700">{dispatcher.phone}</td>
 
-      {/* Role */}
-      <td className="p-4">
-        <span
-          className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-            dispatcher.role === "admin"
-              ? "bg-purple-100 text-purple-800 border border-purple-200"
-              : "bg-slate-100 text-slate-800 border border-slate-200"
-          }`}
-        >
-          {dispatcher.role}
-        </span>
-      </td>
-
-      {/* Position */}
-      <td className="p-4 text-slate-700">{dispatcher.position}</td>
-
-      {/* Job ID */}
-      <td className="p-4">
-        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
-          {dispatcher.jobId}
-        </span>
-      </td>
-
-      {/* Status */}
-      <td className="p-4 text-center">
-        {dispatcher.active ? (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
-            Active
+        {/* Role */}
+        <td className="p-4">
+          <span
+            className={`px-2.5 py-1 rounded-full text-xs font-medium ${
+              dispatcher.role === "admin"
+                ? "bg-purple-100 text-purple-800 border border-purple-200"
+                : "bg-slate-100 text-slate-800 border border-slate-200"
+            }`}
+          >
+            {dispatcher.role}
           </span>
-        ) : (
-          <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
-            Inactive
+        </td>
+
+        {/* Position */}
+        <td className="p-4 text-slate-700">{dispatcher.position}</td>
+
+        {/* Job ID */}
+        <td className="p-4">
+          <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
+            {dispatcher.jobId}
           </span>
-        )}
-      </td>
+        </td>
 
-      {/* Setting */}
-      <td className="p-4">
-        <button
-          onClick={() => openSettingsPopup(dispatcher)}
-          className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-800 hover:text-blue-200 transition-colors"
-        >
-          <IoSettingsOutline />
-          <span>view setting</span>
-        </button>
-      </td>
-    </tr>
-  );
+        {/* Status */}
+        <td className="p-4 text-center">
+          {dispatcher.active ? (
+            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 border border-emerald-200">
+              Active
+            </span>
+          ) : (
+            <span className="px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-800 border border-slate-200">
+              Inactive
+            </span>
+          )}
+        </td>
 
-  // set loading
-  if (loading && dispatchers.length === 0) return <Loading />;
+        {/* Setting */}
+        <td className="p-4">
+          <button
+            onClick={() => openSettingsPopup(dispatcher)}
+            className="flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200 hover:bg-blue-800 hover:text-blue-200 transition-colors"
+          >
+            <IoSettingsOutline />
+            <span>view setting</span>
+          </button>
+        </td>
+      </TableRow>
+    );
+  };
+
+  // Loading state
+  const isInitialLoading = userByIdLoading && !dispatchersData;
+  if (isInitialLoading) return <Loading />;
+
+  // Container styles
+  const containerSx: SxProps = {
+    backgroundColor: theme.currentPalette.background,
+    minHeight: "100vh",
+    p: 3,
+  };
+  const headerContainerSx: SxProps = {
+    mb: 4,
+  };
+  const searchFilterContainerSx: SxProps = {
+    display: "flex",
+    flexDirection: { xs: "column", lg: "row" },
+    alignItems: "end",
+    gap: 2,
+    p: 3,
+    my: 5,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
+    borderRadius: 1,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    backgroundColor: theme.currentPalette.background,
+  };
+  const newLoadButtonSx: SxProps = {
+    py: 1.5,
+    px: 4,
+    fontWeight: "bold",
+    fontSize: "1rem",
+    borderRadius: 2,
+    textTransform: "none",
+    width: { xs: "100%", lg: "auto" },
+    background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+    color: "#fff",
+    "&:hover": {
+      background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+      transform: "translateY(-1px)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    },
+    transition: "all 0.3s ease",
+  };
 
   return (
-    <section className="relative p-6">
+    <Box sx={containerSx}>
       {/* Title */}
-      <Box
-        component="div"
-        className="flex flex-col xl:items-start xl:justify-between gap-1"
-      >
+      <Box sx={headerContainerSx}>
         <Typography
           sx={{
             color: theme.currentPalette.text,
-            fontSize: "45px",
+            fontSize: { xs: "2rem", md: "2.5rem", lg: "3rem" },
             fontWeight: "bold",
+            mb: 1,
           }}
         >
           Dispatcher Management
@@ -374,7 +413,9 @@ const Users = () => {
         <Typography
           sx={{
             color: alpha(theme.currentPalette.text, 0.7),
-            fontSize: "16px",
+            fontSize: "1rem",
+            maxWidth: "600px",
+            lineHeight: 1.6,
           }}
         >
           Manage your dispatch team members and their access
@@ -382,62 +423,45 @@ const Users = () => {
       </Box>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
-        <StatsCard
-          title="Total Dispatchers"
-          value={statsData.totalLoads}
-          icon={IoPerson}
-          iconColor={theme.currentPalette.primary}
-          loading={loading}
-        />
+      <Box sx={{ mt: 4, mb: 5 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatsCard
+            title="Total Dispatchers"
+            value={statsData.totalUsers}
+            icon={IoPerson}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Drivers"
-          value={statsData.driver}
-          icon={IoBriefcase}
-          iconColor={theme.currentPalette.primary}
-          loading={loading}
-        />
+          <StatsCard
+            title="Drivers"
+            value={statsData.drivers}
+            icon={IoBriefcase}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Admins"
-          value={statsData.admin}
-          icon={IoKey}
-          iconColor={theme.currentPalette.primary}
-          loading={loading}
-        />
+          <StatsCard
+            title="Admins"
+            value={statsData.admins}
+            icon={IoKey}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Employees"
-          value={statsData.employee}
-          icon={IoPerson}
-          iconColor={theme.currentPalette.primary}
-          loading={loading}
-        />
-      </div>
+          <StatsCard
+            title="Employees"
+            value={statsData.employees}
+            icon={IoPerson}
+            iconColor={theme.currentPalette.primary}
+          />
+        </div>
+      </Box>
 
       {/* Add User */}
-      <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+      <Box display="flex" justifyContent="end" sx={{ mt: 3 }}>
         <Button
           onClick={() => setPopup(true)}
           variant="contained"
           startIcon={<IoAdd size={22} />}
-          disabled={loading}
-          sx={{
-            py: 1.5,
-            px: 4,
-            fontWeight: "bold",
-            fontSize: "1rem",
-            borderRadius: 2,
-            textTransform: "none",
-            width: { xs: "100%", lg: "auto" },
-            background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
-            color: "#fff",
-            "&:hover": {
-              background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
-            },
-            transition: "all 0.3s ease",
-          }}
+          sx={newLoadButtonSx}
         >
           New User
         </Button>
@@ -446,130 +470,41 @@ const Users = () => {
       <Toaster position="top-right" reverseOrder={false} />
 
       {/* Search & Filter */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", lg: "row" },
-          alignItems: "end",
-          gap: 2,
-          p: 2,
-          my: 5,
-          border: `1px solid ${theme.currentPalette.primary}33`,
-          borderRadius: 2,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          backgroundColor: theme.currentPalette.background,
-        }}
-      >
+      <Box sx={searchFilterContainerSx}>
         {/* Search */}
-        <TextField
-          fullWidth
-          variant="outlined"
+        <SearchInput
+          searchHook={searchHook}
           placeholder="Search users by name, email, phone, or job ID"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IoSearch size={20} color="#9ca3af" />
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{
+          fullWidth
+          showClearButton
+          sx={{ width: "100%" }}
+          inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
+              borderRadius: 2,
               backgroundColor: "#fff",
-              "& fieldset": { borderColor: "#e5e7eb" },
-              "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.currentPalette.primary,
-              },
-            },
-            "& input": {
-              color: theme.currentPalette.text,
+              py: 0.5,
             },
           }}
         />
-
-        {/* Clear Filter Button */}
-        {(isFiltered || searchInput) && (
-          <Button
-            variant="outlined"
-            onClick={handleClearFilter}
-            startIcon={<IoClose size={18} />}
-            sx={{
-              textTransform: "none",
-              borderRadius: 1,
-              borderColor: theme.currentPalette.primary,
-              color: theme.currentPalette.primary,
-              "&:hover": {
-                borderColor: theme.currentPalette.secondary,
-                backgroundColor: alpha(theme.currentPalette.primary, 0.04),
-              },
-            }}
-          >
-            Clear Filters
-          </Button>
-        )}
       </Box>
 
-      {/* Table Info */}
-      {dispatchers.length > 0 && (
-        <div className="mb-4 text-slate-600 text-sm">
-          {isFiltered ? (
-            <span>
-              Showing {tableData.length} users (all matching results)
-            </span>
-          ) : (
-            <span>
-              Showing {(page - 1) * 10 + 1} to {Math.min(page * 10, pagination?.total || 0)} of {pagination?.total || 0} users
-            </span>
-          )}
-        </div>
-      )}
-
       {error && (
-        <div className="mb-6">
+        <Box sx={{ mb: 3 }}>
           <Erros message={error} />
-        </div>
+        </Box>
       )}
 
-      {/* Table */}
-      {(loading || isFetching) && dispatchers.length === 0 ? (
-        <Loading />
-      ) : tableData.length > 0 ? (
-        <DataTable
-          columns={dispatcherColumns}
-          data={tableData}
-          renderRow={renderDispatcherRow}
-          loading={loading || isFetching}
-        />
-      ) : (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-4 py-12 text-center text-slate-500">
-            <div className="flex flex-col items-center justify-center">
-              <div className="text-3xl mb-3">👥</div>
-              <div className="text-slate-600">
-                {loading ? "Loading dispatchers..." : "No dispatchers found"}
-              </div>
-              <div className="text-slate-400 text-sm mt-1">
-                {searchInput || isFiltered
-                  ? "Try adjusting your search terms"
-                  : "Get started by adding your first dispatcher"}
-              </div>
-              {!loading && (
-                <button
-                  onClick={() => refetch()}
-                  className="mt-4 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                >
-                  Retry Loading
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Data Table */}
+      <DataTable
+        columns={dispatcherColumns}
+        data={user}
+        renderRow={renderDispatcherRow}
+        loading={
+          (isSearching && userByIdLoading) ||
+          (isFiltered && filteredData) ||
+          (loading && !dispatchersData)
+        }
+      />
 
       {/* Create User Modal */}
       <CreateUserModal
@@ -591,16 +526,16 @@ const Users = () => {
       />
 
       {/* Pagination */}
-      {!isFiltered && pagination && dispatchers.length > 0 && (
+      {!isFiltered && !isSearching && pagination && user.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}
           setPage={setPage}
           pageSize={10}
-          showInfo={false} 
+          showInfo={false}
         />
       )}
-    </section>
+    </Box>
   );
 };
 

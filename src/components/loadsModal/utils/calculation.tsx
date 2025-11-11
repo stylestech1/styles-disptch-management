@@ -8,7 +8,7 @@ import {
 import { TPlace } from "@/components/sections/LocationAutocomplete";
 
 export const useDistanceCalculations = () => {
-  const { dho, origin, destinations, price } = useSelector(
+  const { dho, origin, destinations, price, isEditing } = useSelector(
     (state: RootState) => state.loadsForm
   );
 
@@ -20,10 +20,27 @@ export const useDistanceCalculations = () => {
   const [allDistance, setAllDistance] = useState<string>("");
   const [pricePerMile, setPricePerMile] = useState<number | null>(null);
 
+  // Helper function to check if coordinates are valid
+  const hasValidCoordinates = (place: TPlace | null): boolean => {
+    if (!place) return false;
+    const lat = parseFloat(place.lat);
+    const lon = parseFloat(place.lon);
+    // Check if coordinates are not 0 and are valid numbers
+    return !isNaN(lat) && !isNaN(lon) && (lat !== 0 || lon !== 0);
+  };
+
   // Calculate DHO to Origin distance
   useEffect(() => {
     const calculateDhoToOrigin = async () => {
       if (!dho || !origin) {
+        setDhoToOriginDistance(null);
+        setAverageTime(null);
+        return;
+      }
+
+      // Skip calculation if coordinates are invalid (e.g., in edit mode with address-only data)
+      if (!hasValidCoordinates(dho) || !hasValidCoordinates(origin)) {
+        console.log("Skipping DHO to Origin calculation - invalid coordinates");
         setDhoToOriginDistance(null);
         setAverageTime(null);
         return;
@@ -55,6 +72,18 @@ export const useDistanceCalculations = () => {
         (dho && origin && validDestinations.length > 0) ||
         (origin && validDestinations.length > 0)
       ) {
+        // Check if all destinations have valid coordinates
+        const allDestinationsValid = validDestinations.every(hasValidCoordinates);
+        const originValid = origin ? hasValidCoordinates(origin) : false;
+        const dhoValid = dho ? hasValidCoordinates(dho) : true; // DHO is optional
+
+        if (!allDestinationsValid || !originValid || (dho && !dhoValid)) {
+          console.log("Skipping total distance calculation - invalid coordinates");
+          setDistance(null);
+          setAllDistance("");
+          return;
+        }
+
         try {
           const destinationsCoords = validDestinations.map((dest) => ({
             lat: parseFloat(dest.lat),

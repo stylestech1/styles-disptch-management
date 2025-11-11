@@ -20,7 +20,7 @@ import {
   IoMail,
   IoPerson,
 } from "react-icons/io5";
-import { useGetAllCustomersQuery } from "@/redux/slices/apiSlice";
+import { useGetCustomersWithPaginationQuery } from "@/redux/slices/apiSlice";
 import { useForm, Controller } from "react-hook-form";
 import { RootState, useAppSelector } from "@/redux/store";
 
@@ -54,7 +54,7 @@ export const CustomerForm = ({
     isLoading: customerLoading,
     error: customerError,
     refetch,
-  } = useGetAllCustomersQuery({
+  } = useGetCustomersWithPaginationQuery({
     skip: !token,
   });
 

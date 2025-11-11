@@ -1,39 +1,34 @@
 "use client";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import Erros from "@/components/ui/Erros";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TTruck } from "@/types/globalTypes";
-import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
-import { IoAdd, IoPencil, IoTrash, IoSearch } from "react-icons/io5";
+import { IoAdd, IoPencil, IoTrash } from "react-icons/io5";
 import {
   Dialog,
   Button,
-  Table,
-  TableBody,
-  TableContainer,
-  TableHead,
   TableRow,
-  Paper,
   Box,
   IconButton,
   Tooltip,
   Typography,
   CircularProgress,
-  TextField,
-  InputAdornment,
+  SxProps,
+  alpha,
+  Chip,
 } from "@mui/material";
-import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {
   useCreateTruckMutation,
   useDeleteTruckMutation,
-  useGetAllDriversQuery,
-  useGetAllTrucksQuery,
   useGetTrucksWithPaginationQuery,
   useGetTruckWithSearchQuery,
+  useLazyGetDriverByIdQuery,
+  useLazyGetTruckByIdQuery,
+  useLazyGetTruckByTruckIdQuery,
   useUpdateTruckMutation,
 } from "@/redux/slices/apiSlice";
 import { TruckForm } from "@/components/truck/TruckForm";
@@ -41,24 +36,23 @@ import StatsCard from "@/components/ui/StatsCard";
 import { FaTruck, FaUserCheck, FaUserMinus } from "react-icons/fa";
 import { FaUserLargeSlash } from "react-icons/fa6";
 import { Dayjs } from "dayjs";
-import { useSearch } from "@/hook/useSearch";
 import useError from "@/hook/useError";
 import {
   StatusChip,
-  StyledTableCell,
-  StyledTableRow,
 } from "@/components/ui/TablesMUI";
+import { useSearchSubmit } from "@/hook/useSearchSubmit";
+import { setLoading } from "@/redux/slices/uiSlice";
+import SearchInput from "@/components/ui/SearchInput";
+import DataTable from "@/components/ui/DataTable";
+import { truckColumns } from "@/data/truckTables";
 
-/* ---------------- TrucksPage (parent) ---------------- */
 const TrucksPage: React.FC = () => {
   const user = useAppSelector((state) => state.auth.user);
-  const token = useAppSelector((state) => state.auth.token);
 
   // ✅ Search And Filter
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
   const [page, setPage] = useState(1);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
   const { error, setError } = useError();
@@ -67,62 +61,85 @@ const TrucksPage: React.FC = () => {
   // RTK Query
   const {
     data: trucksData,
-    isLoading,
-    refetch,
-  } = useGetTrucksWithPaginationQuery({ page, limit: 10 }, { skip: !token });
-  const { data: allTrucksData } = useGetAllTrucksQuery({ skip: !token });
-  const { data: driversData } = useGetAllDriversQuery();
+    isLoading: trucksLoading,
+    refetch: refetchTrucks,
+  } = useGetTrucksWithPaginationQuery(
+    { page, limit: 10 },
+    { refetchOnFocus: false }
+  );
+  const [
+    triggerSearchQuery,
+    {
+      data: truckByIdData,
+      isLoading: truckByIdLoading,
+      error: truckByIdError,
+      reset: resetSearchQuery,
+    },
+  ] = useLazyGetTruckByTruckIdQuery();
+  const [triggerDriver, { data: driversData }] = useLazyGetDriverByIdQuery();
   const { data: filteredData } = useGetTruckWithSearchQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
       to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+      page,
+      limit: 10,
     },
     { skip: !isFiltered }
   );
+
+  // Search Hook
+  const searchHook = useSearchSubmit({
+    onSearch: (term) => {
+      setPage(1);
+      if (term.trim()) {
+        triggerSearchQuery(term);
+      }
+    },
+    onReset: () => {
+      setPage(1);
+      resetSearchQuery();
+      refetchTrucks();
+    },
+  });
+  const { searchTerm, isSearching } = searchHook;
 
   // Mutations
   const [createTruck, { isLoading: isCreating }] = useCreateTruckMutation();
   const [updateTruck, { isLoading: isUpdating }] = useUpdateTruckMutation();
   const [deleteTruck, { isLoading: isDeleting }] = useDeleteTruckMutation();
 
-  // convenient exposures
-  const displayTrucks = isFiltered
-    ? filteredData?.data?.data || []
-    : trucksData?.data?.data || [];
-  const allTrucks = allTrucksData?.data?.data || [];
-  const pagination =
-    trucksData?.data?.paginationResult ||
-    allTrucksData?.data?.paginationResult ||
-    null;
-  const allDrivers = driversData?.data || [];
+  const truck = useMemo(() => {
+    if (isSearching && Array.isArray(truckByIdData?.data.data)) {
+      return Array.isArray(truckByIdData.data.data)
+        ? truckByIdData.data.data
+        : [truckByIdData.data.data];
+    }
+    if (isFiltered && filteredData?.data) {
+      return filteredData.data.data;
+    }
+    return trucksData?.data?.data || [];
+  }, [isSearching, isFiltered, truckByIdData, filteredData, trucksData]);
 
-  // Filter and Search loads
-  const { filteredData: searchedTrucks } = useSearch({
-    data: allTrucks,
-    searchFields: [
-      "truckId",
-      "model",
-      "plateNumber",
-      "assignedDriver.driverId",
-      "assignedDriver.name",
-    ],
-    initialSearch: searchInput,
-  });
-  const tableData = searchInput ? searchedTrucks : displayTrucks;
+  const pagination = isFiltered
+    ? filteredData?.data.paginationResult || null
+    : trucksData?.data.paginationResult || null;
 
-  // StatsCard
+  // Loading state
+  useEffect(() => {
+    setLoading(trucksLoading && !trucksData);
+  }, [trucksLoading, trucksData]);
+
+  // Stats cards
   const statsData = useMemo(() => {
-    const currentData = allTrucks;
-
+    if (!truck || truck.length === 0)
+      return { totalTrucks: 0, available: 0, busy: 0, inactive: 0 };
     return {
-      totalLoads: currentData.length,
-      available: currentData.filter((t: TTruck) => t.status === "available")
-        .length,
-      busy: currentData.filter((t: TTruck) => t.status === "busy").length,
-      inactive: currentData.filter((t: TTruck) => t.status === "inactive")
-        .length,
+      totalTrucks: truck.length,
+      available: truck.filter((t: TTruck) => t.status === "available").length,
+      busy: truck.filter((t: TTruck) => t.status === "busy").length,
+      inactive: truck.filter((t: TTruck) => t.status === "inactive").length,
     };
-  }, [allTrucks]);
+  }, [truck]);
 
   // Modal states
   const [open, setOpen] = useState(false);
@@ -185,16 +202,11 @@ const TrucksPage: React.FC = () => {
 
       toast.success("✅ Truck created successfully!");
       setOpen(false);
-      try {
-        refetch();
-      } catch {
-        // ignore
-      }
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Creating truck failed ❌");
     }
-  }, [createTruck, formData, user?.id, refetch]);
+  }, [createTruck, formData, user?.id]);
 
   // Update truck
   const handleUpdate = useCallback(async () => {
@@ -215,14 +227,11 @@ const TrucksPage: React.FC = () => {
 
       toast.success("✅ Truck updated successfully!");
       setOpen(false);
-      try {
-        refetch();
-      } catch {}
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Updating truck failed ❌");
     }
-  }, [updateTruck, formData, user?.id, refetch]);
+  }, [updateTruck, formData, user?.id]);
 
   // Delete flow
   const handleDelete = useCallback((id: string, truckId?: number) => {
@@ -238,9 +247,6 @@ const TrucksPage: React.FC = () => {
     try {
       await deleteTruck(truckToDelete.id).unwrap();
       toast.success(`✅ Truck #${truckToDelete.truckId} deleted successfully!`);
-      try {
-        refetch();
-      } catch {}
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Deleting truck failed ❌");
@@ -248,270 +254,266 @@ const TrucksPage: React.FC = () => {
       setDeleteToast({ open: false, message: "" });
       setTruckToDelete(null);
     }
-  }, [truckToDelete, deleteTruck, refetch]);
+  }, [truckToDelete, deleteTruck]);
 
   const cancelDelete = useCallback(() => {
     setDeleteToast({ open: false, message: "" });
     setTruckToDelete(null);
   }, []);
 
-  if (isLoading) return <Loading />;
+  // ✅ Render Table Row - Similar to LoadsPage
+  const renderTruckRow = (truck: TTruck) => {
+    // Styles
+    const tableRowSx: SxProps = {
+      "&:hover": {
+        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
 
+    return (
+      <TableRow
+        sx={tableRowSx}
+        key={truck.id || truck.truckId}
+        className="transition-colors group"
+      >
+        {/* Truck ID */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
+            {truck.truckId}
+          </span>
+        </td>
+
+        {/* Modal */}
+        <td className="p-4 text-center">{truck.model || "-"}</td>
+
+        {/* Plate Number */}
+        <td className="p-4 text-center text-slate-700 font-medium">
+          {truck.plateNumber || "-"}
+        </td>
+
+        {/* Truck Type */}
+        <td className="p-4 text-center text-slate-700">
+          <Chip label={truck.type} variant="outlined" size="small" />
+        </td>
+
+        {/* Truck Year */}
+        <td className="p-4 text-center font-semibold">{truck.year || "-"}</td>
+
+        {/* Truck Capacity */}
+        <td className="p-4 text-center">{truck.capacity}</td>
+
+        {/* Fuel Per Mile */}
+        <td className="p-4 text-center">{truck.fuelPerMile ?? "N/A"}</td>
+
+        {/* Assign To Driver */}
+        <td className="p-4 text-center">
+          {typeof truck.assignedDriver === "object"
+            ? truck.assignedDriver.name
+            : truck.assignedDriver || "Unassigned"}
+          {typeof truck.assignedDriver === "object" &&
+            truck.assignedDriver.driverId && (
+              <Box
+                component="span"
+                sx={{
+                  fontSize: "0.75rem",
+                  color: "text.secondary",
+                  display: "block",
+                }}
+              >
+                ID: {truck.assignedDriver.driverId}
+              </Box>
+            )}
+        </td>
+
+        <td className="p-4 text-center">
+          <StatusChip status={truck.status} />
+        </td>
+
+        {/* Actions */}
+        <td className="p-4 text-center">
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+            <Tooltip title="Edit Truck">
+              <IconButton
+                size="small"
+                color="primary"
+                onClick={() => handleEditClick(truck)}
+                disabled={isUpdating}
+              >
+                <IoPencil />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Delete Truck">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={() => handleDelete(truck.id, truck.truckId)}
+                disabled={isDeleting}
+              >
+                {isDeleting ? <CircularProgress size={16} /> : <IoTrash />}
+              </IconButton>
+            </Tooltip>
+          </Box>
+        </td>
+      </TableRow>
+    );
+  };
+
+  // Loading state
+  const isInitialLoading = truckByIdLoading && !trucksData;
+  if (isInitialLoading) return <Loading />;
+
+  // Container styles
+  const containerSx: SxProps = {
+    backgroundColor: theme.currentPalette.background,
+    minHeight: "100vh",
+    p: 3,
+  };
+  const headerContainerSx: SxProps = {
+    mb: 4,
+  };
+  const searchFilterContainerSx: SxProps = {
+    display: "flex",
+    flexDirection: { xs: "column", lg: "row" },
+    alignItems: "end",
+    gap: 2,
+    p: 3,
+    my: 5,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
+    borderRadius: 1,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    backgroundColor: theme.currentPalette.background,
+  };
+  const newLoadButtonSx: SxProps = {
+    py: 1.5,
+    px: 4,
+    fontWeight: "bold",
+    fontSize: "1rem",
+    borderRadius: 2,
+    textTransform: "none",
+    width: { xs: "100%", lg: "auto" },
+    background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+    color: "#fff",
+    "&:hover": {
+      background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+      transform: "translateY(-1px)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    },
+    transition: "all 0.3s ease",
+  };
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={containerSx}>
       <Toaster position="top-right" />
 
       {/* Title */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          mb: 4,
-          [muiTheme.breakpoints.down("md")]: {
-            flexDirection: "column",
-            gap: 2,
-            alignItems: "stretch",
-          },
-        }}
-      >
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          <Titles>Truck Management</Titles>
-          <p className="text-slate-600 text-md">
-            Manage your trucks and their access
-          </p>
-        </Box>
+      <Box sx={headerContainerSx}>
+        <Typography
+          sx={{
+            color: theme.currentPalette.text,
+            fontSize: { xs: "2rem", md: "2.5rem", lg: "3rem" },
+            fontWeight: "bold",
+            mb: 1,
+          }}
+        >
+          Truck Management
+        </Typography>
+        <Typography
+          sx={{
+            color: alpha(theme.currentPalette.text, 0.7),
+            fontSize: "1rem",
+            maxWidth: "600px",
+            lineHeight: 1.6,
+          }}
+        >
+          Manage your trucks and their access
+        </Typography>
       </Box>
 
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
-        <StatsCard
-          title="Total Trucks"
-          value={statsData.totalLoads}
-          icon={FaTruck}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
+      <Box sx={{ mt: 4, mb: 5 }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
+          <StatsCard
+            title="Total Trucks"
+            value={statsData.totalTrucks}
+            icon={FaTruck}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Available"
-          value={statsData.available}
-          icon={FaUserCheck}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
+          <StatsCard
+            title="Available"
+            value={statsData.available}
+            icon={FaUserCheck}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Busy"
-          value={statsData.busy}
-          icon={FaUserMinus}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
+          <StatsCard
+            title="Busy"
+            value={statsData.busy}
+            icon={FaUserMinus}
+            iconColor={theme.currentPalette.primary}
+          />
 
-        <StatsCard
-          title="Inactive"
-          value={statsData.inactive}
-          icon={FaUserLargeSlash}
-          iconColor={theme.currentPalette.primary}
-          loading={isLoading}
-        />
-      </div>
+          <StatsCard
+            title="Inactive"
+            value={statsData.inactive}
+            icon={FaUserLargeSlash}
+            iconColor={theme.currentPalette.primary}
+          />
+        </div>
+      </Box>
 
       {/* Add Button */}
       <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
         <Button
           onClick={handleOpenAdd}
-          disabled={isLoading}
           variant="contained"
           startIcon={<IoAdd size={22} />}
-          sx={{
-            py: 1.5,
-            px: 4,
-            fontWeight: "bold",
-            fontSize: "1rem",
-            borderRadius: 2,
-            textTransform: "none",
-            width: { xs: "100%", lg: "auto" },
-            background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
-            color: "#fff",
-            "&:hover": {
-              background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
-            },
-            transition: "all 0.3s ease",
-          }}
+          sx={newLoadButtonSx}
         >
           Add Truck
         </Button>
       </Box>
 
       {/* Search & Filter */}
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", lg: "row" },
-          alignItems: "end",
-          gap: 2,
-          p: 2,
-          my: 5,
-          border: `1px solid ${theme.currentPalette.primary}33`,
-          borderRadius: 2,
-          boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-          backgroundColor: theme.currentPalette.background,
-        }}
-      >
-        <TextField
-          fullWidth
-          variant="outlined"
+      <Box sx={searchFilterContainerSx}>
+        {/* Search */}
+        <SearchInput
+          searchHook={searchHook}
           placeholder="Search drivers by ID, name, phone, email, or license number"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <IoSearch size={20} color="#9ca3af" />
-                </InputAdornment>
-              ),
-            },
-          }}
-          sx={{
+          fullWidth
+          showClearButton
+          sx={{ width: "100%" }}
+          inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
+              borderRadius: 2,
               backgroundColor: "#fff",
-              "& fieldset": { borderColor: "#e5e7eb" },
-              "&:hover fieldset": { borderColor: theme.currentPalette.primary },
-              "&.Mui-focused fieldset": {
-                borderColor: theme.currentPalette.primary,
-              },
-            },
-            "& input": {
-              color: theme.currentPalette.text,
+              py: 0.5,
             },
           }}
         />
       </Box>
 
       {error && (
-        <div className="mb-6">
+        <Box sx={{ mb: 3 }}>
           <Erros message={error} />
-        </div>
+        </Box>
       )}
 
       {/* Table */}
-      <TableContainer
-        component={Paper}
-        sx={{
-          borderRadius: 2,
-          overflow: "hidden",
-          overflowX: "auto",
-          maxWidth: "100%",
-          "&::-webkit-scrollbar": { height: 8 },
-          "&::-webkit-scrollbar-track": {
-            background: muiTheme.palette.grey[100],
-          },
-          "&::-webkit-scrollbar-thumb": {
-            background: muiTheme.palette.grey[400],
-            borderRadius: 4,
-          },
-        }}
-      >
-        <Table sx={{ minWidth: 650 }} aria-label="trucks table">
-          <TableHead>
-            <TableRow>
-              <StyledTableCell>Truck ID</StyledTableCell>
-              <StyledTableCell>Model</StyledTableCell>
-              <StyledTableCell>Plate Number</StyledTableCell>
-              <StyledTableCell>Type</StyledTableCell>
-              <StyledTableCell>Year</StyledTableCell>
-              <StyledTableCell>Capacity (kg)</StyledTableCell>
-              <StyledTableCell>Fuel/Mile</StyledTableCell>
-              <StyledTableCell>Driver</StyledTableCell>
-              <StyledTableCell>Status</StyledTableCell>
-              <StyledTableCell align="center">Actions</StyledTableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {tableData.length === 0 ? (
-              <TableRow>
-                <StyledTableCell colSpan={10} align="center" sx={{ py: 4 }}>
-                  No trucks found
-                </StyledTableCell>
-              </TableRow>
-            ) : (
-              tableData.map((truck: TTruck) => (
-                <StyledTableRow key={truck.id}>
-                  <StyledTableCell component="th" scope="row">
-                    {truck.truckId}
-                  </StyledTableCell>
-                  <StyledTableCell>{truck.model}</StyledTableCell>
-                  <StyledTableCell>{truck.plateNumber}</StyledTableCell>
-                  <StyledTableCell>{truck.type}</StyledTableCell>
-                  <StyledTableCell>{truck.year}</StyledTableCell>
-                  <StyledTableCell>{truck.capacity}</StyledTableCell>
-                  <StyledTableCell>
-                    {truck.fuelPerMile ?? "N/A"}
-                  </StyledTableCell>
-                  <StyledTableCell>
-                    {typeof truck.assignedDriver === "object"
-                      ? truck.assignedDriver.name
-                      : truck.assignedDriver || "Unassigned"}
-                    {typeof truck.assignedDriver === "object" &&
-                      truck.assignedDriver.driverId && (
-                        <Box
-                          component="span"
-                          sx={{
-                            fontSize: "0.75rem",
-                            color: "text.secondary",
-                            display: "block",
-                          }}
-                        >
-                          ID: {truck.assignedDriver.driverId}
-                        </Box>
-                      )}
-                  </StyledTableCell>
-                  <StyledTableCell>
-                    <StatusChip status={truck.status} />
-                  </StyledTableCell>
-                  <StyledTableCell align="center">
-                    <Box
-                      sx={{ display: "flex", justifyContent: "center", gap: 1 }}
-                    >
-                      <Tooltip title="Edit Truck">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditClick(truck)}
-                          disabled={isUpdating}
-                        >
-                          <IoPencil />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete Truck">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDelete(truck.id, truck.truckId)}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting ? (
-                            <CircularProgress size={16} />
-                          ) : (
-                            <IoTrash />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </StyledTableCell>
-                </StyledTableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        columns={truckColumns}
+        data={truck}
+        renderRow={renderTruckRow}
+        loading={
+          (isSearching && truckByIdLoading) ||
+          (isFiltered && filteredData) ||
+          (trucksLoading && !trucksData)
+        }
+      />
 
       {/* Pagination */}
-      {pagination && tableData.length > 0 && (
+      {!isFiltered && !isSearching && pagination && truck.length > 0 && (
         <Pagination
           pagination={pagination}
           page={page}
@@ -530,8 +532,8 @@ const TrucksPage: React.FC = () => {
         onSubmit={editMode ? handleUpdate : handleCreate}
         editMode={editMode}
         isLoading={isCreating || isUpdating}
-        allDrivers={allDrivers}
-        allTrucks={allTrucks}
+        allDrivers={Array.isArray(driversData?.data) ? driversData.data : []}
+        allTrucks={trucksData?.data?.data || []}
       />
 
       {/* Delete Confirmation */}

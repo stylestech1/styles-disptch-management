@@ -1,53 +1,67 @@
 "use client";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Dayjs } from "dayjs";
+import toast, { Toaster } from "react-hot-toast";
+
+// Components
 import DataTable from "@/components/ui/DataTable";
 import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Pagination from "@/components/ui/Pagination";
 import StatsCard from "@/components/ui/StatsCard";
 import StatusBadge from "@/components/ui/StatusBadge";
-import { loadColumns } from "@/data/loadTables";
+import SearchInput from "@/components/ui/SearchInput";
+import DateRangeFilter from "@/components/ui/Filter";
+import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
+
+// Hooks
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
+import { useSearchSubmit } from "@/hook/useSearchSubmit";
+
+// Types
 import { TLoads } from "@/types/globalTypes";
-import { useEffect, useMemo, useState } from "react";
-import toast, { Toaster } from "react-hot-toast";
+
+// API & Data
+import { loadColumns } from "@/data/loadTables";
+import {
+  useGetLoadsQuery,
+  useGetNotesQuery,
+  useGetLoadsWithFilterQuery,
+  useLazyGetLoadByIdQuery,
+} from "@/redux/slices/apiSlice";
+
+// Utils
+import { getErrorMessage } from "@/utils/getErrorMessage";
+
+// Store
+import { RootState, useAppSelector } from "@/redux/store";
+
+// Icons
 import {
   IoAdd,
   IoCheckmark,
   IoTime,
   IoCar,
   IoNavigate,
-  IoSearch,
   IoLocationSharp,
   IoChatbubbleEllipses,
 } from "react-icons/io5";
-import {
-  useGetLoadsQuery,
-  useGetAllLoadsQuery,
-  useGetNotesQuery,
-  useGetLoadsWithFilterQuery,
-} from "@/redux/slices/apiSlice";
-// Import the new modal components
-import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
-import { useRouter } from "next/navigation";
-// ✅ Import MUI DateTimePicker
-import "react-date-range/dist/styles.css";
-import "react-date-range/dist/theme/default.css";
-import { Dayjs } from "dayjs";
-import DateRangeFilter from "@/components/ui/Filter";
+
+// MUI
 import {
   alpha,
   Box,
   Button,
-  InputAdornment,
+  SxProps,
   TableRow,
-  TextField,
   Typography,
 } from "@mui/material";
-// Utils
-import { getErrorMessage } from "@/utils/getErrorMessage";
-import { useSearch } from "@/hook/useSearch";
-import { RootState, useAppSelector } from "@/redux/store";
+
+// Styles
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
 
 const LoadsPageDetails = () => {
   const [page, setPage] = useState(1);
@@ -57,95 +71,130 @@ const LoadsPageDetails = () => {
 
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
-
-  // Selected items for modals
   const [selectedLoadForNotes, setSelectedLoadForNotes] =
     useState<TLoads | null>(null);
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
+
+  // Loading & Error states
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
 
-  // ✅ Search And Filter
+  // Filter states
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [isFiltered, setIsFiltered] = useState(false);
-  const [searchInput, setSearchInput] = useState("");
 
-  // RTK Query
+  const [
+    triggerSearchQuery,
+    {
+      data: loadByIdData,
+      isLoading: loadByIdLoading,
+      error: loadByIdError,
+      reset: resetSearchQuery,
+    },
+  ] = useLazyGetLoadByIdQuery();
+
+  // Search Hook
+  const searchHook = useSearchSubmit({
+    onSearch: (term) => {
+      setPage(1);
+      if (term.trim()) {
+        triggerSearchQuery(term);
+      }
+    },
+    onReset: () => {
+      setPage(1);
+      resetSearchQuery();
+      refetchLoads();
+    },
+  });
+
+  const { searchTerm, isSearching } = searchHook;
+
   const {
     data: loadsData,
     isLoading: loadsLoading,
     error: loadsError,
     refetch: refetchLoads,
-  } = useGetLoadsQuery({ page, limit: 10 });
-  const { data: allLoadsData, isLoading: allLoadsLoading } =
-    useGetAllLoadsQuery();
-  const { isLoading: notesLoading } = useGetNotesQuery(
-    selectedLoadForNotes?.id || "",
+  } = useGetLoadsQuery(
+    { page, limit: 10 },
     {
-      skip: !selectedLoadForNotes?.id,
+      refetchOnFocus: false,
     }
   );
-  const { data: filteredData } = useGetLoadsWithFilterQuery(
-    {
-      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
-      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
-    },
-    { skip: !isFiltered }
-  )
 
-  // responses
-  const load = isFiltered ? filteredData?.data || [] : loadsData?.data || [];
-  const allLoads = allLoadsData?.data || [];
-  const pagination = isFiltered ? null : loadsData?.paginationResult || null;
+  const { isLoading: notesLoading } = useGetNotesQuery(
+    selectedLoadForNotes?.id || "",
+    { skip: !selectedLoadForNotes?.id }
+  );
 
-  console.log('load', load)
-  console.log('allLoads', allLoads)
-  console.log('pagination', pagination)
+  const { data: filteredData, isLoading: filterLoading } =
+    useGetLoadsWithFilterQuery(
+      {
+        from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+        to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+        page,
+        limit:10
+      },
+      {
+        skip: !isFiltered || !fromDate || !toDate,
+        refetchOnFocus: false,
+      }
+    );
 
-  // Handling Loading
+  //  Process data
+  const load = useMemo(() => {
+    if (isSearching && Array.isArray(loadByIdData?.data)) {
+      return loadByIdData.data.flat();
+    }
+    if (isFiltered && filteredData?.data) {
+      return filteredData.data;
+    }
+    return loadsData?.data || [];
+  }, [isSearching, isFiltered, loadByIdData, filteredData, loadsData]);
+
+  const pagination = isFiltered ? filteredData?.paginationResult || null : loadsData?.paginationResult || null ;
+
+  // Loading state
   useEffect(() => {
-    const isLoading = loadsLoading || allLoadsLoading || notesLoading;
-    setLoading(isLoading);
-  }, [loadsLoading, allLoadsLoading, notesLoading, setLoading]);
+    setLoading(loadsLoading && !loadsData);
+  }, [loadsLoading, loadsData, setLoading]);
 
-  // handling Errors
+  // Error handling
   useEffect(() => {
-    if (loadsError) {
-      const errorMessage = getErrorMessage(loadsError);
+    const currentError = loadsError || loadByIdError;
+    if (currentError) {
+      const errorMessage = getErrorMessage(currentError);
       setError(errorMessage);
-      toast.error(errorMessage || "Loading failed ❌", {
-        style: { background: "#dc2626", color: "#fff" },
+      toast.error(errorMessage || "Failed to load data ❌", {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+        duration: 4000,
       });
     }
-  }, [loadsError, setError]);
+  }, [loadsError, loadByIdError, setError]);
 
-  // Filter and Search loads
-  const { filteredData: searchedLoads } = useSearch({
-    data: allLoads || [],
-    searchFields: ["loadId", "driverId.phone"],
-    initialSearch: searchInput,
-  });
-  const tableData = searchInput ? searchedLoads : load;
-
-  // StatsCard
+  // Stats cards
   const statsData = useMemo(() => {
-    const currentData = allLoads;
-
+    if (!load || load.length === 0)
+      return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
     return {
-      totalLoads: currentData.length,
-      pending: currentData.filter((l: TLoads) => l.status === "pending").length,
-      inTransit: currentData.filter((l: TLoads) => l.status === "in_transit")
-        .length,
-      delivered: currentData.filter((l: TLoads) => l.status === "delivered")
-        .length,
+      totalLoads: load.length,
+      pending: load.filter((l: TLoads) => l.status === "pending").length,
+      inTransit: load.filter((l: TLoads) => l.status === "in_transit").length,
+      delivered: load.filter((l: TLoads) => l.status === "delivered").length,
     };
-  }, [tableData]);
+  }, [load]);
 
-  // TODO: set loading
-  if (loading) return <Loading />;
+  // Loading state
+  const isInitialLoading = loadsLoading && !loadsData;
+  if (isInitialLoading) return <Loading />;
 
-  // TODO: Table
+  // Table row renderer
   const renderLoadRow = (loadItem: TLoads) => {
     const hasComments = loadItem.comments && loadItem.comments.length > 0;
     const commentsCount = loadItem.comments?.length || 0;
@@ -155,26 +204,35 @@ const LoadsPageDetails = () => {
         e.stopPropagation();
       }
 
-      if (userRole === "admin") {
-        router.push(
-          `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
-        );
-      } else if (userRole === "employee") {
-        router.push(
-          `/dispatchers/loadDetails/${encodeURIComponent(loadItem.loadId)}`
-        );
-      }
+      const path =
+        userRole === "admin"
+          ? `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
+          : `/dispatchers/loadDetails/${encodeURIComponent(loadItem.loadId)}`;
+
+      router.push(path);
+    };
+
+    // Styles
+    const tableRowSx: SxProps = {
+      "&:hover": {
+        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
+    const commentButtonSx: SxProps = {
+      backgroundColor: theme.currentPalette.primary,
+      "&:hover": {
+        backgroundColor: theme.currentPalette.secondary,
+        transform: "scale(1.05)",
+      },
+      transition: "all 0.2s ease-in-out",
     };
 
     return (
       <TableRow
-        sx={{
-          "&:hover": {
-            backgroundColor: alpha(theme.currentPalette.primary, 0.05),
-          },
-        }}
-        key={loadItem.loadId}
-        className="transition-colors group cursor-pointer"
+        sx={tableRowSx}
+        key={loadItem.id || loadItem.loadId}
         onClick={navigateToLoadDetails}
       >
         {/* Load ID */}
@@ -230,14 +288,12 @@ const LoadsPageDetails = () => {
 
         {/* Price Per Mile */}
         <td className="p-4 text-center text-slate-700">
-          {loadItem.pricePerMile
-            ? `${loadItem.pricePerMile.toFixed(2)} $`
-            : "-"}
+          {loadItem.pricePerMile ? `$${loadItem.pricePerMile.toFixed(2)}` : "-"}
         </td>
 
         {/* Total */}
         <td className="p-4 text-center font-semibold text-emerald-700">
-          {loadItem.totalPrice ? `${loadItem.totalPrice} $` : "-"}
+          {loadItem.totalPrice ? `$${loadItem.totalPrice}` : "-"}
         </td>
 
         {/* Status */}
@@ -267,28 +323,24 @@ const LoadsPageDetails = () => {
           <div className="flex items-center justify-center">
             {hasComments ? (
               <div
-                className="relative cursor-pointer hover:scale-110 transition-transform group/note"
+                className="relative cursor-pointer group/note"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (userRole === "admin") {
-                    router.push(
-                      `/admin/loadDetails/${encodeURIComponent(
-                        loadItem.loadId
-                      )}`
-                    );
-                  } else if (userRole === "employee") {
-                    router.push(
-                      `/dispatchers/loadDetails/${encodeURIComponent(
-                        loadItem.loadId
-                      )}`
-                    );
-                  }
+                  const path =
+                    userRole === "admin"
+                      ? `/admin/loadDetails/${encodeURIComponent(
+                          loadItem.loadId
+                        )}`
+                      : `/dispatchers/loadDetails/${encodeURIComponent(
+                          loadItem.loadId
+                        )}`;
+                  router.push(path);
                 }}
                 title={`${commentsCount} comment(s) - Click to view`}
               >
                 <Box
-                  sx={{ backgroundColor: theme.currentPalette.primary }}
-                  className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm group-hover/note:bg-blue-600 transition-colors"
+                  sx={commentButtonSx}
+                  className="w-8 h-8 rounded-full flex items-center justify-center shadow-sm"
                 >
                   <IoChatbubbleEllipses size={16} className="text-white" />
                 </Box>
@@ -324,68 +376,107 @@ const LoadsPageDetails = () => {
     );
   };
 
+  // Container styles
+  const containerSx: SxProps = {
+    backgroundColor: theme.currentPalette.background,
+    minHeight: "100vh",
+    p: 3,
+  };
+
+  const headerContainerSx: SxProps = {
+    mb: 4,
+  };
+
+  const searchFilterContainerSx: SxProps = {
+    display: "flex",
+    flexDirection: { xs: "column", lg: "row" },
+    alignItems: "end",
+    gap: 2,
+    p: 3,
+    my: 5,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
+    borderRadius: 1,
+    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    backgroundColor: theme.currentPalette.background,
+  };
+
+  const newLoadButtonSx: SxProps = {
+    py: 1.5,
+    px: 4,
+    fontWeight: "bold",
+    fontSize: "1rem",
+    borderRadius: 2,
+    textTransform: "none",
+    width: { xs: "100%", lg: "auto" },
+    background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+    color: "#fff",
+    "&:hover": {
+      background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+      transform: "translateY(-1px)",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+    },
+    transition: "all 0.3s ease",
+  };
+
   return (
-    <section className="relative p-6">
-      {/* Header */}
-      <div className="space-y-6 mb-10">
-        {/* Title */}
-        <Box
-          component="div"
-          className="flex flex-col xl:items-start xl:justify-between gap-1"
+    <Box sx={containerSx}>
+      {/* Header Section */}
+      <Box sx={headerContainerSx}>
+        <Typography
+          sx={{
+            color: theme.currentPalette.text,
+            fontSize: { xs: "2rem", md: "2.5rem", lg: "3rem" },
+            fontWeight: "bold",
+            mb: 1,
+          }}
         >
-          <Typography
-            sx={{
-              color: theme.currentPalette.text,
-              fontSize: "45px",
-              fontWeight: "bold",
-            }}
-          >
-            Load Management
-          </Typography>
-          <Typography
-            sx={{
-              color: alpha(theme.currentPalette.text, 0.7),
-              fontSize: "16px",
-            }}
-          >
-            Manage and track all your shipments and deliveries in one place.
-            Monitor status, assign drivers, and update load information.
-          </Typography>
-        </Box>
+          Load Management
+        </Typography>
+        <Typography
+          sx={{
+            color: alpha(theme.currentPalette.text, 0.7),
+            fontSize: "1rem",
+            maxWidth: "600px",
+            lineHeight: 1.6,
+          }}
+        >
+          Manage and track all your shipments and deliveries in one place.
+          Monitor status, assign drivers, and update load information
+          efficiently.
+        </Typography>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
-          <StatsCard
-            title="Total Loads"
-            value={statsData.totalLoads}
-            icon={IoCar}
-            iconColor={theme.currentPalette.primary}
-          />
+        <Box sx={{ mt: 4, mb: 5 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatsCard
+              title="Total Loads"
+              value={statsData.totalLoads}
+              icon={IoCar}
+              iconColor={theme.currentPalette.primary}
+            />
+            <StatsCard
+              title="Pending"
+              value={statsData.pending}
+              icon={IoTime}
+              iconColor={theme.currentPalette.primary}
+            />
+            <StatsCard
+              title="In Transit"
+              value={statsData.inTransit}
+              icon={IoNavigate}
+              iconColor={theme.currentPalette.primary}
+            />
+            <StatsCard
+              title="Delivered"
+              value={statsData.delivered}
+              icon={IoCheckmark}
+              iconColor={theme.currentPalette.primary}
+            />
+          </div>
+        </Box>
 
-          <StatsCard
-            title="Pending"
-            value={statsData.pending}
-            icon={IoTime}
-            iconColor={theme.currentPalette.primary}
-          />
-
-          <StatsCard
-            title="In Transit"
-            value={statsData.inTransit}
-            icon={IoNavigate}
-            iconColor={theme.currentPalette.primary}
-          />
-
-          <StatsCard
-            title="Delivered"
-            value={statsData.delivered}
-            icon={IoCheckmark}
-            iconColor={theme.currentPalette.primary}
-          />
-        </div>
-
-        {/* Button */}
-        <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
+        {/* Action Button */}
+        <Box display="flex" justifyContent="end" sx={{ mt: 3 }}>
           <Button
             onClick={() => {
               setEditingLoad(null);
@@ -393,122 +484,93 @@ const LoadsPageDetails = () => {
             }}
             variant="contained"
             startIcon={<IoAdd size={22} />}
-            sx={{
-              py: 1.5,
-              px: 4,
-              fontWeight: "bold",
-              fontSize: "1rem",
-              borderRadius: 2,
-              textTransform: "none",
-              width: { xs: "100%", lg: "auto" },
-              background: `linear-gradient(to right, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
-              color: "#fff",
-              "&:hover": {
-                background: `linear-gradient(to right, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
-              },
-              transition: "all 0.3s ease",
-            }}
+            sx={newLoadButtonSx}
           >
             New Load
           </Button>
         </Box>
+      </Box>
 
-        {/* Search & Filter */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", lg: "row" },
-            alignItems: "end",
-            gap: 2,
-            p: 2,
-            mt: 5,
-            border: `1px solid ${theme.currentPalette.primary}33`,
-            borderRadius: 2,
-            boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
-            backgroundColor: theme.currentPalette.background,
+      {/* Search & Filter Section */}
+      <Box sx={searchFilterContainerSx}>
+        <SearchInput
+          searchHook={searchHook}
+          placeholder="Search by Load ID or Driver Phone..."
+          fullWidth
+          showClearButton
+          sx={{ width: "100%" }}
+          inputSx={{
+            "& .MuiOutlinedInput-root": {
+              borderRadius: 2,
+              backgroundColor: "#fff",
+              py: 0.5,
+            },
           }}
-        >
-          {/* Search */}
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search loads by ID or driver number"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <IoSearch size={20} color="#9ca3af" />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{
-              width: { xs: "100%", lg: "80%" },
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 1,
-                backgroundColor: "#fff",
-                "& fieldset": { borderColor: "#e5e7eb" },
-                "&:hover fieldset": {
-                  borderColor: theme.currentPalette.primary,
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: theme.currentPalette.primary,
-                },
-              },
-              "& input": {
-                color: theme.currentPalette.text,
-              },
-            }}
-          />
+        />
 
-          {/* Filter */}
-          <DateRangeFilter
-            onApply={(from, to) => {
-              if (!from || !to) {
-                setIsFiltered(false);
-                setFromDate(null);
-                setToDate(null);
-              } else {
-                setIsFiltered(true);
-                setFromDate(from);
-                setToDate(to);
-              }
-            }}
-          />
-        </Box>
-      </div>
+        <DateRangeFilter
+          onApply={(from, to) => {
+            if (!from || !to) {
+              setIsFiltered(false);
+              setFromDate(null);
+              setToDate(null);
+              setPage(1);
+            } else {
+              setIsFiltered(true);
+              setFromDate(from);
+              setToDate(to);
+              setPage(1);
+            }
+            searchHook.handleSearchReset();
+          }}
+        />
+      </Box>
 
-      <Toaster position="top-right" />
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: {
+            borderRadius: "8px",
+            fontSize: "14px",
+          },
+        }}
+      />
 
-      {/* Errors */}
+      {/* Error Display */}
       {error && (
-        <div className="mb-6">
+        <Box sx={{ mb: 3 }}>
           <Erros message={error} />
-        </div>
+        </Box>
       )}
 
-      {/* Table For Loads */}
+      {/* Data Table */}
       <DataTable
         columns={loadColumns}
-        data={tableData}
+        data={load}
         renderRow={renderLoadRow}
-        loading={loading}
+        loading={
+          (isSearching && loadByIdLoading) ||
+          (isFiltered && filterLoading) ||
+          (loadsLoading && !loadsData)
+        }
       />
 
       {/* Pagination */}
-      {!isFiltered && !searchInput && pagination && tableData.length > 0 && (
-        <Pagination
-          pagination={pagination}
-          page={page}
-          setPage={setPage}
-          pageSize={10}
-          showInfo={true}
-        />
+      {!isSearching && pagination && load.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Pagination
+            pagination={pagination}
+            page={page}
+            setPage={setPage}
+            pageSize={10}
+            showInfo={true}
+          />
+        </Box>
       )}
 
-      {/* Modal Components */}
+      {/* Create/Edit Load Modal */}
       <CreateEditLoadModal
         isOpen={showCreateEditModal}
         onClose={() => {
@@ -518,7 +580,7 @@ const LoadsPageDetails = () => {
         }}
         editingLoad={editingLoad}
       />
-    </section>
+    </Box>
   );
 };
 
