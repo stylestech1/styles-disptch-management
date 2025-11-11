@@ -28,7 +28,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
     load?.id || ""
   );
   const [addingNote, setAddingNote] = useState("");
-  const [noteType, setNoteType] = useState<"load" | "driver">("load");
+  const [noteType, setNoteType] = useState<"dispatcher" | "driver">("dispatcher");
 
   // using useGetLoadsQuery instead of useSelector
   const { refetch } = useGetLoadsQuery({ page: 1, limit: 10 });
@@ -69,7 +69,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
 
   const handleClose = () => {
     setAddingNote("");
-    setNoteType("load");
+    setNoteType("dispatcher");
     onClose();
   };
 
@@ -103,9 +103,11 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
             <Select
               labelId="demo-simple-select-label"
               value={noteType}
-              onChange={(e) => setNoteType(e.target.value as "load" | "driver")}
+              displayEmpty
+              onChange={(e) => setNoteType(e.target.value as "dispatcher" | "driver")}
             >
-              <MenuItem value={"load"}>Load Note</MenuItem>
+              <MenuItem value={""} disabled>Select Note Type</MenuItem>
+              <MenuItem value={"dispatcher"}>Dispatcher Note</MenuItem>
               <MenuItem value={"driver"}>Driver Note</MenuItem>
             </Select>
           </FormControl>

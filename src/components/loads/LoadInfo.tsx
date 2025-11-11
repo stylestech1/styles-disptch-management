@@ -1,5 +1,4 @@
 "use client";
-import { useParams } from "next/navigation";
 import { useGetLoadByIdQuery } from "@/redux/slices/apiSlice";
 import {
   Box,
