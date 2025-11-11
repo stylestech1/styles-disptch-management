@@ -336,7 +336,7 @@ const TruckDashboard = () => {
       <Box sx={searchFilterContainerSx}>
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search trucks by ID"
+          placeholder="Search trucks by Plate Number"
           fullWidth
           showClearButton
           sx={{ width: "100%" }}
@@ -375,7 +375,7 @@ const TruckDashboard = () => {
           <TableHead>
             <TableRow>
               <StyledTableCell>#</StyledTableCell>
-              <StyledTableCell>Truck</StyledTableCell>
+              <StyledTableCell>Plate Number</StyledTableCell>
               <StyledTableCell align="right">Loads</StyledTableCell>
               <StyledTableCell align="right">Miles</StyledTableCell>
               <StyledTableCell align="right">Gross</StyledTableCell>
