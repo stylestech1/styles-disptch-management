@@ -95,7 +95,7 @@ export const DriverForm = ({
       status: "",
       user: "",
     },
-    mode: "onChange",
+    mode: "onSubmit",
   });
 
   const emailValue = watch("email");
@@ -507,6 +507,9 @@ export const DriverForm = ({
                           )
                         }
                         slotProps={{
+                          popper:{
+                            disablePortal: true
+                          },
                           textField: {
                             fullWidth: true,
                             error: !!errors.hireDate,
