@@ -495,7 +495,7 @@ const LoadsPageDetails = () => {
       <Box sx={searchFilterContainerSx}>
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search by Load ID or Driver Phone..."
+          placeholder="Search by Load ID"
           fullWidth
           showClearButton
           sx={{ width: "100%" }}

@@ -566,7 +566,7 @@ const DriversPage = () => {
         {/* Search */}
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search drivers by ID, name, phone, email, or license number"
+          placeholder="Search drivers by ID"
           fullWidth
           showClearButton
           sx={{ width: "100%" }}

@@ -332,11 +332,11 @@ const TruckDashboard = () => {
         )}
       </Box>
 
-      {/* Search Bar باستخدام SearchInput */}
+      {/* Search Bar */}
       <Box sx={searchFilterContainerSx}>
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search trucks by ID, model, or plate number"
+          placeholder="Search trucks by ID"
           fullWidth
           showClearButton
           sx={{ width: "100%" }}

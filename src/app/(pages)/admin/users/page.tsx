@@ -474,7 +474,7 @@ const Users = () => {
         {/* Search */}
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search users by name, email, phone, or job ID"
+          placeholder="Search users by job ID"
           fullWidth
           showClearButton
           sx={{ width: "100%" }}
