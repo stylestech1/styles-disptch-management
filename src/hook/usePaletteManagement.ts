@@ -30,8 +30,6 @@ export const usePaletteManagement = () => {
     refetch: refetchPalettes 
   } = useGetPaletteQuery();
 
-  console.log(backendPalettes)
-
   const [createPalette, { isLoading: isCreating }] = useCreatePaletteMutation();
   const [updatePalette, { isLoading: isUpdating }] = useUpdatePaletteMutation();
 

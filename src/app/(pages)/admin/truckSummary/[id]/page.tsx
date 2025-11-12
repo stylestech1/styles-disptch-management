@@ -84,7 +84,6 @@ const TruckSummary = () => {
     return Array.isArray(summaryData.data.loads) ? summaryData.data.loads : [];
   })();
 
-  // console.log()
   const { filteredData: searchedTruck } = useSearch<TLoads>({
     data: loadsData,
     searchFields: ["loadId", "driverId.name"],

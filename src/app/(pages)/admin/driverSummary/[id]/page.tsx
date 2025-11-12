@@ -78,8 +78,6 @@ const DriverSummary = () => {
 
   const profile = profileData?.data;
   const summaryData = driverSummaryData?.data;
-  console.log('profile', profile)
-  console.log('summaryData', summaryData)
 
   // ✅ Search
   const loadsData: TLoads[] = Array.isArray(summaryData?.loads)

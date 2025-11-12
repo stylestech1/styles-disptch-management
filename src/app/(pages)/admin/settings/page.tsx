@@ -39,7 +39,7 @@ export default function Settings() {
   });
 
   useEffect(() => {
-    setCustom(prev => ({
+    setCustom((prev) => ({
       ...prev,
       primary: currentPalette.primary,
       secondary: currentPalette.secondary,
@@ -65,13 +65,14 @@ export default function Settings() {
         overflow: "hidden",
         cursor: "pointer",
         boxShadow: currentPalette.customName === palette.customName ? 4 : 1,
-        border: currentPalette.customName === palette.customName 
-          ? `2px solid ${palette.primary}` 
-          : "1px solid #ccc",
-        "&:hover": { 
+        border:
+          currentPalette.customName === palette.customName
+            ? `2px solid ${palette.primary}`
+            : "1px solid #ccc",
+        "&:hover": {
           boxShadow: 4,
           transform: "scale(1.05)",
-          transition: "all 0.2s ease-in-out"
+          transition: "all 0.2s ease-in-out",
         },
       }}
     >
@@ -82,19 +83,24 @@ export default function Settings() {
         <Box sx={{ flex: 1, backgroundColor: palette.text }} />
         <Box sx={{ flex: 1, backgroundColor: palette.title }} />
       </Box>
-      <Box sx={{ 
-        height: "30%", 
-        display: "flex", 
-        alignItems: "center", 
-        justifyContent: "center",
-        backgroundColor: palette.background,
-      }}>
+      <Box
+        sx={{
+          height: "30%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          backgroundColor: palette.background,
+        }}
+      >
         <Typography
           variant="caption"
           sx={{
             textAlign: "center",
             color: palette.text,
-            fontWeight: currentPalette.customName === palette.customName ? "bold" : "normal",
+            fontWeight:
+              currentPalette.customName === palette.customName
+                ? "bold"
+                : "normal",
           }}
         >
           {palette.customName}
@@ -114,9 +120,12 @@ export default function Settings() {
       return;
     }
 
-    const colorFields = ['primary', 'secondary', 'background', 'text', 'title'];
+    const colorFields = ["primary", "secondary", "background", "text", "title"];
     for (const field of colorFields) {
-      if (!custom[field as keyof typeof custom] || !/^#[0-9A-F]{6}$/i.test(custom[field as keyof typeof custom])) {
+      if (
+        !custom[field as keyof typeof custom] ||
+        !/^#[0-9A-F]{6}$/i.test(custom[field as keyof typeof custom])
+      ) {
         toast.error(`Please enter a valid color for ${field}! ❌`);
         return;
       }
@@ -191,11 +200,12 @@ export default function Settings() {
   ];
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
+    <Box sx={{ p: 3, maxWidth: 1200, margin: "0 auto" }}>
       <Box
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          flexDirection: { xs: "column", sm: "row" },
+          justifyContent: { xs: "center", sm: "space-between" },
           alignItems: "center",
           mb: 3,
         }}
@@ -223,11 +233,19 @@ export default function Settings() {
         <Typography variant="h5" sx={{ mb: 2 }}>
           Available Palettes
         </Typography>
-        
+
         <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
           Default Palettes
         </Typography>
-        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: { xs: 1.5, sm: 2, md: 3 },
+            justifyContent: { xs: "center", sm: "flex-start" },
+            mb: { xs: 2, sm: 3, md: 4 },
+            flexWrap: "wrap",
+          }}
+        >
           {defaultPalettes.map((palette, index) => (
             <PaletteCardPreview
               key={`default-${index}`}
@@ -240,7 +258,15 @@ export default function Settings() {
         <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
           Custom Palettes
         </Typography>
-        <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+        <Box
+          sx={{
+            display: "flex",
+            gap: { xs: 1.5, sm: 2, md: 3 },
+            justifyContent: { xs: "center", sm: "flex-start" },
+            mb: { xs: 2, sm: 3, md: 4 },
+            flexWrap: "wrap",
+          }}
+        >
           {customPalettes.length > 0 ? (
             customPalettes.map((palette) => (
               <PaletteCardPreview
@@ -257,28 +283,36 @@ export default function Settings() {
         </Box>
       </Box>
 
-      <Box sx={{ 
-        p: 3, 
-        border: "1px solid", 
-        borderColor: "divider", 
-        borderRadius: 2,
-        backgroundColor: "background.paper"
-      }}>
+      <Box
+        sx={{
+          p: 3,
+          border: "1px solid",
+          borderColor: "divider",
+          borderRadius: 2,
+          backgroundColor: "background.paper",
+        }}
+      >
         <Typography variant="h5" sx={{ mb: 3 }}>
           Create Custom Palette
         </Typography>
 
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 3, mb: 3 }}>
+        <Box sx={{ display: "flex",
+            gap: { xs: 1.5, sm: 2, md: 3 },
+            justifyContent: "flex-start",
+            mb: { xs: 2, sm: 3, md: 4 },
+            flexWrap: "wrap", }}>
           <TextField
             label="Palette Name"
             value={custom.customName}
-            onChange={(e) => setCustom({ ...custom, customName: e.target.value })}
+            onChange={(e) =>
+              setCustom({ ...custom, customName: e.target.value })
+            }
             size="small"
-            sx={{ minWidth: 200 }}
+            sx={{ minWidth: {xs: '100%', md: 200} }}
             placeholder="Enter palette name"
           />
 
-          <FormControl size="small" sx={{ minWidth: 120 }}>
+          <FormControl size="small" sx={{ minWidth: {sx: '100%', md: 120} }}>
             <InputLabel>Mode</InputLabel>
             <Select
               value={custom.mode}
@@ -295,7 +329,11 @@ export default function Settings() {
           {[
             { label: "Primary", value: custom.primary, key: "primary" },
             { label: "Secondary", value: custom.secondary, key: "secondary" },
-            { label: "Background", value: custom.background, key: "background" },
+            {
+              label: "Background",
+              value: custom.background,
+              key: "background",
+            },
             { label: "Text", value: custom.text, key: "text" },
             { label: "Title", value: custom.title, key: "title" },
           ].map((color) => (
@@ -304,9 +342,11 @@ export default function Settings() {
               label={color.label}
               type="color"
               value={color.value}
-              onChange={(e) => setCustom({ ...custom, [color.key]: e.target.value })}
+              onChange={(e) =>
+                setCustom({ ...custom, [color.key]: e.target.value })
+              }
               size="small"
-              sx={{ minWidth: 150 }}
+              sx={{ minWidth: {xs: '100%', md: 150} }}
               InputProps={{
                 startAdornment: (
                   <Box
@@ -325,7 +365,7 @@ export default function Settings() {
           ))}
         </Box>
 
-        <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+        <Box sx={{ display: "flex", flexDirection: {xs: 'column', md: 'row'} ,gap: 2, alignItems: "center" }}>
           <Button
             variant="contained"
             onClick={handleSaveCustom}
@@ -335,18 +375,20 @@ export default function Settings() {
           >
             {isLoading ? "Saving..." : "Save Custom Palette"}
           </Button>
-          
+
           <Button
             variant="outlined"
-            onClick={() => setCustom({
-              mode: "light",
-              customName: "",
-              primary: "#1E56A0",
-              secondary: "#266DCB",
-              background: "#FBFDFE",
-              text: "#333333",
-              title: "#1E56A0",
-            })}
+            onClick={() =>
+              setCustom({
+                mode: "light",
+                customName: "",
+                primary: "#1E56A0",
+                secondary: "#266DCB",
+                background: "#FBFDFE",
+                text: "#333333",
+                title: "#1E56A0",
+              })
+            }
             disabled={isLoading}
           >
             Reset Form
