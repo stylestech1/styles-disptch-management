@@ -56,10 +56,7 @@ import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 import UpdateStatusModal from "@/components/loads/UpdateStatusModal";
 import { IoRefresh } from "react-icons/io5";
 import { RootState, useAppSelector } from "@/redux/store";
-
-interface LoadInfoProps {
-  loadId: string | undefined;
-}
+import { useParams } from "next/navigation";
 
 // handling Tabs
 function TabPanel(props: TabPanelProps) {
@@ -78,17 +75,17 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
-const LoadInfo = ({ loadId }: LoadInfoProps) => {
+const LoadInfo = () => {
   const [tabValue, setTabValue] = useState(0);
   const [viewNoteDialog, setViewNoteDialog] = useState(false);
   const [selectedNote, setSelectedNote] = useState<TComments | null>(null);
   const [notes, setNotes] = useState<TComments[]>([]);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const theme = useAppSelector((state: RootState) => state.palette);
+  const params = useParams();
+  const loadId = params.loadId;
   // decode and clean the loadId
-  const decodedLoadId = loadId ? decodeURIComponent(loadId).trim() : "";
-  console.log('decodedLoadId', typeof decodedLoadId)
-  console.log('loadId', typeof loadId)
+  const decodedLoadId = decodeURIComponent(String(loadId)).trim();
 
   const {
     data,

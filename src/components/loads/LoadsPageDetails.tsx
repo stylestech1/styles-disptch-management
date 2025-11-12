@@ -198,6 +198,7 @@ const LoadsPageDetails = () => {
   const renderLoadRow = (loadItem: TLoads) => {
     const hasComments = loadItem.comments && loadItem.comments.length > 0;
     const commentsCount = loadItem.comments?.length || 0;
+    console.log('loadId, ', typeof loadItem.loadId)
 
     const navigateToLoadDetails = (e?: React.MouseEvent) => {
       if (e) {
@@ -206,8 +207,8 @@ const LoadsPageDetails = () => {
 
       const path =
         userRole === "admin"
-          ? `/admin/loadDetails/${encodeURIComponent(loadItem.loadId)}`
-          : `/dispatchers/loadDetails/${encodeURIComponent(loadItem.loadId)}`;
+          ? `/admin/loadDetails/${encodeURIComponent(String(loadItem.loadId))}`
+          : `/dispatchers/loadDetails/${encodeURIComponent(String(loadItem.loadId))}`;
 
       router.push(path);
     };
