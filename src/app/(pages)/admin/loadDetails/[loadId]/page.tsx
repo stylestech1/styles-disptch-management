@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 
 const LoadDetailsForAdmin = () => {
   const { loadId } = useParams();
-  const loadIdParam  = Array.isArray(loadId) ? loadId[0] : loadId;
+  const loadIdParam  = String(Array.isArray(loadId) ? loadId[0] : loadId);
   return <LoadInfo loadId={loadIdParam} />;
 };
 
