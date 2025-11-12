@@ -48,11 +48,11 @@ const StatsCard = ({
             justifyContent="space-between"
           >
             <Box flex={1}>
-              <Box sx={{ width: "50%", height: 14, bgcolor: "#e2e8f0", mb: 1 }} />
-              <Box sx={{ width: "30%", height: 18, bgcolor: "#e2e8f0" }} />
+              <Box sx={{ width: "50%", height: 14, mb: 1 }} />
+              <Box sx={{ width: "30%", height: 18 }} />
             </Box>
-            <Box sx={{ p: 1.5, bgcolor: bgColor, borderRadius: 2 }}>
-              <Box sx={{ width: 24, height: 24, bgcolor: "#e2e8f0", borderRadius: "50%" }} />
+            <Box sx={{ p: 1.5, borderRadius: 2 }}>
+              <Box sx={{ width: 24, height: 24, borderRadius: "50%" }} />
             </Box>
           </Box>
         </CardContent>
@@ -65,8 +65,8 @@ const StatsCard = ({
       variant="outlined"
       sx={{
         borderRadius: 3,
-        borderColor: "#e2e8f0",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+        borderColor: alpha(theme.currentPalette.primary, 0.2),
+        bgcolor: theme.currentPalette.background,
         transition: "all 0.3s ease",
         "&:hover": { boxShadow: "0 3px 8px rgba(0,0,0,0.1)" },
       }}

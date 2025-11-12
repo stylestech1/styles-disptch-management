@@ -197,6 +197,15 @@ export default function Settings() {
       text: "#05292E",
       title: "#0A7C78",
     },
+    // {
+    //   mode: "dark",
+    //   customName: "Midnight",
+    //   primary: "#3B82F6",
+    //   secondary: "#1E40AF",
+    //   background: "#0F1724",
+    //   text: "#E6EEF8",
+    //   title: "#60A5FA",
+    // },
   ];
 
   return (
@@ -296,11 +305,15 @@ export default function Settings() {
           Create Custom Palette
         </Typography>
 
-        <Box sx={{ display: "flex",
+        <Box
+          sx={{
+            display: "flex",
             gap: { xs: 1.5, sm: 2, md: 3 },
             justifyContent: "flex-start",
             mb: { xs: 2, sm: 3, md: 4 },
-            flexWrap: "wrap", }}>
+            flexWrap: "wrap",
+          }}
+        >
           <TextField
             label="Palette Name"
             value={custom.customName}
@@ -308,11 +321,11 @@ export default function Settings() {
               setCustom({ ...custom, customName: e.target.value })
             }
             size="small"
-            sx={{ minWidth: {xs: '100%', md: 200} }}
+            sx={{ minWidth: { xs: "100%", md: 200 } }}
             placeholder="Enter palette name"
           />
 
-          <FormControl size="small" sx={{ minWidth: {sx: '100%', md: 120} }}>
+          <FormControl size="small" sx={{ minWidth: { sx: "100%", md: 120 } }}>
             <InputLabel>Mode</InputLabel>
             <Select
               value={custom.mode}
@@ -346,7 +359,7 @@ export default function Settings() {
                 setCustom({ ...custom, [color.key]: e.target.value })
               }
               size="small"
-              sx={{ minWidth: {xs: '100%', md: 150} }}
+              sx={{ minWidth: { xs: "100%", md: 150 } }}
               InputProps={{
                 startAdornment: (
                   <Box
@@ -365,7 +378,14 @@ export default function Settings() {
           ))}
         </Box>
 
-        <Box sx={{ display: "flex", flexDirection: {xs: 'column', md: 'row'} ,gap: 2, alignItems: "center" }}>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 2,
+            alignItems: "center",
+          }}
+        >
           <Button
             variant="contained"
             onClick={handleSaveCustom}

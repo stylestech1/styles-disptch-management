@@ -501,7 +501,7 @@ export const apiSlice = api.injectEndpoints({
       invalidatesTags: ["Customers"],
     }),
 
-    // 🔹 Update driver
+    // 🔹 Update customer
     updateCustomer: builder.mutation<
       { data: TCustomer },
       { id: string; body: Partial<TCustomer> }
@@ -512,6 +512,15 @@ export const apiSlice = api.injectEndpoints({
         body,
       }),
       invalidatesTags: ["Customers"],
+    }),
+
+    // 🔹 Delete Customer
+    deleteCustomer: builder.mutation<{ message: string }, string>({
+      query: (id) => ({
+        url: `/api/v1/customers/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ['Customers'],
     }),
   }),
 });
@@ -587,4 +596,5 @@ export const {
   useGetCustomersWithPaginationQuery,
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
+  useDeleteCustomerMutation,
 } = apiSlice;

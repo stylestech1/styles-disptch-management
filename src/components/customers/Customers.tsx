@@ -6,7 +6,7 @@ import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
 import Erros from "@/components/ui/Erros";
-import { IoAdd, IoPencil, IoSearch, IoPerson } from "react-icons/io5";
+import { IoAdd, IoPencil, IoSearch, IoPerson, IoTrash } from "react-icons/io5";
 import {
   Button,
   TableRow,
@@ -19,6 +19,7 @@ import {
   alpha,
   SxProps,
   Typography,
+  Dialog,
 } from "@mui/material";
 
 import { muiTheme } from "@/theme/theme";
@@ -26,6 +27,7 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {
   useCreateCustomerMutation,
+  useDeleteCustomerMutation,
   useGetCustomersWithPaginationQuery,
   useGetCustomerWithFilterQuery,
   useLazyGetCustomerByIdQuery,
@@ -203,7 +205,7 @@ const CustomerPage = () => {
     }
   }, [customerError, customerByIdError, setError]);
 
-  // ✅ Create Driver
+  // ✅ Create Customer
   const handleCreate = async () => {
     if (!user?.id) {
       toast.error("User not found!");
@@ -224,10 +226,10 @@ const CustomerPage = () => {
     }
   };
 
-  // ✅ Update Driver
+  // ✅ Update Customer
   const handleUpdate = async () => {
     if (!formData?.id) {
-      toast.error("Missing driver ID");
+      toast.error("Missing customer ID");
       return;
     }
 
@@ -250,6 +252,48 @@ const CustomerPage = () => {
       toast.error(errorMessage || "Updating customer failed ❌");
       throw err;
     }
+  };
+
+  // ✅ Delete Customer with MUI Toast
+  const [customerToDelete, setCustomerToDelete] = useState<{
+    id: string;
+    customerId?: number;
+  } | null>(null);
+  const [deleteCustomer] = useDeleteCustomerMutation();
+  const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
+
+  // ✅ Delete Customer handler
+  const handleDelete = async (id: string, customerId?: number) => {
+    setDeleteToast({
+      open: true,
+      message: `Are you sure you want to delete customer #${customerId}?`,
+    });
+    setCustomerToDelete({ id, customerId });
+  };
+
+  // ✅ Confirm Delete
+  const confirmDelete = async () => {
+    if (!customerToDelete) return;
+
+    try {
+      await deleteCustomer(customerToDelete.id).unwrap();
+      toast.success(
+        `✅ Customer #${customerToDelete.customerId} deleted successfully!`
+      );
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err);
+      toast.error(errorMessage || "Deleting customer failed ❌");
+      throw err;
+    } finally {
+      setDeleteToast({ open: false, message: "" });
+      setCustomerToDelete(null);
+    }
+  };
+
+  // ✅ Cancel Delete
+  const cancelDelete = () => {
+    setDeleteToast({ open: false, message: "" });
+    setCustomerToDelete(null);
   };
 
   // ✅ Render Table Row - Similar to LoadsPage
@@ -328,6 +372,24 @@ const CustomerPage = () => {
                 }}
               >
                 <IoPencil size={16} />
+              </IconButton>
+            </Tooltip>
+
+            <Tooltip title="Delete Customer">
+              <IconButton
+                size="small"
+                color="error"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDelete(customer.id, customer.customerId);
+                }}
+                sx={{
+                  "&:hover": {
+                    backgroundColor: alpha("#dc2626", 0.1),
+                  },
+                }}
+              >
+                <IoTrash size={16} />
               </IconButton>
             </Tooltip>
           </div>
@@ -434,7 +496,7 @@ const CustomerPage = () => {
       <Box sx={searchFilterContainerSx}>
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search drivers by ID"
+          placeholder="Search Customers by ID"
           fullWidth
           showClearButton
           sx={{ width: "100%" }}
@@ -477,7 +539,7 @@ const CustomerPage = () => {
         />
       )}
 
-      {/* Driver Form Modal */}
+      {/* Customer Form Modal */}
       <CustomerForm
         open={open}
         onClose={() => setOpen(false)}
@@ -487,6 +549,91 @@ const CustomerPage = () => {
         editMode={editMode}
         isLoading={isCreating || isUpdating}
       />
+
+      {/* MUI Delete Confirmation Toast */}
+      {deleteToast.open && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.1)",
+            backdropFilter: "blur(2px)",
+            zIndex: 1299,
+          }}
+        />
+      )}
+
+      {/* Delete Confirmation Dialog - Centered */}
+      <Dialog
+        open={deleteToast.open}
+        onClose={cancelDelete}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
+            minWidth: 300,
+            maxWidth: 400,
+            margin: 2,
+          },
+        }}
+        sx={{
+          zIndex: 1300,
+          "& .MuiDialog-container": {
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          },
+        }}
+      >
+        <Box sx={{ p: 3, textAlign: "center" }}>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{ fontWeight: 600, color: "text.primary" }}
+          >
+            Confirm Delete
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 3, color: "text.secondary" }}>
+            {deleteToast.message}
+          </Typography>
+          <Box sx={{ display: "flex", gap: 2, justifyContent: "center" }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              onClick={cancelDelete}
+              sx={{
+                borderRadius: 1,
+                minWidth: 80,
+                borderColor: "grey.400",
+                "&:hover": {
+                  borderColor: "grey.600",
+                  backgroundColor: "grey.50",
+                },
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              color="error"
+              onClick={confirmDelete}
+              sx={{
+                borderRadius: 1,
+                minWidth: 80,
+                backgroundColor: "error.main",
+                "&:hover": {
+                  backgroundColor: "error.dark",
+                },
+              }}
+            >
+              Delete
+            </Button>
+          </Box>
+        </Box>
+      </Dialog>
     </Box>
   );
 };

@@ -85,12 +85,16 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
   const [notes, setNotes] = useState<TComments[]>([]);
   const [showAddNoteModal, setShowAddNoteModal] = useState(false);
   const theme = useAppSelector((state: RootState) => state.palette);
+  // decode and clean the loadId
+  const decodedLoadId = loadId ? decodeURIComponent(loadId).trim() : "";
+  console.log('decodedLoadId', typeof decodedLoadId)
+  console.log('loadId', typeof loadId)
 
   const {
     data,
     isLoading: loadLoading,
     refetch: refetchLoads,
-  } = useGetLoadByIdQuery(loadId);
+  } = useGetLoadByIdQuery(decodedLoadId);
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
@@ -123,7 +127,11 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
   if (loadLoading) return <Loading />;
 
   // Set Data
-  const load = data?.data.find((item: TLoads) => item.loadId === loadId);
+  const load = data?.data.find((item: TLoads) => {
+    const itemLoadId = String(item.loadId).trim();
+    const searchLoadId = String(decodedLoadId).trim();
+    return itemLoadId === searchLoadId;
+  });
   if (!load) return <Erros message="No load details found for this ID." />;
   const allNotes = [...notes, ...(load.comments || [])];
 
@@ -383,13 +391,17 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                     primary="Origin"
                     secondary={load.origin}
                   />
-                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                  <Divider
+                    sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                  />
                   <InfoItem
                     icon={<LocationOn fontSize="small" />}
                     primary="DHO"
                     secondary={load.DHO}
                   />
-                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                  <Divider
+                    sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                  />
                   <InfoItem
                     icon={<LocationOn fontSize="small" />}
                     primary="Destination"
@@ -412,13 +424,17 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                     primary="Pickup Time"
                     secondary={new Date(load.pickupAt).toLocaleString()}
                   />
-                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                  <Divider
+                    sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                  />
                   <InfoItem
                     icon={<Schedule fontSize="small" />}
                     primary="Completed At"
                     secondary={new Date(load.completedAt).toLocaleString()}
                   />
-                  <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                  <Divider
+                    sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                  />
                   <InfoItem
                     icon={<AttachMoney fontSize="small" />}
                     primary="Price Details"
@@ -440,13 +456,21 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                       primary="Driver Name"
                       secondary={load.driverId.name}
                     />
-                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                    <Divider
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
+                    />
                     <InfoItem
                       icon={<Phone fontSize="small" />}
                       primary="Phone Number"
                       secondary={load.driverId.phone}
                     />
-                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                    <Divider
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
+                    />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Driver ID"
@@ -476,19 +500,31 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                       primary="Truck Model"
                       secondary={load.truckId.model}
                     />
-                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                    <Divider
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
+                    />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Plate Number"
                       secondary={load.truckId.plateNumber}
                     />
-                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                    <Divider
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
+                    />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Truck Type"
                       secondary={load.truckType}
                     />
-                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                    <Divider
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
+                    />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
                       primary="Temperature"
@@ -552,7 +588,12 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         </ListItem>
                         {i < load.documents.length - 1 && (
                           <Divider
-                            sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                            sx={{
+                              borderColor: alpha(
+                                theme.currentPalette.text,
+                                0.2
+                              ),
+                            }}
                           />
                         )}
                       </Box>
@@ -713,7 +754,10 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                             <Divider
                               sx={{
                                 my: 1,
-                                borderColor: alpha(theme.currentPalette.text, 0.2),
+                                borderColor: alpha(
+                                  theme.currentPalette.text,
+                                  0.2
+                                ),
                               }}
                             />
                           )}
@@ -820,7 +864,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                           : "info"
                       }
                       icon={<CalendarToday />}
-                      sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
                     >
                       <Stack spacing={1}>
                         <Typography variant="subtitle1" fontWeight="600">
@@ -846,7 +892,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocationOn />}
-                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                        sx={{
+                          borderColor: alpha(theme.currentPalette.text, 0.2),
+                        }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -866,7 +914,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocalShipping />}
-                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                        sx={{
+                          borderColor: alpha(theme.currentPalette.text, 0.2),
+                        }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -886,7 +936,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocationOn />}
-                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                        sx={{
+                          borderColor: alpha(theme.currentPalette.text, 0.2),
+                        }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -906,7 +958,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         variant="outlined"
                         severity="success"
                         icon={<LocalShipping />}
-                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                        sx={{
+                          borderColor: alpha(theme.currentPalette.text, 0.2),
+                        }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -931,7 +985,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                           : "warning"
                       }
                       icon={<CalendarToday />}
-                      sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
                     >
                       <Stack spacing={1}>
                         <Typography variant="subtitle1" fontWeight="600">
@@ -971,7 +1027,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         variant="outlined"
                         severity="error"
                         icon={<Schedule />}
-                        sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                        sx={{
+                          borderColor: alpha(theme.currentPalette.text, 0.2),
+                        }}
                       >
                         <Stack spacing={1}>
                           <Typography variant="subtitle1" fontWeight="600">
@@ -1002,7 +1060,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         <Alert
                           variant="outlined"
                           severity="info"
-                          sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                          sx={{
+                            borderColor: alpha(theme.currentPalette.text, 0.2),
+                          }}
                         >
                           <Typography variant="body2">
                             No appointments scheduled for this load yet.
@@ -1096,7 +1156,11 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                       )}
                     </Box>
 
-                    <Divider sx={{ borderColor: alpha(theme.currentPalette.text, 0.2) }} />
+                    <Divider
+                      sx={{
+                        borderColor: alpha(theme.currentPalette.text, 0.2),
+                      }}
+                    />
 
                     {/* Status Overview */}
                     <Box>
@@ -1288,7 +1352,10 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                       <Alert
                         variant="outlined"
                         severity="success"
-                        sx={{ mt: 2, borderColor: alpha(theme.currentPalette.text, 0.2) }}
+                        sx={{
+                          mt: 2,
+                          borderColor: alpha(theme.currentPalette.text, 0.2),
+                        }}
                       >
                         <Typography variant="body2">
                           Load was successfully delivered on{" "}

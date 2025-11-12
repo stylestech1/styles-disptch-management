@@ -226,7 +226,7 @@ export type TTrucksSummaryResponse = {
 };
 export type TCustomer = {
   id: string
-  customerId: string
+  customerId: number
   name: string
   email: string
   phone: string

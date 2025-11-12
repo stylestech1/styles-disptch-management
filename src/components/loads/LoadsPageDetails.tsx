@@ -214,8 +214,9 @@ const LoadsPageDetails = () => {
 
     // Styles
     const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
       "&:hover": {
-        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        backgroundColor: alpha(theme.currentPalette.primary, 0.1),
         cursor: "pointer",
       },
       transition: "all 0.2s ease-in-out",
@@ -232,12 +233,12 @@ const LoadsPageDetails = () => {
     return (
       <TableRow
         sx={tableRowSx}
-        key={loadItem.id || loadItem.loadId}
+        key={loadItem.id ? String(loadItem.id) : String(loadItem.loadId)}
         onClick={navigateToLoadDetails}
       >
         {/* Load ID */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
             {loadItem.loadId}
           </span>
         </td>
@@ -396,7 +397,6 @@ const LoadsPageDetails = () => {
     my: 5,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
     borderRadius: 1,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
     backgroundColor: theme.currentPalette.background,
   };
 
@@ -501,9 +501,12 @@ const LoadsPageDetails = () => {
           sx={{ width: "100%" }}
           inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-              backgroundColor: "#fff",
+              borderRadius: 1,
+              backgroundColor: theme.currentPalette.background,
               py: 0.5,
+              "&:hover":{
+              borderColor: theme.currentPalette.primary,
+              }
             },
           }}
         />

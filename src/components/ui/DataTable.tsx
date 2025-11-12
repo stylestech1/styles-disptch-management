@@ -53,9 +53,8 @@ const DataTable = <T,>({
         sx={{
           borderRadius: 3,
           border: "1px solid",
-          borderColor: "divider",
+          borderColor: theme.currentPalette.primary,
           overflow: "hidden",
-          bgcolor: "background.paper",
         }}
         className={className}
       >
@@ -138,9 +137,8 @@ const DataTable = <T,>({
       sx={{
         borderRadius: 2,
         border: "1px solid",
-        borderColor: "divider",
+        borderColor: alpha(theme.currentPalette.primary, 0.2),
         overflowX: "auto",
-        bgcolor: "background.paper",
       }}
       className={className}
     >
@@ -154,7 +152,7 @@ const DataTable = <T,>({
                   align={column.align || "center"}
                   sx={{
                     fontWeight: 600,
-                    color: theme.currentPalette.primary,
+                    color: theme.currentPalette.title,
                     borderBottom: 1,
                     borderColor: theme.currentPalette.primary,
                     backgroundColor: alpha(theme.currentPalette.primary, 0.1),
