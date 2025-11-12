@@ -35,3 +35,8 @@ export interface Palette {
   text: string;
   title: string;
 }
+
+export interface TUpdatePaletteRequest {
+  _id: string;
+  body: TPaletteConfig;
+}

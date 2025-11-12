@@ -30,6 +30,8 @@ export const usePaletteManagement = () => {
     refetch: refetchPalettes 
   } = useGetPaletteQuery();
 
+  console.log(backendPalettes)
+
   const [createPalette, { isLoading: isCreating }] = useCreatePaletteMutation();
   const [updatePalette, { isLoading: isUpdating }] = useUpdatePaletteMutation();
 
@@ -39,10 +41,12 @@ export const usePaletteManagement = () => {
     }
   }, [backendPalettes, dispatch]);
 
+  // Loading Handler
   useEffect(() => {
     dispatch(setLoadingPalette(isLoadingQuery || isCreating || isUpdating || localLoading));
   }, [isLoadingQuery, isCreating, isUpdating, localLoading, dispatch]);
 
+  // Error Handler
   useEffect(() => {
     if (queryError) {
       const errorMessage = "Failed to load palettes from server";
@@ -58,7 +62,10 @@ export const usePaletteManagement = () => {
       let result;
 
       if (palette._id) {
-        result = await updatePalette(paletteConfig).unwrap();
+        result = await updatePalette({
+          _id: palette._id,
+          body: paletteConfig
+        }).unwrap();
       } else {
         result = await createPalette(paletteConfig).unwrap();
       }

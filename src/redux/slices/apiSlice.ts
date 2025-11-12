@@ -9,7 +9,7 @@ import {
   TTruckWithSummary,
 } from "@/types/globalTypes";
 import { api } from "../api/baseApi";
-import { TPaletteConfig } from "@/types/themeType";
+import { TPaletteConfig, TUpdatePaletteRequest } from "@/types/themeType";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -444,19 +444,19 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     createPalette: builder.mutation<TPaletteConfig, TPaletteConfig>({
-      query: (palette) => ({
+      query: (body) => ({
         url: "/api/v1/ui-settings/palette",
         method: "POST",
-        body: palette,
+        body: body,
       }),
       invalidatesTags: ["Palette"],
     }),
 
-    updatePalette: builder.mutation<TPaletteConfig, TPaletteConfig>({
-      query: (body) => ({
-        url: "/api/v1/ui-settings/palette",
+    updatePalette: builder.mutation<TPaletteConfig, TUpdatePaletteRequest>({
+      query: ({_id, ...body}) => ({
+        url: `/api/v1/ui-settings/palette/${_id}`,
         method: "PATCH",
-        body: body,
+        body,
       }),
       invalidatesTags: ["Palette"],
     }),

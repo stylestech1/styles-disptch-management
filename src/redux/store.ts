@@ -14,7 +14,7 @@ import { googleMapsApi } from "./slices/googleMapsSlice";
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["auth"],
+  whitelist: ["auth",'palette'],
 };
 
 // combine reducers
