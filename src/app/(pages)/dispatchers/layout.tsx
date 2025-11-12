@@ -18,6 +18,7 @@ import {
   Avatar,
   CircularProgress,
   Link,
+  alpha,
 } from "@mui/material";
 import {
   IoLogOutOutline,
@@ -38,7 +39,8 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up("md")); 
+  const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
+  const themePalette = useAppSelector((state: RootState) => state.palette);
   const pathname = usePathname();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const dispatch = useAppDispatch();
@@ -71,8 +73,8 @@ export default function AdminLayout({
         height: "100%",
         display: "flex",
         flexDirection: "column",
-        bgcolor: theme.palette.background.paper,
-        color: theme.palette.text.primary,
+        bgcolor: themePalette.currentPalette.background,
+        color: themePalette.currentPalette.text,
       }}
     >
       {/* User Header */}
@@ -84,7 +86,7 @@ export default function AdminLayout({
           gap={2}
           underline="none"
         >
-          <Avatar sx={{ bgcolor: theme.palette.primary.main }}>
+          <Avatar sx={{ bgcolor: themePalette.currentPalette.primary }}>
             <IoPersonCircleOutline />
           </Avatar>
           <Box>
@@ -95,7 +97,7 @@ export default function AdminLayout({
               <Typography
                 variant="body2"
                 sx={{
-                  color: theme.palette.text.secondary,
+                  color: themePalette.currentPalette.text,
                   textTransform: "capitalize",
                 }}
               >
@@ -122,15 +124,18 @@ export default function AdminLayout({
                 mx: 1,
                 my: 0.5,
                 backgroundColor: active
-                  ? theme.palette.primary.main
+                  ? themePalette.currentPalette.primary
                   : "transparent",
                 color: active
                   ? theme.palette.primary.contrastText || "#fff"
-                  : theme.palette.text.primary,
+                  : themePalette.currentPalette.text,
                 "&:hover": {
                   backgroundColor: active
-                    ? theme.palette.primary.dark
-                    : theme.palette.action.hover,
+                    ? alpha(themePalette.currentPalette.primary, 0.9)
+                    : alpha(themePalette.currentPalette.primary, 0.1),
+                  color: active
+                    ? themePalette.currentPalette.background
+                    : themePalette.currentPalette.primary,
                 },
               }}
             >
@@ -148,10 +153,10 @@ export default function AdminLayout({
           fullWidth
           startIcon={<IoLogOutOutline />}
           variant="contained"
-          color="secondary"
           onClick={handleLogout}
           sx={{
             borderRadius: 2,
+            bgcolor: themePalette.currentPalette.primary,
             textTransform: "none",
             py: 1,
           }}
@@ -171,11 +176,12 @@ export default function AdminLayout({
         onClose={() => setIsSidebarOpen(false)}
         ModalProps={{ keepMounted: true }}
         sx={{
-          zIndex: (theme) => isDesktop ? theme.zIndex.drawer - 1200 : theme.zIndex.modal + 1,
+          zIndex: (theme) =>
+            isDesktop ? theme.zIndex.drawer - 1200 : theme.zIndex.modal + 1,
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
-            bgcolor: theme.palette.background.default,
+            bgcolor: themePalette.currentPalette.background,
             borderRight: `1px solid ${theme.palette.divider}`,
             boxShadow: isDesktop ? "none" : undefined,
           },
@@ -194,15 +200,15 @@ export default function AdminLayout({
           display: "flex",
           flexDirection: "column",
           minHeight: "100vh",
-          bgcolor: theme.palette.background.default,
+          bgcolor: themePalette.currentPalette.background,
         }}
       >
         {!isDesktop && (
           <AppBar
             position="fixed"
             sx={{
-              backgroundColor: theme.palette.background.paper,
-              color: theme.palette.text.primary,
+              backgroundColor: themePalette.currentPalette.background,
+              color: themePalette.currentPalette.text,
               boxShadow: 1,
               zIndex: (t) => t.zIndex.drawer - 1100,
             }}
@@ -243,7 +249,9 @@ export default function AdminLayout({
               }}
             >
               <CircularProgress color="primary" />
-              <Typography sx={{ mt: 2, color: theme.palette.text.secondary }}>
+              <Typography
+                sx={{ mt: 2, color: themePalette.currentPalette.text }}
+              >
                 Loading Google Maps...
               </Typography>
             </Box>
