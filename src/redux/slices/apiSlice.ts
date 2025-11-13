@@ -461,6 +461,14 @@ export const apiSlice = api.injectEndpoints({
       invalidatesTags: ["Palette"],
     }),
 
+    deletePalette: builder.mutation<{ message: string }, string>({
+      query: (_id) => ({
+        url: `/api/v1/ui-settings/palette/${_id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Palette"],
+    }),
+
     // ! ========== Customer Methods ==========
 
     getCustomerById: builder.query({

@@ -264,21 +264,21 @@ export const CustomerForm = ({
                   <Controller
                     name="email"
                     control={control}
-                    rules={{
-                      required: "Email is required",
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: "Invalid email address",
-                      },
-                    }}
+                    // rules={{
+                    //   required: "Email is required",
+                    //   pattern: {
+                    //     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    //     message: "Invalid email address",
+                    //   },
+                    // }}
                     render={({ field }) => (
                       <TextField
                         {...field}
                         fullWidth
                         label="Email *"
                         type="email"
-                        error={!!errors.email}
-                        helperText={errors.email?.message as string}
+                        // error={!!errors.email}
+                        // helperText={errors.email?.message as string}
                         size="medium"
                         placeholder="john.doe@example.com"
                         slotProps={{
