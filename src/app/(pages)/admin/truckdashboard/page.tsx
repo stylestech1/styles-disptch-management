@@ -143,7 +143,7 @@ const TruckRow = React.memo(
         <TableCell align="center">
           <button
             onClick={() => onViewStats(truck._id)}
-            className="flex items-center gap-1 px-3 py-2 bg-blue-950 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors duration-200"
+            className="flex w-full items-center justify-center gap-1 px-3 py-2 bg-blue-950 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors duration-200"
             disabled={!hasSummary}
           >
             <IoStatsChart size={14} />

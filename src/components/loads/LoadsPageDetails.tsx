@@ -30,6 +30,7 @@ import {
   useGetNotesQuery,
   useGetLoadsWithFilterQuery,
   useLazyGetLoadByIdQuery,
+  useGetAllLoadsQuery,
 } from "@/redux/slices/apiSlice";
 
 // Utils
@@ -93,7 +94,7 @@ const LoadsPageDetails = () => {
       reset: resetSearchQuery,
     },
   ] = useLazyGetLoadByIdQuery();
-
+  
   // Search Hook
   const searchHook = useSearchSubmit({
     onSearch: (term) => {

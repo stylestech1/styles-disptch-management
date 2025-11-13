@@ -24,7 +24,7 @@ export const apiSlice = api.injectEndpoints({
 
     // Get All Loads
     getAllLoads: builder.query({
-      query: (arg: void) => `/api/v1/loads?limit=50`,
+      query: (arg: void) => `/api/v1/loads`,
       providesTags: ["Loads"],
     }),
 
@@ -248,7 +248,10 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // ✅ Get specific truck summary
-    getSpecificTruckSummary: builder.query<{ data: TTruckSummaryResponse }, string>({
+    getSpecificTruckSummary: builder.query<
+      { data: TTruckSummaryResponse },
+      string
+    >({
       query: (id) => `/api/v1/summary/truck/${id}`,
       providesTags: (result, error, id) => [{ type: "TruckSummary", id }],
       keepUnusedDataFor: 60 * 60,
