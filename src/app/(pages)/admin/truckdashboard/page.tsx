@@ -180,7 +180,7 @@ const TruckDashboard = () => {
 
   const { filteredData: searchedTrucks } = useSearch({
     data: allTrucksData?.data?.trucksSummary || [],
-    searchFields: ["truckId", "model", "plateNumber"],
+    searchFields: ["plateNumber"],
     initialSearch: searchTerm,
   });
 

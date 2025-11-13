@@ -6,6 +6,7 @@ import {
   TTruck,
   TTrucksSummaryResponse,
   TTruckSummary,
+  TTruckSummaryResponse,
   TTruckWithSummary,
 } from "@/types/globalTypes";
 import { api } from "../api/baseApi";
@@ -149,9 +150,7 @@ export const apiSlice = api.injectEndpoints({
     // 🔹 Get driver summary
     getSpecificDriverSummary: builder.query<{ data: TLoadSummary }, string>({
       query: (id) => `/api/v1/summary/driver/${id}`,
-      providesTags: (result, error, id) => [
-        { type: "DriverSummary", id: id },
-      ],
+      providesTags: (result, error, id) => [{ type: "DriverSummary", id: id }],
     }),
 
     // 🔹 Get driver summary with date filter
@@ -249,7 +248,7 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // ✅ Get specific truck summary
-    getSpecificTruckSummary: builder.query<{ data: TTruckSummary }, string>({
+    getSpecificTruckSummary: builder.query<{ data: TTruckSummaryResponse }, string>({
       query: (id) => `/api/v1/summary/truck/${id}`,
       providesTags: (result, error, id) => [{ type: "TruckSummary", id }],
       keepUnusedDataFor: 60 * 60,
@@ -257,7 +256,7 @@ export const apiSlice = api.injectEndpoints({
 
     // ✅ Get truck summary with date filter
     getTruckSummaryWithFilter: builder.query<
-      { data: TTruckSummary },
+      { data: TTruckSummaryResponse },
       { id: string; from?: string; to?: string }
     >({
       query: ({ id, from, to }) => {
@@ -278,8 +277,8 @@ export const apiSlice = api.injectEndpoints({
 
     // ✅ Get single truck by ID
     getTruckById: builder.query({
-      query: (id) => `/api/v1/summary/truck/${id}`,
-      providesTags: (result, error, id) => [{ type: "Trucks", id }],
+      query: (id) => `/api/v1/trucks/${id}`,
+      providesTags: ["Trucks"],
     }),
 
     // ✅ Create / Update / Delete
@@ -453,7 +452,7 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     updatePalette: builder.mutation<TPaletteConfig, TUpdatePaletteRequest>({
-      query: ({_id, ...body}) => ({
+      query: ({ _id, ...body }) => ({
         url: `/api/v1/ui-settings/palette/${_id}`,
         method: "PATCH",
         body,
@@ -528,7 +527,7 @@ export const apiSlice = api.injectEndpoints({
         url: `/api/v1/customers/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ['Customers'],
+      invalidatesTags: ["Customers"],
     }),
   }),
 });

@@ -92,13 +92,6 @@ const DriverSummary = () => {
 
   const displayedData = searchInput ? searchedDriver : loadsData;
 
-  // ✅ Clear Filter
-  const handleClearFilter = () => {
-    setFromDate(null);
-    setToDate(null);
-    setIsFilterActive(false);
-  };
-
   // ✅ Apply Filter
   const handleApplyFilter = (from: Dayjs | null, to: Dayjs | null) => {
     setFromDate(from);
@@ -507,15 +500,6 @@ const DriverSummary = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  {isFilterActive && (
-                    <button
-                      onClick={handleClearFilter}
-                      className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
-                    >
-                      <IoRefreshOutline size={16} />
-                      Clear Filter
-                    </button>
-                  )}
                   {/* ✅ Filter */}
                   <DateRangeFilter onApply={handleApplyFilter} />
                 </div>

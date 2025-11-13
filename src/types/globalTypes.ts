@@ -194,6 +194,22 @@ export type TTruckSummary = {
   loads: TLoads;
   period: TPeriod;
 };
+export type TTruckSummaryResponse = {
+  truckId: number;
+  truckInfo: {
+    model: string;
+    plateNumber: string;
+    type: string;
+    assignedDriver?: {
+      name: string;
+      id?: string;
+    };
+    fuelPerMile?: number;
+  };
+  summary: TTruckSummary;
+  period: TPeriod;
+  loads: TLoads[];
+};
 export interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -225,18 +241,18 @@ export type TTrucksSummaryResponse = {
   };
 };
 export type TCustomer = {
-  id: string
-  customerId: number
-  name: string
-  email: string
-  phone: string
-  address: string
-  feedback: string
-  type: '' | 'shipper' | 'receiver'
-  addedBy: string
-  createdAt: string
-  updatedAt: string
-}
+  id: string;
+  customerId: number;
+  name: string;
+  email: string;
+  phone: string;
+  address: string;
+  feedback: string;
+  type: "" | "shipper" | "receiver";
+  addedBy: string;
+  createdAt: string;
+  updatedAt: string;
+};
 export interface RTKError {
   data?: {
     message?: string;

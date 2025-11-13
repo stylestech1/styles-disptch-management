@@ -1,7 +1,13 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import Titles from "@/components/ui/Titles";
-import { TLoads, TStatusLoad } from "@/types/globalTypes";
+import {
+  TLoads,
+  TStatusLoad,
+  TTruckSummary,
+  TTruckSummaryResponse,
+  TTruckWithSummary,
+} from "@/types/globalTypes";
 import { useState, useEffect, useMemo } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
@@ -44,15 +50,15 @@ import { MdOutlineCancelPresentation } from "react-icons/md";
 
 const TruckSummary = () => {
   const { id } = useParams();
+  const router = useRouter();
+  const { error, setError } = useError();
+  const theme = useAppSelector((state: RootState) => state.palette);
+
   // ✅ Search And Filter
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [isFilterActive, setIsFilterActive] = useState(false);
-
-  const router = useRouter();
-  const { error, setError } = useError();
-  const theme = useAppSelector((state: RootState) => state.palette);
 
   // ✅ RTK Query hooks
   const { data: profileData, isLoading: profileLoading } = useGetTruckByIdQuery(
@@ -84,6 +90,10 @@ const TruckSummary = () => {
     return Array.isArray(summaryData.data.loads) ? summaryData.data.loads : [];
   })();
 
+  console.log("profile", profile);
+  console.log("summaryData", summaryData);
+  console.log("loadsData", loadsData);
+
   const { filteredData: searchedTruck } = useSearch<TLoads>({
     data: loadsData,
     searchFields: ["loadId", "driverId.name"],
@@ -92,17 +102,20 @@ const TruckSummary = () => {
   const displayedData = searchInput ? searchedTruck : loadsData;
 
   // ✅ StatsCard Data
-  const statsData = useMemo(() => {
-    const currentData = displayedData;
-
-    return {
-      totalLoads: currentData.length,
-      totalMiles: currentData.filter((load: TLoads) => load.distanceMiles)
-        .length,
-      totalPrice: currentData.filter((load: TLoads) => load.totalPrice).length,
-      cancelled: currentData.filter((load: TLoads) => load.cancelledAt).length,
-    };
-  }, [displayedData]);
+  const statsData = summaryData?.data
+    ? {
+        totalLoads: summaryData.data?.summary.totalLoads ?? 0,
+        totalMiles: summaryData.data?.summary.totalMiles ?? 0,
+        totalRevenue: summaryData.data?.summary.totalRevenue ?? 0,
+        netProfit: summaryData.data?.summary.netProfit ?? 0,
+      }
+    : {
+        totalLoads: 0,
+        totalMiles: 0,
+        totalRevenue: 0,
+        netProfit: 0,
+      };
+      console.log('hhhhhhhhh',summaryData?.data)
 
   useEffect(() => {
     if (id && !isFilterActive) {
@@ -120,13 +133,6 @@ const TruckSummary = () => {
       });
     }
   }, [summaryFilterError, setError]);
-
-  // ✅ Clear Filter
-  const handleClearFilter = () => {
-    setFromDate(null);
-    setToDate(null);
-    setIsFilterActive(false);
-  };
 
   // ✅ Apply Filter
   const handleApplyFilter = (from: Dayjs | null, to: Dayjs | null) => {
@@ -418,17 +424,15 @@ const TruckSummary = () => {
               </div>
               <div className="space-y-3">
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
-                  <span className="text-slate-600">Truck ID</span>
+                  <span className="text-slate-600">Truck Plate Number</span>
                   <span className="font-mono font-semibold text-slate-800">
-                    {profile.truckId}
+                    {profile.plateNumber}
                   </span>
                 </div>
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                   <span className="text-slate-600">Capacity Category</span>
                   <span className="font-semibold text-slate-800">
-                    {Number(profile.capacity) >= 20000
-                      ? "Heavy Duty"
-                      : "Medium Duty"}
+                    {profile.capacity}
                   </span>
                 </div>
               </div>
@@ -487,16 +491,16 @@ const TruckSummary = () => {
         />
 
         <StatsCard
-          title="Total Price"
-          value={statsData.totalPrice}
+          title="Total Revenue"
+          value={statsData.totalRevenue}
           icon={FaMoneyBillWave}
           iconColor={theme.currentPalette.primary}
           loading={loading}
         />
 
         <StatsCard
-          title="Cancelled Loads"
-          value={statsData.cancelled}
+          title="Net Profit"
+          value={statsData.netProfit}
           icon={MdOutlineCancelPresentation}
           iconColor={theme.currentPalette.primary}
           loading={loading}
@@ -525,15 +529,6 @@ const TruckSummary = () => {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {isFilterActive && (
-              <button
-                onClick={handleClearFilter}
-                className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors border border-red-200"
-              >
-                <IoRefreshOutline size={16} />
-                Clear Filter
-              </button>
-            )}
             {/* ✅ Filter */}
             <DateRangeFilter onApply={handleApplyFilter} />
           </div>

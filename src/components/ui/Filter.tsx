@@ -30,13 +30,16 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
     },
   ]);
 
-  const theme = useAppSelector((state: RootState) => state.palette)
-  const pickerRef = useRef<HTMLDivElement>(null)
+  const theme = useAppSelector((state: RootState) => state.palette);
+  const pickerRef = useRef<HTMLDivElement>(null);
 
   // Close when clicking everywher
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (pickerRef.current && !pickerRef.current.contains(event.target as Node)) {
+      if (
+        pickerRef.current &&
+        !pickerRef.current.contains(event.target as Node)
+      ) {
         setShowPicker(false);
       }
     };
@@ -73,17 +76,26 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
 
   // ✅ when selecting range
   const handleRangeSelect = (ranges: RangeKeyDict) => {
-    setDateRange([ranges.selection]);
+    const selection = ranges.selection;
+
+    if (selection.startDate && !selection.endDate) {
+      const endOfMonth = dayjs(selection.startDate).endOf("month").toDate();
+      selection.endDate = endOfMonth;
+    }
+
+    setDateRange([selection]);
   };
 
   // ✅ Apply
   const handleApply = () => {
-    if (!dateRange?.[0]?.startDate || !dateRange?.[0]?.endDate) return;
+    if (!dateRange?.[0]?.startDate) return;
 
-    const start = dateRange[0].startDate;
-    const end = dateRange[0].endDate;
+    const start = dayjs(dateRange[0].startDate);
+    const end = dateRange?.[0]?.endDate
+      ? dayjs(dateRange[0].endDate)
+      : start.endOf("month");
 
-    onApply?.(dayjs(start), dayjs(end));
+    onApply?.(start, end);
     onFilterApplied?.(true);
     setShowPicker(false);
   };
@@ -107,8 +119,11 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   const from = dateRange?.[0]?.startDate
     ? dayjs(dateRange[0].startDate).format("MMM D, YYYY")
     : "";
+
   const to = dateRange?.[0]?.endDate
-    ? dayjs(dateRange[0].endDate).subtract(1, 'day').format("MMM D, YYYY")
+    ? dayjs(dateRange[0].endDate).format("MMM D, YYYY")
+    : dateRange?.[0]?.startDate
+    ? dayjs(dateRange[0].startDate).endOf("month").format("MMM D, YYYY")
     : "";
 
   const label = from && to ? `${from} → ${to}` : "Date";
@@ -122,17 +137,17 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
           maxWidth: "100%",
           textAlign: "left",
           cursor: "pointer",
-          fontSize: '16px',
+          fontSize: "16px",
           py: 1.6,
           backgroundColor: alpha(theme.currentPalette.primary, 0.1),
-          border: `1px solid ${theme.currentPalette.primary}`, 
+          border: `1px solid ${theme.currentPalette.primary}`,
           borderRadius: "4px",
-          color: theme.currentPalette.primary, 
-          textTransform: "none", 
+          color: theme.currentPalette.primary,
+          textTransform: "none",
           transition: "all 0.2s ease",
           "&:hover": {
-            color: '#fff', 
-            backgroundColor: theme.currentPalette.primary, 
+            color: "#fff",
+            backgroundColor: theme.currentPalette.primary,
           },
         }}
       >

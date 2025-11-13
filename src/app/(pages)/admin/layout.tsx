@@ -113,7 +113,7 @@ export default function AdminLayout({
       {/* Navigation */}
       <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
         {tabs.map(({ label, icon }, i) => {
-          const link = `${base}/${label.toLowerCase()}`;
+          const link = `${base}/${label.replace(/\s+/g, '').toLowerCase()}`;
           const active = pathname.startsWith(link);
           return (
             <ListItemButton
