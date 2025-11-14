@@ -65,7 +65,14 @@ const Users = () => {
     error: dispatchersError,
     isLoading: loading,
     refetch: refetchLoads,
-  } = useGetAllDispatchersQuery({ page, limit: 10 }, { refetchOnFocus: false });
+  } = useGetAllDispatchersQuery(
+    { page, limit: 10 },
+    {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: false,
+    }
+  );
 
   const { data: filteredData } = useGetUserWithSearchQuery(
     {
@@ -269,8 +276,9 @@ const Users = () => {
   const renderDispatcherRow = (dispatcher: TDispatcher) => {
     // Styles
     const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
       "&:hover": {
-        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        bgcolor: alpha(theme.currentPalette.primary, 0.1),
         cursor: "pointer",
       },
       transition: "all 0.2s ease-in-out",
@@ -480,9 +488,12 @@ const Users = () => {
           sx={{ width: "100%" }}
           inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-              backgroundColor: "#fff",
+              borderRadius: 1,
+              backgroundColor: theme.currentPalette.background,
               py: 0.5,
+              "&:hover": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
           }}
         />

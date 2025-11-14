@@ -57,7 +57,7 @@ import {
   useGetTrucksQuery,
   useUpdateLoadsMutation,
 } from "@/redux/slices/apiSlice";
-import { RootState } from "@/redux/store";
+import { RootState, useAppSelector } from "@/redux/store";
 import {
   AssignmentTabProps,
   CreateEditLoadModalProps,
@@ -71,6 +71,8 @@ import toast from "react-hot-toast";
 import { MdError, MdPictureAsPdf } from "react-icons/md";
 import {
   Alert,
+  alpha,
+  Box,
   Button,
   FormControl,
   InputAdornment,
@@ -79,6 +81,7 @@ import {
   Tab,
   Tabs,
   TextField,
+  Typography,
 } from "@mui/material";
 
 // Lazy load the map components
@@ -113,6 +116,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     activeTab,
     isEditing,
   } = useSelector((state: RootState) => state.loadsForm);
+
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   // For Documents
   const [selectedDocuments, setSelectedDocuments] = useState<File[]>([]);
@@ -679,9 +684,9 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               </span>
             }
             sx={{
-              color: activeTab === 1 ? "#10b981" : "#64748b",
+              color: activeTab === 1 ? theme.currentPalette.primary : theme.currentPalette.text,
               "&.Mui-selected": {
-                color: "#10b981",
+                color: theme.currentPalette.primary,
               },
             }}
           />
@@ -694,9 +699,9 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               </span>
             }
             sx={{
-              color: activeTab === 2 ? "#10b981" : "#64748b",
+              color: activeTab === 2 ? theme.currentPalette.primary : theme.currentPalette.text,
               "&.Mui-selected": {
-                color: "#10b981",
+                color: theme.currentPalette.primary,
               },
             }}
           />
@@ -709,9 +714,9 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               </span>
             }
             sx={{
-              color: activeTab === 3 ? "#10b981" : "#64748b",
+              color: activeTab === 3 ? theme.currentPalette.primary : theme.currentPalette.text,
               "&.Mui-selected": {
-                color: "#10b981",
+                color: theme.currentPalette.primary,
               },
             }}
           />
@@ -772,9 +777,17 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <Typography
+                        sx={{
+                          color: theme.currentPalette.primary,
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          display: "block",
+                          mb: 1,
+                        }}
+                      >
                         DHO to Origin Distance
-                      </label>
+                      </Typography>
                       <div className="relative">
                         <TextField
                           type="text"
@@ -783,7 +796,11 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                               ? `${dhoToOriginDistance.toFixed(2)} miles`
                               : ""
                           }
-                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                          sx={{
+                            bgcolor: theme.currentPalette.background,
+                            color: theme.currentPalette.primary,
+                          }}
+                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg font-medium"
                           aria-readonly
                           placeholder="Distance will auto-calculate"
                         />
@@ -791,16 +808,28 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">
+                      <Typography
+                        sx={{
+                          color: theme.currentPalette.primary,
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          display: "block",
+                          mb: 1,
+                        }}
+                      >
                         Average Time To Pickup
-                      </label>
+                      </Typography>
                       <div className="relative">
                         <TextField
                           type="text"
                           value={
                             averageTime ? `${formatTime(averageTime)}` : ""
                           }
-                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium"
+                          sx={{
+                            bgcolor: theme.currentPalette.background,
+                            color: theme.currentPalette.primary,
+                          }}
+                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg font-medium"
                           aria-readonly
                           placeholder="Time will auto-calculate"
                         />
@@ -811,9 +840,17 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                   {/* Destinations Section */}
                   <div className="space-y-4">
                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
-                      <label className="block text-sm font-medium text-slate-700 mb-2 md:mb-0">
-                        Destinations <span className="text-red-500">*</span>
-                      </label>
+                      <Typography
+                        sx={{
+                          color: theme.currentPalette.primary,
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                          display: "block",
+                          mb: 1,
+                        }}
+                      >
+                        Destinations
+                      </Typography>
                       <Button
                         variant="contained"
                         type="button"
@@ -853,14 +890,18 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     ))}
 
                     {destinations.length === 0 && (
-                      <div className="text-center py-6 border-2 border-dashed border-slate-300 rounded-lg bg-gray-50">
-                        <p className="text-gray-500 font-medium">
-                          No destinations added yet
-                        </p>
-                        <p className="text-gray-400 text-sm px-3 mt-1">
+                      <Box
+                        sx={{
+                          bgcolor: theme.currentPalette.background,
+                          color: theme.currentPalette.primary,
+                        }}
+                        className="text-center py-6 border-2 border-dashed rounded-lg"
+                      >
+                        <p className="font-medium">No destinations added yet</p>
+                        <p className="text-sm px-3 mt-1">
                           You must add at least one destination to continue
                         </p>
-                      </div>
+                      </Box>
                     )}
                   </div>
                 </div>
@@ -894,19 +935,17 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               </div>
 
               <div className="flex justify-end pt-4">
-                <button
+                <Button
+                  sx={{
+                    bgcolor: theme.currentPalette.primary,
+                    color: theme.currentPalette.background,
+                  }}
                   type="button"
                   onClick={() => dispatch(setActiveTab(2))}
                   disabled={!isTab1Valid()}
-                  className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
-                    isTab1Valid()
-                      ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                      : "bg-slate-300 text-slate-500 cursor-not-allowed"
-                  }`}
                 >
                   Next
-                  <IoArrowForward size={16} />
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -1033,21 +1072,33 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
   onNextTab,
 }) => {
   const canAddMoreFiles = selectedDocuments.length < 2;
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Calculated All Distance - Read Only */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Calculated All Distance
-          </label>
+          </Typography>
           <div className="relative">
             <TextField
               aria-readonly
               type="text"
               value={allDistance ? `${allDistance} miles` : "Calculating..."}
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                width: "100%",
+              }}
               placeholder="Auto-calculating total distance..."
               slotProps={{
                 input: {
@@ -1069,15 +1120,26 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Total Price <span className="text-red-500">*</span>
-          </label>
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
+            Total Price
+          </Typography>
           <div>
             <TextField
               type="text"
               value={price}
               onChange={(e) => onPriceChange(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                width: "100%",
+              }}
               placeholder="0.00"
               required
               slotProps={{
@@ -1094,9 +1156,17 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Price Per Mile
-          </label>
+          </Typography>
           <div className="relative">
             <TextField
               aria-readonly
@@ -1108,7 +1178,10 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                   ? `$${pricePerMile.toFixed(3)}`
                   : "$0.000"
               }
-              className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                width: "100%",
+              }}
               placeholder="Auto-calculating total distance..."
               slotProps={{
                 input: {
@@ -1131,15 +1204,26 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Fees Number
-          </label>
+          </Typography>
           <div className="relative">
             <TextField
               type="text"
               value={fees}
               onChange={(e) => onFeesChange(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                width: "100%",
+              }}
               placeholder="0.00"
               required
               slotProps={{
@@ -1156,15 +1240,26 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Load Id <span className="text-red-500">*</span>
-          </label>
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
+            Load Id
+          </Typography>
           <div className="relative">
             <TextField
               type="text"
               value={loadIDInp}
               onChange={(e) => onLoadIDChange(e.target.value)}
-              className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                width: "100%",
+              }}
               placeholder="0.00"
               required
               slotProps={{
@@ -1185,9 +1280,17 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Pickup DateTime */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Pickup <span className="text-red-500">*</span>
-                </label>
+                <Typography
+                  sx={{
+                    color: theme.currentPalette.primary,
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    display: "block",
+                    mb: 1,
+                  }}
+                >
+                  Pickup
+                </Typography>
                 <DateTimePicker
                   value={pickupAt}
                   onChange={onPickupAtChange}
@@ -1196,7 +1299,19 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                     textField: {
                       required: true,
                       fullWidth: true,
-                      className: "bg-white",
+                      sx: {
+                        bgcolor: theme.currentPalette.background,
+                        "& .MuiInputBase-root": {
+                          bgcolor: theme.currentPalette.background,
+                        },
+                      },
+                    },
+                    popper: {
+                      sx: {
+                        "& .MuiPaper-root": {
+                          bgcolor: theme.currentPalette.background,
+                        },
+                      },
                     },
                   }}
                 />
@@ -1204,9 +1319,17 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
 
               {/* Completed DateTime */}
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Delivery <span className="text-red-500">*</span>
-                </label>
+                <Typography
+                  sx={{
+                    color: theme.currentPalette.primary,
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    display: "block",
+                    mb: 1,
+                  }}
+                >
+                  Delivery
+                </Typography>
                 <DateTimePicker
                   value={completedAt}
                   onChange={onCompletedAtChange}
@@ -1215,7 +1338,19 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                     textField: {
                       required: true,
                       fullWidth: true,
-                      className: "bg-white",
+                      sx: {
+                        bgcolor: theme.currentPalette.background,
+                        "& .MuiInputBase-root": {
+                          bgcolor: theme.currentPalette.background,
+                        },
+                      },
+                    },
+                    popper: {
+                      sx: {
+                        "& .MuiPaper-root": {
+                          bgcolor: theme.currentPalette.background,
+                        },
+                      },
                     },
                   }}
                 />
@@ -1225,17 +1360,38 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
                 <>
                   {/* ArrivalAtShipper */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <Typography
+                      sx={{
+                        color: theme.currentPalette.primary,
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        display: "block",
+                        mb: 1,
+                      }}
+                    >
                       Arrival At Shipper
-                    </label>
+                    </Typography>
                     <DateTimePicker
                       value={arrivalAtShipper}
                       onChange={onArrivalAtShipperChange}
                       views={["year", "month", "day", "hours", "minutes"]}
                       slotProps={{
                         textField: {
+                          required: true,
                           fullWidth: true,
-                          className: "bg-white",
+                          sx: {
+                            bgcolor: theme.currentPalette.background,
+                            "& .MuiInputBase-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
+                        },
+                        popper: {
+                          sx: {
+                            "& .MuiPaper-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
                         },
                       }}
                     />
@@ -1243,17 +1399,38 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
 
                   {/* arrivalAtReceiver */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <Typography
+                      sx={{
+                        color: theme.currentPalette.primary,
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        display: "block",
+                        mb: 1,
+                      }}
+                    >
                       Arrival At Receiver
-                    </label>
+                    </Typography>
                     <DateTimePicker
                       value={arrivalAtReceiver}
                       onChange={onArrivalAtReceiverChange}
                       views={["year", "month", "day", "hours", "minutes"]}
                       slotProps={{
                         textField: {
+                          required: true,
                           fullWidth: true,
-                          className: "bg-white",
+                          sx: {
+                            bgcolor: theme.currentPalette.background,
+                            "& .MuiInputBase-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
+                        },
+                        popper: {
+                          sx: {
+                            "& .MuiPaper-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
                         },
                       }}
                     />
@@ -1261,17 +1438,38 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
 
                   {/* leftShipper */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <Typography
+                      sx={{
+                        color: theme.currentPalette.primary,
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        display: "block",
+                        mb: 1,
+                      }}
+                    >
                       Left Shipper
-                    </label>
+                    </Typography>
                     <DateTimePicker
                       value={leftShipper}
                       onChange={onLeftShipperChange}
                       views={["year", "month", "day", "hours", "minutes"]}
                       slotProps={{
                         textField: {
+                          required: true,
                           fullWidth: true,
-                          className: "bg-white",
+                          sx: {
+                            bgcolor: theme.currentPalette.background,
+                            "& .MuiInputBase-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
+                        },
+                        popper: {
+                          sx: {
+                            "& .MuiPaper-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
                         },
                       }}
                     />
@@ -1279,17 +1477,38 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
 
                   {/* leftReceiver */}
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                    <Typography
+                      sx={{
+                        color: theme.currentPalette.primary,
+                        fontSize: "14px",
+                        fontWeight: "bold",
+                        display: "block",
+                        mb: 1,
+                      }}
+                    >
                       Left Receiver
-                    </label>
+                    </Typography>
                     <DateTimePicker
                       value={leftReceiver}
                       onChange={onLeftReceiverChange}
                       views={["year", "month", "day", "hours", "minutes"]}
                       slotProps={{
                         textField: {
+                          required: true,
                           fullWidth: true,
-                          className: "bg-white",
+                          sx: {
+                            bgcolor: theme.currentPalette.background,
+                            "& .MuiInputBase-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
+                        },
+                        popper: {
+                          sx: {
+                            "& .MuiPaper-root": {
+                              bgcolor: theme.currentPalette.background,
+                            },
+                          },
                         },
                       }}
                     />
@@ -1303,11 +1522,18 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
         {/* Documents - Drag & Drop Area */}
         <div className="md:col-span-2">
           <div
-            className={`border-2 border-dashed rounded-lg p-6 transition-all duration-200 ${
-              isDragging
-                ? "border-blue-500 bg-blue-50"
-                : "border-slate-300 bg-slate-50"
-            }`}
+            className={`
+    border-2 border-dashed rounded-lg p-6 transition-all duration-200
+    ${isDragging ? "ring-2 ring-offset-1" : ""}
+  `}
+            style={{
+              borderColor: isDragging
+                ? theme.currentPalette.primary
+                : theme.currentPalette.text,
+              backgroundColor: isDragging
+                ? `${theme.currentPalette.primary}20`
+                : theme.currentPalette.background,
+            }}
             onDragEnter={onDragEnter}
             onDragLeave={onDragLeave}
             onDragOver={onDragOver}
@@ -1340,11 +1566,24 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
               />
               <label
                 htmlFor="pdf-upload-create"
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer ${
-                  canAddMoreFiles
-                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                    : "bg-slate-300 text-slate-500 cursor-not-allowed"
-                }`}
+                className={`
+                  inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium 
+                  transition-all duration-200 cursor-pointer
+                  ${canAddMoreFiles ? "" : "cursor-not-allowed opacity-60"}
+                `}
+                style={{
+                  backgroundColor: canAddMoreFiles
+                    ? theme.currentPalette.primary
+                    : theme.currentPalette.background,
+                  color: canAddMoreFiles
+                    ? theme.currentPalette.background
+                    : theme.currentPalette.text,
+                  border: `1px solid ${
+                    canAddMoreFiles
+                      ? theme.currentPalette.primary
+                      : theme.currentPalette.text
+                  }`,
+                }}
               >
                 <IoAdd size={16} />
                 Select PDF Files
@@ -1401,27 +1640,27 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
       </div>
 
       <div className="flex justify-between pt-4">
-        <button
+        <Button
+          sx={{
+            bgcolor: theme.currentPalette.primary,
+            color: theme.currentPalette.background,
+          }}
           type="button"
           onClick={onPrevTab}
-          className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
         >
-          <IoArrowBack size={16} />
           Back
-        </button>
-        <button
+        </Button>
+        <Button
+          sx={{
+            bgcolor: theme.currentPalette.primary,
+            color: theme.currentPalette.background,
+          }}
           type="button"
           onClick={onNextTab}
           disabled={!isTabValid}
-          className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
-            isTabValid
-              ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-              : "bg-slate-300 text-slate-500 cursor-not-allowed"
-          }`}
         >
           Next
-          <IoArrowForward size={16} />
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -1448,6 +1687,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
 
   const drivers = driversData?.data || [];
   const trucks = trucksData?.data || [];
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   if (isEditing) {
     return (
@@ -1455,16 +1695,29 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Driver - Display Only */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Driver <span className="text-green-600">✓ Assigned</span>
-            </label>
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
+              Driver{" "}
+              <Typography sx={{ color: theme.currentPalette.text }}>
+                ✓ Assigned
+              </Typography>
+            </Typography>
             <div className="relative">
               <TextField
                 aria-readonly
                 type="text"
                 value={editingLoad?.driverId?.name || "No driver assigned"}
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-                placeholder="Auto-calculating total distance..."
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 slotProps={{
                   input: {
                     endAdornment: (
@@ -1485,9 +1738,20 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
 
           {/* Truck Type - Display Only */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Truck Type <span className="text-green-600">✓ Assigned</span>
-            </label>
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
+              Truck Type{" "}
+              <Typography sx={{ color: theme.currentPalette.text }}>
+                ✓ Assigned
+              </Typography>
+            </Typography>
             <div className="relative">
               <TextField
                 aria-readonly
@@ -1500,8 +1764,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
                       }`
                     : "No type assigned"
                 }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-                placeholder="Auto-calculating total distance..."
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 slotProps={{
                   input: {
                     endAdornment: (
@@ -1517,9 +1783,20 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
 
           {/* Truck - Display Only */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Truck <span className="text-green-600">✓ Assigned</span>
-            </label>
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
+              Truck{" "}
+              <Typography sx={{ color: theme.currentPalette.text }}>
+                ✓ Assigned
+              </Typography>
+            </Typography>
             <div className="relative">
               <TextField
                 aria-readonly
@@ -1529,8 +1806,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
                     ? `${editingLoad.truckId.model} (${editingLoad.truckId.plateNumber})`
                     : "No truck assigned"
                 }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-                placeholder="Auto-calculating total distance..."
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 slotProps={{
                   input: {
                     endAdornment: (
@@ -1551,9 +1830,20 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
 
           {/* Temperature - Display Only */}
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
-              Temperature <span className="text-green-600">✓ Set</span>
-            </label>
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
+              Temperature{" "}
+              <Typography sx={{ color: theme.currentPalette.text }}>
+                ✓ Set
+              </Typography>
+            </Typography>
             <div className="relative">
               <TextField
                 aria-readonly
@@ -1563,8 +1853,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
                     ? `${editingLoad.truckTemp}°C`
                     : "Not set"
                 }
-                className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-slate-50 text-slate-700 font-medium cursor-not-allowed"
-                placeholder="Auto-calculating total distance..."
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 slotProps={{
                   input: {
                     endAdornment: (
@@ -1595,22 +1887,23 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         </Alert>
 
         <div className="flex justify-between pt-4">
-          <button
+          <Button
+            sx={{
+              bgcolor: theme.currentPalette.primary,
+              color: theme.currentPalette.background,
+            }}
             type="button"
             onClick={onPrevTab}
-            className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
           >
-            <IoArrowBack size={16} />
             Back
-          </button>
-          <button
+          </Button>
+          <Button
+            sx={{
+              bgcolor: theme.currentPalette.primary,
+              color: theme.currentPalette.background,
+            }}
             type="submit"
-            disabled={isLoading}
-            className={`uppercase flex items-center gap-2 py-2 px-6 rounded-lg font-medium transition-colors ${
-              !isLoading
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                : "bg-slate-300 text-slate-500 cursor-not-allowed"
-            }`}
+            disabled={!isTabValid || isLoading}
           >
             {isLoading ? (
               <>
@@ -1623,7 +1916,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
                 Update Load
               </>
             )}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -1633,9 +1926,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Driver <span className="text-red-500">*</span>
-          </label>
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
+            Driver
+          </Typography>
           <FormControl fullWidth>
             <Select
               labelId="demo-simple-select-label"
@@ -1657,9 +1958,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Truck Type <span className="text-red-500">*</span>
-          </label>
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
+            Truck Type
+          </Typography>
           <FormControl fullWidth>
             <Select
               labelId="demo-simple-select-label"
@@ -1678,9 +1987,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Truck <span className="text-red-500">*</span>
-          </label>
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
+            Truck
+          </Typography>
           <FormControl fullWidth>
             <Select
               labelId="demo-simple-select-label"
@@ -1693,8 +2010,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               <MenuItem value="" disabled>
                 Select Truck
               </MenuItem>
-              {Array.isArray(trucks) ? (
-                trucks
+              {Array.isArray(trucks?.data) ? (
+                trucks.data
                   .filter((t: TTruck) => !truckType || t.type === truckType)
                   .map((t: TTruck, i: number) => (
                     <MenuItem key={i} value={t.id}>
@@ -1709,10 +2026,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
-            Temperature{" "}
-            {truckType === "reefer" && <span className="text-red-500">*</span>}
-          </label>
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
+            Temperature
+          </Typography>
           <TextField
             fullWidth
             type="number"
@@ -1727,9 +2051,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
                   ?.type?.toLowerCase() !== "reefer")
             }
             sx={{
+              bgcolor: theme.currentPalette.background,
+              width: "100%",
               "& .MuiInputBase-root.Mui-disabled": {
                 cursor: "not-allowed",
-                backgroundColor: "#f5f5f5",
+                backgroundColor: alpha(theme.currentPalette.primary, 0.1),
               },
             }}
           />
@@ -1737,22 +2063,23 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
       </div>
 
       <div className="flex justify-between pt-4">
-        <button
+        <Button
+          sx={{
+            bgcolor: theme.currentPalette.primary,
+            color: theme.currentPalette.background,
+          }}
           type="button"
           onClick={onPrevTab}
-          className="uppercase cursor-pointer flex items-center gap-2 py-2 px-6 text-sm bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg font-medium transition-colors"
         >
-          <IoArrowBack size={16} />
           Back
-        </button>
-        <button
+        </Button>
+        <Button
+          sx={{
+            bgcolor: theme.currentPalette.primary,
+            color: theme.currentPalette.background,
+          }}
           type="submit"
           disabled={!isTabValid || isLoading}
-          className={`uppercase flex items-center gap-2 py-2 px-6 text-sm rounded-lg font-medium transition-colors ${
-            isTabValid && !isLoading
-              ? "bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-              : "bg-slate-300 text-slate-500 cursor-not-allowed"
-          }`}
         >
           {isLoading ? (
             <>
@@ -1760,12 +2087,9 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               Creating...
             </>
           ) : (
-            <>
-              <IoAdd size={18} />
-              Create Load
-            </>
+            <>Create Load</>
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

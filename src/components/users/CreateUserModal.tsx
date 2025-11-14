@@ -14,12 +14,14 @@ import { useForm, Controller } from "react-hook-form";
 import toast from "react-hot-toast";
 import {
   alpha,
+  Box,
   Button,
   FormControl,
   InputAdornment,
   MenuItem,
   Select,
   TextField,
+  Typography,
 } from "@mui/material";
 import { RootState, useAppSelector } from "@/redux/store";
 
@@ -157,28 +159,37 @@ const CreateUserModal = ({
       }}
       className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
     >
-      <div
+      <Box
+        sx={{ bgcolor: theme.currentPalette.background }}
         ref={modalRef}
         className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
       >
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-slate-800 flex items-center gap-1">
             <IoAdd size={20} />
-            <span>Add New User</span>
+            <Typography sx={{color: theme.currentPalette.primary, fontSize: '18px', fontWeight: 'bold'}}>Add New User</Typography>
           </h3>
-          <button
+          <Button
             onClick={handleClose}
             className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
           >
             <IoClose size={20} />
-          </button>
+          </Button>
         </div>
 
         <form onSubmit={handleSubmit(onSubmitForm)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
               Full Name
-            </label>
+            </Typography>
             <div className="relative">
               <TextField
                 type="text"
@@ -193,9 +204,13 @@ const CreateUserModal = ({
                     message: "Name must be less least 50 characters",
                   },
                 })}
-                className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
+                className={`block w-full pl-10 pr-3 py-3 border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.name ? "border-red-500" : "border-slate-300"
                 }`}
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 placeholder="Enter full name"
                 slotProps={{
                   input: {
@@ -216,9 +231,17 @@ const CreateUserModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
               Email Address
-            </label>
+            </Typography>
             <div className="relative">
               <TextField
                 type="email"
@@ -229,9 +252,13 @@ const CreateUserModal = ({
                     message: "Invalid email address",
                   },
                 })}
-                className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
+                className={`block w-full pl-10 pr-3 py-3 border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.email ? "border-red-500" : "border-slate-300"
                 }`}
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 placeholder="Enter full name"
                 slotProps={{
                   input: {
@@ -252,9 +279,17 @@ const CreateUserModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
               Phone Number
-            </label>
+            </Typography>
             <div className="relative">
               <TextField
                 type="text"
@@ -269,9 +304,13 @@ const CreateUserModal = ({
                     message: "Phone number must be at least 8 digits",
                   },
                 })}
-                className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
+                className={`block w-full pl-10 pr-3 py-3 border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.phone ? "border-red-500" : "border-slate-300"
                 }`}
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 placeholder="Enter phone number"
                 slotProps={{
                   input: {
@@ -293,9 +332,17 @@ const CreateUserModal = ({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <Typography
+                sx={{
+                  color: theme.currentPalette.primary,
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  display: "block",
+                  mb: 1,
+                }}
+              >
                 Role
-              </label>
+              </Typography>
               <FormControl fullWidth error={!!errors.role}>
                 <Controller
                   name="role"
@@ -329,9 +376,17 @@ const CreateUserModal = ({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
+              <Typography
+                sx={{
+                  color: theme.currentPalette.primary,
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  display: "block",
+                  mb: 1,
+                }}
+              >
                 Position
-              </label>
+              </Typography>
               <TextField
                 type="text"
                 {...register("position", {
@@ -341,9 +396,13 @@ const CreateUserModal = ({
                     message: "Position must be at least 2 characters",
                   },
                 })}
-                className={`block w-full border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
+                className={`block w-full border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.position ? "border-red-500" : "border-slate-300"
                 }`}
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 placeholder="Position"
               />
               {errors.position && (
@@ -355,9 +414,17 @@ const CreateUserModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
               Password
-            </label>
+            </Typography>
             <div className="relative">
               <TextField
                 type={showPassword ? "text" : "password"}
@@ -368,9 +435,13 @@ const CreateUserModal = ({
                     message: "Password must be at least 6 characters",
                   },
                 })}
-                className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
+                className={`block w-full pl-10 pr-3 py-3 border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.password ? "border-red-500" : "border-slate-300"
                 }`}
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 placeholder="Enter password"
                 slotProps={{
                   input: {
@@ -398,9 +469,17 @@ const CreateUserModal = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "14px",
+                fontWeight: "bold",
+                display: "block",
+                mb: 1,
+              }}
+            >
               Confirm Password
-            </label>
+            </Typography>
             <div className="relative">
               <TextField
                 type={showPasswordConfirm ? "text" : "password"}
@@ -409,11 +488,15 @@ const CreateUserModal = ({
                   validate: (value: string) =>
                     value === watchPassword || "Passwords do not match",
                 })}
-                className={`block w-full pl-10 pr-3 py-3 border rounded-lg bg-white text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
+                className={`block w-full pl-10 pr-3 py-3 border rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors ${
                   errors.passwordConfirmation
                     ? "border-red-500"
                     : "border-slate-300"
                 }`}
+                sx={{
+                  bgcolor: theme.currentPalette.background,
+                  width: "100%",
+                }}
                 placeholder="Confirm password"
                 slotProps={{
                   input: {
@@ -463,7 +546,7 @@ const CreateUserModal = ({
             {isLoading ? "Save Changes" : "Create User"}
           </Button>
         </form>
-      </div>
+      </Box>
     </div>
   );
 };

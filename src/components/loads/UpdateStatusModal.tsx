@@ -16,7 +16,9 @@ import {
   Select,
   SelectChangeEvent,
   TextField,
+  Typography,
 } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
 
 interface UpdateStatusModalProps {
   isOpen: boolean;
@@ -29,6 +31,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
   onClose,
   load,
 }) => {
+  const theme = useAppSelector((state: RootState) => state.palette);
   const [selectedStatus, setSelectedStatus] = useState<TStatusLoad>(
     load?.status || "pending"
   );
@@ -102,20 +105,39 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
     >
       <form onSubmit={handleUpdateLoadStatus} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Load ID
-          </label>
+          </Typography>
           <TextField
             aria-readonly
             value={load?.loadId || "N/A"}
-            className="block w-full px-3 py-3 cursor-not-allowed border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-slate-100"
+            sx={{
+              bgcolor: theme.currentPalette.background,
+              width: "100%",
+            }}
           />
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Status
-          </label>
+          </Typography>
           <FormControl fullWidth>
             <Select
               labelId="demo-simple-select-label"
@@ -132,12 +154,20 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
 
         {/* Delivery Date Picker - Only shown when status is delivered */}
         {showDeliveredAt && (
-          <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <div className="space-y-4 p-4 rounded-lg border">
             <div className="flex items-center gap-2 text-slate-700 mb-2">
               <IoTime className="text-emerald-600" size={18} />
-              <label className="block text-sm font-medium text-slate-700">
-                Delivery Date & Time <span className="text-red-500">*</span>
-              </label>
+              <Typography
+                sx={{
+                  color: theme.currentPalette.primary,
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  display: "block",
+                  mb: 1,
+                }}
+              >
+                Delivery Date & Time
+              </Typography>
             </div>
 
             <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -156,8 +186,19 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
                   textField: {
                     required: true,
                     fullWidth: true,
-                    className: "bg-white",
-                    placeholder: "Select delivery date and time",
+                    sx: {
+                      bgcolor: theme.currentPalette.background,
+                      "& .MuiInputBase-root": {
+                        bgcolor: theme.currentPalette.background,
+                      },
+                    },
+                  },
+                  popper: {
+                    sx: {
+                      "& .MuiPaper-root": {
+                        bgcolor: theme.currentPalette.background,
+                      },
+                    },
                   },
                 }}
               />

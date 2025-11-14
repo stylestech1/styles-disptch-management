@@ -1,4 +1,8 @@
 "use client";
+
+import { RootState, useAppSelector } from "@/redux/store";
+import { Button, Typography } from "@mui/material";
+
 interface PaginationProps {
   pagination: {
     currentPage: number;
@@ -18,33 +22,40 @@ const Pagination = ({
   setPage,
   variant = "default",
 }: PaginationProps) => {
-  if (!pagination) return null;
+  const theme = useAppSelector((state: RootState) => state.palette);
 
+  if (!pagination) return null;
   const { currentPage, totalPages } = pagination;
 
   if (variant === "minimal") {
     return (
       <div className="flex justify-end items-center mt-6">
         <div className="flex items-center justify-end gap-1">
-          <button
+          <Button
+            sx={{
+              bgcolor: theme.currentPalette.background,
+            }}
             disabled={page <= 1}
             onClick={() => setPage(Math.max(1, page - 1))}
-            className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             ← Prev
-          </button>
+          </Button>
 
-          <span className="px-3 py-2 text-sm text-slate-700">
+          <Typography className="px-3 py-2 text-sm" sx={{color:theme.currentPalette.primary}}>
             {currentPage} / {totalPages}
-          </span>
+          </Typography>
 
-          <button
+          <Button
+            sx={{
+              bgcolor: theme.currentPalette.background,
+            }}
             disabled={page >= totalPages}
             onClick={() => setPage(Math.min(totalPages, page + 1))}
-            className="flex items-center gap-1 px-3 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="flex items-center gap-1 px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium text-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next →
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -53,25 +64,33 @@ const Pagination = ({
   return (
     <div className="flex justify-end items-center mt-6">
       <div className="flex items-center justify-end gap-2">
-        <button
+        <Button
+          sx={{
+            bgcolor: theme.currentPalette.primary,
+            color: theme.currentPalette.background,
+          }}
           disabled={page <= 1}
           onClick={() => setPage(Math.max(1, page - 1))}
-          className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Previous
-        </button>
+        </Button>
 
-        <span className="px-3 py-2 text-sm text-slate-700">
+        <Typography className="px-3 py-2 text-sm" sx={{color:theme.currentPalette.primary}}>
           Page {currentPage} of {totalPages}
-        </span>
+        </Typography>
 
-        <button
+        <Button
+          sx={{
+            bgcolor: theme.currentPalette.primary,
+            color: theme.currentPalette.background,
+          }}
           disabled={page >= totalPages}
           onClick={() => setPage(Math.min(totalPages, page + 1))}
-          className="flex items-center gap-1 px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="flex items-center gap-1 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           Next
-        </button>
+        </Button>
       </div>
     </div>
   );

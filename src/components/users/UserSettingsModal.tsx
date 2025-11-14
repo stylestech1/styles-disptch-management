@@ -4,7 +4,15 @@ import { IoClose, IoSettingsOutline } from "react-icons/io5";
 import { TDispatcher } from "@/types/globalTypes";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import toast from "react-hot-toast";
-import { FormControl, MenuItem, Select } from "@mui/material";
+import {
+  Box,
+  Button,
+  FormControl,
+  MenuItem,
+  Select,
+  Typography,
+} from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
 
 interface UserSettingsModalProps {
   isOpen: boolean;
@@ -32,6 +40,8 @@ const UserSettingsModal = ({
     role: "employee" as "admin" | "employee",
     status: "active" as "active" | "deactive",
   });
+
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   useEffect(() => {
     if (user) {
@@ -69,26 +79,40 @@ const UserSettingsModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4">
-      <div className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+      <Box
+        sx={{ bgcolor: theme.currentPalette.background }}
+        className="relative rounded-2xl shadow-2xl border p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+      >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-xl font-semibold text-slate-800 flex items-center gap-1">
+          <h3 className="flex items-center gap-1">
             <IoSettingsOutline size={20} />
-            <span>User Settings</span>
+            <Typography
+              sx={{
+                color: theme.currentPalette.primary,
+                fontSize: "18px",
+                fontWeight: "bold",
+              }}
+            >
+              User Settings
+            </Typography>
           </h3>
-          <button
+          <Button
             onClick={onClose}
             className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
           >
             <IoClose size={24} />
-          </button>
+          </Button>
         </div>
 
         {/* User Info */}
-        <div className="mb-6 p-4 bg-slate-50 rounded-lg">
+        <Box
+          sx={{ border: 1, borderColor: theme.currentPalette.text }}
+          className="mb-6 p-4 rounded-lg"
+        >
           <h4 className="font-medium text-slate-800">{user.name}</h4>
           <p className="text-sm text-slate-600">{user.email}</p>
           <p className="text-sm text-slate-600">{user.phone}</p>
-        </div>
+        </Box>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -105,6 +129,7 @@ const UserSettingsModal = ({
                       role: e.target.value as "admin" | "employee",
                     })
                   }
+                  sx={{ bgcolor: theme.currentPalette.background }}
                   className="block w-full border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 >
                   <MenuItem value={"employee"}>Employee</MenuItem>
@@ -126,6 +151,7 @@ const UserSettingsModal = ({
                       status: e.target.value as "active" | "deactive",
                     })
                   }
+                  sx={{ bgcolor: theme.currentPalette.background }}
                   className="block w-full border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 >
                   <MenuItem value={"active"}>Active</MenuItem>
@@ -135,16 +161,17 @@ const UserSettingsModal = ({
             </div>
           </div>
 
-          <button
+          <Button
             type="submit"
             disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
+            sx={{ bgcolor: theme.currentPalette.primary, color: theme.currentPalette.background }}
+            className="w-full flex items-center justify-center gap-2 py-3 px-4 text-white rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 mt-4"
           >
             <IoSettingsOutline size={18} />
             {isLoading ? "Updating..." : "Update User"}
-          </button>
+          </Button>
         </form>
-      </div>
+      </Box>
     </div>
   );
 };

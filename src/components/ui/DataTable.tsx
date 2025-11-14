@@ -152,10 +152,10 @@ const DataTable = <T,>({
                   align={column.align || "center"}
                   sx={{
                     fontWeight: 600,
-                    color: theme.currentPalette.title,
+                    color: theme.currentPalette.background,
                     borderBottom: 1,
                     borderColor: theme.currentPalette.primary,
-                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                    backgroundColor: theme.currentPalette.primary,
                     width: column.width,
                     py: 2,
                   }}

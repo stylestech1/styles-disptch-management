@@ -138,7 +138,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
       variant="outlined"
       sx={{
         height: "100%",
-        border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+        border: `1px solid ${alpha(theme.currentPalette.text, 0.2)}`,
         borderRadius: 2,
         bgcolor: theme.currentPalette.background,
         transition: "all 0.2s ease",
@@ -183,7 +183,9 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
         direction="row"
         spacing={2}
         alignItems="flex-start"
-        sx={{ width: "100%" }}
+        sx={{
+          width: "100%",
+        }}
       >
         <Box
           sx={{
@@ -223,7 +225,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
           p: 4,
           mb: 3,
           bgcolor: theme.currentPalette.background,
-          border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+          border: `1px solid ${alpha(theme.currentPalette.text, 0.2)}`,
           borderRadius: 2,
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
@@ -283,7 +285,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
           width: "100%",
           overflow: "hidden",
           bgcolor: theme.currentPalette.background,
-          border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+          border: `1px solid ${alpha(theme.currentPalette.text, 0.2)}`,
           borderRadius: 2,
           boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
         }}
@@ -359,20 +361,21 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
               variant="contained"
               startIcon={<RxUpdate />}
               sx={{
-                background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)",
-                "&:hover": {
-                  background:
-                    "linear-gradient(135deg, #1565c0 0%, #0d47a1 100%)",
-                  transform: "translateY(-2px)",
-                  boxShadow: "0 4px 12px rgba(25, 118, 210, 0.4)",
-                },
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 4,
                 py: 1.5,
+                px: 4,
+                fontWeight: "bold",
+                fontSize: "1rem",
+                borderRadius: 2,
                 textTransform: "none",
+                width: { xs: "100%", lg: "auto" },
+                background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+                color: "#fff",
+                "&:hover": {
+                  background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                },
                 transition: "all 0.3s ease",
-                boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
               }}
             >
               Update Load
@@ -622,6 +625,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                   border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+                  bgcolor: theme.currentPalette.background,
                 }}
               >
                 <CardContent sx={{ p: 3 }}>
@@ -661,15 +665,21 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                       variant="contained"
                       startIcon={<MdEdit size={16} />}
                       sx={{
-                        bgcolor: theme.currentPalette.primary,
-                        "&:hover": {
-                          bgcolor: alpha(theme.currentPalette.primary, 0.9),
-                        },
-                        fontWeight: 600,
+                        py: 1.5,
+                        px: 4,
+                        fontWeight: "bold",
+                        fontSize: "1rem",
                         borderRadius: 2,
-                        px: 3,
-                        py: 1,
                         textTransform: "none",
+                        width: { xs: "100%", lg: "auto" },
+                        background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+                        color: "#fff",
+                        "&:hover": {
+                          background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+                          transform: "translateY(-1px)",
+                          boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                        },
+                        transition: "all 0.3s ease",
                       }}
                     >
                       Add Note
@@ -794,19 +804,21 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
               variant="contained"
               startIcon={<IoRefresh size={18} />}
               sx={{
-                bgcolor: theme.currentPalette.primary,
-                "&:hover": {
-                  bgcolor: alpha(theme.currentPalette.primary, 0.9),
-                  transform: "translateY(-1px)",
-                },
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 4,
                 py: 1.5,
+                px: 4,
+                fontWeight: "bold",
+                fontSize: "1rem",
+                borderRadius: 2,
                 textTransform: "none",
-                fontSize: "0.9rem",
-                transition: "all 0.2s ease",
-                boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
+                width: { xs: "100%", lg: "auto" },
+                background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
+                color: "#fff",
+                "&:hover": {
+                  background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
+                  transform: "translateY(-1px)",
+                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                },
+                transition: "all 0.3s ease",
               }}
             >
               Update Status
@@ -817,7 +829,8 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
               <Card
                 variant="outlined"
                 sx={{
-                  border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+                  bgcolor: theme.currentPalette.background,
+                  border: `1px solid ${theme.currentPalette.text}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}
@@ -1077,7 +1090,8 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
               <Card
                 variant="outlined"
                 sx={{
-                  border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+                  bgcolor: theme.currentPalette.background,
+                  border: `1px solid ${theme.currentPalette.text}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}
@@ -1232,7 +1246,8 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
               <Card
                 variant="outlined"
                 sx={{
-                  border: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+                  bgcolor: theme.currentPalette.background,
+                  border: `1px solid ${theme.currentPalette.text}`,
                   borderRadius: 2,
                   boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
                 }}

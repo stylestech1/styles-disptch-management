@@ -71,7 +71,11 @@ const DriversPage = () => {
     refetch: refetchDrivers,
   } = useGetDriversWithPaginationQuery(
     { page, limit: 10 },
-    { refetchOnFocus: false }
+    {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: false,
+    }
   );
 
   const { data: filteredData } = useGetDriverWithFilterQuery(
@@ -318,8 +322,9 @@ const DriversPage = () => {
   const renderDriverRow = (driver: TDriver) => {
     // Styles
     const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
       "&:hover": {
-        backgroundColor: alpha(theme.currentPalette.primary, 0.05),
+        bgcolor: alpha(theme.currentPalette.primary, 0.1),
         cursor: "pointer",
       },
       transition: "all 0.2s ease-in-out",
@@ -572,9 +577,12 @@ const DriversPage = () => {
           sx={{ width: "100%" }}
           inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-              backgroundColor: "#fff",
+              borderRadius: 1,
+              backgroundColor: theme.currentPalette.background,
               py: 0.5,
+              "&:hover": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
           }}
         />

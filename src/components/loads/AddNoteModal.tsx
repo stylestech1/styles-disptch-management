@@ -11,7 +11,9 @@ import {
   MenuItem,
   Select,
   TextField,
+  Typography,
 } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
 
 interface AddNoteModalProps {
   isOpen: boolean;
@@ -28,11 +30,15 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
     load?.id || ""
   );
   const [addingNote, setAddingNote] = useState("");
-  const [noteType, setNoteType] = useState<"dispatcher" | "driver">("dispatcher");
+  const [noteType, setNoteType] = useState<"dispatcher" | "driver">(
+    "dispatcher"
+  );
 
   // using useGetLoadsQuery instead of useSelector
   const { refetch } = useGetLoadsQuery({ page: 1, limit: 10 });
   const [addNote, { isLoading: addingNoteLoading }] = useAddNoteMutation();
+
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   const handleNotes = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -84,29 +90,56 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
       <form onSubmit={handleNotes} className="space-y-4">
         {/* Load ID */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2 ">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Load ID
-          </label>
+          </Typography>
           <TextField
             aria-readonly
             value={load?.loadId || "N/A"}
-            className="block w-full px-3 py-3 cursor-not-allowed border border-slate-300 rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors bg-slate-100"
+            sx={{
+              bgcolor: theme.currentPalette.background,
+              width: "100%",
+            }}
           />
         </div>
 
         {/* Note Type */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Note Type
-          </label>
+          </Typography>
           <FormControl fullWidth>
             <Select
               labelId="demo-simple-select-label"
               value={noteType}
               displayEmpty
-              onChange={(e) => setNoteType(e.target.value as "dispatcher" | "driver")}
+              onChange={(e) =>
+                setNoteType(e.target.value as "dispatcher" | "driver")
+              }
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                width: "100%",
+              }}
             >
-              <MenuItem value={""} disabled>Select Note Type</MenuItem>
+              <MenuItem value={""} disabled>
+                Select Note Type
+              </MenuItem>
               <MenuItem value={"dispatcher"}>Dispatcher Note</MenuItem>
               <MenuItem value={"driver"}>Driver Note</MenuItem>
             </Select>
@@ -115,14 +148,25 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
 
         {/* Note Text */}
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-2">
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "14px",
+              fontWeight: "bold",
+              display: "block",
+              mb: 1,
+            }}
+          >
             Note
-          </label>
+          </Typography>
           <TextField
             value={addingNote}
             onChange={(e) => setAddingNote(e.target.value)}
             rows={5}
-            className="block w-full px-3 py-3 border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors resize-none"
+            sx={{
+                bgcolor: theme.currentPalette.background,
+              }}
+            className="block w-full px-3 py-3 border rounded-lg text-slate-900 focus:outline-none focus:ring-2 transition-colors resize-none"
             placeholder="Enter your note here..."
             multiline
           />

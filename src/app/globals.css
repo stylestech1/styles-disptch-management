@@ -8,3 +8,17 @@ body {
 button{
   cursor: pointer !important
 }
+.date-range-container .rdrCalendarWrapper,
+.date-range-container .rdrDateRangeWrapper,
+.date-range-container .rdrMonths {
+  background-color: var(--date-range-bg) !important;
+}
+.date-range-container .rdrMonthAndYearWrapper,
+.date-range-container .rdrMonthAndYearPickers {
+  background-color: var(--date-range-bg) !important;
+}
+.date-range-container .rdrDays,
+.date-range-container .rdrDay,
+.date-range-container .rdrDayNumber span {
+  background-color: transparent !important;
+}

@@ -37,9 +37,7 @@ import { FaTruck, FaUserCheck, FaUserMinus } from "react-icons/fa";
 import { FaUserLargeSlash } from "react-icons/fa6";
 import { Dayjs } from "dayjs";
 import useError from "@/hook/useError";
-import {
-  StatusChip,
-} from "@/components/ui/TablesMUI";
+import { StatusChip } from "@/components/ui/TablesMUI";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
 import { setLoading } from "@/redux/slices/uiSlice";
 import SearchInput from "@/components/ui/SearchInput";
@@ -65,7 +63,11 @@ const TrucksPage: React.FC = () => {
     refetch: refetchTrucks,
   } = useGetTrucksWithPaginationQuery(
     { page, limit: 10 },
-    { refetchOnFocus: false }
+    {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: false,
+    }
   );
   const [
     triggerSearchQuery,

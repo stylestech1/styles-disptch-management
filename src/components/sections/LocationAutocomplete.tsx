@@ -1,5 +1,7 @@
 "use client";
-import { Button, TextField } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
+import { Label } from "@mui/icons-material";
+import { alpha, Box, Button, TextField, Typography } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 
 export type TPlace = {
@@ -55,6 +57,7 @@ const LocationAutocomplete = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSelecting, setIsSelecting] = useState(false);
   const [shouldSearch, setShouldSearch] = useState(true);
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   useEffect(() => {
     if (value?.display_name && value.display_name !== input) {
@@ -235,9 +238,17 @@ const LocationAutocomplete = ({
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <label className="block mb-1 font-medium">
+      <Typography
+        sx={{
+          color: theme.currentPalette.primary,
+          fontSize: "16px",
+          fontWeight: "bold",
+          display: "block",
+          mb: 1,
+        }}
+      >
         {label} <span className="text-red-500">*</span>
-      </label>
+      </Typography>
       <div className="flex items-end gap-5">
         <div className="relative flex items-end gap-4 w-full">
           <TextField
@@ -252,7 +263,9 @@ const LocationAutocomplete = ({
             variant="outlined"
             fullWidth
             size="small"
-            className="bg-white rounded-lg"
+            sx={{
+              bgcolor: theme.currentPalette.background,
+            }}
             slotProps={{
               input: {
                 endAdornment: input && (
@@ -277,20 +290,24 @@ const LocationAutocomplete = ({
       </div>
 
       {loading && (
-        <div className="absolute top-17 left-0 bg-white border p-2 w-full z-50 shadow-lg rounded-b">
+        <Box
+          sx={{ bgcolor: theme.currentPalette.background }}
+          className="absolute top-17 left-0 border p-2 w-full z-50 shadow-lg rounded-b"
+        >
           <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-            Searching...
+            <Box className="animate-spin rounded-full h-4 w-4 border-b-2 mr-2" sx={{borderColor: theme.currentPalette.primary}}></Box>
+            <Typography sx={{color: theme.currentPalette.primary}}>Searching...</Typography>
           </div>
-        </div>
+        </Box>
       )}
 
       {!loading && showSuggestions && suggestions.length > 0 && (
-        <ul className="absolute top-17 left-0 bg-white border w-full max-h-60 overflow-auto z-50 shadow-lg rounded-b">
+        <Box component={'ul'} sx={{bgcolor: theme.currentPalette.background}} className="absolute top-17 left-0 border w-full max-h-60 overflow-auto z-50 shadow-lg rounded-b">
           {suggestions.map((s) => (
-            <li
+            <Box component={'li'}
+              sx={{'&:hover': {bgcolor: alpha(theme.currentPalette.primary, 0.1)}}}
               key={s.place_id}
-              className="p-3 cursor-pointer hover:bg-blue-50 border-b last:border-b-0 transition-colors"
+              className="p-3 cursor-pointer border-b last:border-b-0 transition-colors"
               onMouseDown={(e) => {
                 e.preventDefault();
                 handleSelectPlace(s);
@@ -304,18 +321,21 @@ const LocationAutocomplete = ({
                   📮 ZIP: {s.postcode}
                 </div>
               )}
-            </li>
+            </Box>
           ))}
-        </ul>
+        </Box>
       )}
 
       {!loading &&
         showSuggestions &&
         suggestions.length === 0 &&
         input.length >= 2 && (
-          <div className="absolute top-17 left-0 bg-white border p-3 w-full z-50 shadow-lg rounded-b text-gray-500">
-            No locations found. Try a different search term.
-          </div>
+          <Box
+          sx={{ bgcolor: theme.currentPalette.background }}
+          className="absolute top-17 left-0 border p-2 w-full z-50 shadow-lg rounded-b"
+        >
+            <Typography sx={{color: theme.currentPalette.primary}}>No locations found. Try a different search term.</Typography>
+          </Box>
         )}
     </div>
   );

@@ -20,12 +20,14 @@ export const apiSlice = api.injectEndpoints({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/loads?page=${page}&limit=${limit}`,
       providesTags: ["Loads", "Drivers", "Trucks"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // Get All Loads
     getAllLoads: builder.query({
-      query: (arg: void) => `/api/v1/loads`,
+      query: () => `/api/v1/loads`,
       providesTags: ["Loads"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // Get Loads Using Id
@@ -93,8 +95,9 @@ export const apiSlice = api.injectEndpoints({
 
     // Get Drivers
     getDrivers: builder.query({
-      query: (arg: void) => `/api/v1/drivers?status=available`,
+      query: () => `/api/v1/drivers?status=available`,
       providesTags: ["Drivers"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // Get User has driver role
@@ -113,6 +116,7 @@ export const apiSlice = api.injectEndpoints({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/drivers?page=${page}&limit=${limit}`,
       providesTags: ["Drivers"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // 🔹 Get all drivers without pagination
@@ -200,8 +204,9 @@ export const apiSlice = api.injectEndpoints({
 
     // Get Trucks
     getTrucks: builder.query({
-      query: (arg: void) => `/api/v1/trucks?status=available`,
+      query: () => `/api/v1/trucks?status=available`,
       providesTags: ["Trucks"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // Get trucks with pagination
@@ -209,6 +214,7 @@ export const apiSlice = api.injectEndpoints({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/trucks?page=${page}&limit=${limit}`,
       providesTags: ["Trucks"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // Get All Trucks for Search
@@ -344,6 +350,7 @@ export const apiSlice = api.injectEndpoints({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/adminDashboard?page=${page}&limit=${limit}`,
       providesTags: ["Dispatchers"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // Get Users Using Id
@@ -414,6 +421,7 @@ export const apiSlice = api.injectEndpoints({
     getUserInfo: builder.query({
       query: () => `/api/v1/userDashboard/getMyData`,
       providesTags: ["Users"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // Update User Info
@@ -499,6 +507,7 @@ export const apiSlice = api.injectEndpoints({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/customers?page=${page}&limit=${limit}`,
       providesTags: ["Customers"],
+      keepUnusedDataFor: 60 * 60 * 24
     }),
 
     // 🔹 Create Customer

@@ -163,11 +163,7 @@ const TruckDashboard = () => {
 
   const searchHook = useSearchSubmit();
 
-  const {
-    searchInput,
-    searchTerm,
-    isSearching,
-  } = searchHook;
+  const { searchInput, searchTerm, isSearching } = searchHook;
 
   const {
     data: allTrucksData,
@@ -176,6 +172,9 @@ const TruckDashboard = () => {
     isFetching,
   } = useGetTruckSummaryQuery(undefined, {
     skip: !token,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMountOrArgChange: false,
   });
 
   const { filteredData: searchedTrucks } = useSearch({
@@ -293,7 +292,7 @@ const TruckDashboard = () => {
     minHeight: "100vh",
     p: 3,
   };
-  
+
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },

@@ -5,7 +5,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import dayjs, { Dayjs } from "dayjs";
 import { useSearchParams } from "next/navigation";
-import { alpha, Button } from "@mui/material";
+import { alpha, Box, Button } from "@mui/material";
 import { RootState, useAppSelector } from "@/redux/store";
 
 type DateRangeFilterProps = {
@@ -155,7 +155,13 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
       </Button>
 
       {showPicker && (
-        <div className="absolute top-12 right-0 z-50 bg-white border border-gray-200 rounded-xl shadow-xl p-4 w-[370px]">
+        <Box
+          sx={{
+            bgcolor: theme.currentPalette.background,
+            "--date-range-bg": theme.currentPalette.background,
+          }}
+          className="date-range-container absolute top-12 right-0 z-50 border border-gray-200 rounded-xl shadow-xl p-4 w-[370px]"
+        >
           {dateRange[0].startDate === undefined &&
           dateRange[0].endDate === undefined ? (
             <DateRange
@@ -168,7 +174,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
                   key: "selection",
                 },
               ]}
-              rangeColors={["#2563eb"]}
+              rangeColors={[theme.currentPalette.primary]}
               showDateDisplay={false}
               months={1}
               direction="horizontal"
@@ -180,7 +186,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
               onChange={handleRangeSelect}
               moveRangeOnFirstSelection={false}
               ranges={dateRange}
-              rangeColors={["#2563eb"]}
+              rangeColors={[theme.currentPalette.primary]}
               showDateDisplay={false}
               months={1}
               direction="horizontal"
@@ -190,28 +196,34 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
           )}
 
           <div className="flex justify-between mt-3">
-            <button
+            <Button
+              sx={{ color: theme.currentPalette.primary }}
               onClick={handleClear}
-              className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-md text-sm"
+              className="px-3 py-1.5 text-gray-600 rounded-md text-sm"
             >
               Clear
-            </button>
+            </Button>
             <div className="flex gap-2">
-              <button
+              <Button
+                sx={{ color: theme.currentPalette.primary }}
                 onClick={() => setShowPicker(false)}
-                className="px-3 py-1.5 text-gray-600 hover:bg-gray-100 rounded-md text-sm"
+                className="px-3 py-1.5 text-gray-600 rounded-md text-sm"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
+                sx={{
+                  bgcolor: theme.currentPalette.primary,
+                  color: theme.currentPalette.background,
+                }}
                 onClick={handleApply}
-                className="px-4 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm"
+                className="px-4 py-1.5 text-white rounded-md text-sm"
               >
                 Apply
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
+        </Box>
       )}
     </div>
   );

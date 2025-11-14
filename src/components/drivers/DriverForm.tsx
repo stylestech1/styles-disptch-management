@@ -229,7 +229,8 @@ export const DriverForm = ({
       }}
       className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
     >
-      <div
+      <Box
+        sx={{ bgcolor: theme.currentPalette.background }}
         ref={modalRef}
         className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
       >
@@ -237,10 +238,7 @@ export const DriverForm = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             {!editMode && (
-              <Box
-                sx={{ bgcolor: alpha(theme.currentPalette.secondary, 0.3) }}
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-              >
+              <Box>
                 <IoAdd size={18} />
               </Box>
             )}
@@ -248,12 +246,12 @@ export const DriverForm = ({
               {editMode ? "Edit Driver" : "Add New Driver"}
             </h3>
           </div>
-          <button
+          <Button
             onClick={onClose}
             className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
           >
             <IoClose size={24} />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -507,13 +505,24 @@ export const DriverForm = ({
                           )
                         }
                         slotProps={{
-                          popper:{
-                            disablePortal: true
+                          popper: {
+                            disablePortal: true,
+                            sx: {
+                              "& .MuiPaper-root": {
+                                bgcolor: theme.currentPalette.background,
+                              },
+                            },
                           },
                           textField: {
                             fullWidth: true,
                             error: !!errors.hireDate,
                             helperText: errors.hireDate?.message as string,
+                            sx: {
+                              bgcolor: theme.currentPalette.background,
+                              "& .MuiInputBase-root": {
+                                bgcolor: theme.currentPalette.background,
+                              },
+                            },
                             slotProps: {
                               input: {
                                 startAdornment: (
@@ -676,7 +685,7 @@ export const DriverForm = ({
               : "Create Driver"}
           </Button>
         </form>
-      </div>
+      </Box>
     </div>
   );
 };

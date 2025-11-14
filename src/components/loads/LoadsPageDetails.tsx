@@ -94,7 +94,7 @@ const LoadsPageDetails = () => {
       reset: resetSearchQuery,
     },
   ] = useLazyGetLoadByIdQuery();
-  
+
   // Search Hook
   const searchHook = useSearchSubmit({
     onSearch: (term) => {
@@ -121,6 +121,8 @@ const LoadsPageDetails = () => {
     { page, limit: 10 },
     {
       refetchOnFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: false,
     }
   );
 
@@ -135,7 +137,7 @@ const LoadsPageDetails = () => {
         from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
         to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
         page,
-        limit:10
+        limit: 10,
       },
       {
         skip: !isFiltered || !fromDate || !toDate,
@@ -154,7 +156,9 @@ const LoadsPageDetails = () => {
     return loadsData?.data || [];
   }, [isSearching, isFiltered, loadByIdData, filteredData, loadsData]);
 
-  const pagination = isFiltered ? filteredData?.paginationResult || null : loadsData?.paginationResult || null ;
+  const pagination = isFiltered
+    ? filteredData?.paginationResult || null
+    : loadsData?.paginationResult || null;
 
   // Loading state
   useEffect(() => {
@@ -199,7 +203,7 @@ const LoadsPageDetails = () => {
   const renderLoadRow = (loadItem: TLoads) => {
     const hasComments = loadItem.comments && loadItem.comments.length > 0;
     const commentsCount = loadItem.comments?.length || 0;
-    console.log('loadId, ', typeof loadItem.loadId)
+    console.log("loadId, ", typeof loadItem.loadId);
 
     const navigateToLoadDetails = (e?: React.MouseEvent) => {
       if (e) {
@@ -209,7 +213,9 @@ const LoadsPageDetails = () => {
       const path =
         userRole === "admin"
           ? `/admin/loadDetails/${encodeURIComponent(String(loadItem.loadId))}`
-          : `/dispatchers/loadDetails/${encodeURIComponent(String(loadItem.loadId))}`;
+          : `/dispatchers/loadDetails/${encodeURIComponent(
+              String(loadItem.loadId)
+            )}`;
 
       router.push(path);
     };
@@ -218,17 +224,13 @@ const LoadsPageDetails = () => {
     const tableRowSx: SxProps = {
       bgcolor: theme.currentPalette.background,
       "&:hover": {
-        backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+        bgcolor: alpha(theme.currentPalette.primary, 0.1),
         cursor: "pointer",
       },
       transition: "all 0.2s ease-in-out",
     };
     const commentButtonSx: SxProps = {
       backgroundColor: theme.currentPalette.primary,
-      "&:hover": {
-        backgroundColor: theme.currentPalette.secondary,
-        transform: "scale(1.05)",
-      },
       transition: "all 0.2s ease-in-out",
     };
 
@@ -307,7 +309,7 @@ const LoadsPageDetails = () => {
         {/* Driver */}
         <td className="p-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center">
               <IoCar size={12} className="text-slate-600" />
             </div>
             <div>
@@ -506,9 +508,9 @@ const LoadsPageDetails = () => {
               borderRadius: 1,
               backgroundColor: theme.currentPalette.background,
               py: 0.5,
-              "&:hover":{
-              borderColor: theme.currentPalette.primary,
-              }
+              "&:hover": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
           }}
         />

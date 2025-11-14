@@ -296,9 +296,9 @@ export default function Settings() {
         sx={{
           p: 3,
           border: "1px solid",
-          borderColor: "divider",
+          borderColor: "text.secondary",
           borderRadius: 2,
-          backgroundColor: "background.paper",
+          backgroundColor: "background.default",
         }}
       >
         <Typography variant="h5" sx={{ mb: 3 }}>

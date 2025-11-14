@@ -63,7 +63,11 @@ const CustomerPage = () => {
     refetch: refetchCustomer,
   } = useGetCustomersWithPaginationQuery(
     { page, limit: 10 },
-    { refetchOnFocus: false }
+    {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: false,
+    }
   );
   const [
     triggerSearchQuery,

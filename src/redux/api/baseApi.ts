@@ -25,5 +25,8 @@ export const api = createApi({
     "Palette",
     "Customers",
   ],
+  refetchOnFocus: false,
+  refetchOnReconnect: false,
+  refetchOnMountOrArgChange: false,
   endpoints: () => ({}),
 });
