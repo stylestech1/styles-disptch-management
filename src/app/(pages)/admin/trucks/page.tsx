@@ -67,6 +67,7 @@ const TrucksPage: React.FC = () => {
     { page, limit: 10 },
     { refetchOnFocus: false }
   );
+  console.log(trucksData.data)
   const [
     triggerSearchQuery,
     {
@@ -109,20 +110,20 @@ const TrucksPage: React.FC = () => {
   const [deleteTruck, { isLoading: isDeleting }] = useDeleteTruckMutation();
 
   const truck = useMemo(() => {
-    if (isSearching && Array.isArray(truckByIdData?.data.data)) {
-      return Array.isArray(truckByIdData.data.data)
-        ? truckByIdData.data.data
-        : [truckByIdData.data.data];
+    if (isSearching && Array.isArray(truckByIdData?.data)) {
+      return Array.isArray(truckByIdData.data)
+        ? truckByIdData.data
+        : [truckByIdData.data];
     }
     if (isFiltered && filteredData?.data) {
-      return filteredData.data.data;
+      return filteredData.data;
     }
-    return trucksData?.data?.data || [];
+    return trucksData?.data || [];
   }, [isSearching, isFiltered, truckByIdData, filteredData, trucksData]);
 
   const pagination = isFiltered
-    ? filteredData?.data.paginationResult || null
-    : trucksData?.data.paginationResult || null;
+    ? filteredData?.paginationResult || null
+    : trucksData?.paginationResult || null;
 
   // Loading state
   useEffect(() => {
