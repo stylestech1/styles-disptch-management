@@ -684,7 +684,10 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               </span>
             }
             sx={{
-              color: activeTab === 1 ? theme.currentPalette.primary : theme.currentPalette.text,
+              color:
+                activeTab === 1
+                  ? theme.currentPalette.primary
+                  : theme.currentPalette.text,
               "&.Mui-selected": {
                 color: theme.currentPalette.primary,
               },
@@ -699,7 +702,10 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               </span>
             }
             sx={{
-              color: activeTab === 2 ? theme.currentPalette.primary : theme.currentPalette.text,
+              color:
+                activeTab === 2
+                  ? theme.currentPalette.primary
+                  : theme.currentPalette.text,
               "&.Mui-selected": {
                 color: theme.currentPalette.primary,
               },
@@ -714,7 +720,10 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
               </span>
             }
             sx={{
-              color: activeTab === 3 ? theme.currentPalette.primary : theme.currentPalette.text,
+              color:
+                activeTab === 3
+                  ? theme.currentPalette.primary
+                  : theme.currentPalette.text,
               "&.Mui-selected": {
                 color: theme.currentPalette.primary,
               },
@@ -1682,8 +1691,20 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
   onPrevTab,
   isLoading,
 }) => {
-  const { data: driversData } = useGetDriversQuery();
-  const { data: trucksData } = useGetTrucksQuery();
+  const token = useAppSelector((state: RootState) => state.auth.token);
+
+  const { data: driversData } = useGetDriversQuery({
+    skip: !token,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMountOrArgChange: false,
+  });
+  const { data: trucksData } = useGetTrucksQuery({
+    skip: !token,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMountOrArgChange: false,
+  });
 
   const drivers = driversData?.data || [];
   const trucks = trucksData?.data || [];
