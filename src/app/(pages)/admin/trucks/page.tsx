@@ -67,7 +67,6 @@ const TrucksPage: React.FC = () => {
     { page, limit: 10 },
     { refetchOnFocus: false }
   );
-  console.log(trucksData.data)
   const [
     triggerSearchQuery,
     {
