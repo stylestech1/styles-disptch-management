@@ -90,10 +90,6 @@ const TruckSummary = () => {
     return Array.isArray(summaryData.data.loads) ? summaryData.data.loads : [];
   })();
 
-  console.log("profile", profile);
-  console.log("summaryData", summaryData);
-  console.log("loadsData", loadsData);
-
   const { filteredData: searchedTruck } = useSearch<TLoads>({
     data: loadsData,
     searchFields: ["loadId", "driverId.name"],
@@ -115,7 +111,6 @@ const TruckSummary = () => {
         totalRevenue: 0,
         netProfit: 0,
       };
-      console.log('hhhhhhhhh',summaryData?.data)
 
   useEffect(() => {
     if (id && !isFilterActive) {
