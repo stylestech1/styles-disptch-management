@@ -11,15 +11,19 @@ import {
   MenuItem,
   CircularProgress,
   PaletteMode,
+  IconButton,
+  Menu,
 } from "@mui/material";
 import { Palette } from "@/types/themeType";
 import { usePaletteManagement } from "@/hook/usePaletteManagement";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import toast from "react-hot-toast";
 
 export default function Settings() {
   const {
     currentPalette,
     customPalettes,
+    removeCustomPalette,
     isLoading,
     savePaletteToBackend,
     applyPalette,
@@ -41,73 +45,147 @@ export default function Settings() {
   useEffect(() => {
     setCustom((prev) => ({
       ...prev,
-      primary: currentPalette.primary,
-      secondary: currentPalette.secondary,
-      background: currentPalette.background,
-      text: currentPalette.text,
-      title: currentPalette.title,
+      primary: currentPalette.primary || "#1E56A0",
+      secondary: currentPalette.secondary || "#266DCB",
+      background: currentPalette.background || "#FBFDFE",
+      text: currentPalette.text || "#333333",
+      title: currentPalette.title || "#1E56A0",
     }));
   }, [currentPalette]);
+
+  const handleEditPalette = (palette: Palette) => {
+    setCustom({ ...palette, mode: palette.mode });
+  };
+
+  const handleDeletePalette = (palette: Palette) => {
+    removeCustomPalette(palette._id ?? palette.customName);
+    toast.success(`Palette "${palette.customName}" deleted successfully!`);
+  };
 
   const PaletteCardPreview = ({
     palette,
     onClick,
+    onEdit,
+    onDelete,
+    currentPalette,
+    isDefault,
   }: {
     palette: Palette;
     onClick: () => void;
-  }) => (
-    <Box
-      onClick={onClick}
-      sx={{
-        width: 120,
-        height: 60,
-        borderRadius: 2,
-        overflow: "hidden",
-        cursor: "pointer",
-        boxShadow: currentPalette.customName === palette.customName ? 4 : 1,
-        border:
-          currentPalette.customName === palette.customName
-            ? `2px solid ${palette.primary}`
-            : "1px solid #ccc",
-        "&:hover": {
-          boxShadow: 4,
-          transform: "scale(1.05)",
-          transition: "all 0.2s ease-in-out",
-        },
-      }}
-    >
-      <Box sx={{ display: "flex", height: "70%" }}>
-        <Box sx={{ flex: 1, backgroundColor: palette.primary }} />
-        <Box sx={{ flex: 1, backgroundColor: palette.secondary }} />
-        <Box sx={{ flex: 1, backgroundColor: palette.background }} />
-        <Box sx={{ flex: 1, backgroundColor: palette.text }} />
-        <Box sx={{ flex: 1, backgroundColor: palette.title }} />
-      </Box>
+    onEdit: (palette: Palette) => void;
+    onDelete: (palette: Palette) => void;
+    currentPalette: Palette;
+    isDefault: boolean;
+  }) => {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+
+    const handleMenuOpen = (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.stopPropagation();
+      setAnchorEl(e.currentTarget);
+    };
+
+    const handleMenuClose = () => setAnchorEl(null);
+
+    return (
       <Box
+        onClick={onClick}
         sx={{
-          height: "30%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundColor: palette.background,
+          width: 120,
+          height: 60,
+          borderRadius: 2,
+          overflow: "hidden",
+          cursor: "pointer",
+          boxShadow: currentPalette.customName === palette.customName ? 4 : 1,
+          border:
+            currentPalette.customName === palette.customName
+              ? `2px solid ${palette.primary}`
+              : "1px solid #ccc",
+          position: "relative",
+          "&:hover": {
+            boxShadow: 4,
+            transform: "scale(1.05)",
+            transition: "all 0.2s ease-in-out",
+          },
         }}
       >
-        <Typography
-          variant="caption"
+        {!isDefault && (
+          <IconButton
+            size="small"
+            onClick={handleMenuOpen}
+            sx={{
+              position: "absolute",
+              top: 2,
+              right: 2,
+              zIndex: 10,
+              backgroundColor: "rgba(255,255,255,0.7)",
+              "&:hover": { backgroundColor: "rgba(255,255,255,0.9)" },
+            }}
+          >
+            <MoreVertIcon fontSize="small" />
+          </IconButton>
+        )}
+
+        <Menu
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleMenuClose}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          transformOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <MenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMenuClose();
+              onEdit(palette);
+            }}
+          >
+            Edit
+          </MenuItem>
+          <MenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              handleMenuClose();
+              if (palette._id) onDelete(palette);
+            }}
+          >
+            Delete
+          </MenuItem>
+        </Menu>
+
+        <Box sx={{ display: "flex", height: "70%" }}>
+          <Box sx={{ flex: 1, backgroundColor: palette.primary }} />
+          <Box sx={{ flex: 1, backgroundColor: palette.secondary }} />
+          <Box sx={{ flex: 1, backgroundColor: palette.background }} />
+          <Box sx={{ flex: 1, backgroundColor: palette.text }} />
+          <Box sx={{ flex: 1, backgroundColor: palette.title }} />
+        </Box>
+        <Box
           sx={{
-            textAlign: "center",
-            color: palette.text,
-            fontWeight:
-              currentPalette.customName === palette.customName
-                ? "bold"
-                : "normal",
+            height: "30%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            backgroundColor: palette.background,
           }}
         >
-          {palette.customName}
-        </Typography>
+          <Typography
+            variant="caption"
+            sx={{
+              textAlign: "center",
+              color: palette.text,
+              fontWeight:
+                currentPalette.customName === palette.customName
+                  ? "bold"
+                  : "normal",
+            }}
+          >
+            {palette.customName}
+          </Typography>
+        </Box>
       </Box>
-    </Box>
-  );
+    );
+  };
 
   const handleSaveCustom = async () => {
     if (!custom.customName.trim()) {
@@ -141,7 +219,7 @@ export default function Settings() {
       title: custom.title,
     };
 
-    const savedPalette = await savePaletteToBackend(newPalette);
+    const savedPalette = await savePaletteToBackend(newPalette, true);
 
     if (savedPalette) {
       setCustom({
@@ -154,6 +232,7 @@ export default function Settings() {
         title: "#1E56A0",
       });
     }
+    applyPalette(newPalette);
   };
 
   const handleApplyPalette = (palette: Palette) => {
@@ -197,15 +276,6 @@ export default function Settings() {
       text: "#05292E",
       title: "#0A7C78",
     },
-    // {
-    //   mode: "dark",
-    //   customName: "Midnight",
-    //   primary: "#3B82F6",
-    //   secondary: "#1E40AF",
-    //   background: "#0F1724",
-    //   text: "#E6EEF8",
-    //   title: "#60A5FA",
-    // },
   ];
 
   return (
@@ -257,9 +327,13 @@ export default function Settings() {
         >
           {defaultPalettes.map((palette, index) => (
             <PaletteCardPreview
-              key={`default-${index}`}
+              key={palette._id ?? `${palette.customName}-${index}`}
               palette={palette}
+              currentPalette={currentPalette}
               onClick={() => handleApplyPalette(palette)}
+              onEdit={handleEditPalette}
+              onDelete={handleDeletePalette}
+              isDefault={true}
             />
           ))}
         </Box>
@@ -277,11 +351,15 @@ export default function Settings() {
           }}
         >
           {customPalettes.length > 0 ? (
-            customPalettes.map((palette) => (
+            customPalettes.map((palette, index) => (
               <PaletteCardPreview
-                key={palette._id || palette.customName}
+                key={palette._id ?? `${palette.customName}-${index}`}
                 palette={palette}
+                currentPalette={currentPalette}
                 onClick={() => handleApplyPalette(palette)}
+                onEdit={handleEditPalette}
+                onDelete={handleDeletePalette}
+                isDefault={false}
               />
             ))
           ) : (

@@ -23,13 +23,20 @@ export const paletteToPaletteConfig = (p: Palette): TPaletteConfig => ({
   _id: p._id,
 });
 
-export const TPaletteConfigToPalette = (p: TPaletteConfig) : Palette => ({
-    mode: p.mode,
-    customName: p.customName,
-    primary: p.primary.main,
-    secondary: p.secondary.main,
-    background: p.background.default,
-    text: p.text.primary,
-    title: p.title,
-    _id: p._id
-})
+export const TPaletteConfigToPalette = (p: TPaletteConfig | Palette): Palette => {
+  if ('primary' in p && typeof p.primary === 'string') {
+    return p as Palette;
+  }
+  
+  const config = p as TPaletteConfig;
+  return {
+    mode: config.mode,
+    customName: config.customName,
+    primary: config.primary?.main ?? '#000000',
+    secondary: config.secondary?.main ?? '#000000',
+    background: config.background?.default ?? '#ffffff',
+    text: config.text?.primary ?? '#333333',
+    title: config.title,
+    _id: config._id,
+  };
+}

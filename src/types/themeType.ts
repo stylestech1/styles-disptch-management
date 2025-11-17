@@ -40,3 +40,9 @@ export interface TUpdatePaletteRequest {
   _id: string;
   body: TPaletteConfig;
 }
+
+export interface TGetPaletteResponse {
+  message: string;
+  results: number;
+  data: TPaletteConfig[];
+}

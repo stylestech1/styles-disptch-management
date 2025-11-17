@@ -38,11 +38,15 @@ const paletteSlice = createSlice({
       state.customPalettes = action.payload;
     },
     addCustomePalette(state, action: PayloadAction<Palette>) {
-      state.customPalettes = state.customPalettes.filter(
-        (p) =>
-          p._id !== action.payload._id &&
-          p.customName !== action.payload.customName
-      );
+      if (action.payload._id) {
+        state.customPalettes = state.customPalettes.filter(
+          (p) => p._id !== action.payload._id
+        );
+      } else {
+        state.customPalettes = state.customPalettes.filter(
+          (p) => p.customName !== action.payload.customName
+        );
+      }
       state.customPalettes.push(action.payload);
     },
     removeCustomPalette(state, action: PayloadAction<string>) {
@@ -62,9 +66,14 @@ const paletteSlice = createSlice({
     loadPalettesFromBackend(state, action: PayloadAction<TPaletteConfig[]>) {
       const palettes = action.payload.map(TPaletteConfigToPalette);
       state.customPalettes = palettes;
-      
-      if (palettes.length > 0) {
-        state.currentPalette = palettes[0];
+
+      if (
+        !state.currentPalette ||
+        state.currentPalette.customName === "Default"
+      ) {
+        if (palettes.length > 0) {
+          state.currentPalette = palettes[0];
+        }
       }
     },
   },
@@ -78,6 +87,6 @@ export const {
   setPaletteMode,
   setLoadingPalette,
   setErrorPalette,
-  loadPalettesFromBackend
+  loadPalettesFromBackend,
 } = paletteSlice.actions;
 export default paletteSlice.reducer;
