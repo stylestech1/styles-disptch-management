@@ -203,7 +203,6 @@ const LoadsPageDetails = () => {
   const renderLoadRow = (loadItem: TLoads) => {
     const hasComments = loadItem.comments && loadItem.comments.length > 0;
     const commentsCount = loadItem.comments?.length || 0;
-    console.log("loadId, ", typeof loadItem.loadId);
 
     const navigateToLoadDetails = (e?: React.MouseEvent) => {
       if (e) {

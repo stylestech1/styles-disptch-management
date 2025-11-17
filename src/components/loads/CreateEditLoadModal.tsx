@@ -2031,8 +2031,8 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               <MenuItem value="" disabled>
                 Select Truck
               </MenuItem>
-              {Array.isArray(trucks?.data) ? (
-                trucks.data
+              {Array.isArray(trucks) ? (
+                trucks
                   .filter((t: TTruck) => !truckType || t.type === truckType)
                   .map((t: TTruck, i: number) => (
                     <MenuItem key={i} value={t.id}>
