@@ -45,7 +45,6 @@ import SearchInput from "../ui/SearchInput";
 
 const CustomerPage = () => {
   const user = useAppSelector((state) => state.auth.user);
-  const token = useAppSelector((state) => state.auth.token);
   const { error, setError } = useError();
   const theme = useAppSelector((state: RootState) => state.palette);
 
@@ -132,11 +131,14 @@ const CustomerPage = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    if (!customer || customer.length === 0) return { totalCustomers: 0 };
+    const statsCustomerData = customersData?.stats || []
+    if (!statsCustomerData || statsCustomerData.length === 0) return { totalCustomers: 0 };
     return {
-      totalCustomers: customer.length,
+      totalCustomers: statsCustomerData.total,
+      shipper: statsCustomerData.shipper,
+      receiver: statsCustomerData.receiver,
     };
-  }, [customer]);
+  }, [customersData?.stats]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
@@ -478,6 +480,20 @@ const CustomerPage = () => {
           <StatsCard
             title="Total Customers"
             value={statsData.totalCustomers}
+            icon={IoPerson}
+            iconColor={theme.currentPalette.primary}
+          />
+
+          <StatsCard
+            title="Total Shippers"
+            value={statsData.shipper}
+            icon={IoPerson}
+            iconColor={theme.currentPalette.primary}
+          />
+
+          <StatsCard
+            title="Total Receivers"
+            value={statsData.receiver}
             icon={IoPerson}
             iconColor={theme.currentPalette.primary}
           />

@@ -30,6 +30,13 @@ export type TDocument = {
   downloadLink: string;
   name?: string;
 };
+export type TStats = {
+  total: number;
+  pending: number;
+  inTransit: number;
+  delivered: number;
+  cancelled: number;
+};
 export type TLoadsForm = {
   dho: string;
   origin: string;

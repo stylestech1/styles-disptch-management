@@ -5,7 +5,7 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { useState, useEffect } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
-import { IoKeyOutline, IoMail, IoPerson } from "react-icons/io5";
+import { IoKeyOutline } from "react-icons/io5";
 import {
   IoPersonCircleOutline,
   IoMailOutline,
@@ -14,7 +14,6 @@ import {
   IoCalendarOutline,
   IoCheckmarkCircleOutline,
   IoRefresh,
-  IoClose,
   IoPersonOutline,
 } from "react-icons/io5";
 import { FaEye, FaEyeSlash } from "react-icons/fa";

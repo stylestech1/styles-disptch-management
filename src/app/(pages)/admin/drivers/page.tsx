@@ -141,15 +141,16 @@ const DriversPage = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    if (!driver || driver.length === 0)
+    const statsDriverData = driversData?.stats || []
+    if (!statsDriverData || statsDriverData.length === 0)
       return { totalDrivers: 0, available: 0, busy: 0, inactive: 0 };
     return {
-      totalDrivers: driver.length,
-      available: driver.filter((d: TDriver) => d.status === "available").length,
-      busy: driver.filter((d: TDriver) => d.status === "busy").length,
-      inactive: driver.filter((d: TDriver) => d.status === "inactive").length,
+      totalDrivers: statsDriverData.total,
+      available: statsDriverData.available,
+      busy: statsDriverData.busy,
+      inactive: statsDriverData.inactive,
     };
-  }, [driver]);
+  }, [driversData?.stats]);
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);

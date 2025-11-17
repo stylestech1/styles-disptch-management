@@ -21,7 +21,7 @@ import useLoading from "@/hook/useLoading";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
 
 // Types
-import { TLoads } from "@/types/globalTypes";
+import { TLoads, TStats } from "@/types/globalTypes";
 
 // API & Data
 import { loadColumns } from "@/data/loadTables";
@@ -30,7 +30,6 @@ import {
   useGetNotesQuery,
   useGetLoadsWithFilterQuery,
   useLazyGetLoadByIdQuery,
-  useGetAllLoadsQuery,
 } from "@/redux/slices/apiSlice";
 
 // Utils
@@ -185,15 +184,16 @@ const LoadsPageDetails = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    if (!load || load.length === 0)
+    const statLoadData = loadsData?.stats || []
+    if (!statLoadData || statLoadData.length === 0)
       return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
     return {
-      totalLoads: load.length,
-      pending: load.filter((l: TLoads) => l.status === "pending").length,
-      inTransit: load.filter((l: TLoads) => l.status === "in_transit").length,
-      delivered: load.filter((l: TLoads) => l.status === "delivered").length,
+      totalLoads: statLoadData.total,
+      pending: statLoadData.pending,
+      inTransit: statLoadData.inTransit,
+      delivered: statLoadData.delivered,
     };
-  }, [load]);
+  }, [loadsData?.stats]);
 
   // Loading state
   const isInitialLoading = loadsLoading && !loadsData;

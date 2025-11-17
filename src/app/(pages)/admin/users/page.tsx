@@ -158,15 +158,16 @@ const Users = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    if (!user || user.length === 0)
+    const statsUsersData = dispatchersData?.stats || []
+    if (!statsUsersData || statsUsersData.length === 0)
       return { totalUsers: 0, drivers: 0, admins: 0, employees: 0 };
     return {
-      totalUsers: user.length,
-      drivers: user.filter((u: TDispatcher) => u.role === "driver").length,
-      admins: user.filter((u: TDispatcher) => u.role === "admin").length,
-      employees: user.filter((u: TDispatcher) => u.role === "employee").length,
+      totalUsers: statsUsersData.total,
+      drivers: statsUsersData.drivers,
+      admins: statsUsersData.admins,
+      employees: statsUsersData.employee,
     };
-  }, [user]);
+  }, [dispatchersData?.stats]);
 
   // FIXME: Create User
   const handleCreateUser = async (userData: {

@@ -133,15 +133,16 @@ const TrucksPage: React.FC = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    if (!truck || truck.length === 0)
+    const statsTruckData = trucksData?.stats || []
+    if (!statsTruckData || statsTruckData.length === 0)
       return { totalTrucks: 0, available: 0, busy: 0, inactive: 0 };
     return {
-      totalTrucks: truck.length,
-      available: truck.filter((t: TTruck) => t.status === "available").length,
-      busy: truck.filter((t: TTruck) => t.status === "busy").length,
-      inactive: truck.filter((t: TTruck) => t.status === "inactive").length,
+      totalTrucks: statsTruckData.total,
+      available: statsTruckData.available,
+      busy: statsTruckData.busy,
+      inactive: statsTruckData.inactive,
     };
-  }, [truck]);
+  }, [trucksData?.stats]);
 
   // Modal states
   const [open, setOpen] = useState(false);
