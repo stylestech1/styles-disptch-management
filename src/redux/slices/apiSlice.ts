@@ -2,10 +2,7 @@ import {
   TCustomer,
   TDriver,
   TLoadSummary,
-  TPagination,
-  TTruck,
   TTrucksSummaryResponse,
-  TTruckSummary,
   TTruckSummaryResponse,
   TTruckWithSummary,
 } from "@/types/globalTypes";

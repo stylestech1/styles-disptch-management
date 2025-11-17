@@ -11,27 +11,29 @@ import paletteSlice from "./slices/paletteSlice";
 import { apiSlice } from "./slices/apiSlice";
 import { googleMapsApi } from "./slices/googleMapsSlice";
 
-const persistConfig = {
-  key: "root",
+const authPersistConfig = {
+  key: "auth",
   storage,
-  whitelist: ["auth",'palette'],
+  whitelist: ["token", "user"],
 };
+const palettePersistConfig = {
+  key: "palette",
+  storage,
+  whitelist: ["currentPalette"]
+}
 
-// combine reducers
 const rootReducer = combineReducers({
-  auth: authSlice,
+  auth: persistReducer(authPersistConfig, authSlice),
+  palette: persistReducer(palettePersistConfig, paletteSlice),
   loadsForm: loadsFormSlice,
   modals: modalsSlice,
   ui: uiSlice,
-  palette: paletteSlice,
   [apiSlice.reducerPath]: apiSlice.reducer,
   [googleMapsApi.reducerPath]: googleMapsApi.reducer,
 });
 
-const persistedReducer = persistReducer(persistConfig, rootReducer);
-
 export const store = configureStore({
-  reducer: persistedReducer,
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
@@ -39,7 +41,6 @@ export const store = configureStore({
       },
     }).concat(apiSlice.middleware, googleMapsApi.middleware),
 });
-
 export const persistor = persistStore(store);
 
 export type RootState = ReturnType<typeof store.getState>;
