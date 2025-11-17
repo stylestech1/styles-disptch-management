@@ -155,7 +155,7 @@ export default function AdminLayout({
         {user.role === "admin" && (
           <Button
             component={NextLink}
-            href="settings"
+            href="/admin/settings"
             fullWidth
             startIcon={<PiPaintBrushBroad />}
             variant="outlined"

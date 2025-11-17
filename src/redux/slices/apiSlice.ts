@@ -556,6 +556,7 @@ export const {
   useUploadDocumentsMutation,
   // TODO: ----- Drivers -----
   useGetDriversQuery,
+  useLazyGetDriversQuery,
   useGetUserDriverRoleQuery,
   useGetDriversWithPaginationQuery,
   useGetAllDriversQuery,

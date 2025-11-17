@@ -306,6 +306,7 @@ const CustomerPage = () => {
   const renderCustomerRow = (customer: TCustomer) => {
     // Styles
     const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
       "&:hover": {
         backgroundColor: alpha(theme.currentPalette.primary, 0.05),
         cursor: "pointer",
@@ -320,7 +321,7 @@ const CustomerPage = () => {
       >
         {/* Customer ID */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
             {customer.customerId}
           </span>
         </td>
@@ -328,7 +329,7 @@ const CustomerPage = () => {
         {/* Name */}
         <td className="p-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center">
               <IoPerson size={12} className="text-slate-600" />
             </div>
             <div>
@@ -523,7 +524,7 @@ const CustomerPage = () => {
           inputSx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
-              backgroundColor: "#fff",
+              backgroundColor: theme.currentPalette.background,
               py: 0.5,
             },
           }}

@@ -14,6 +14,7 @@ import {
   Skeleton,
   SxProps,
   alpha,
+  Button,
 } from "@mui/material";
 import { IoCar, IoStatsChart } from "react-icons/io5";
 import { useRouter } from "next/navigation";
@@ -25,9 +26,10 @@ import { muiTheme } from "@/theme/theme";
 import ChartSection from "@/components/ui/ChartSection";
 import { useGetTruckSummaryQuery } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
-import { StyledTableCell, TableSkeleton } from "@/components/ui/TablesMUI";
+import { TableSkeleton } from "@/components/ui/TablesMUI";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
 import SearchInput from "@/components/ui/SearchInput";
+import { Palette } from "@/types/themeType";
 
 // Memoized Truck Row Component
 const TruckRow = React.memo(
@@ -35,7 +37,9 @@ const TruckRow = React.memo(
     truck,
     index,
     onViewStats,
+    themeColors,
   }: {
+    themeColors: Palette;
     truck: TTruckWithSummary;
     index: number;
     onViewStats: (_id: string) => void;
@@ -50,7 +54,11 @@ const TruckRow = React.memo(
       <TableRow
         key={truck.truckId}
         hover
-        sx={{ "&:last-child td, &:last-child th": { border: 0 } }}
+        sx={{
+          "&:last-child td, &:last-child th": { border: 0 },
+          bgcolor: themeColors.background,
+          "&:hover": { bgcolor: alpha(themeColors.background, 0.1) },
+        }}
       >
         <TableCell>{index + 1}</TableCell>
         <TableCell>
@@ -141,14 +149,23 @@ const TruckRow = React.memo(
         </TableCell>
 
         <TableCell align="center">
-          <button
+          <Button
             onClick={() => onViewStats(truck._id)}
-            className="flex w-full items-center justify-center gap-1 px-3 py-2 bg-blue-950 hover:bg-blue-600 text-white rounded-lg text-xs font-medium transition-colors duration-200"
+            sx={{
+              bgcolor: themeColors.primary,
+              color: themeColors.background,
+              cursor: "pointer",
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              px: 2,
+              "&:hover":{bgcolor: alpha(themeColors.primary, 0.9)}
+            }}
             disabled={!hasSummary}
           >
             <IoStatsChart size={14} />
-            Stats
-          </button>
+            <Typography>Stats</Typography>
+          </Button>
         </TableCell>
       </TableRow>
     );
@@ -343,6 +360,7 @@ const TruckDashboard = () => {
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
               backgroundColor: "#fff",
+              bgcolor: theme.currentPalette.background,
               py: 0.5,
             },
           }}
@@ -373,17 +391,34 @@ const TruckDashboard = () => {
         <Table sx={{ minWidth: 800 }}>
           <TableHead>
             <TableRow>
-              <StyledTableCell>#</StyledTableCell>
-              <StyledTableCell>Plate Number</StyledTableCell>
-              <StyledTableCell align="right">Loads</StyledTableCell>
-              <StyledTableCell align="right">Miles</StyledTableCell>
-              <StyledTableCell align="right">Gross</StyledTableCell>
-              <StyledTableCell align="right">Fuel</StyledTableCell>
-              <StyledTableCell align="right">Driver Pay</StyledTableCell>
-              <StyledTableCell align="right">Insurance</StyledTableCell>
-              <StyledTableCell align="right">Repair</StyledTableCell>
-              <StyledTableCell align="right">Profit</StyledTableCell>
-              <StyledTableCell align="center">Actions</StyledTableCell>
+              {[
+                "#",
+                "Plate Number",
+                "Loads",
+                "Miles",
+                "Gross",
+                "Fuel",
+                "Driver Pay",
+                "Insurance",
+                "Repair",
+                "Profit",
+                "Actions",
+              ].map((header) => (
+                <TableCell
+                  key={header}
+                  align={"left"}
+                  sx={{
+                    fontWeight: 600,
+                    color: theme.currentPalette.background,
+                    bgcolor: theme.currentPalette.primary,
+                    borderBottom: 1,
+                    borderColor: alpha(theme.currentPalette.primary, 0.2),
+                    py: 2,
+                  }}
+                >
+                  {header}
+                </TableCell>
+              ))}
             </TableRow>
           </TableHead>
 
@@ -397,6 +432,7 @@ const TruckDashboard = () => {
                   truck={truck}
                   index={index}
                   onViewStats={handleViewStats}
+                  themeColors={theme.currentPalette}
                 />
               ))}
 

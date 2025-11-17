@@ -18,7 +18,6 @@ import {
   IoCashOutline,
   IoTimeOutline,
   IoArrowBack,
-  IoRefreshOutline,
 } from "react-icons/io5";
 import { FaMoneyBillWave } from "react-icons/fa";
 import useError from "@/hook/useError";
@@ -36,11 +35,14 @@ import {
 } from "@/redux/slices/apiSlice";
 import { useSearch } from "@/hook/useSearch";
 import { getErrorMessage } from "@/utils/getErrorMessage";
+import { Box } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
 
 const DriverSummary = () => {
   const { id } = useParams();
   const router = useRouter();
   const { error, setError } = useError();
+  const theme = useAppSelector((state: RootState) => state.palette)
 
   // ✅ Filter + Search
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
@@ -58,7 +60,6 @@ const DriverSummary = () => {
     isLoading: summaryLoading,
     isFetching: summaryFetching,
     error: summaryError,
-    refetch,
   } = useGetDriverSummaryWithFilterQuery({
     id: id as string,
     from: fromDate ? fromDate.toISOString() : undefined,
@@ -233,7 +234,6 @@ const DriverSummary = () => {
 
   // ✅ Intelligent Loading
   const isInitialLoading = profileLoading || (!summaryData && summaryLoading);
-  const isFiltering = summaryFetching && summaryData;
 
   if (isInitialLoading) return <Loading />;
 
@@ -273,11 +273,11 @@ const DriverSummary = () => {
       {profile && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Driver Information */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <Box sx={{bgcolor: theme.currentPalette.background}} className="rounded-xl border shadow-sm p-6">
             <div className="flex items-center gap-4 mb-6">
-              <div className="p-3 bg-slate-100 rounded-xl">
+              <Box sx={{borderColor: theme.currentPalette.text}} className="p-3 border rounded-xl">
                 <IoPersonCircleOutline size={32} className="text-slate-600" />
-              </div>
+              </Box>
               <div>
                 <h3 className="text-xl font-semibold text-slate-800">
                   {profile.name}
@@ -289,7 +289,7 @@ const DriverSummary = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoMailOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Email</span>
@@ -299,7 +299,7 @@ const DriverSummary = () => {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoCallOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Phone</span>
@@ -309,7 +309,7 @@ const DriverSummary = () => {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoIdCardOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">License Number</span>
@@ -319,7 +319,7 @@ const DriverSummary = () => {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoCalendarOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Hire Date</span>
@@ -340,11 +340,11 @@ const DriverSummary = () => {
                 <StatusBadge status={profile.status} />
               </div>
             </div>
-          </div>
+          </Box>
 
           {/* Stats Cards */}
           <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <Box sx={{bgcolor: theme.currentPalette.background}} className="rounded-xl border shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-semibold text-slate-800">
                   Quick Stats
@@ -352,23 +352,23 @@ const DriverSummary = () => {
                 <IoStatsChart size={24} className="text-blue-500" />
               </div>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                <Box sx={{borderColor: theme.currentPalette.text}} className="flex justify-between items-center p-3 border-b rounded-lg">
                   <span className="text-slate-600">Driver ID</span>
                   <span className="font-mono font-semibold text-slate-800">
                     {profile.driverId}
                   </span>
-                </div>
-                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                </Box>
+                <Box className="flex justify-between items-center p-3 rounded-lg">
                   <span className="text-slate-600">Price Per Mile</span>
                   <span className="font-semibold text-slate-800">
                     ${profile.pricePerMile?.toFixed(2)}
                   </span>
-                </div>
+                </Box>
               </div>
-            </div>
+            </Box>
 
             {/* Status Overview */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <Box sx={{bgcolor: theme.currentPalette.background}} className="rounded-xl border shadow-sm p-6">
               <h4 className="text-lg font-semibold text-slate-800 mb-4">
                 Status Overview
               </h4>
@@ -396,7 +396,7 @@ const DriverSummary = () => {
                   </span>
                 </div>
               </div>
-            </div>
+            </Box>
           </div>
         </div>
       )}
@@ -408,7 +408,7 @@ const DriverSummary = () => {
           <div className="xl:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
               {/* Total Loads Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className="rounded-xl border shadow-sm p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-500 text-sm font-medium mb-1">
@@ -418,14 +418,14 @@ const DriverSummary = () => {
                       {summaryData.totalLoads}
                     </p>
                   </div>
-                  <div className="p-2.5 bg-blue-50 rounded-lg">
+                  <div className="p-2.5 rounded-lg">
                     <IoStatsChart size={20} className="text-blue-600" />
                   </div>
                 </div>
               </div>
 
               {/* Total Miles Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className=" rounded-xl border shadow-sm p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-500 text-sm font-medium mb-1">
@@ -435,14 +435,14 @@ const DriverSummary = () => {
                       {summaryData.totalMiles?.toLocaleString()}
                     </p>
                   </div>
-                  <div className="p-2.5 bg-emerald-50 rounded-lg">
+                  <div className="p-2.5 rounded-lg">
                     <IoNavigate size={20} className="text-emerald-600" />
                   </div>
                 </div>
               </div>
 
               {/* Total Earnings Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className="rounded-xl border shadow-sm p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-500 text-sm font-medium mb-1">
@@ -453,14 +453,14 @@ const DriverSummary = () => {
                       {summaryData.totalEarnings?.toLocaleString()}
                     </p>
                   </div>
-                  <div className="p-2.5 bg-amber-50 rounded-lg">
+                  <div className="p-2.5 rounded-lg">
                     <IoCashOutline size={20} className="text-amber-600" />
                   </div>
                 </div>
               </div>
 
               {/* Avg Price/Mile Card */}
-              <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+              <div className="rounded-xl border shadow-sm p-5">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-slate-500 text-sm font-medium mb-1">
@@ -471,7 +471,7 @@ const DriverSummary = () => {
                       {summaryData.pricePerMile?.toFixed(2)}
                     </p>
                   </div>
-                  <div className="p-2.5 bg-red-50 rounded-lg">
+                  <div className="p-2.5 rounded-lg">
                     <FaMoneyBillWave size={20} className="text-red-500" />
                   </div>
                 </div>
@@ -480,7 +480,7 @@ const DriverSummary = () => {
 
             {/* Period Info */}
             {summaryData && (
-              <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
+              <div className="flex justify-between items-center rounded-xl border p-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
                   <div className="flex items-center gap-2">
                     <IoCalendarOutline size={14} className="flex-shrink-0" />
@@ -511,9 +511,9 @@ const DriverSummary = () => {
 
       {/* ✅ Loads Table Section */}
       {displayedData && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="rounded-xl border shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <div className="px-6 py-4 border-b">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
               <div>
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">
@@ -558,7 +558,7 @@ const DriverSummary = () => {
       {/* ✅ Summary Footer */}
       {displayedData && (
         <div className="mt-6 flex justify-end">
-          <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+          <div className="rounded-lg px-4 py-3 border">
             <p className="text-sm text-slate-600">
               Showing {displayedData.length} loads
               {isFilterActive && " (filtered)"}
@@ -568,7 +568,7 @@ const DriverSummary = () => {
       )}
 
       {!profile && !isInitialLoading && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
+        <div className="rounded-xl border shadow-sm p-12 text-center">
           <div className="text-4xl mb-4">👨‍💼</div>
           <h3 className="text-xl font-semibold text-slate-800 mb-2">
             Driver Not Found

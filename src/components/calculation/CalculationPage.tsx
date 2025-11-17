@@ -462,7 +462,7 @@ const CalculationPage = () => {
                 borderRadius: 3,
                 border: "1px solid",
                 borderColor: "divider",
-                backgroundColor: "background.paper",
+                backgroundColor: theme.currentPalette.background,
               }}
             >
               <Box
@@ -611,7 +611,7 @@ const CalculationPage = () => {
                 borderRadius: 3,
                 border: "1px solid",
                 borderColor: "divider",
-                backgroundColor: "background.paper",
+                backgroundColor: theme.currentPalette.background,
                 height: "fit-content",
                 minHeight: 600,
               }}
@@ -725,7 +725,7 @@ const CalculationPage = () => {
               borderRadius: 3,
               border: "1px solid",
               borderColor: "divider",
-              backgroundColor: "background.paper",
+              backgroundColor: theme.currentPalette.background,
             }}
           >
             <Box

@@ -27,6 +27,7 @@ import {
   useGetTrucksWithPaginationQuery,
   useGetTruckWithSearchQuery,
   useLazyGetDriverByIdQuery,
+  useLazyGetDriversQuery,
   useLazyGetTruckByIdQuery,
   useLazyGetTruckByTruckIdQuery,
   useUpdateTruckMutation,
@@ -78,7 +79,17 @@ const TrucksPage: React.FC = () => {
       reset: resetSearchQuery,
     },
   ] = useLazyGetTruckByTruckIdQuery();
-  const [triggerDriver, { data: driversData }] = useLazyGetDriverByIdQuery();
+
+  const [triggerDriverForTruck, { data: allDriversAvailable }] =
+    useLazyGetDriversQuery();
+  useEffect(() => {
+    triggerDriverForTruck({
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMountOrArgChange: false,
+    });
+  }, []);
+
   const { data: filteredData } = useGetTruckWithSearchQuery(
     {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
@@ -133,7 +144,7 @@ const TrucksPage: React.FC = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    const statsTruckData = trucksData?.stats || []
+    const statsTruckData = trucksData?.stats || [];
     if (!statsTruckData || statsTruckData.length === 0)
       return { totalTrucks: 0, available: 0, busy: 0, inactive: 0 };
     return {
@@ -268,6 +279,7 @@ const TrucksPage: React.FC = () => {
   const renderTruckRow = (truck: TTruck) => {
     // Styles
     const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
       "&:hover": {
         backgroundColor: alpha(theme.currentPalette.primary, 0.05),
         cursor: "pointer",
@@ -283,7 +295,7 @@ const TrucksPage: React.FC = () => {
       >
         {/* Truck ID */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
             {truck.truckId}
           </span>
         </td>
@@ -492,6 +504,7 @@ const TrucksPage: React.FC = () => {
               borderRadius: 2,
               backgroundColor: "#fff",
               py: 0.5,
+              bgcolor: theme.currentPalette.background,
             },
           }}
         />
@@ -535,7 +548,7 @@ const TrucksPage: React.FC = () => {
         onSubmit={editMode ? handleUpdate : handleCreate}
         editMode={editMode}
         isLoading={isCreating || isUpdating}
-        allDrivers={Array.isArray(driversData?.data) ? driversData.data : []}
+        allDrivers={Array.isArray(allDriversAvailable?.data) ? allDriversAvailable.data : []}
         allTrucks={trucksData?.data?.data || []}
       />
 

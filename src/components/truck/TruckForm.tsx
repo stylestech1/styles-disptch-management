@@ -233,17 +233,17 @@ export const TruckForm = React.memo(function TruckFormComp(
       }}
       className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
     >
-      <div
+      <Box
+        sx={{ bgcolor: theme.currentPalette.background }}
         ref={modalRef}
-        className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
+        className="relative rounded-2xl shadow-2xl border p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
       >
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             {!editMode && (
               <Box
-                sx={{ bgcolor: alpha(theme.currentPalette.secondary, 0.3) }}
-                className="w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center"
+                className="w-8 h-8 rounded-full flex items-center justify-center"
               >
                 <IoAdd size={18} />
               </Box>
@@ -252,12 +252,12 @@ export const TruckForm = React.memo(function TruckFormComp(
               {editMode ? "Edit Truck" : "Add New Truck"}
             </h3>
           </div>
-          <button
+          <Button
             onClick={handleClose}
             className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
           >
             <IoClose size={24} />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -626,12 +626,13 @@ export const TruckForm = React.memo(function TruckFormComp(
                           mt: 2,
                           mb: 2,
                           borderRadius: 1,
+                          borderColor: theme.currentPalette.primary,
                           "& .MuiAlert-message": { fontSize: "0.875rem" },
                         }}
                         icon={false}
                       >
                         <div className="flex items-center gap-2">
-                          <div className="w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-white text-xs">
+                          <div className="w-5 h-5 rounded-full flex items-center justify-center text-white text-xs">
                             ⚠️
                           </div>
                           <span className="text-sm">
@@ -749,7 +750,7 @@ export const TruckForm = React.memo(function TruckFormComp(
               : "Create Truck"}
           </Button>
         </form>
-      </div>
+      </Box>
     </div>
   );
 });

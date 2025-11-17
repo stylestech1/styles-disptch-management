@@ -171,7 +171,8 @@ export const CustomerForm = ({
       }}
       className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4"
     >
-      <div
+      <Box
+      sx={{bgcolor: theme.currentPalette.background}}
         ref={modalRef}
         className="relative rounded-2xl shadow-2xl border border-slate-200 bg-white p-6 w-full max-w-md max-h-[90vh] overflow-y-auto"
       >
@@ -179,17 +180,7 @@ export const CustomerForm = ({
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             {!editMode && (
-              <Box
-                sx={{
-                  width: 32,
-                  height: 32,
-                  borderRadius: "50%",
-                  bgcolor: alpha(theme.currentPalette.primary, 0.1),
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
+              <Box>
                 <IoAdd size={18} color={theme.currentPalette.primary} />
               </Box>
             )}
@@ -197,12 +188,12 @@ export const CustomerForm = ({
               {editMode ? "Edit Customer" : "Add New Customer"}
             </h3>
           </div>
-          <button
+          <Button
             onClick={onClose}
             className="cursor-pointer text-slate-400 hover:text-slate-600 transition-colors p-1 rounded-lg hover:bg-slate-100"
           >
             <IoClose size={24} />
-          </button>
+          </Button>
         </div>
 
         {/* Content */}
@@ -264,21 +255,12 @@ export const CustomerForm = ({
                   <Controller
                     name="email"
                     control={control}
-                    // rules={{
-                    //   required: "Email is required",
-                    //   pattern: {
-                    //     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    //     message: "Invalid email address",
-                    //   },
-                    // }}
                     render={({ field }) => (
                       <TextField
                         {...field}
                         fullWidth
                         label="Email *"
                         type="email"
-                        // error={!!errors.email}
-                        // helperText={errors.email?.message as string}
                         size="medium"
                         placeholder="john.doe@example.com"
                         slotProps={{
@@ -485,7 +467,7 @@ export const CustomerForm = ({
               : "Create Customer"}
           </Button>
         </form>
-      </div>
+      </Box>
     </div>
   );
 };

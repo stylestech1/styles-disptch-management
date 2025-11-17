@@ -47,6 +47,7 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import StatsCard from "@/components/ui/StatsCard";
 import { RootState, useAppSelector } from "@/redux/store";
 import { MdOutlineCancelPresentation } from "react-icons/md";
+import { Box } from "@mui/material";
 
 const TruckSummary = () => {
   const { id } = useParams();
@@ -331,9 +332,9 @@ const TruckSummary = () => {
       {profile && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Truck Information */}
-          <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+          <Box sx={{bgcolor: theme.currentPalette.background}} className="rounded-xl border shadow-sm p-6">
             <div className="flex items-center gap-4 mb-6">
-              <div className="p-3 bg-slate-100 rounded-xl">
+              <div className="p-3 border rounded-xl">
                 <IoCar size={32} className="text-slate-600" />
               </div>
               <div>
@@ -347,7 +348,7 @@ const TruckSummary = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoIdCardOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Plate Number</span>
@@ -357,7 +358,7 @@ const TruckSummary = () => {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoCar className="text-slate-400" size={18} />
                   <span className="text-slate-600">Type</span>
@@ -365,7 +366,7 @@ const TruckSummary = () => {
                 <TypeBadge type={profile.type} />
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoCalendarOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Year</span>
@@ -375,7 +376,7 @@ const TruckSummary = () => {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoScaleOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">Capacity</span>
@@ -385,7 +386,7 @@ const TruckSummary = () => {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-b border-slate-100">
+              <div className="flex items-center justify-between py-2 border-b">
                 <div className="flex items-center gap-3 text-sm">
                   <IoCheckmarkCircleOutline
                     className="text-slate-400"
@@ -406,11 +407,11 @@ const TruckSummary = () => {
                 </span>
               </div>
             </div>
-          </div>
+          </Box>
 
           {/* Stats Cards */}
           <div className="space-y-4">
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <Box sx={{bgcolor: theme.currentPalette.background}} className="rounded-xl border shadow-sm p-6">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-semibold text-slate-800">
                   Quick Stats
@@ -418,23 +419,23 @@ const TruckSummary = () => {
                 <IoStatsChart size={24} className="text-blue-500" />
               </div>
               <div className="space-y-3">
-                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                <div className="flex justify-between items-center p-3 border-b rounded-lg">
                   <span className="text-slate-600">Truck Plate Number</span>
                   <span className="font-mono font-semibold text-slate-800">
                     {profile.plateNumber}
                   </span>
                 </div>
-                <div className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
+                <div className="flex justify-between items-center p-3 rounded-lg">
                   <span className="text-slate-600">Capacity Category</span>
                   <span className="font-semibold text-slate-800">
                     {profile.capacity}
                   </span>
                 </div>
               </div>
-            </div>
+            </Box>
 
             {/* Status Overview */}
-            <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
+            <Box sx={{bgcolor: theme.currentPalette.background}} className="rounded-xl border shadow-sm p-6">
               <h4 className="text-lg font-semibold text-slate-800 mb-4">
                 Status Overview
               </h4>
@@ -462,7 +463,7 @@ const TruckSummary = () => {
                   </span>
                 </div>
               </div>
-            </div>
+            </Box>
           </div>
         </div>
       )}
@@ -504,7 +505,7 @@ const TruckSummary = () => {
 
       {/* Period Info */}
       {summaryData && (
-        <div className="flex justify-between items-center bg-slate-50 rounded-xl border border-slate-200 p-4">
+        <Box sx={{bgcolor: theme.currentPalette.background}} className="flex justify-between items-center rounded-xl border p-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-sm text-slate-600">
             <div className="flex items-center gap-2">
               <IoCalendarOutline size={14} className="flex-shrink-0" />
@@ -527,14 +528,14 @@ const TruckSummary = () => {
             {/* ✅ Filter */}
             <DateRangeFilter onApply={handleApplyFilter} />
           </div>
-        </div>
+        </Box>
       )}
 
       {/* ✅ Loads Table Section */}
       {displayedData && (
-        <div className="mt-10 bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+        <Box sx={{bgcolor: theme.currentPalette.background}} className="mt-10 rounded-xl border shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="px-6 py-4 border-b border-slate-200 bg-slate-50">
+          <div className="px-6 py-4 border-b">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-4">
               <div>
                 <h3 className="text-lg font-semibold text-slate-800 mb-1">
@@ -573,13 +574,13 @@ const TruckSummary = () => {
               </div>
             </div>
           )}
-        </div>
+        </Box>
       )}
 
       {/* ✅ Summary Footer */}
       {displayedData && (
         <div className="mt-6 flex justify-end">
-          <div className="bg-slate-50 rounded-lg px-4 py-3 border border-slate-200">
+          <div className="rounded-lg px-4 py-3 border">
             <p className="text-sm text-slate-600">
               Showing {displayedData.length} loads
               {(fromDate || toDate) && " (filtered)"}
@@ -589,7 +590,7 @@ const TruckSummary = () => {
       )}
 
       {!profile && !loading && (
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-12 text-center">
+        <div className="rounded-xl border shadow-sm p-12 text-center">
           <div className="text-4xl mb-4">🚛</div>
           <h3 className="text-xl font-semibold text-slate-800 mb-2">
             Truck Not Found
