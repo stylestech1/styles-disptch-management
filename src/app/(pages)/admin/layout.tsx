@@ -20,6 +20,7 @@ import {
   Link,
   alpha,
 } from "@mui/material";
+import NextLink from "next/link";
 import {
   IoLogOutOutline,
   IoPersonCircleOutline,
@@ -118,7 +119,7 @@ export default function AdminLayout({
           return (
             <ListItemButton
               key={i}
-              component={Link}
+              component={NextLink}
               href={link}
               onClick={() => !isDesktop && setIsSidebarOpen(false)}
               sx={{
@@ -153,7 +154,7 @@ export default function AdminLayout({
       <Box sx={{ p: 2, display: "flex", gap: 2, flexDirection: "column" }}>
         {user.role === "admin" && (
           <Button
-            component={Link}
+            component={NextLink}
             href="settings"
             fullWidth
             startIcon={<PiPaintBrushBroad />}
