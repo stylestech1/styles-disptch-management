@@ -200,10 +200,7 @@ export default function Settings() {
 
     const colorFields = ["primary", "secondary", "background", "text", "title"];
     for (const field of colorFields) {
-      if (
-        !custom[field as keyof typeof custom] ||
-        !/^#[0-9A-F]{6}$/i.test(custom[field as keyof typeof custom])
-      ) {
+      if (!custom[field as keyof typeof custom]) {
         toast.error(`Please enter a valid color for ${field}! ❌`);
         return;
       }
@@ -219,9 +216,10 @@ export default function Settings() {
       title: custom.title,
     };
 
-    const savedPalette = await savePaletteToBackend(newPalette, true);
+    const savedPalette = await savePaletteToBackend(newPalette, false);
 
     if (savedPalette) {
+      applyPalette(savedPalette);
       setCustom({
         mode: "light",
         customName: "",
@@ -232,7 +230,6 @@ export default function Settings() {
         title: "#1E56A0",
       });
     }
-    applyPalette(newPalette);
   };
 
   const handleApplyPalette = (palette: Palette) => {

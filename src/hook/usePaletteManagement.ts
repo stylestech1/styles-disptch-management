@@ -44,13 +44,6 @@ export const usePaletteManagement = () => {
   useEffect(() => {
     if (backendPalettes.length > 0) {
       dispatch(loadPalettesFromBackend(backendPalettes));
-
-      if (
-        (!currentPalette || currentPalette.customName === "Default") &&
-        !customPalettes.find((p) => p.customName === currentPalette?.customName)
-      ) {
-        dispatch(setPalette(TPaletteConfigToPalette(backendPalettes[0])));
-      }
     }
   }, [backendPalettes, dispatch]);
 
@@ -79,35 +72,25 @@ export const usePaletteManagement = () => {
     setLocalLoading(true);
     try {
       const paletteConfig = paletteToPaletteConfig(palette);
-      let result;
 
+      let result;
       if (palette._id) {
         result = await updatePalette({
           _id: palette._id,
-          body: paletteConfig,
+          body: { ...paletteConfig, active: true } as TPaletteConfig,
         }).unwrap();
       } else {
         result = await createPalette(paletteConfig).unwrap();
       }
 
-      await refetchPalettes();
-      const savedPalette = TPaletteConfigToPalette(result as TPaletteConfig);
+      const savedPalette = TPaletteConfigToPalette(result);
 
-      if (result._id && !savedPalette._id) savedPalette._id = result._id;
+      if (setAsCurrent) dispatch(setPalette(savedPalette));
 
-      dispatch(addCustomePalette(savedPalette));
-
-      if (setAsCurrent) {
-        dispatch(setPalette(savedPalette));
-      }
-
-      toast.success(
-        `Palette "${savedPalette.customName}" saved successfully! 🎨`
-      );
+      toast.success(`Palette "${savedPalette.customName}" saved successfully!`);
       return savedPalette;
     } catch (error) {
       console.error("Save palette error:", error);
-      dispatch(setErrorPalette("Failed to save palette to server"));
       toast.error("Failed to save palette to server");
       return null;
     } finally {
@@ -115,9 +98,31 @@ export const usePaletteManagement = () => {
     }
   };
 
-  const applyPalette = (palette: Palette) => {
-    dispatch(setPalette(palette));
-    toast.success(`Applied "${palette.customName}" palette! 🎨`);
+  const applyPalette = async (palette: Palette) => {
+    if (currentPalette?.customName === palette.customName) return;
+
+    if (!palette._id) {
+      dispatch(setPalette(palette));
+      toast.success(`Applied "${palette.customName}" palette!`);
+      return;
+    }
+
+    try {
+      dispatch(setPalette(palette));
+
+      await updatePalette({
+        _id: palette._id,
+        body: { ...paletteToPaletteConfig(palette), active: true },
+      }).unwrap();
+
+      await refetchPalettes().unwrap();
+
+      toast.success(`Applied "${palette.customName}" palette!`);
+    } catch (error) {
+      console.error("Apply failed:", error);
+      toast.error("Failed to apply palette");
+      await refetchPalettes().unwrap();
+    }
   };
 
   const refreshPalettes = async () => {

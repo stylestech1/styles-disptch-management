@@ -16,15 +16,15 @@ const authPersistConfig = {
   storage,
   whitelist: ["token", "user"],
 };
-const palettePersistConfig = {
-  key: "palette",
-  storage,
-  whitelist: ["currentPalette"]
-}
+// const palettePersistConfig = {
+//   key: "palette",
+//   storage,
+//   whitelist: ["currentPalette"]
+// }
 
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authSlice),
-  palette: persistReducer(palettePersistConfig, paletteSlice),
+  palette: paletteSlice,
   loadsForm: loadsFormSlice,
   modals: modalsSlice,
   ui: uiSlice,

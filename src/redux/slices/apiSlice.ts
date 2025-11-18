@@ -7,7 +7,12 @@ import {
   TTruckWithSummary,
 } from "@/types/globalTypes";
 import { api } from "../api/baseApi";
-import { TGetPaletteResponse, TPaletteConfig, TUpdatePaletteRequest } from "@/types/themeType";
+import {
+  GetSinglePaletteResponse,
+  TGetPaletteResponse,
+  TPaletteConfig,
+  TUpdatePaletteRequest,
+} from "@/types/themeType";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -451,6 +456,12 @@ export const apiSlice = api.injectEndpoints({
       transformResponse: (response: TGetPaletteResponse) => response.data,
     }),
 
+    getSpecificPalette: builder.query({
+      query: (_id) => `/api/v1/ui-settings/palette/${_id}`,
+      providesTags: (result, error, _id) => [{ type: "Palette", id: _id }],
+      transformResponse: (response: GetSinglePaletteResponse) => response.data,
+    }),
+
     createPalette: builder.mutation<TPaletteConfig, TPaletteConfig>({
       query: (body) => ({
         url: "/api/v1/ui-settings/palette",
@@ -461,7 +472,7 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     updatePalette: builder.mutation<TPaletteConfig, TUpdatePaletteRequest>({
-      query: ({ _id, ...body }) => ({
+      query: ({ _id, body }) => ({
         url: `/api/v1/ui-settings/palette/${_id}`,
         method: "PATCH",
         body,
@@ -605,6 +616,7 @@ export const {
   useUpdateUserPasswordMutation,
   // TODO: ----- Palette -----
   useGetPaletteQuery,
+  useGetSpecificPaletteQuery,
   useCreatePaletteMutation,
   useUpdatePaletteMutation,
   useDeletePaletteMutation,

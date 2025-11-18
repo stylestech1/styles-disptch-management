@@ -3,6 +3,7 @@ import { Palette, TPaletteConfig } from "@/types/themeType";
 export const paletteToPaletteConfig = (p: Palette): TPaletteConfig => ({
   mode: p.mode,
   customName: p.customName,
+  active: false,
   primary: {
     main: p.primary,
     contrastText: "#fff",
@@ -38,5 +39,6 @@ export const TPaletteConfigToPalette = (p: TPaletteConfig | Palette): Palette =>
     text: config.text?.primary ?? '#333333',
     title: config.title,
     _id: config._id,
+    active: config.active ?? false,
   };
 }

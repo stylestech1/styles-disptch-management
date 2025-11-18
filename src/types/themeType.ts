@@ -4,6 +4,7 @@ export interface TPaletteConfig {
   _id?: string;
   mode: PaletteMode;
   customName: string;
+  active: boolean;
   primary: {
     main: string;
     contrastText: string;
@@ -34,6 +35,7 @@ export interface Palette {
   background: string;
   text: string;
   title: string;
+  active?: boolean
 }
 
 export interface TUpdatePaletteRequest {
@@ -45,4 +47,9 @@ export interface TGetPaletteResponse {
   message: string;
   results: number;
   data: TPaletteConfig[];
+}
+
+export interface GetSinglePaletteResponse {
+  message: string;
+  data: TPaletteConfig;
 }

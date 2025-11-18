@@ -67,13 +67,14 @@ const paletteSlice = createSlice({
       const palettes = action.payload.map(TPaletteConfigToPalette);
       state.customPalettes = palettes;
 
-      if (
-        !state.currentPalette ||
-        state.currentPalette.customName === "Default"
+      const activePalette = palettes.find((p) => p.active);
+      if (activePalette) {
+        state.currentPalette = activePalette;
+      } else if (
+        palettes.length > 0 &&
+        (!state.currentPalette || state.currentPalette.customName === "Default")
       ) {
-        if (palettes.length > 0) {
-          state.currentPalette = palettes[0];
-        }
+        state.currentPalette = palettes[0];
       }
     },
   },
