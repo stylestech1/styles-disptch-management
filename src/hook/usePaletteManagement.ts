@@ -21,9 +21,11 @@ import {
 } from "@/utils/helperPalette";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export const usePaletteManagement = () => {
   const dispatch = useDispatch();
+  const router = useRouter()
   const { currentPalette, customPalettes } = useSelector(
     (state: RootState) => state.palette
   );
@@ -80,7 +82,8 @@ export const usePaletteManagement = () => {
           body: { ...paletteConfig, active: true } as TPaletteConfig,
         }).unwrap();
       } else {
-        result = await createPalette(paletteConfig).unwrap();
+        result = await createPalette({...paletteConfig, active: true}).unwrap();
+        router.refresh()
       }
 
       const savedPalette = TPaletteConfigToPalette(result);

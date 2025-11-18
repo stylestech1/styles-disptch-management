@@ -216,7 +216,7 @@ export default function Settings() {
       title: custom.title,
     };
 
-    const savedPalette = await savePaletteToBackend(newPalette, false);
+    const savedPalette = await savePaletteToBackend(newPalette, true);
 
     if (savedPalette) {
       applyPalette(savedPalette);
@@ -232,48 +232,9 @@ export default function Settings() {
     }
   };
 
-  const handleApplyPalette = (palette: Palette) => {
-    applyPalette(palette);
+  const handleApplyPalette = async (palette: Palette) => {
+    await applyPalette(palette);
   };
-
-  const defaultPalettes: Palette[] = [
-    {
-      mode: "light",
-      customName: "Blue",
-      primary: "#1E56A0",
-      secondary: "#266DCB",
-      background: "#FBFDFE",
-      text: "#333333",
-      title: "#1E56A0",
-    },
-    {
-      mode: "light",
-      customName: "Red",
-      primary: "#B10C2E",
-      secondary: "#6E0715",
-      background: "#F6F6F6",
-      text: "#2E2E2E",
-      title: "#B10C2E",
-    },
-    {
-      mode: "light",
-      customName: "Sunset",
-      primary: "#FF6B6B",
-      secondary: "#FFB86B",
-      background: "#FFF7F3",
-      text: "#2B2B2B",
-      title: "#D9534F",
-    },
-    {
-      mode: "light",
-      customName: "Teal Mint",
-      primary: "#0FB39E",
-      secondary: "#2DD4BF",
-      background: "#F5FFFD",
-      text: "#05292E",
-      title: "#0A7C78",
-    },
-  ];
 
   return (
     <Box sx={{ p: 3, maxWidth: 1200, margin: "0 auto" }}>
@@ -308,35 +269,6 @@ export default function Settings() {
       <Box sx={{ mb: 4 }}>
         <Typography variant="h5" sx={{ mb: 2 }}>
           Available Palettes
-        </Typography>
-
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-          Default Palettes
-        </Typography>
-        <Box
-          sx={{
-            display: "flex",
-            gap: { xs: 1.5, sm: 2, md: 3 },
-            justifyContent: { xs: "center", sm: "flex-start" },
-            mb: { xs: 2, sm: 3, md: 4 },
-            flexWrap: "wrap",
-          }}
-        >
-          {defaultPalettes.map((palette, index) => (
-            <PaletteCardPreview
-              key={palette._id ?? `${palette.customName}-${index}`}
-              palette={palette}
-              currentPalette={currentPalette}
-              onClick={() => handleApplyPalette(palette)}
-              onEdit={handleEditPalette}
-              onDelete={handleDeletePalette}
-              isDefault={true}
-            />
-          ))}
-        </Box>
-
-        <Typography variant="h6" color="text.secondary" sx={{ mb: 1 }}>
-          Custom Palettes
         </Typography>
         <Box
           sx={{
