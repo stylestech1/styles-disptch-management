@@ -23,13 +23,13 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     { label: "Calculation", icon: <ImCalculator /> },
     { label: "Broker", icon: <MdOutlineCommentBank /> },
     { label: "Customers", icon: <RiCustomerService2Fill /> },
-    { label: "Notification", icon: <IoMdNotifications /> },
+    { label: "Notifications", icon: <IoMdNotifications /> },
   ],
   employee: [
     { label: "Loads", icon: <FaCirclePlus /> },
     { label: "Calculation", icon: <ImCalculator /> },
     { label: "Customers", icon: <RiCustomerService2Fill /> },
-    { label: "Notification", icon: <IoMdNotifications /> },
+    { label: "Notifications", icon: <IoMdNotifications /> },
   ],
   driver: [{ label: "Loads", icon: <FaCirclePlus /> }],
 };
