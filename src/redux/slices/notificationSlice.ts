@@ -23,12 +23,18 @@ const notificationsSlice = createSlice({
       const notif = state.list.find((n) => n.id === action.payload.id);
       if (notif) notif.status = action.payload.status;
     },
+    updateAllNotificationsStatus: (
+      state,
+      action: PayloadAction<"read" | "unread">
+    ) => {
+      state.list = state.list.map((n) => ({ ...n, status: action.payload }));
+    },
     clearNotifications: (state) => {
       state.list = [];
     },
   },
 });
 
-export const { addNotification, updateNotificationStatus, clearNotifications } =
+export const { addNotification, updateNotificationStatus, updateAllNotificationsStatus, clearNotifications } =
   notificationsSlice.actions;
 export default notificationsSlice.reducer;

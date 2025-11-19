@@ -4,7 +4,7 @@ import { useAppSelector, useAppDispatch, RootState } from "@/redux/store";
 import { apiSlice } from "@/redux/slices/apiSlice";
 import { TNotification } from "@/types/notificationType";
 import toast from "react-hot-toast";
-import { addNotification } from "@/redux/slices/notificationSlice";
+import { addNotification, updateAllNotificationsStatus } from "@/redux/slices/notificationSlice";
 import {
   alpha,
   Box,
@@ -85,7 +85,7 @@ export default function HeaderNotifications() {
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead(null).unwrap(); 
-      refetch()
+      dispatch(updateAllNotificationsStatus("read")); 
       toast.success("All notifications marked as read");
     } catch {
       toast.error("Failed to mark notifications as read");
@@ -212,7 +212,7 @@ export default function HeaderNotifications() {
             ) : (
               <List sx={{ p: 0 }}>
                 {notifications.map((notification, index) => (
-                  <Box key={notification.id}>
+                  <Box key={`${notification.id}-${index}`}>
                     <ListItemButton
                       onClick={() => handleNotificationClick(notification)}
                       sx={{

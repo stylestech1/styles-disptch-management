@@ -543,7 +543,7 @@ export const TruckForm = React.memo(function TruckFormComp(
                   rules={{
                     required: "Fuel per mile is required",
                     min: {
-                      value: 0.1,
+                      value: 0,
                       message: "Fuel per mile must be at least 0.1",
                     },
                     max: {

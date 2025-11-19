@@ -187,7 +187,7 @@ const TrucksPage: React.FC = () => {
       fuelPerMile: truck.fuelPerMile,
       status: truck.status,
       assignedDriver: assignedDriverId,
-      source: truck.source
+      source: truck.source,
     });
     setEditMode(true);
     setOpen(true);
@@ -259,6 +259,7 @@ const TrucksPage: React.FC = () => {
     if (!truckToDelete) return;
     try {
       await deleteTruck(truckToDelete.id).unwrap();
+      refetchTrucks();
       toast.success(`✅ Truck #${truckToDelete.truckId} deleted successfully!`);
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
@@ -552,7 +553,11 @@ const TrucksPage: React.FC = () => {
         onSubmit={editMode ? handleUpdate : handleCreate}
         editMode={editMode}
         isLoading={isCreating || isUpdating}
-        allDrivers={Array.isArray(allDriversAvailable?.data) ? allDriversAvailable.data : []}
+        allDrivers={
+          Array.isArray(allDriversAvailable?.data)
+            ? allDriversAvailable.data
+            : []
+        }
         allTrucks={trucksData?.data?.data || []}
         refetch={refetchTrucks}
       />
