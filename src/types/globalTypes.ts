@@ -5,6 +5,7 @@ export type TUserRole = "admin" | "employee" | "driver";
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
 export type TTruckType = "reefer" | "van";
+export type TTruckSource = 'company' | 'other'
 export type TTruckId = {
   model: string;
   truckId: number;
@@ -113,6 +114,7 @@ export type TTruck = {
   updatedBy: string;
   assignedDriver?: string | { name: string; driverId: number; id: string };
   type: TTruckType;
+  source: TTruckSource;
   fuelPerMile: string;
   insuranceCost: number;
   repairCost: number;

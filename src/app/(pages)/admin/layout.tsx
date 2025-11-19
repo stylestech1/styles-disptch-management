@@ -32,6 +32,7 @@ import { logout } from "@/redux/slices/authSlice";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
 import { PiPaintBrushBroad } from "react-icons/pi";
+import NotificationProvider from "@/providers/NotificationProvider";
 
 const DRAWER_WIDTH = 300;
 

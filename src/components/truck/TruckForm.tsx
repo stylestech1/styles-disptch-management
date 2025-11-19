@@ -32,6 +32,7 @@ export type TruckFormProps = {
   allDrivers: TDriver[];
   allTrucks: TTruck[];
   closeOnOutsideClick?: boolean;
+  refetch?: () => void;
 };
 
 interface TruckFormData {
@@ -43,6 +44,7 @@ interface TruckFormData {
   fuelPerMile: string;
   assignedDriver: string;
   status: string;
+  source: string;
 }
 
 export const TruckForm = React.memo(function TruckFormComp(
@@ -59,6 +61,7 @@ export const TruckForm = React.memo(function TruckFormComp(
     allDrivers,
     allTrucks,
     closeOnOutsideClick = true,
+    refetch,
   } = props;
 
   const modalRef = useRef<HTMLDivElement>(null);
@@ -75,6 +78,7 @@ export const TruckForm = React.memo(function TruckFormComp(
     return () => handleBodyScroll(false);
   }, [open]);
 
+  // closing popup with keyup (Esc)
   useEffect(() => {
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape" && open && !isSelectOpen) {
@@ -86,6 +90,7 @@ export const TruckForm = React.memo(function TruckFormComp(
     return () => document.removeEventListener("keydown", handleEscape);
   }, [open, onClose, isSelectOpen]);
 
+  // handling select closing popups
   useEffect(() => {
     const checkSelectState = () => {
       const selectMenus = document.querySelectorAll(
@@ -116,9 +121,10 @@ export const TruckForm = React.memo(function TruckFormComp(
       model: "",
       plateNumber: "",
       type: "",
-      year: '',
-      capacity: '',
-      fuelPerMile: '',
+      year: "",
+      source: "",
+      capacity: "",
+      fuelPerMile: "",
       assignedDriver: "",
       status: "",
     },
@@ -128,11 +134,22 @@ export const TruckForm = React.memo(function TruckFormComp(
   // when updating data
   useEffect(() => {
     if (formData && open) {
-      Object.keys(formData).forEach((key) => {
-        const fieldName = key as keyof TruckFormData;
-        const value = formData[key as keyof TTruck];
-        if (value !== undefined) {
-          setValue(fieldName, value as never);
+      const formFields: (keyof TruckFormData)[] = [
+        "model",
+        "plateNumber",
+        "type",
+        "year",
+        "source",
+        "capacity",
+        "fuelPerMile",
+        "assignedDriver",
+        "status",
+      ];
+
+      formFields.forEach((field) => {
+        const value = formData[field];
+        if (value !== undefined && value !== null) {
+          setValue(field, value as never);
         }
       });
     }
@@ -160,23 +177,26 @@ export const TruckForm = React.memo(function TruckFormComp(
   }, [allDrivers, assignedDriverIds]);
 
   const truckTypes = useMemo(() => ["reefer", "van"], []);
+  const truckSource = useMemo(() => ["company", "other"], []);
 
   // Handle form submission
-  const onSubmitForm = (data: TruckFormData) => {
+  const onSubmitForm = async (data: TruckFormData) => {
     Object.keys(data).forEach((key) => {
       const field = key as keyof TTruck;
       const value = data[key as keyof TruckFormData];
       onChange(field, value as TTruck[keyof TTruck]);
     });
-    onSubmit();
+    await onSubmit();
+    if (props.refetch) props.refetch();
     if (!editMode) {
       reset({
         model: "",
         plateNumber: "",
         type: "",
-        year: '',
-        capacity: '',
-        fuelPerMile: '',
+        year: "",
+        source: "",
+        capacity: "",
+        fuelPerMile: "",
         assignedDriver: "",
         status: "",
       });
@@ -242,9 +262,7 @@ export const TruckForm = React.memo(function TruckFormComp(
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             {!editMode && (
-              <Box
-                className="w-8 h-8 rounded-full flex items-center justify-center"
-              >
+              <Box className="w-8 h-8 rounded-full flex items-center justify-center">
                 <IoAdd size={18} />
               </Box>
             )}
@@ -377,6 +395,54 @@ export const TruckForm = React.memo(function TruckFormComp(
                           sx={{ mt: 1, display: "block" }}
                         >
                           {errors.type.message}
+                        </Typography>
+                      )}
+                    </FormControl>
+                  )}
+                />
+
+                {/* Source Field */}
+                <Controller
+                  name="source"
+                  control={control}
+                  rules={{ required: "Source is required" }}
+                  render={({ field }) => (
+                    <FormControl
+                      fullWidth
+                      size="medium"
+                      error={!!errors.source}
+                      sx={{ marginBottom: "16px" }}
+                    >
+                      <InputLabel>Source *</InputLabel>
+                      <Select
+                        {...field}
+                        label="Source *"
+                        value={field.value || ""}
+                        error={!!errors.source}
+                        onChange={(e) =>
+                          handleFieldChange("source", e.target.value)
+                        }
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            "&:hover fieldset": {
+                              borderColor: "#10b981",
+                            },
+                          },
+                        }}
+                      >
+                        {truckSource.map((source) => (
+                          <MenuItem key={source} value={source}>
+                            {source.charAt(0).toUpperCase() + source.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      {errors.source && (
+                        <Typography
+                          variant="caption"
+                          color="error"
+                          sx={{ mt: 1, display: "block" }}
+                        >
+                          {errors.source.message}
                         </Typography>
                       )}
                     </FormControl>

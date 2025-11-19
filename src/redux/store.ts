@@ -8,6 +8,7 @@ import loadsFormSlice from "./slices/loadsFormSlice";
 import modalsSlice from "./slices/modalsSlice";
 import uiSlice from "./slices/uiSlice";
 import paletteSlice from "./slices/paletteSlice";
+import notificationsSlice from "./slices/notificationSlice";
 import { apiSlice } from "./slices/apiSlice";
 import { googleMapsApi } from "./slices/googleMapsSlice";
 
@@ -16,11 +17,6 @@ const authPersistConfig = {
   storage,
   whitelist: ["token", "user"],
 };
-// const palettePersistConfig = {
-//   key: "palette",
-//   storage,
-//   whitelist: ["currentPalette"]
-// }
 
 const rootReducer = combineReducers({
   auth: persistReducer(authPersistConfig, authSlice),
@@ -28,6 +24,7 @@ const rootReducer = combineReducers({
   loadsForm: loadsFormSlice,
   modals: modalsSlice,
   ui: uiSlice,
+  notifications: notificationsSlice,
   [apiSlice.reducerPath]: apiSlice.reducer,
   [googleMapsApi.reducerPath]: googleMapsApi.reducer,
 });

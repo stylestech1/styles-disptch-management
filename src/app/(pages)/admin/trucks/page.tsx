@@ -26,9 +26,7 @@ import {
   useDeleteTruckMutation,
   useGetTrucksWithPaginationQuery,
   useGetTruckWithSearchQuery,
-  useLazyGetDriverByIdQuery,
   useLazyGetDriversQuery,
-  useLazyGetTruckByIdQuery,
   useLazyGetTruckByTruckIdQuery,
   useUpdateTruckMutation,
 } from "@/redux/slices/apiSlice";
@@ -189,6 +187,7 @@ const TrucksPage: React.FC = () => {
       fuelPerMile: truck.fuelPerMile,
       status: truck.status,
       assignedDriver: assignedDriverId,
+      source: truck.source
     });
     setEditMode(true);
     setOpen(true);
@@ -311,6 +310,11 @@ const TrucksPage: React.FC = () => {
         {/* Truck Type */}
         <td className="p-4 text-center text-slate-700">
           <Chip label={truck.type} variant="outlined" size="small" />
+        </td>
+
+        {/* Truck Source */}
+        <td className="p-4 text-center text-slate-700">
+          <Chip label={truck.source} variant="outlined" size="small" />
         </td>
 
         {/* Truck Year */}
@@ -550,6 +554,7 @@ const TrucksPage: React.FC = () => {
         isLoading={isCreating || isUpdating}
         allDrivers={Array.isArray(allDriversAvailable?.data) ? allDriversAvailable.data : []}
         allTrucks={trucksData?.data?.data || []}
+        refetch={refetchTrucks}
       />
 
       {/* Delete Confirmation */}

@@ -24,6 +24,7 @@ export const api = createApi({
     "DriverSummary",
     "Palette",
     "Customers",
+    "Notifications",
   ],
   refetchOnFocus: false,
   refetchOnReconnect: false,

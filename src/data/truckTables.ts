@@ -6,6 +6,7 @@ export const truckColumns: Column[] = [
   { key: "plateNumber", header: "Plate Number", align: "center" },
   { key: "type", header: "Type", align: "center" },
   { key: "year", header: "Year", align: "center" },
+  { key: "source", header: "Source", align: "center" },
   { key: "truckCapacity", header: "Capacity (kg)", align: "center" },
   { key: "fuelPerMile", header: "Fuel/Mile", align: "center" },
   { key: "assignToDriver", header: "Driver", align: "center" },

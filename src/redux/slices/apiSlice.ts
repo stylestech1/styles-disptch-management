@@ -13,6 +13,7 @@ import {
   TPaletteConfig,
   TUpdatePaletteRequest,
 } from "@/types/themeType";
+import { get } from "http";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -550,6 +551,25 @@ export const apiSlice = api.injectEndpoints({
       }),
       invalidatesTags: ["Customers"],
     }),
+
+    // ! ========== Notification Methods ==========
+    getAllNotifications: builder.query({
+      query: () => `/api/v1/notifications`,
+      providesTags: ["Notifications"],
+    }),
+
+    markAllAsRead: builder.mutation({
+      query: () => ({ url: `/api/v1/notifications/mark-all`, method: "PATCH" }),
+      invalidatesTags: ["Notifications"],
+    }),
+
+    markSpecificAsRead: builder.mutation({
+      query: (id) => ({
+        url: `api/v1/notifications/mark/${id}`,
+        method: "PATCH",
+      }),
+      invalidatesTags: ["Notifications"],
+    }),
   }),
 });
 
@@ -628,4 +648,8 @@ export const {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
+  // TODO: ----- Notification -----
+  useGetAllNotificationsQuery,
+  useMarkAllAsReadMutation,
+  useMarkSpecificAsReadMutation,
 } = apiSlice;
