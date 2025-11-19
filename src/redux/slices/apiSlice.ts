@@ -38,6 +38,10 @@ export const apiSlice = api.injectEndpoints({
       query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
       providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
     }),
+    getLoadByMongoId: builder.query({
+      query: (_id) => `/api/v1/loads?_id=${_id}`,
+      providesTags: (result, error, _id) => [{ type: "Loads", id: _id }],
+    }),
 
     // Get Loads with Filter and Search
     getLoadsWithFilter: builder.query({
@@ -579,6 +583,7 @@ export const {
   useGetLoadsQuery,
   useGetAllLoadsQuery,
   useGetLoadByIdQuery,
+  useGetLoadByMongoIdQuery,
   useLazyGetLoadByIdQuery,
   useCreateLoadsMutation,
   useUpdateLoadsMutation,

@@ -213,7 +213,7 @@ const LoadsPageDetails = () => {
         userRole === "admin"
           ? `/admin/loadDetails/${encodeURIComponent(String(loadItem.loadId))}`
           : `/dispatchers/loadDetails/${encodeURIComponent(
-              String(loadItem.loadId)
+              String(loadItem.id)
             )}`;
 
       router.push(path);

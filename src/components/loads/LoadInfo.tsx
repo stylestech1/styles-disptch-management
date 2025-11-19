@@ -1,5 +1,5 @@
 "use client";
-import { useGetLoadByIdQuery } from "@/redux/slices/apiSlice";
+import { useGetLoadByMongoIdQuery } from "@/redux/slices/apiSlice";
 import {
   Box,
   Typography,
@@ -92,7 +92,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
     data,
     isLoading: loadLoading,
     refetch: refetchLoads,
-  } = useGetLoadByIdQuery(decodedLoadId);
+  } = useGetLoadByMongoIdQuery(decodedLoadId);
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
@@ -126,7 +126,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
 
   // Set Data
   const load = data?.data.find((item: TLoads) => {
-    const itemLoadId = String(item.loadId).trim();
+    const itemLoadId = String(item.id).trim();
     const searchLoadId = String(decodedLoadId).trim();
     return itemLoadId === searchLoadId;
   });
