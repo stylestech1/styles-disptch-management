@@ -229,7 +229,7 @@ export default function AdminLayout({
               backgroundColor: themePalette.currentPalette.background,
               color: themePalette.currentPalette.text,
               boxShadow: 1,
-              zIndex: (t) => t.zIndex.drawer - 1100,
+              zIndex: (t) => t.zIndex.drawer - 1151,
             }}
           >
             <Toolbar>
