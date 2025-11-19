@@ -556,6 +556,7 @@ export const apiSlice = api.injectEndpoints({
     getAllNotifications: builder.query({
       query: () => `/api/v1/notifications`,
       providesTags: ["Notifications"],
+      keepUnusedDataFor: 60 * 60 * 24,
     }),
 
     markAllAsRead: builder.mutation({

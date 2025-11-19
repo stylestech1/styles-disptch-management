@@ -2,11 +2,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TCustomer } from "@/types/globalTypes";
-import Titles from "@/components/ui/Titles";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
 import Erros from "@/components/ui/Erros";
-import { IoAdd, IoPencil, IoSearch, IoPerson, IoTrash } from "react-icons/io5";
+import { IoAdd, IoPencil, IoPerson, IoTrash } from "react-icons/io5";
 import {
   Button,
   TableRow,
@@ -14,15 +13,12 @@ import {
   IconButton,
   Tooltip,
   Chip,
-  TextField,
-  InputAdornment,
   alpha,
   SxProps,
   Typography,
   Dialog,
 } from "@mui/material";
 
-import { muiTheme } from "@/theme/theme";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {

@@ -1,3 +1,5 @@
+import { TPagination } from "./globalTypes";
+
 export type TNotification = {
   title: string;
   id: string;
@@ -14,3 +16,7 @@ export type TNotification = {
   createdAt: string;
   updatedAt: string;
 };
+export interface TNotificationsResponse {
+  data: TNotification[];
+  paginationResult: TPagination;
+}
