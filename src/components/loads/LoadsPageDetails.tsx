@@ -211,7 +211,7 @@ const LoadsPageDetails = () => {
 
       const path =
         userRole === "admin"
-          ? `/admin/loadDetails/${encodeURIComponent(String(loadItem.loadId))}`
+          ? `/admin/loadDetails/${encodeURIComponent(String(loadItem.id))}`
           : `/dispatchers/loadDetails/${encodeURIComponent(
               String(loadItem.id)
             )}`;
