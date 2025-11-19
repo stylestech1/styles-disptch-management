@@ -130,7 +130,7 @@ const UserSettingsModal = ({
                     })
                   }
                   sx={{ bgcolor: theme.currentPalette.background }}
-                  className="block w-full border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="block w-full border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 >
                   <MenuItem value={"employee"}>Employee</MenuItem>
                   <MenuItem value={"admin"}>Admin</MenuItem>
@@ -152,7 +152,7 @@ const UserSettingsModal = ({
                     })
                   }
                   sx={{ bgcolor: theme.currentPalette.background }}
-                  className="block w-full border border-slate-300 rounded-lg bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+                  className="block w-full border rounded-lg text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
                 >
                   <MenuItem value={"active"}>Active</MenuItem>
                   <MenuItem value={"deactive"}>Deactive</MenuItem>

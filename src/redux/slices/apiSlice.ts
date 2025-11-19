@@ -392,7 +392,7 @@ export const apiSlice = api.injectEndpoints({
     updateUserRole: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/api/v1/adminDashboard/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: ["Dispatchers"],
@@ -402,7 +402,7 @@ export const apiSlice = api.injectEndpoints({
     activateUser: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/api/v1/adminDashboard/activate/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: ["Dispatchers"],
@@ -412,7 +412,7 @@ export const apiSlice = api.injectEndpoints({
     deactivateUser: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/api/v1/adminDashboard/deactivate/${id}`,
-        method: "PUT",
+        method: "PATCH",
         body,
       }),
       invalidatesTags: ["Dispatchers"],
