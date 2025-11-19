@@ -328,18 +328,6 @@ const LoadsPageDetails = () => {
             {hasComments ? (
               <div
                 className="relative cursor-pointer group/note"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  const path =
-                    userRole === "admin"
-                      ? `/admin/loadDetails/${encodeURIComponent(
-                          loadItem.loadId
-                        )}`
-                      : `/dispatchers/loadDetails/${encodeURIComponent(
-                          loadItem.loadId
-                        )}`;
-                  router.push(path);
-                }}
                 title={`${commentsCount} comment(s) - Click to view`}
               >
                 <Box
