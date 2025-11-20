@@ -1,15 +1,15 @@
 import { RootState, useAppSelector } from "@/redux/store";
-import {
-  alpha,
-  AppBar,
-  Box,
-  Toolbar,
-  Typography,
-} from "@mui/material";
+import { alpha, AppBar, Box, Toolbar, Typography } from "@mui/material";
 
 import NotificationProvider from "@/providers/NotificationProvider";
 
-export default function Navbar({ title, subtitle }) {
+export default function Navbar({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle: string;
+}) {
   const theme = useAppSelector((state: RootState) => state.palette);
 
   return (
@@ -36,14 +36,22 @@ export default function Navbar({ title, subtitle }) {
           <Box>
             <Typography
               variant="h1"
-              sx={{ fontWeight: "bold", color: theme.currentPalette.text, fontSize: '24px' }}
+              sx={{
+                fontWeight: "bold",
+                color: theme.currentPalette.text,
+                fontSize: "24px",
+              }}
             >
               {title}
             </Typography>
             {subtitle && (
               <Typography
                 variant="body2"
-                sx={{ color: theme.currentPalette.text, fontSize: '14px', width: 700 }}
+                sx={{
+                  color: theme.currentPalette.text,
+                  fontSize: "14px",
+                  width: 700,
+                }}
               >
                 {subtitle}
               </Typography>

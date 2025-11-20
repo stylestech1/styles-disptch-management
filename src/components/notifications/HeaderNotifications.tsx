@@ -321,10 +321,6 @@ export default function HeaderNotifications() {
                               ? alpha(theme.currentPalette.primary, 0.12)
                               : alpha(theme.currentPalette.primary, 0.04),
                         },
-                        borderLeft:
-                          notification.status === "unread"
-                            ? `3px solid ${theme.currentPalette.primary}`
-                            : "3px solid transparent",
                       }}
                     >
                       <Box
