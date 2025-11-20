@@ -6,7 +6,6 @@ import { RiCustomerService2Fill } from "react-icons/ri";
 import { SiGoogleanalytics } from "react-icons/si";
 import { MdOutlineCommentBank } from "react-icons/md";
 import { TUserRole } from "@/types/globalTypes";
-import { IoMdNotifications } from "react-icons/io";
 
 type TabItem = {
   label: string;
@@ -23,13 +22,11 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     { label: "Calculation", icon: <ImCalculator /> },
     { label: "Broker", icon: <MdOutlineCommentBank /> },
     { label: "Customers", icon: <RiCustomerService2Fill /> },
-    { label: "Notifications", icon: <IoMdNotifications /> },
   ],
   employee: [
     { label: "Loads", icon: <FaCirclePlus /> },
     { label: "Calculation", icon: <ImCalculator /> },
     { label: "Customers", icon: <RiCustomerService2Fill /> },
-    { label: "Notifications", icon: <IoMdNotifications /> },
   ],
   driver: [{ label: "Loads", icon: <FaCirclePlus /> }],
 };

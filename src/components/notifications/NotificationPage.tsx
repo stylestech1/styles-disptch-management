@@ -1,6 +1,10 @@
 "use client";
 import useError from "@/hook/useError";
-import { useGetAllNotificationsQuery, useMarkAllAsReadMutation, useMarkSpecificAsReadMutation } from "@/redux/slices/apiSlice";
+import {
+  useGetAllNotificationsQuery,
+  useMarkAllAsReadMutation,
+  useMarkSpecificAsReadMutation,
+} from "@/redux/slices/apiSlice";
 import { setLoading } from "@/redux/slices/uiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
 import { getErrorMessage } from "@/utils/getErrorMessage";
@@ -29,8 +33,16 @@ import {
   Refresh,
   NotificationsActive,
   NotificationsOff,
+  SettingsRounded,
+  LocalShippingRounded,
+  AirportShuttleRounded,
+  PersonPinRounded,
+  BadgeRounded,
 } from "@mui/icons-material";
-import { TNotification, TNotificationsResponse } from "../../types/notificationType";
+import {
+  TNotification,
+  TNotificationsResponse,
+} from "../../types/notificationType";
 
 const NotificationPage = () => {
   const { error, setError } = useError();
@@ -42,18 +54,17 @@ const NotificationPage = () => {
     isLoading: notifyLoading,
     error: notifyError,
     refetch: refetchNotify,
-  } = useGetAllNotificationsQuery(
-    {
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMountOrArgChange: false,
-    }
-  );
+  } = useGetAllNotificationsQuery({
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMountOrArgChange: false,
+  });
 
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [markSpecificAsRead] = useMarkSpecificAsReadMutation();
 
-  const notifications: TNotification[] = (notifyData as TNotificationsResponse)?.data || [];
+  const notifications: TNotification[] =
+    (notifyData as TNotificationsResponse)?.data || [];
 
   // handling Loading
   useEffect(() => {
@@ -78,6 +89,7 @@ const NotificationPage = () => {
     }
   }, [notifyError, setError]);
 
+  // handling Marking All as Read
   const handleMarkAllAsRead = async (): Promise<void> => {
     try {
       await markAllAsRead(null).unwrap();
@@ -88,11 +100,12 @@ const NotificationPage = () => {
           borderRadius: "8px",
         },
       });
-    } catch{
+    } catch {
       toast.error("Failed to mark all as read ❌");
     }
   };
 
+  // handling Marking as Read
   const handleMarkAsRead = async (id: string): Promise<void> => {
     try {
       await markSpecificAsRead(id).unwrap();
@@ -103,11 +116,12 @@ const NotificationPage = () => {
           borderRadius: "8px",
         },
       });
-    } catch{
+    } catch {
       toast.error("Failed to mark as read ❌");
     }
   };
 
+  // Handling Refresh
   const handleRefresh = (): void => {
     refetchNotify();
     toast.success("Notifications refreshed 🔄", {
@@ -120,11 +134,21 @@ const NotificationPage = () => {
   };
 
   // Calculate unread count with proper typing
-  const unreadCount = notifications.filter((n: TNotification) => n.status === 'unread').length;
+  const unreadCount = notifications.filter(
+    (n: TNotification) => n.status === "unread"
+  ).length;
 
   // Loading state
   const isInitialLoading = notifyLoading && !notifyData;
   if (isInitialLoading) return <Loading />;
+
+  const icons = {
+    system: <SettingsRounded sx={{ fontSize: 24 }} />,
+    loads: <LocalShippingRounded sx={{ fontSize: 24 }} />,
+    trucks: <AirportShuttleRounded sx={{ fontSize: 24 }} />,
+    drivers: <PersonPinRounded sx={{ fontSize: 24 }} />,
+    identity: <BadgeRounded sx={{ fontSize: 24 }} />,
+  };
 
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: 1200, mx: "auto" }}>
@@ -136,7 +160,15 @@ const NotificationPage = () => {
           mb: 3,
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: 2,
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <Badge
               badgeContent={unreadCount}
@@ -149,24 +181,24 @@ const NotificationPage = () => {
                 },
               }}
             >
-              <NotificationsActive 
-                sx={{ 
-                  fontSize: 32, 
-                  color: theme.currentPalette.primary 
-                }} 
+              <NotificationsActive
+                sx={{
+                  fontSize: 32,
+                  color: theme.currentPalette.primary,
+                }}
               />
             </Badge>
             <Box>
-              <Typography 
-                variant="h4" 
-                component="h1" 
+              <Typography
+                variant="h4"
+                component="h1"
                 fontWeight="bold"
                 sx={{ color: theme.currentPalette.text }}
               >
                 Notifications
               </Typography>
-              <Typography 
-                variant="body1" 
+              <Typography
+                variant="body1"
                 sx={{ color: alpha(theme.currentPalette.text, 0.7) }}
               >
                 Manage your notifications and stay updated
@@ -249,16 +281,16 @@ const NotificationPage = () => {
                   <ListItem
                     sx={{
                       p: 3,
-                      backgroundColor: 
-                        notification.status === "unread" 
+                      backgroundColor:
+                        notification.status === "unread"
                           ? alpha(theme.currentPalette.primary, 0.04)
                           : "transparent",
-                      borderLeft: 
+                      borderLeft:
                         notification.status === "unread"
                           ? `4px solid ${theme.currentPalette.primary}`
                           : "4px solid transparent",
                       "&:hover": {
-                        backgroundColor: 
+                        backgroundColor:
                           notification.status === "unread"
                             ? alpha(theme.currentPalette.primary, 0.08)
                             : alpha(theme.currentPalette.background, 0.5),
@@ -270,8 +302,16 @@ const NotificationPage = () => {
                         <Chip
                           label={notification.status}
                           size="small"
-                          color={notification.status === "unread" ? "primary" : "default"}
-                          variant={notification.status === "unread" ? "filled" : "outlined"}
+                          color={
+                            notification.status === "unread"
+                              ? "primary"
+                              : "default"
+                          }
+                          variant={
+                            notification.status === "unread"
+                              ? "filled"
+                              : "outlined"
+                          }
                         />
                         {notification.status === "unread" && (
                           <Tooltip title="Mark as read">
@@ -281,7 +321,10 @@ const NotificationPage = () => {
                               sx={{
                                 color: theme.currentPalette.primary,
                                 "&:hover": {
-                                  backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                                  backgroundColor: alpha(
+                                    theme.currentPalette.primary,
+                                    0.1
+                                  ),
                                 },
                               }}
                             >
@@ -292,42 +335,72 @@ const NotificationPage = () => {
                       </Stack>
                     }
                   >
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant="h6"
-                        component="div"
+                    <Box sx={{display: 'flex' , alignItems: 'flex-start', gap: 2}}>
+                      <Box
                         sx={{
-                          fontWeight: notification.status === "unread" ? 600 : 400,
-                          color: theme.currentPalette.text,
-                          mb: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                          color: theme.currentPalette.primary,
                         }}
                       >
-                        {notification.title}
-                        <Chip label={notification.module} variant="outlined" size="small" />
-                        <Chip label={notification.importance} variant="outlined" size="small" />
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: alpha(theme.currentPalette.text, 0.7),
-                          mb: 1,
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {notification.message}
-                      </Typography>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: alpha(theme.currentPalette.text, 0.5),
-                        }}
-                      >
-                        {new Date(notification.createdAt).toLocaleDateString()} • 
-                        {new Date(notification.createdAt).toLocaleTimeString()}
-                      </Typography>
+                        {icons[notification.module]}
+                      </Box>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography
+                          variant="h6"
+                          component="div"
+                          sx={{
+                            fontWeight:
+                              notification.status === "unread" ? 600 : 400,
+                            color: theme.currentPalette.text,
+                            mb: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          {notification.title}
+                          <Chip
+                            label={notification.module}
+                            variant="outlined"
+                            size="small"
+                          />
+                          <Chip
+                            label={notification.importance}
+                            variant="outlined"
+                            size="small"
+                          />
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: alpha(theme.currentPalette.text, 0.7),
+                            mb: 1,
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {notification.message}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: alpha(theme.currentPalette.text, 0.5),
+                          }}
+                        >
+                          {new Date(
+                            notification.createdAt
+                          ).toLocaleDateString()}{" "}
+                          •
+                          {new Date(
+                            notification.createdAt
+                          ).toLocaleTimeString()}
+                        </Typography>
+                      </Box>
                     </Box>
                   </ListItem>
                   {index < notifications.length - 1 && (

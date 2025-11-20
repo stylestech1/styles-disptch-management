@@ -1,10 +1,17 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useAppSelector, useAppDispatch, RootState } from "@/redux/store";
-import { apiSlice } from "@/redux/slices/apiSlice";
+import {
+  apiSlice,
+  useMarkSpecificAsReadMutation,
+} from "@/redux/slices/apiSlice";
 import { TNotification } from "@/types/notificationType";
 import toast from "react-hot-toast";
-import { addNotification, updateAllNotificationsStatus } from "@/redux/slices/notificationSlice";
+import {
+  addNotification,
+  updateAllNotificationsStatus,
+  updateNotificationStatus,
+} from "@/redux/slices/notificationSlice";
 import {
   alpha,
   Box,
@@ -20,8 +27,16 @@ import {
   useTheme,
   useMediaQuery,
 } from "@mui/material";
+import {
+  SettingsRounded,
+  LocalShippingRounded,
+  AirportShuttleRounded,
+  PersonPinRounded,
+  BadgeRounded,
+} from "@mui/icons-material";
 import { IoMdNotifications } from "react-icons/io";
-import { Close, MarkEmailRead } from "@mui/icons-material";
+import { ArrowForward, Close, MarkEmailRead } from "@mui/icons-material";
+import Link from "next/link";
 
 export default function HeaderNotifications() {
   const dispatch = useAppDispatch();
@@ -30,6 +45,7 @@ export default function HeaderNotifications() {
   );
   const token = useAppSelector((state: RootState) => state.auth.token);
   const theme = useAppSelector((state: RootState) => state.palette);
+  const userRole = useAppSelector((state: RootState) => state.auth.user?.role);
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const muiTheme = useTheme();
@@ -48,6 +64,7 @@ export default function HeaderNotifications() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [audioInitialized, setAudioInitialized] = useState(false);
   const [markAllAsRead] = apiSlice.endpoints.markAllAsRead.useMutation();
+  const [markSpecificAsRead] = useMarkSpecificAsReadMutation();
 
   // Initialize audio after first user interaction
   useEffect(() => {
@@ -72,7 +89,11 @@ export default function HeaderNotifications() {
         const exists = notifications.find((n) => n.id === notif.id);
         if (!exists) {
           dispatch(addNotification(notif));
-          if (notif.status === "unread" && audioInitialized && audioRef.current) {
+          if (
+            notif.status === "unread" &&
+            audioInitialized &&
+            audioRef.current
+          ) {
             audioRef.current
               .play()
               .catch((err) => console.warn("Audio play error:", err));
@@ -84,16 +105,41 @@ export default function HeaderNotifications() {
 
   const handleMarkAllAsRead = async () => {
     try {
-      await markAllAsRead(null).unwrap(); 
-      dispatch(updateAllNotificationsStatus("read")); 
+      await markAllAsRead(null).unwrap();
+      dispatch(updateAllNotificationsStatus("read"));
       toast.success("All notifications marked as read");
     } catch {
       toast.error("Failed to mark notifications as read");
     }
   };
 
+  // handling Marking as Read
+  const handleMarkAsRead = async (id: string): Promise<void> => {
+    try {
+      await markSpecificAsRead(id).unwrap();
+      dispatch(updateNotificationStatus({ id, status: "read" }));
+      toast.success("Notification marked as read", {
+        style: {
+          borderColor: theme.currentPalette.primary,
+          color: theme.currentPalette.primary,
+          borderRadius: "8px",
+        },
+      });
+    } catch {
+      toast.error("Failed to mark as read ❌");
+    }
+  };
+
   const handleNotificationClick = (notification: TNotification) => {
     setDropdownOpen(false);
+  };
+
+  const icons = {
+    system: <SettingsRounded sx={{ fontSize: 24 }} />,
+    loads: <LocalShippingRounded sx={{ fontSize: 24 }} />,
+    trucks: <AirportShuttleRounded sx={{ fontSize: 24 }} />,
+    drivers: <PersonPinRounded sx={{ fontSize: 24 }} />,
+    identity: <BadgeRounded sx={{ fontSize: 24 }} />,
   };
 
   return (
@@ -149,9 +195,12 @@ export default function HeaderNotifications() {
               display: "flex",
               justifyContent: "space-between",
               alignItems: "center",
-              borderBottom: `1px solid ${alpha(theme.currentPalette.text, 0.2)}`,
+              borderBottom: `1px solid ${alpha(
+                theme.currentPalette.text,
+                0.2
+              )}`,
               backgroundColor: theme.currentPalette.background,
-              flexShrink: 0, 
+              flexShrink: 0,
             }}
           >
             <Typography variant="h6" component="h2" fontWeight="bold">
@@ -169,31 +218,52 @@ export default function HeaderNotifications() {
                 </Typography>
               )}
             </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setDropdownOpen(false)}
-              sx={{ color: theme.currentPalette.text }}
-            >
-              <Close />
-            </IconButton>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Button
+                fullWidth
+                startIcon={<MarkEmailRead />}
+                onClick={handleMarkAllAsRead}
+                sx={{
+                  color: theme.currentPalette.primary,
+                  "&:hover": {
+                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                    color: theme.currentPalette.primary,
+                  },
+                  justifyContent: "flex-start",
+                  pl: 2,
+                  textTransform: "none",
+                  fontWeight: 500,
+                }}
+              >
+                Read All
+              </Button>
+              <IconButton
+                size="small"
+                onClick={() => setDropdownOpen(false)}
+                sx={{ color: theme.currentPalette.text }}
+              >
+                <Close />
+              </IconButton>
+            </Box>
           </Box>
 
           {/* Notifications List  */}
-          <Box 
-            sx={{ 
-              flex: 1, 
+          <Box
+            sx={{
+              flex: 1,
               overflow: "auto",
-              '&::-webkit-scrollbar': {
-                width: '8px',
+              "&::-webkit-scrollbar": {
+                width: "8px",
               },
-              '&::-webkit-scrollbar-track': {
+              "&::-webkit-scrollbar-track": {
                 background: alpha(theme.currentPalette.text, 0.1),
-                borderRadius: '4px',
+                borderRadius: "4px",
               },
-              '&::-webkit-scrollbar-thumb': {
+              "&::-webkit-scrollbar-thumb": {
                 background: alpha(theme.currentPalette.text, 0.3),
-                borderRadius: '4px',
-                '&:hover': {
+                borderRadius: "4px",
+                "&:hover": {
                   background: alpha(theme.currentPalette.text, 0.5),
                 },
               },
@@ -214,10 +284,16 @@ export default function HeaderNotifications() {
                 {notifications.map((notification, index) => (
                   <Box key={`${notification.id}-${index}`}>
                     <ListItemButton
-                      onClick={() => handleNotificationClick(notification)}
+                      onClick={() => {
+                        handleNotificationClick(notification);
+                        handleMarkAsRead(notification.id);
+                      }}
                       sx={{
                         py: 1.5,
                         px: 2,
+                        position: "relative",
+                        display: 'flex',
+                        gap: 2,
                         backgroundColor:
                           notification.status === "unread"
                             ? alpha(theme.currentPalette.primary, 0.08)
@@ -234,13 +310,28 @@ export default function HeaderNotifications() {
                             : "3px solid transparent",
                       }}
                     >
+                      <Box
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          borderRadius: 1,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                          color: theme.currentPalette.primary,
+                        }}
+                      >
+                        {icons[notification.module]}
+                      </Box>
                       <ListItemText
                         primary={
                           <Typography
                             variant="subtitle2"
                             component="div"
                             sx={{
-                              fontWeight: notification.status === "unread" ? 600 : 400,
+                              fontWeight:
+                                notification.status === "unread" ? 600 : 400,
                               color: theme.currentPalette.text,
                             }}
                           >
@@ -259,8 +350,24 @@ export default function HeaderNotifications() {
                           </Typography>
                         }
                       />
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 10,
+                          right: 10,
+                          width: 7,
+                          height: 7,
+                          borderRadius: "50%",
+                          backgroundColor:
+                            notification.status === "unread"
+                              ? "red"
+                              : "transparent",
+                        }}
+                      />
                     </ListItemButton>
-                    {index < notifications.length - 1 && <Divider variant="inset" component="li" />}
+                    {index < notifications.length - 1 && (
+                      <Divider variant="inset" component="li" />
+                    )}
                   </Box>
                 ))}
               </List>
@@ -274,13 +381,16 @@ export default function HeaderNotifications() {
                 p: 1,
                 borderTop: `1px solid ${alpha(theme.currentPalette.text, 0.2)}`,
                 backgroundColor: theme.currentPalette.background,
-                flexShrink: 0, 
+                flexShrink: 0,
               }}
             >
               <Button
-                fullWidth
-                startIcon={<MarkEmailRead />}
-                onClick={handleMarkAllAsRead}
+                component={Link}
+                onClick={() => setDropdownOpen(false)}
+                href={`/${
+                  userRole === "employee" ? "dispatchers" : userRole
+                }/notifications`}
+                startIcon={<ArrowForward />}
                 sx={{
                   color: theme.currentPalette.primary,
                   "&:hover": {
@@ -293,7 +403,7 @@ export default function HeaderNotifications() {
                   fontWeight: 500,
                 }}
               >
-                Mark all as read
+                See All
               </Button>
             </Box>
           )}
