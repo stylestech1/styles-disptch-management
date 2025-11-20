@@ -62,54 +62,13 @@ export default function HeaderNotifications() {
     }
   );
 
-  // 🔊 Audio setup
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const [audioInitialized, setAudioInitialized] = useState(false);
   const [markAllAsRead] = apiSlice.endpoints.markAllAsRead.useMutation();
   const [markSpecificAsRead] = useMarkSpecificAsReadMutation();
-
-  // Initialize audio after first user interaction
-  useEffect(() => {
-    const handleFirstInteraction = () => {
-      if (!audioRef.current) {
-        audioRef.current = new Audio("/audio/notify.wav");
-        audioRef.current.volume = 0.5;
-      }
-      setAudioInitialized(true);
-      document.removeEventListener("click", handleFirstInteraction);
-    };
-
-    document.addEventListener("click", handleFirstInteraction);
-
-    return () => document.removeEventListener("click", handleFirstInteraction);
-  }, []);
-
-  // Add new notifications to redux and play sound
-  useEffect(() => {
-    if (data?.data) {
-      data.data.forEach((notif: TNotification) => {
-        const exists = notifications.find((n) => n.id === notif.id);
-        if (!exists) {
-          dispatch(addNotification(notif));
-          if (
-            notif.status === "unread" &&
-            audioInitialized &&
-            audioRef.current
-          ) {
-            audioRef.current
-              .play()
-              .catch((err) => console.warn("Audio play error:", err));
-          }
-        }
-      });
-    }
-  }, [data, dispatch, notifications, audioInitialized]);
 
   const handleMarkAllAsRead = async () => {
     try {
       await markAllAsRead(null).unwrap();
       dispatch(updateAllNotificationsStatus("read"));
-      toast.success("All notifications marked as read");
     } catch {
       toast.error("Failed to mark notifications as read");
     }

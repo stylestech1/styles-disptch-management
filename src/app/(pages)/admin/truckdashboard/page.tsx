@@ -16,7 +16,7 @@ import {
   alpha,
   Button,
 } from "@mui/material";
-import { IoCar, IoStatsChart } from "react-icons/io5";
+import { IoCar, IoCheckmark, IoNavigate, IoStatsChart, IoTime } from "react-icons/io5";
 import { useRouter } from "next/navigation";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TTruck, TTruckSummary, TTruckWithSummary } from "@/types/globalTypes";
@@ -30,6 +30,7 @@ import { TableSkeleton } from "@/components/ui/TablesMUI";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
 import SearchInput from "@/components/ui/SearchInput";
 import { Palette } from "@/types/themeType";
+import StatsCard from "@/components/ui/StatsCard";
 
 // Memoized Truck Row Component
 const TruckRow = React.memo(
@@ -155,11 +156,11 @@ const TruckRow = React.memo(
               bgcolor: themeColors.primary,
               color: themeColors.background,
               cursor: "pointer",
-              display: 'flex',
-              alignItems: 'center',
+              display: "flex",
+              alignItems: "center",
               gap: 2,
               px: 2,
-              "&:hover":{bgcolor: alpha(themeColors.primary, 0.9)}
+              "&:hover": { bgcolor: alpha(themeColors.primary, 0.9) },
             }}
             disabled={!hasSummary}
           >
@@ -203,6 +204,21 @@ const TruckDashboard = () => {
   const displayTrucks = isSearching
     ? searchedTrucks
     : allTrucksData?.data?.trucksSummary || [];
+
+  // Stats cards
+  const statsData = useMemo(() => {
+    const statTruckData = allTrucksData?.data?.totalSummary as TTruckSummary;;
+    if (!statTruckData)
+      return { TotalRevenueMile: 0, TotalCostMile: 0, TotalProfitMile: 0, ProfitMargin: 0 };
+    return {
+      TotalRevenueMile: statTruckData.totalRevenue,
+      TotalCostMile: statTruckData.totalExpenses,
+      TotalProfitMile: statTruckData.netProfit,
+      ProfitMargin: statTruckData.totalExpenses
+      ? (statTruckData.netProfit / statTruckData.totalExpenses).toFixed(2)
+      : 0,
+    };
+  }, [allTrucksData?.data?.totalSummary]);
 
   // chart data
   const chartData = useMemo(() => {
@@ -314,7 +330,36 @@ const TruckDashboard = () => {
   return (
     <Box sx={containerSx}>
       {/* Header */}
-      <Box className="flex justify-between items-start flex-col md:flex-row mb-6">
+      <Box className="flex justify-between items-start flex-col mb-6">
+        {/* Stats Cards */}
+        <Box sx={{ mt: 4, mb: 5 }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatsCard
+              title="Total Revenue/Mile"
+              value={`$${statsData.TotalRevenueMile}`}
+              icon={IoCar}
+              iconColor={theme.currentPalette.primary}
+            />
+            <StatsCard
+              title="Total Cost/Mile"
+              value={`$${statsData.TotalCostMile}`}
+              icon={IoTime}
+              iconColor={theme.currentPalette.primary}
+            />
+            <StatsCard
+              title="Total Profit/Mile"
+              value={`$${statsData.TotalProfitMile}`}
+              icon={IoNavigate}
+              iconColor={theme.currentPalette.primary}
+            />
+            <StatsCard
+              title="Profit Margin %"
+              value={`${statsData.ProfitMargin}%`}
+              icon={IoCheckmark}
+              iconColor={theme.currentPalette.primary}
+            />
+          </div>
+        </Box>
         {/* Charts Section */}
         {chartData && (
           <Box>
