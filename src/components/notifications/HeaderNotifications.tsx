@@ -296,108 +296,101 @@ export default function HeaderNotifications() {
             ) : (
               <List sx={{ p: 0 }}>
                 {notifications.map((notification, index) => {
-                    const loadId = extractIdFromMessage(notification.message);
-                  return(
-                  <Box key={`${notification.id}-${index}`}>
-                    <ListItemButton
-                      onClick={() => {
-                        handleNotificationClick(notification);
-                        handleMarkAsRead(notification.id);
-                        setDropdownOpen(false);
-                      }}
-                      sx={{
-                        py: 1.5,
-                        px: 2,
-                        position: "relative",
-                        display: "flex",
-                        gap: 2,
-                        backgroundColor:
-                          notification.status === "unread"
-                            ? alpha(theme.currentPalette.primary, 0.08)
-                            : "transparent",
-                        "&:hover": {
+                  const loadId = extractIdFromMessage(notification.message);
+                  return (
+                    <Box key={`${notification.id}-${index}`}>
+                      <ListItemButton
+                        onClick={(e) => {
+                          handleNotificationClick(notification);
+                          handleMarkAsRead(notification.id);
+                          setDropdownOpen(false);
+                          if (loadId) {
+                            e.stopPropagation();
+                            navigateToLoadDetails(loadId);
+                          }
+                        }}
+                        sx={{
+                          py: 1.5,
+                          px: 2,
+                          position: "relative",
+                          display: "flex",
+                          gap: 2,
                           backgroundColor:
                             notification.status === "unread"
-                              ? alpha(theme.currentPalette.primary, 0.12)
-                              : alpha(theme.currentPalette.primary, 0.04),
-                        },
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 1,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: alpha(theme.currentPalette.primary, 0.1),
-                          color: theme.currentPalette.primary,
+                              ? alpha(theme.currentPalette.primary, 0.08)
+                              : "transparent",
+                          "&:hover": {
+                            backgroundColor:
+                              notification.status === "unread"
+                                ? alpha(theme.currentPalette.primary, 0.12)
+                                : alpha(theme.currentPalette.primary, 0.04),
+                          },
                         }}
                       >
-                        {icons[notification.module]}
-                      </Box>
-                      <ListItemText
-                        primary={
-                          <Typography
-                            variant="subtitle2"
-                            component="div"
-                            sx={{
-                              fontWeight:
-                                notification.status === "unread" ? 600 : 400,
-                              color: theme.currentPalette.text,
-                            }}
-                          >
-                            {notification.title}
-                          </Typography>
-                        }
-                        secondary={
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: loadId
-                                ? theme.currentPalette.primary
-                                : alpha(theme.currentPalette.text, 0.7),
-                              mt: 0.5,
-                              cursor: loadId ? "pointer" : "default",
-                              textDecoration: loadId ? "underline" : "none",
-                            }}
-                            onClick={(e) => {
-                              if (loadId) {
-                                e.stopPropagation();
-                                navigateToLoadDetails(loadId);
-                              }
-                              handleMarkAsRead(notification.id);
-                              setDropdownOpen(false);
-                            }}
-                          >
-                            {notification.message
-                              .replace(/\([^)]*\)/g, "")
-                              .replace(/\s+/g, " ")
-                              .trim()}
-                          </Typography>
-                        }
-                      />
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          top: 10,
-                          right: 10,
-                          width: 7,
-                          height: 7,
-                          borderRadius: "50%",
-                          backgroundColor:
-                            notification.status === "unread"
-                              ? "red"
-                              : "transparent",
-                        }}
-                      />
-                    </ListItemButton>
-                    {index < notifications.length - 1 && (
-                      <Divider variant="inset" component="li" />
-                    )}
-                  </Box>
-                )})}
+                        <Box
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            borderRadius: 1,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                            color: theme.currentPalette.primary,
+                          }}
+                        >
+                          {icons[notification.module]}
+                        </Box>
+                        <ListItemText
+                          primary={
+                            <Typography
+                              variant="subtitle2"
+                              component="div"
+                              sx={{
+                                fontWeight:
+                                  notification.status === "unread" ? 600 : 400,
+                                color: theme.currentPalette.text,
+                              }}
+                            >
+                              {notification.title}
+                            </Typography>
+                          }
+                          secondary={
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                mt: 0.5,
+                                cursor: loadId ? "pointer" : "default",
+                              }}
+                            >
+                              {notification.message
+                                .replace(/\([^)]*\)/g, "")
+                                .replace(/\s+/g, " ")
+                                .trim()}
+                            </Typography>
+                          }
+                        />
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            top: 10,
+                            right: 10,
+                            width: 7,
+                            height: 7,
+                            borderRadius: "50%",
+                            backgroundColor:
+                              notification.status === "unread"
+                                ? "red"
+                                : "transparent",
+                          }}
+                        />
+                      </ListItemButton>
+                      {index < notifications.length - 1 && (
+                        <Divider variant="inset" component="li" />
+                      )}
+                    </Box>
+                  );
+                })}
               </List>
             )}
           </Box>

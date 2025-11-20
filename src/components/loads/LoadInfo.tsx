@@ -24,7 +24,7 @@ import {
   IconButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   LocalShipping,
   Person,
@@ -96,6 +96,11 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
+
+  // Refetching for coming from notify
+  useEffect(() => {
+    refetchLoads()
+  },[])
 
   // Handling Change Tabs
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
