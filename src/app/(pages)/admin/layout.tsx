@@ -32,7 +32,7 @@ import { logout } from "@/redux/slices/authSlice";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
 import { PiPaintBrushBroad } from "react-icons/pi";
-import NotificationProvider from "@/providers/NotificationProvider";
+import Navbar from "@/components/layout/Header";
 
 const DRAWER_WIDTH = 300;
 
@@ -68,6 +68,15 @@ export default function AdminLayout({
     dispatch(logout());
     router.replace("/");
   };
+
+  const getActiveTabInfo = () => {
+    const cleanedPath = pathname.split("/").pop();
+    const activeTab = tabs.find(
+      (tab) => tab.label.replace(/\s+/g, "").toLowerCase() === cleanedPath
+    );
+    return activeTab || { label: "", subtitle: "" };
+  };
+  const { label: title, subtitle } = getActiveTabInfo();
 
   const SidebarContent = (
     <Box
@@ -115,7 +124,7 @@ export default function AdminLayout({
       {/* Navigation */}
       <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
         {tabs.map(({ label, icon }, i) => {
-          const link = `${base}/${label.replace(/\s+/g, '').toLowerCase()}`;
+          const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
           const active = pathname.startsWith(link);
           return (
             <ListItemButton
@@ -252,11 +261,22 @@ export default function AdminLayout({
           sx={{
             flex: 1,
             overflow: "auto",
-            p: { xs: 3, md: 4 },
           }}
         >
           {isGoogleMapsLoaded ? (
-            children
+            <>
+              <Navbar title={title} subtitle={subtitle} />
+
+              <Box
+                sx={{
+                  flex: 1,
+                  overflow: "auto",
+                  p: { xs: 3, md: 4 },
+                }}
+              >
+                {children}
+              </Box>
+            </>
           ) : (
             <Box
               sx={{

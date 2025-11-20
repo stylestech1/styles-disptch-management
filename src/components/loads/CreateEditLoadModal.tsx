@@ -1693,17 +1693,11 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
 }) => {
   const token = useAppSelector((state: RootState) => state.auth.token);
 
-  const { data: driversData } = useGetDriversQuery({
+  const { data: driversData, refetch: driverRefetch } = useGetDriversQuery({
     skip: !token,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMountOrArgChange: false,
   });
-  const { data: trucksData } = useGetTrucksQuery({
+  const { data: trucksData, refetch: truckRefetch } = useGetTrucksQuery({
     skip: !token,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMountOrArgChange: false,
   });
 
   const drivers = driversData?.data || [];
@@ -1964,6 +1958,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               value={driverId}
               displayEmpty
               required
+              onOpen={() => {
+                driverRefetch();
+                truckRefetch();
+              }}
               onChange={(e) => onDriverIdChange(e.target.value)}
             >
               <MenuItem value="" disabled>

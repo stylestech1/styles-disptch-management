@@ -426,30 +426,6 @@ const TrucksPage: React.FC = () => {
     <Box sx={containerSx}>
       <Toaster position="top-right" />
 
-      {/* Title */}
-      <Box sx={headerContainerSx}>
-        <Typography
-          sx={{
-            color: theme.currentPalette.text,
-            fontSize: { xs: "2rem", md: "2.5rem", lg: "3rem" },
-            fontWeight: "bold",
-            mb: 1,
-          }}
-        >
-          Truck Management
-        </Typography>
-        <Typography
-          sx={{
-            color: alpha(theme.currentPalette.text, 0.7),
-            fontSize: "1rem",
-            maxWidth: "600px",
-            lineHeight: 1.6,
-          }}
-        >
-          Manage your trucks and their access
-        </Typography>
-      </Box>
-
       {/* Stats Summary */}
       <Box sx={{ mt: 4, mb: 5 }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">

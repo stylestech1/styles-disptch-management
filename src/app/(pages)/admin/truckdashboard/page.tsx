@@ -315,19 +315,6 @@ const TruckDashboard = () => {
     <Box sx={containerSx}>
       {/* Header */}
       <Box className="flex justify-between items-start flex-col md:flex-row mb-6">
-        <Box className="flex flex-col w-full">
-          <Box className="mb-6">
-            <Titles>Truck Dashboard</Titles>
-            <Typography variant="body1" color="text.secondary" className="mt-2">
-              {trucks.length > 0
-                ? `Managing ${trucks.length} trucks in your fleet${
-                    isFetching ? " (updating...)" : ""
-                  }`
-                : "No trucks available in your fleet"}
-            </Typography>
-          </Box>
-        </Box>
-
         {/* Charts Section */}
         {chartData && (
           <Box>

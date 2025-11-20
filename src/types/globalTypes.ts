@@ -85,6 +85,7 @@ export type TLoads = {
   deliveredAt?: string;
   createdAt?: string;
   documents?: TDocument[];
+  documentsForDriver?: TDocument[]
 };
 export type TDriver = {
   id: string;

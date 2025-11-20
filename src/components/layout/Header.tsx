@@ -1,28 +1,61 @@
-import Image from "next/image";
-import React from "react";
+import { RootState, useAppSelector } from "@/redux/store";
+import {
+  alpha,
+  AppBar,
+  Box,
+  Toolbar,
+  Typography,
+} from "@mui/material";
 
-const Header = () => {
+import NotificationProvider from "@/providers/NotificationProvider";
+
+export default function Navbar({ title, subtitle }) {
+  const theme = useAppSelector((state: RootState) => state.palette);
+
   return (
-    <nav className="bg-white shadow-md px-10 py-3 flex justify-between items-center">
-      <div className="flex items-center space-x-2">
-        <Image
-          src="/truck.png"
-          alt="Logo"
-          className="h-8 w-8"
-          width={50}
-          height={50}
-          loading="lazy"
-        />
-        <span className="text-xl font-bold text-indigo-600">
-          Styles Dispatch
-        </span>
-      </div>
+    <AppBar
+      position="static"
+      sx={{
+        borderBottom: 1,
+        bgcolor: theme.currentPalette.background,
+        borderColor: alpha(theme.currentPalette.text, 0.1),
+        color: theme.currentPalette.text,
+        boxShadow: "none",
+      }}
+    >
+      <Toolbar
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          py: 3,
+        }}
+      >
+        {/* Left Side */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <Box>
+            <Typography
+              variant="h1"
+              sx={{ fontWeight: "bold", color: theme.currentPalette.text, fontSize: '24px' }}
+            >
+              {title}
+            </Typography>
+            {subtitle && (
+              <Typography
+                variant="body2"
+                sx={{ color: theme.currentPalette.text, fontSize: '14px', width: 700 }}
+              >
+                {subtitle}
+              </Typography>
+            )}
+          </Box>
+        </Box>
 
-      <button className="bg-red-500 text-white px-4 py-1.5 rounded-md text-sm font-medium hover:bg-red-600 transition">
-        Logout
-      </button>
-    </nav>
+        {/* Right Side */}
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <NotificationProvider />
+        </Box>
+      </Toolbar>
+    </AppBar>
   );
-};
-
-export default Header;
+}

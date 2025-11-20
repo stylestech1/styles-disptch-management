@@ -37,6 +37,7 @@ import {
 import { IoMdNotifications } from "react-icons/io";
 import { ArrowForward, Close, MarkEmailRead } from "@mui/icons-material";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function HeaderNotifications() {
   const dispatch = useAppDispatch();
@@ -46,6 +47,7 @@ export default function HeaderNotifications() {
   const token = useAppSelector((state: RootState) => state.auth.token);
   const theme = useAppSelector((state: RootState) => state.palette);
   const userRole = useAppSelector((state: RootState) => state.auth.user?.role);
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const muiTheme = useTheme();
@@ -134,6 +136,18 @@ export default function HeaderNotifications() {
     setDropdownOpen(false);
   };
 
+  const extractIdFromMessage = (message: string): string | null => {
+    const match = message.match(/\(([^)]+)\)/);
+    return match ? match[1] : null;
+  };
+  const navigateToLoadDetails = (id: string) => {
+    const path =
+      userRole === "admin"
+        ? `/admin/loadDetails/${encodeURIComponent(id)}`
+        : `/dispatchers/loadDetails/${encodeURIComponent(id)}`;
+
+    router.push(path);
+  };
   const icons = {
     system: <SettingsRounded sx={{ fontSize: 24 }} />,
     loads: <LocalShippingRounded sx={{ fontSize: 24 }} />,
@@ -281,18 +295,21 @@ export default function HeaderNotifications() {
               </Box>
             ) : (
               <List sx={{ p: 0 }}>
-                {notifications.map((notification, index) => (
+                {notifications.map((notification, index) => {
+                    const loadId = extractIdFromMessage(notification.message);
+                  return(
                   <Box key={`${notification.id}-${index}`}>
                     <ListItemButton
                       onClick={() => {
                         handleNotificationClick(notification);
                         handleMarkAsRead(notification.id);
+                        setDropdownOpen(false);
                       }}
                       sx={{
                         py: 1.5,
                         px: 2,
                         position: "relative",
-                        display: 'flex',
+                        display: "flex",
                         gap: 2,
                         backgroundColor:
                           notification.status === "unread"
@@ -342,11 +359,26 @@ export default function HeaderNotifications() {
                           <Typography
                             variant="body2"
                             sx={{
-                              color: alpha(theme.currentPalette.text, 0.7),
+                              color: loadId
+                                ? theme.currentPalette.primary
+                                : alpha(theme.currentPalette.text, 0.7),
                               mt: 0.5,
+                              cursor: loadId ? "pointer" : "default",
+                              textDecoration: loadId ? "underline" : "none",
+                            }}
+                            onClick={(e) => {
+                              if (loadId) {
+                                e.stopPropagation();
+                                navigateToLoadDetails(loadId);
+                              }
+                              handleMarkAsRead(notification.id);
+                              setDropdownOpen(false);
                             }}
                           >
-                            {notification.message}
+                            {notification.message
+                              .replace(/\([^)]*\)/g, "")
+                              .replace(/\s+/g, " ")
+                              .trim()}
                           </Typography>
                         }
                       />
@@ -369,7 +401,7 @@ export default function HeaderNotifications() {
                       <Divider variant="inset" component="li" />
                     )}
                   </Box>
-                ))}
+                )})}
               </List>
             )}
           </Box>

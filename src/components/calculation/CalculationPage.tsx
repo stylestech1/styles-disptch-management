@@ -424,13 +424,6 @@ const CalculationPage = () => {
           flexDirection: "row",
         }}
       >
-        <Box>
-          <Titles>Calculation & Route Planning</Titles>
-          <Typography variant="body1" color="text.secondary" sx={{ mt: 1 }}>
-            Calculate rates and plan your routes with real-time distance
-            measurements
-          </Typography>
-        </Box>
         <Button
           sx={{
             width: "10%",

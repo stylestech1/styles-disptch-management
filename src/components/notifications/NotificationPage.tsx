@@ -335,7 +335,9 @@ const NotificationPage = () => {
                       </Stack>
                     }
                   >
-                    <Box sx={{display: 'flex' , alignItems: 'flex-start', gap: 2}}>
+                    <Box
+                      sx={{ display: "flex", alignItems: "flex-start", gap: 2 }}
+                    >
                       <Box
                         sx={{
                           width: 40,
@@ -384,7 +386,10 @@ const NotificationPage = () => {
                             lineHeight: 1.5,
                           }}
                         >
-                          {notification.message}
+                          {notification.message
+                            .replace(/\([^)]*\)/g, "")
+                            .replace(/\s+/g, " ")
+                            .trim()}
                         </Typography>
                         <Typography
                           variant="caption"

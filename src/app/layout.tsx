@@ -6,7 +6,6 @@ import { Toaster } from "react-hot-toast";
 // Fonts
 import { Roboto } from "next/font/google";
 import MuiThemeProvider from "@/providers/MuiThemeProvider";
-import NotificationProvider from "@/providers/NotificationProvider";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -29,7 +28,6 @@ export default function RootLayout({
       <body className={`${roboto.className} antialiased`}>
         <Providers>
           <MuiThemeProvider>
-            <NotificationProvider />
             {children}
             <Toaster position="top-right" reverseOrder={false} />
           </MuiThemeProvider>

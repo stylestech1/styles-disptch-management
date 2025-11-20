@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import HeaderNotifications from "@/components/notifications/HeaderNotifications";
 import NotificationListener from "@/components/notifications/NotificationListener";
 import { usePathname } from "next/navigation";
@@ -14,12 +14,7 @@ const NotificationProvider = () => {
     <>
       {showNotifications && (
         <>
-          <Box sx={{ 
-            position: "absolute", 
-            top: 16, 
-            right: 20, 
-            zIndex: 50 
-          }}>
+          <Box>
             <HeaderNotifications />
           </Box>
           <NotificationListener />

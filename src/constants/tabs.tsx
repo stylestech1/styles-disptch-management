@@ -9,24 +9,77 @@ import { TUserRole } from "@/types/globalTypes";
 
 type TabItem = {
   label: string;
+  subtitle: string;
   icon: React.ReactNode;
 };
 
 export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
   admin: [
-    { label: "Loads", icon: <FaCirclePlus /> },
-    { label: "Users", icon: <IoPeopleOutline /> },
-    { label: "Drivers", icon: <PiUsersFill /> },
-    { label: "Trucks", icon: <FaTruckFast /> },
-    { label: "Truck Dashboard", icon: <SiGoogleanalytics /> },
-    { label: "Calculation", icon: <ImCalculator /> },
-    { label: "Broker", icon: <MdOutlineCommentBank /> },
-    { label: "Customers", icon: <RiCustomerService2Fill /> },
+    {
+      label: "Loads",
+      subtitle:
+        "Manage and track all your shipments and deliveries in one place.",
+      icon: <FaCirclePlus />,
+    },
+    {
+      label: "Users",
+      subtitle: "Manage your dispatch team members and their access",
+      icon: <IoPeopleOutline />,
+    },
+    {
+      label: "Drivers",
+      subtitle: "Manage your driver team members and their access",
+      icon: <PiUsersFill />,
+    },
+    {
+      label: "Trucks",
+      subtitle: "Manage your trucks and their access",
+      icon: <FaTruckFast />,
+    },
+    {
+      label: "Truck Dashboard",
+      subtitle: "Managing your trucks in your fleet",
+      icon: <SiGoogleanalytics />,
+    },
+    {
+      label: "Calculation",
+      subtitle:
+        "Calculate rates and plan your routes with real-time distance measurements",
+      icon: <ImCalculator />,
+    },
+    {
+      label: "Broker",
+      subtitle: "Manage your broker team members and their access",
+      icon: <MdOutlineCommentBank />,
+    },
+    {
+      label: "Customers",
+      subtitle: "Handle your customers with love",
+      icon: <RiCustomerService2Fill />,
+    },
   ],
   employee: [
-    { label: "Loads", icon: <FaCirclePlus /> },
-    { label: "Calculation", icon: <ImCalculator /> },
-    { label: "Customers", icon: <RiCustomerService2Fill /> },
+    {
+      label: "Loads",
+      subtitle: "Manage your dispatch team members and their access",
+      icon: <FaCirclePlus />,
+    },
+    {
+      label: "Calculation",
+      subtitle: "Manage your driver team members and their access",
+      icon: <ImCalculator />,
+    },
+    {
+      label: "Customers",
+      subtitle: "Manage your trucks and their access",
+      icon: <RiCustomerService2Fill />,
+    },
   ],
-  driver: [{ label: "Loads", icon: <FaCirclePlus /> }],
+  driver: [
+    {
+      label: "Loads",
+      subtitle: "Manage your dispatch team members and their access",
+      icon: <FaCirclePlus />,
+    },
+  ],
 };

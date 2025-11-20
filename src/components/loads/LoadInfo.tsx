@@ -612,6 +612,73 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                 )}
               </InfoCard>
             </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
+              <InfoCard title="Documents For Driver" icon={<Description />}>
+                {load.documentsForDriver?.length > 0 ? (
+                  <List dense sx={{ py: 0 }}>
+                    {load.documentsForDriver.map((doc: TDocument, i: number) => (
+                      <Box key={i}>
+                        <ListItem sx={{ px: 0, py: 1.5 }}>
+                          {doc.viewLink ? (
+                            <Link
+                              href={doc.viewLink}
+                              target="_blank"
+                              rel="noopener"
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 2,
+                                textDecoration: "none",
+                                color: theme.currentPalette.primary,
+                                "&:hover": {
+                                  color: alpha(
+                                    theme.currentPalette.primary,
+                                    0.8
+                                  ),
+                                  textDecoration: "underline",
+                                },
+                              }}
+                            >
+                              <Description fontSize="small" />
+                              <Typography variant="body2" fontWeight="500">
+                                Document {i + 1}
+                              </Typography>
+                            </Link>
+                          ) : (
+                            <Typography
+                              variant="body2"
+                              color={theme.currentPalette.secondary}
+                            >
+                              No link available
+                            </Typography>
+                          )}
+                        </ListItem>
+                        {i < load.documents.length - 1 && (
+                          <Divider
+                            sx={{
+                              borderColor: alpha(
+                                theme.currentPalette.text,
+                                0.2
+                              ),
+                            }}
+                          />
+                        )}
+                      </Box>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    color={theme.currentPalette.secondary}
+                    textAlign="center"
+                    py={3}
+                  >
+                    No documents available
+                  </Typography>
+                )}
+              </InfoCard>
+            </Grid>
           </Grid>
         </TabPanel>
 
