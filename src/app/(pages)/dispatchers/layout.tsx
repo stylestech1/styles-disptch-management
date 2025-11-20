@@ -31,6 +31,7 @@ import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
+import Navbar from "@/components/layout/Header";
 
 const DRAWER_WIDTH = 300;
 
@@ -66,6 +67,15 @@ export default function AdminLayout({
     dispatch(logout());
     router.replace("/");
   };
+
+  const getActiveTabInfo = () => {
+    const cleanedPath = pathname.split("/").pop();
+    const activeTab = tabs.find(
+      (tab) => tab.label.replace(/\s+/g, "").toLowerCase() === cleanedPath
+    );
+    return activeTab || { label: "", subtitle: "" };
+  };
+  const { label: title, subtitle } = getActiveTabInfo();
 
   const SidebarContent = (
     <Box
@@ -234,11 +244,22 @@ export default function AdminLayout({
           sx={{
             flex: 1,
             overflow: "auto",
-            p: { xs: 3, md: 4 },
           }}
         >
           {isGoogleMapsLoaded ? (
-            children
+            <>
+              <Navbar title={title} subtitle={subtitle} />
+
+              <Box
+                sx={{
+                  flex: 1,
+                  overflow: "auto",
+                  p: { xs: 3, md: 4 },
+                }}
+              >
+                {children}
+              </Box>
+            </>
           ) : (
             <Box
               sx={{
