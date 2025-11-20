@@ -280,18 +280,6 @@ const TruckDashboard = () => {
     [router, searchInput]
   );
 
-  // Loading state
-  if (trucksLoading) {
-    return (
-      <Box className="flex flex-col items-center justify-center h-[80vh] gap-4">
-        <CircularProgress size={60} />
-        <Typography variant="h6" color="text.secondary">
-          Loading truck dashboard...
-        </Typography>
-      </Box>
-    );
-  }
-
   // Error state
   if (trucksError) {
     return (
@@ -406,7 +394,7 @@ const TruckDashboard = () => {
               ].map((header) => (
                 <TableCell
                   key={header}
-                  align={"left"}
+                  align={"center"}
                   sx={{
                     fontWeight: 600,
                     color: theme.currentPalette.background,
