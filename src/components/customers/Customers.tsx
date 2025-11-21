@@ -88,7 +88,7 @@ const CustomerPage = () => {
     onSearch: (term) => {
       setPage(1);
       if (term.trim()) {
-        triggerSearchQuery(term);
+        triggerSearchQuery(encodeURIComponent(term));
       }
     },
     onReset: () => {
