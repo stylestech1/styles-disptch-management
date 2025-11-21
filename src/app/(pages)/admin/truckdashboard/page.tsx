@@ -1,28 +1,53 @@
 "use client";
-import { useSearch } from "@/hook/useSearch";
-import { useSearchSubmit } from "@/hook/useSearchSubmit";
-import { useGetTruckSummaryQuery } from "@/redux/slices/apiSlice";
+import {
+  useGetAllTruckSummaryWithFilterQuery,
+  useGetTruckSummaryQuery,
+} from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
-import { alpha, Box, SxProps, Typography } from "@mui/material";
+import {
+  alpha,
+  Box,
+  Chip,
+  SxProps,
+  TableRow,
+  Typography,
+  MenuItem,
+  FormControl,
+} from "@mui/material";
+import Select from "@mui/material/Select";
 import { useRouter } from "next/navigation";
 import Erros from "@/components/ui/Erros";
 import { FaArrowTrendDown, FaArrowTrendUp } from "react-icons/fa6";
 import BarChartTruckDashboard from "@/components/truck/BarChartTruckDashboard";
-import { TTruckSummaryResponse } from "@/types/globalTypes";
+import { TTruckSummary, TTruckWithSummary } from "@/types/globalTypes";
+import SearchInput from "@/components/ui/SearchInput";
+import DataTable from "@/components/ui/DataTable";
+import { profitabilityColumns } from "@/data/truckDashboard/profitabilityTable";
+import { revenueColumns } from "@/data/truckDashboard/RevenueTable";
+import { costColumns } from "@/data/truckDashboard/costTable";
+import { useEffect, useMemo, useState } from "react";
+import { useFilter } from "@/providers/FilterProvider";
+import { setError, setLoading } from "@/redux/slices/uiSlice";
+import toast from "react-hot-toast";
+import { getErrorMessage } from "@/utils/getErrorMessage";
 
-const TruckDashboard2 = () => {
+type TableType = "profitability" | "Revenue" | "cost";
+
+const TruckDashboard = () => {
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
   const theme = useAppSelector((state: RootState) => state.palette);
-  const searchHook = useSearchSubmit();
-  const { searchInput, searchTerm, isSearching } = searchHook;
+  const [page, setPage] = useState(1);
+  const [currentTable, setCurrentTable] = useState<TableType>("profitability");
+  const { fromDate, toDate, isFiltered } = useFilter();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  // API Query
+  // API Queries
   const {
     data: allTrucksData,
     isLoading: trucksLoading,
     error: trucksError,
-    isFetching,
+    isFetching: trucksFetching,
   } = useGetTruckSummaryQuery(undefined, {
     skip: !token,
     refetchOnFocus: false,
@@ -30,17 +55,84 @@ const TruckDashboard2 = () => {
     refetchOnMountOrArgChange: false,
   });
 
-  const { filteredData: searchedTrucks } = useSearch({
-    data: allTrucksData?.data?.trucksSummary || [],
-    searchFields: ["plateNumber"],
-    initialSearch: searchTerm,
-  });
+  const {
+    data: filteredData,
+    isLoading: filterLoading,
+    error: filterError,
+  } = useGetAllTruckSummaryWithFilterQuery(
+    {
+      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+    },
+    {
+      skip: !isFiltered || !fromDate || !toDate,
+      refetchOnFocus: false,
+    }
+  );
 
-  const displayTrucks = isSearching
-    ? searchedTrucks
-    : allTrucksData?.data?.trucksSummary || [];
+  // Search function
+  const searchTrucks = (trucks: TTruckWithSummary[] | TTruckSummary[], term: string): TTruckWithSummary[] => {
+  if (!term.trim()) return trucks as TTruckWithSummary[];
 
-  // State Cards
+  const searchTermLower = term.toLowerCase().trim();
+  
+  return (trucks as TTruckWithSummary[]).filter(truck => 
+    truck.plateNumber.toLowerCase().includes(searchTermLower) ||
+    (truck.source && truck.source.toLowerCase().includes(searchTermLower)) ||
+    (truck.truckId && String(truck.truckId).toLowerCase().includes(searchTermLower))
+  );
+};
+
+  // Get base data based on filter state
+  const baseData = useMemo(() => {
+    if (isFiltered && filteredData) {
+      return filteredData?.data?.trucksSummary || [];
+    }
+    return allTrucksData?.data?.trucksSummary || [];
+  }, [isFiltered, filteredData, allTrucksData]);
+
+  // Apply search to base data
+  const displayData = useMemo(() => {
+    return searchTrucks(baseData, searchTerm);
+  }, [baseData, searchTerm]);
+
+  // Debounced search for better performance
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
+
+  const finalDisplayData = useMemo(() => {
+    return searchTrucks(baseData, debouncedSearchTerm);
+  }, [baseData, debouncedSearchTerm]);
+
+  const isLoading = useMemo(() => {
+    return trucksLoading || (isFiltered && filterLoading);
+  }, [trucksLoading, isFiltered, filterLoading]);
+
+  const error = useMemo(() => {
+    return trucksError || filterError;
+  }, [trucksError, filterError]);
+
+  // Handle search
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    setPage(1);
+  };
+
+  const handleClearSearch = () => {
+    setSearchTerm("");
+    setDebouncedSearchTerm("");
+  };
+
+  // Stat Card Component
   const StatCard = ({
     title,
     value,
@@ -63,7 +155,7 @@ const TruckDashboard2 = () => {
             lg: `1px solid ${alpha(theme.currentPalette.primary, 0.1)}`,
           },
           borderBottom: {
-            sx: `1px solid ${alpha(theme.currentPalette.primary, 0.1)}`,
+            xs: `1px solid ${alpha(theme.currentPalette.primary, 0.1)}`,
           },
         }}
       >
@@ -96,8 +188,251 @@ const TruckDashboard2 = () => {
     );
   };
 
+  // Table Profitability renderer
+  const renderProfitabilityRow = (truckItem: TTruckWithSummary) => {
+    const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
+      "&:hover": {
+        bgcolor: alpha(theme.currentPalette.primary, 0.1),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
+
+    const summary = truckItem.summary;
+    const profitMargin = summary?.avgRevenuePerMile
+      ? (summary.netProfit / summary.avgRevenuePerMile) * 100
+      : 0;
+
+    return (
+      <TableRow
+        sx={tableRowSx}
+        key={truckItem._id}
+        onClick={() => {
+          // router.push(`/trucks/${truckItem.truckId}`);
+        }}
+      >
+        {/* Plate Number */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {truckItem.plateNumber}
+          </span>
+        </td>
+
+        {/* Source */}
+        <td className="p-4 text-center">
+          <Chip label={truckItem.source || "Unknown"} />
+        </td>
+
+        {/* Revenue */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.avgRevenuePerMile?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Cost */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.avgExpensePerMile?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Net Profit */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.netProfit?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Profit Margin */}
+        <td className="p-4 text-center">
+          <Chip
+            label={`${profitMargin.toFixed(2)}%`}
+            color={
+              profitMargin > 20
+                ? "success"
+                : profitMargin > 10
+                ? "warning"
+                : "error"
+            }
+            variant={profitMargin > 15 ? "filled" : "outlined"}
+          />
+        </td>
+      </TableRow>
+    );
+  };
+
+  // Table Revenue renderer
+  const renderRevenueRow = (truckItem: TTruckWithSummary) => {
+    const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
+      "&:hover": {
+        bgcolor: alpha(theme.currentPalette.primary, 0.1),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
+
+    const summary = truckItem.summary;
+
+    return (
+      <TableRow
+        sx={tableRowSx}
+        key={truckItem._id}
+        onClick={() => {
+          // router.push(`/trucks/${truckItem.truckId}`);
+        }}
+      >
+        {/* Plate Number */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {truckItem.plateNumber}
+          </span>
+        </td>
+
+        {/* Source */}
+        <td className="p-4 text-center">
+          <Chip label={truckItem.source || "Unknown"} />
+        </td>
+
+        {/* Net Rev/Mile  */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.avgRevenuePerMile?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Loads */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`${summary?.totalLoads || "0"}`}
+          </span>
+        </td>
+
+        {/* Avg/Load */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${(summary && summary.totalLoads > 0
+              ? summary.totalRevenue / summary.totalLoads
+              : 0
+            ).toFixed(2)}`}
+          </span>
+        </td>
+      </TableRow>
+    );
+  };
+
+  // Table cost renderer
+  const renderCostRow = (truckItem: TTruckWithSummary) => {
+    const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
+      "&:hover": {
+        bgcolor: alpha(theme.currentPalette.primary, 0.1),
+        cursor: "pointer",
+      },
+      transition: "all 0.2s ease-in-out",
+    };
+
+    const summary = truckItem.summary;
+
+    return (
+      <TableRow
+        sx={tableRowSx}
+        key={truckItem._id}
+        onClick={() => {
+          // router.push(`/trucks/${truckItem.truckId}`);
+        }}
+      >
+        {/* Plate Number */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {truckItem.plateNumber}
+          </span>
+        </td>
+
+        {/* Source */}
+        <td className="p-4 text-center">
+          <Chip label={truckItem.source || "Unknown"} />
+        </td>
+
+        {/* Fuel  */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.fuelCost?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Maintenance */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.repairCost?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Driver Pay */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.driverPay?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Insurance */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.insuranceCost?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+
+        {/* Total Cost */}
+        <td className="p-4 text-center">
+          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+            {`$${summary?.totalExpenses?.toFixed(2) || "0.00"}`}
+          </span>
+        </td>
+      </TableRow>
+    );
+  };
+
+  const tableConfig = {
+    profitability: {
+      columns: profitabilityColumns,
+      render: renderProfitabilityRow,
+    },
+    Revenue: {
+      columns: revenueColumns,
+      render: renderRevenueRow,
+    },
+    cost: {
+      columns: costColumns,
+      render: renderCostRow,
+    },
+  } as const;
+
+  const selectedConfig = tableConfig[currentTable];
+
+  useEffect(() => {
+    setLoading(isLoading);
+  }, [isLoading, setLoading]);
+
+  useEffect(() => {
+    if (error) {
+      const errorMessage = getErrorMessage(error);
+      setError(errorMessage);
+      toast.error(errorMessage || "Failed to load data ❌", {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+        duration: 4000,
+      });
+    }
+  }, [error, setError]);
+
   // Error state
-  if (trucksError) {
+  if (trucksError && !allTrucksData) {
     return (
       <Box p={3}>
         <Erros message="Failed to load truck data. Please try again later." />
@@ -111,20 +446,23 @@ const TruckDashboard2 = () => {
     minHeight: "100vh",
     p: 3,
   };
+
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },
-    alignItems: "end",
+    alignItems: "center",
+    justifyContent: "space-between",
     gap: 2,
-    border: `1px solid ${alpha(theme.currentPalette.primary, 0.1)}`,
+    p: 2,
+    my: 2,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
     borderRadius: 2,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
     backgroundColor: theme.currentPalette.background,
   };
 
   return (
     <Box sx={containerSx}>
-      {/* Stats Cards Truck-Dashboard */}
+      {/* Stats Cards */}
       <Box>
         <Typography
           variant="h5"
@@ -144,34 +482,43 @@ const TruckDashboard2 = () => {
         >
           <StatCard
             title="Total Revenue/Mile"
-            value={`$${allTrucksData?.data.totalSummary.totalRevenue.toFixed(
-              2
-            )}`}
+            value={`$${
+              allTrucksData?.data?.totalSummary?.avgRevenuePerMile?.toFixed(
+                2
+              ) || "0.00"
+            }`}
             change={12.5}
             positive={true}
           />
 
           <StatCard
             title="Total Cost/Mile"
-            value={`$${allTrucksData?.data.totalSummary.totalExpenses.toFixed(
-              2
-            )}`}
+            value={`$${
+              allTrucksData?.data?.totalSummary?.avgExpensePerMile?.toFixed(
+                2
+              ) || "0.00"
+            }`}
             change={8.2}
             positive={false}
           />
 
           <StatCard
             title="Total Profit/Mile"
-            value={`$${allTrucksData?.data.totalSummary.netProfit.toFixed(2)}`}
+            value={`$${(
+              (allTrucksData?.data?.totalSummary?.avgRevenuePerMile || 0) -
+              (allTrucksData?.data?.totalSummary?.avgExpensePerMile || 0)
+            ).toFixed(2)}`}
             change={24.3}
             positive={true}
           />
 
           <StatCard
             title="Profit Margin %"
-            value={`${(allTrucksData?.data.totalSummary.totalExpenses
-              ? allTrucksData?.data.totalSummary.netProfit /
-                allTrucksData?.data.totalSummary.totalExpenses
+            value={`${(allTrucksData?.data?.totalSummary?.avgRevenuePerMile
+              ? ((allTrucksData.data.totalSummary.avgRevenuePerMile -
+                  allTrucksData.data.totalSummary.avgExpensePerMile) /
+                  allTrucksData.data.totalSummary.avgRevenuePerMile) *
+                100
               : 0
             ).toFixed(2)}%`}
             change={3.1}
@@ -188,13 +535,112 @@ const TruckDashboard2 = () => {
         >
           Profitability Analysis
         </Typography>
-        
-        <Box sx={{my: 3}}>
-          <BarChartTruckDashboard data={displayTrucks} />
+
+        <Box sx={{ my: 3 }}>
+          <BarChartTruckDashboard data={finalDisplayData} />
         </Box>
       </Box>
+
+      {/* Tables Section */}
+      <Box sx={searchFilterContainerSx}>
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+          >
+            {currentTable === "profitability" &&
+              "Profitability Breakdown per Truck"}
+            {currentTable === "Revenue" && "Revenue Breakdown per Truck"}
+            {currentTable === "cost" && "Cost Breakdown per Truck"}
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+          >
+            {currentTable === "profitability" &&
+              "Net profit margins and profitability metrics"}
+            {currentTable === "Revenue" && "Total revenue and rates per truck"}
+            {currentTable === "cost" &&
+              "Full costs for Company-owned, driver pay % for O/O trucks"}
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            gap: 2,
+            alignItems: "center",
+            width: { xs: "100%", lg: "auto" },
+          }}
+        >
+          {/* Search Input */}
+          <Box sx={{ minWidth: 250, flexGrow: { xs: 1, lg: 0 } }}>
+            <SearchInput
+              value={searchTerm}
+              onChange={handleSearchChange}
+              onClear={handleClearSearch}
+              placeholder="Search by plate number or source..."
+              fullWidth
+              showClearButton
+              inputSx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  backgroundColor: theme.currentPalette.background,
+                  borderColor: theme.currentPalette.primary,
+                },
+              }}
+            />
+          </Box>
+
+          {/* Table Type Selector */}
+          <FormControl size="small">
+            <Select
+              displayEmpty
+              value={currentTable}
+              onChange={(e) => setCurrentTable(e.target.value as TableType)}
+              renderValue={(selected) => {
+                if (!selected) {
+                  return (
+                    <span style={{ color: theme.currentPalette.primary }}>
+                      Select table type...
+                    </span>
+                  );
+                }
+                return selected;
+              }}
+              sx={{ py: 0.5, borderRadius: 2 }}
+            >
+              <MenuItem disabled value="">
+                <em>Select table type...</em>
+              </MenuItem>
+
+              <MenuItem value="profitability">Profitability</MenuItem>
+              <MenuItem value="Revenue">Revenue</MenuItem>
+              <MenuItem value="cost">Cost</MenuItem>
+            </Select>
+          </FormControl>
+        </Box>
+      </Box>
+
+      {/* Search Results Info */}
+      {debouncedSearchTerm && (
+        <Box sx={{ mb: 2, p: 1 }}>
+          <Typography variant="body2" sx={{ color: theme.currentPalette.primary }}>
+            Showing {finalDisplayData.length} results for {debouncedSearchTerm}
+            {finalDisplayData.length === 0 && " - No matching trucks found"}
+          </Typography>
+        </Box>
+      )}
+
+      {/* Data Table */}
+      <DataTable
+        columns={selectedConfig.columns}
+        data={finalDisplayData}
+        renderRow={selectedConfig.render}
+        loading={isLoading}
+      />
     </Box>
   );
 };
 
-export default TruckDashboard2;
+export default TruckDashboard;

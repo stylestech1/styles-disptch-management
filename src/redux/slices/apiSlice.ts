@@ -270,6 +270,14 @@ export const apiSlice = api.injectEndpoints({
       keepUnusedDataFor: 60 * 60,
     }),
 
+    // ✅ Get specific truck By Plate Number
+    getTruckByPlateNumber: builder.query({
+      query: (plateNumber) => `/api/v1/trucks?plateNumber=${plateNumber}`,
+      providesTags: (result, error, plateNumber) => [
+        { type: "Trucks", plateNumber },
+      ],
+    }),
+
     // ✅ Get truck summary with date filter
     getTruckSummaryWithFilter: builder.query<
       { data: TTruckSummaryResponse },
@@ -282,6 +290,21 @@ export const apiSlice = api.injectEndpoints({
         return `/api/v1/summary/truck/${id}?${params.toString()}`;
       },
       providesTags: (result, error, { id }) => [{ type: "TruckSummary", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // ✅ Get truck summary with date filter
+    getAllTruckSummaryWithFilter: builder.query<
+      TTruckSummaryResponse,
+      { from?: string; to?: string }
+    >({
+      query: ({ from, to }) => {
+        const params = new URLSearchParams();
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+        return `/api/v1/summary/truck?${params.toString()}`;
+      },
+      providesTags: ["TruckSummary"],
       keepUnusedDataFor: 60 * 60,
     }),
 
@@ -616,7 +639,10 @@ export const {
   useGetTruckSummaryQuery,
   useGetTruckWithSearchQuery,
   useLazyGetSpecificTruckSummaryQuery,
+  useGetTruckByPlateNumberQuery,
+  useLazyGetTruckByPlateNumberQuery,
   useGetTruckSummaryWithFilterQuery,
+  useGetAllTruckSummaryWithFilterQuery,
   useGetTruckByIdQuery,
   useGetTruckByTruckIdQuery,
   useLazyGetTruckByIdQuery,

@@ -5,7 +5,7 @@ export type TUserRole = "admin" | "employee" | "driver";
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
 export type TTruckType = "reefer" | "van";
-export type TTruckSource = 'company' | 'other'
+export type TTruckSource = "company" | "other";
 export type TTruckId = {
   model: string;
   truckId: number;
@@ -85,7 +85,7 @@ export type TLoads = {
   deliveredAt?: string;
   createdAt?: string;
   documents?: TDocument[];
-  documentsForDriver?: TDocument[]
+  documentsForDriver?: TDocument[];
 };
 export type TDriver = {
   id: string;
@@ -203,22 +203,21 @@ export type TTruckSummary = {
   currency: string;
   loads: TLoads;
   period: TPeriod;
+  trucks: TTruck;
 };
 export type TTruckSummaryResponse = {
-  truckId: number;
-  truckInfo: {
-    model: string;
-    plateNumber: string;
-    type: string;
-    assignedDriver?: {
-      name: string;
-      id?: string;
+  status: string;
+  message: string;
+  data: {
+    period: {
+      from: string;
+      to: string;
     };
-    fuelPerMile?: number;
+    totalTrucks: number;
+    source: TTruckSource;
+    trucksSummary: TTruckSummary[];
+    totalSummary: TTruckSummary;
   };
-  summary: TTruckSummary;
-  period: TPeriod;
-  loads: TLoads[];
 };
 export interface TabPanelProps {
   children?: React.ReactNode;
@@ -237,16 +236,27 @@ export interface InfoItemProps {
 }
 export type TTruckWithSummary = TTruck & {
   _id: string;
+  truckId: number;
+  plateNumber: string;
   summary?: TTruckSummary;
+  model?: string;
+  year?: string;
+  capacity?: string;
+  status?: TStatusDriver;
+  source?: TTruckSource;
+  type?: TTruckType;
 };
 export type TTrucksSummaryResponse = {
+  status: string;
+  message: string;
   data: {
     period: {
       from: string;
       to: string;
     };
     totalTrucks: number;
-    trucksSummary: TTruckWithSummary[];
+    source: TTruckSource
+    trucksSummary: TTruckWithSummary[]; 
     totalSummary: TTruckSummary;
   };
 };

@@ -1,0 +1,10 @@
+import { Column } from "@/components/ui/DataTable";
+
+export const profitabilityColumns: Column[] = [
+  { key: "plateNumber", header: "Plate Number", align: "center" },
+  { key: "source", header: "Ownership", align: "center" },
+  { key: "revenue", header: "Revenue", align: "center" },
+  { key: "cost", header: "Cost", align: "center" },
+  { key: "netProfit", header: "Net Profit", align: "center" },
+  { key: "profitMargin", header: "Profit Margin", align: "center" },
+];

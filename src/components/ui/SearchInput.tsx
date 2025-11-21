@@ -10,7 +10,11 @@ import { IoSearch, IoClose } from 'react-icons/io5';
 import { UseSearchSubmitReturn } from '@/hook/useSearchSubmit';
 
 interface SearchInputProps {
-  searchHook: UseSearchSubmitReturn;
+  searchHook?: UseSearchSubmitReturn;
+  value?: string;
+  onChange?: (value: string) => void;
+  onClear?: () => void;
+  onSubmit?: () => void;
   placeholder?: string;
   fullWidth?: boolean;
   showClearButton?: boolean;
@@ -20,6 +24,10 @@ interface SearchInputProps {
 
 const SearchInput: React.FC<SearchInputProps> = ({
   searchHook,
+  value,
+  onChange,
+  onClear,
+  onSubmit,
   placeholder = "Search...",
   fullWidth = true,
   showClearButton = true,
@@ -27,28 +35,61 @@ const SearchInput: React.FC<SearchInputProps> = ({
   inputSx = {},
 }) => {
   const {
-    searchInput,
-    setSearchInput,
-    handleSearchSubmit,
-    handleSearchReset,
-    handleKeyPress,
-    isSearching,
-  } = searchHook;
+    searchInput: hookSearchInput,
+    setSearchInput: hookSetSearchInput,
+    handleSearchSubmit: hookHandleSearchSubmit,
+    handleSearchReset: hookHandleSearchReset,
+    handleKeyPress: hookHandleKeyPress,
+    isSearching: hookIsSearching,
+  } = searchHook || {};
+
+  const finalValue = searchHook ? hookSearchInput : value || '';
+  const finalIsSearching = searchHook ? hookIsSearching : false;
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    if (searchHook) {
+      hookSetSearchInput?.(newValue);
+    } else {
+      onChange?.(newValue);
+    }
+  };
 
   const handleClear = () => {
-    setSearchInput('');
-    handleSearchReset();
+    if (searchHook) {
+      hookSetSearchInput?.('');
+      hookHandleSearchReset?.();
+    } else {
+      onChange?.('');
+      onClear?.();
+    }
   };
 
-   const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); 
-    handleSearchSubmit();
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchHook) {
+      hookHandleSearchSubmit?.();
+    } else {
+      onSubmit?.();
+    }
   };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (searchHook) {
+        hookHandleKeyPress?.(e);
+      } else {
+        handleSubmit(e);
+      }
+    }
+  };
+
+  const shouldShowClearButton = showClearButton && (finalValue || finalIsSearching);
 
   return (
     <Box 
       component="form"
-      onSubmit={handleFormSubmit}
+      onSubmit={handleSubmit}
       sx={{ 
         width: fullWidth ? '100%' : 'auto',
         ...sx 
@@ -58,8 +99,8 @@ const SearchInput: React.FC<SearchInputProps> = ({
         fullWidth={fullWidth}
         variant="outlined"
         placeholder={placeholder}
-        value={searchInput}
-        onChange={(e) => setSearchInput(e.target.value)}
+        value={finalValue}
+        onChange={handleInputChange}
         onKeyPress={handleKeyPress}
         slotProps={{
           input: {
@@ -79,7 +120,7 @@ const SearchInput: React.FC<SearchInputProps> = ({
                 </IconButton>
               </InputAdornment>
             ),
-            endAdornment: showClearButton && (searchInput || isSearching) ? (
+            endAdornment: shouldShowClearButton ? (
               <InputAdornment position="end">
                 <IconButton
                   size="small"
