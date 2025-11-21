@@ -23,7 +23,7 @@ import { TTruckSummary, TTruckWithSummary } from "@/types/globalTypes";
 import SearchInput from "@/components/ui/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import { profitabilityColumns } from "@/data/truckDashboard/profitabilityTable";
-import { revenueColumns } from "@/data/truckDashboard/RevenueTable";
+import { revenueColumns } from "@/data/truckDashboard/revenueTable";
 import { costColumns } from "@/data/truckDashboard/costTable";
 import { useEffect, useMemo, useState } from "react";
 import { useFilter } from "@/providers/FilterProvider";
