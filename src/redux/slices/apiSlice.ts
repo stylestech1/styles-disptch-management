@@ -226,7 +226,7 @@ export const apiSlice = api.injectEndpoints({
 
     // Get All Trucks for Search
     getAllTrucks: builder.query({
-      query: () => `/api/v1/trucks?limit=50`,
+      query: () => `/api/v1/trucks`,
       providesTags: ["Trucks"],
     }),
 

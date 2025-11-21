@@ -174,6 +174,7 @@ export default function HeaderNotifications() {
                     ml: 1,
                     color: theme.currentPalette.primary,
                     fontSize: "0.8rem",
+                    display: {xs: 'block', md:'flex'}
                   }}
                 >
                   ({unreadCount} unread)

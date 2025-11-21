@@ -24,7 +24,6 @@ import NextLink from "next/link";
 import {
   IoLogOutOutline,
   IoPersonCircleOutline,
-  IoMenu,
 } from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
@@ -231,31 +230,6 @@ export default function AdminLayout({
           bgcolor: themePalette.currentPalette.background,
         }}
       >
-        {!isDesktop && (
-          <AppBar
-            position="fixed"
-            sx={{
-              backgroundColor: themePalette.currentPalette.background,
-              color: themePalette.currentPalette.text,
-              boxShadow: 1,
-              zIndex: (t) => t.zIndex.drawer - 1151,
-            }}
-          >
-            <Toolbar>
-              <IconButton
-                edge="start"
-                onClick={() => setIsSidebarOpen(true)}
-                sx={{ mr: 2 }}
-                aria-label="open menu"
-              >
-                <IoMenu size={22} />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-        )}
-
-        {!isDesktop && <Box sx={theme.mixins.toolbar} />}
-
         {/* Page content */}
         <Box
           sx={{
@@ -265,7 +239,12 @@ export default function AdminLayout({
         >
           {isGoogleMapsLoaded ? (
             <>
-              <Navbar title={title} subtitle={subtitle} />
+              {/* Navbar */}
+              <Navbar 
+                title={title} 
+                subtitle={subtitle} 
+                onMenuClick={() => setIsSidebarOpen(true)} 
+              />
 
               <Box
                 sx={{

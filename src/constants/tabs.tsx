@@ -38,7 +38,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     },
     {
       label: "Truck Dashboard",
-      subtitle: "Managing your trucks in your fleet",
+      subtitle: "View detailed revenue metrics per truck to track earnings. Identify high-performing vehicles and monitor overall fleet performance.",
       icon: <SiGoogleanalytics />,
     },
     {

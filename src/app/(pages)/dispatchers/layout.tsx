@@ -214,30 +214,6 @@ export default function AdminLayout({
           bgcolor: themePalette.currentPalette.background,
         }}
       >
-        {!isDesktop && (
-          <AppBar
-            position="fixed"
-            sx={{
-              backgroundColor: themePalette.currentPalette.background,
-              color: themePalette.currentPalette.text,
-              boxShadow: 1,
-              zIndex: (t) => t.zIndex.drawer - 1151,
-            }}
-          >
-            <Toolbar>
-              <IconButton
-                edge="start"
-                onClick={() => setIsSidebarOpen(true)}
-                sx={{ mr: 2 }}
-                aria-label="open menu"
-              >
-                <IoMenu size={22} />
-              </IconButton>
-            </Toolbar>
-          </AppBar>
-        )}
-
-        {!isDesktop && <Box sx={theme.mixins.toolbar} />}
 
         {/* Page content */}
         <Box
@@ -248,7 +224,7 @@ export default function AdminLayout({
         >
           {isGoogleMapsLoaded ? (
             <>
-              <Navbar title={title} subtitle={subtitle} />
+              <Navbar title={title} subtitle={subtitle} onMenuClick={() => setIsSidebarOpen(true)}/>
 
               <Box
                 sx={{

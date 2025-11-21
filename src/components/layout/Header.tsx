@@ -1,16 +1,20 @@
+"use client";
 import { RootState, useAppSelector } from "@/redux/store";
-import { alpha, AppBar, Box, Toolbar, Typography } from "@mui/material";
-
+import { alpha, AppBar, Box, Toolbar, Typography, IconButton } from "@mui/material";
 import NotificationProvider from "@/providers/NotificationProvider";
+import HeaderSourceTruckDashboard from "../truck/HeaderSourceTruckDashboard";
+import { usePathname } from "next/navigation";
+import { IoMenu } from "react-icons/io5";
 
-export default function Navbar({
-  title,
-  subtitle,
-}: {
+interface NavbarProps {
   title: string;
   subtitle: string;
-}) {
+  onMenuClick: () => void;
+}
+
+export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
   const theme = useAppSelector((state: RootState) => state.palette);
+  const pathname = usePathname();
 
   return (
     <AppBar
@@ -28,11 +32,33 @@ export default function Navbar({
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          py: 3,
+          py: { xs: 2, sm: 3 },
+          gap: { xs: 2, sm: 0 },
         }}
       >
         {/* Left Side */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 2,
+            mb: { xs: 1, sm: 0 },
+          }}
+        >
+          {/* Menu Button */}
+          <IconButton
+            edge="start"
+            onClick={onMenuClick}
+            aria-label="open menu"
+            sx={{ 
+              color: theme.currentPalette.text,
+              display: { md: 'none' }
+            }}
+          >
+            <IoMenu size={22} />
+          </IconButton>
+
+          {/* Logo and Title */}
           <Box>
             <Typography
               variant="h1"
@@ -50,7 +76,8 @@ export default function Navbar({
                 sx={{
                   color: theme.currentPalette.text,
                   fontSize: "14px",
-                  width: 700,
+                  width: 500,
+                  display: { xs: 'none', md: 'block' } 
                 }}
               >
                 {subtitle}
@@ -60,7 +87,17 @@ export default function Navbar({
         </Box>
 
         {/* Right Side */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
+            justifyContent: { xs: "flex-start", sm: "flex-end" },
+          }}
+        >
+          {pathname === "/admin/truckdashboard" && (
+            <HeaderSourceTruckDashboard />
+          )}
           <NotificationProvider />
         </Box>
       </Toolbar>
