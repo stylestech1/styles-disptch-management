@@ -45,4 +45,4 @@ next-env.d.ts
 
 # !Folders
 /src/components/loadsModal/
-/src/truckSummary/
+/src/app/(pages)/admin/truckSummary/
