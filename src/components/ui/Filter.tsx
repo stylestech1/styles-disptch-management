@@ -7,6 +7,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { useSearchParams } from "next/navigation";
 import { alpha, Box, Button } from "@mui/material";
 import { RootState, useAppSelector } from "@/redux/store";
+import { FaRegCalendarAlt } from "react-icons/fa";
 
 type DateRangeFilterProps = {
   onApply?: (from: Dayjs | null, to: Dayjs | null) => void;
@@ -132,22 +133,25 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
     <div className="relative inline-block" ref={pickerRef}>
       <Button
         onClick={() => setShowPicker(!showPicker)}
+        startIcon={<FaRegCalendarAlt size={18} />}
         sx={{
-          width: { xs: 260, md: 320, lg: 250 },
           maxWidth: "100%",
           textAlign: "left",
           cursor: "pointer",
-          fontSize: "16px",
-          py: 1.6,
-          backgroundColor: alpha(theme.currentPalette.primary, 0.1),
-          border: `1px solid ${theme.currentPalette.primary}`,
-          borderRadius: "4px",
+          fontSize: "14px",
+          py: 1,
+          px: 2,
+          border: `1px solid ${alpha(theme.currentPalette.text, 0.3)}`,
+          borderRadius: 2,
           color: theme.currentPalette.primary,
           textTransform: "none",
-          transition: "all 0.2s ease",
+          display: "flex",
+          alignItems: "center",
+          gap: 0,
           "&:hover": {
             color: "#fff",
             backgroundColor: theme.currentPalette.primary,
+            borderColor: theme.currentPalette.primary,
           },
         }}
       >

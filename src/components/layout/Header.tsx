@@ -5,6 +5,7 @@ import NotificationProvider from "@/providers/NotificationProvider";
 import HeaderSourceTruckDashboard from "../truck/HeaderSourceTruckDashboard";
 import { usePathname } from "next/navigation";
 import { IoMenu } from "react-icons/io5";
+import GlobalFilter from "@/components/ui/GlobalFilter";
 
 interface NavbarProps {
   title: string;
@@ -15,6 +16,21 @@ interface NavbarProps {
 export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
   const theme = useAppSelector((state: RootState) => state.palette);
   const pathname = usePathname();
+
+  const shouldShowFilter = [
+    "/admin/loads",
+    "/admin/truckdashboard",
+    // "/admin/driversummary", 
+    // "/admin/trucksummary",
+    "/dispatchers/loads",
+  ].some(path => pathname.includes(path));
+
+  const getFilterType = () => {
+    if (pathname.includes('loads')) return 'loads';
+    if (pathname.includes('driversummary')) return 'drivers';
+    if (pathname.includes('trucksummary')) return 'trucks';
+    return 'default';
+  };
 
   return (
     <AppBar
@@ -92,11 +108,13 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
             display: "flex",
             alignItems: "center",
             gap: 1,
-            justifyContent: { xs: "flex-start", sm: "flex-end" },
           }}
         >
           {pathname === "/admin/truckdashboard" && (
-            <HeaderSourceTruckDashboard />
+            <div className="hidden sm:flex"><HeaderSourceTruckDashboard /></div>
+          )}
+          {shouldShowFilter && (
+            <GlobalFilter filterType={getFilterType()} />
           )}
           <NotificationProvider />
         </Box>

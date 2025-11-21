@@ -32,6 +32,7 @@ import { logout } from "@/redux/slices/authSlice";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
 import Navbar from "@/components/layout/Header";
+import { FilterProvider } from "@/providers/FilterProvider";
 
 const DRAWER_WIDTH = 300;
 
@@ -179,83 +180,88 @@ export default function AdminLayout({
   );
 
   return (
-    <Box sx={{ display: "flex", height: "100vh" }}>
-      {/* Sidebar Drawer */}
-      <Drawer
-        variant={isDesktop ? "permanent" : "temporary"}
-        open={isSidebarOpen}
-        onClose={() => setIsSidebarOpen(false)}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          zIndex: (theme) =>
-            isDesktop ? theme.zIndex.drawer - 1200 : theme.zIndex.modal + 1,
-          "& .MuiDrawer-paper": {
-            width: DRAWER_WIDTH,
-            boxSizing: "border-box",
-            bgcolor: themePalette.currentPalette.background,
-            borderRight: `1px solid ${theme.palette.divider}`,
-            boxShadow: isDesktop ? "none" : undefined,
-          },
-        }}
-      >
-        {SidebarContent}
-      </Drawer>
-
-      {/* Main content area */}
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          ml: isDesktop ? `${DRAWER_WIDTH}px` : 0,
-          width: isDesktop ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
-          display: "flex",
-          flexDirection: "column",
-          minHeight: "100vh",
-          bgcolor: themePalette.currentPalette.background,
-        }}
-      >
-
-        {/* Page content */}
-        <Box
+    <FilterProvider>
+      <Box sx={{ display: "flex", height: "100vh" }}>
+        {/* Sidebar Drawer */}
+        <Drawer
+          variant={isDesktop ? "permanent" : "temporary"}
+          open={isSidebarOpen}
+          onClose={() => setIsSidebarOpen(false)}
+          ModalProps={{ keepMounted: true }}
           sx={{
-            flex: 1,
-            overflow: "auto",
+            zIndex: (theme) =>
+              isDesktop ? theme.zIndex.drawer - 1200 : theme.zIndex.modal + 1,
+            "& .MuiDrawer-paper": {
+              width: DRAWER_WIDTH,
+              boxSizing: "border-box",
+              bgcolor: themePalette.currentPalette.background,
+              borderRight: `1px solid ${theme.palette.divider}`,
+              boxShadow: isDesktop ? "none" : undefined,
+            },
           }}
         >
-          {isGoogleMapsLoaded ? (
-            <>
-              <Navbar title={title} subtitle={subtitle} onMenuClick={() => setIsSidebarOpen(true)}/>
+          {SidebarContent}
+        </Drawer>
 
+        {/* Main content area */}
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            ml: isDesktop ? `${DRAWER_WIDTH}px` : 0,
+            width: isDesktop ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
+            display: "flex",
+            flexDirection: "column",
+            minHeight: "100vh",
+            bgcolor: themePalette.currentPalette.background,
+          }}
+        >
+          {/* Page content */}
+          <Box
+            sx={{
+              flex: 1,
+              overflow: "auto",
+            }}
+          >
+            {isGoogleMapsLoaded ? (
+              <>
+                <Navbar
+                  title={title}
+                  subtitle={subtitle}
+                  onMenuClick={() => setIsSidebarOpen(true)}
+                />
+
+                <Box
+                  sx={{
+                    flex: 1,
+                    overflow: "auto",
+                    p: { xs: 3, md: 4 },
+                  }}
+                >
+                  {children}
+                </Box>
+              </>
+            ) : (
               <Box
                 sx={{
-                  flex: 1,
-                  overflow: "auto",
-                  p: { xs: 3, md: 4 },
+                  height: "60vh",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
                 }}
               >
-                {children}
+                <CircularProgress color="primary" />
+                <Typography
+                  sx={{ mt: 2, color: themePalette.currentPalette.text }}
+                >
+                  Loading Google Maps...
+                </Typography>
               </Box>
-            </>
-          ) : (
-            <Box
-              sx={{
-                height: "60vh",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <CircularProgress color="primary" />
-              <Typography
-                sx={{ mt: 2, color: themePalette.currentPalette.text }}
-              >
-                Loading Google Maps...
-              </Typography>
-            </Box>
-          )}
+            )}
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </FilterProvider>
   );
 }

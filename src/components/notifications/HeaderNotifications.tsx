@@ -34,10 +34,10 @@ import {
   PersonPinRounded,
   BadgeRounded,
 } from "@mui/icons-material";
-import { IoMdNotifications } from "react-icons/io";
 import { ArrowForward, Close, MarkEmailRead } from "@mui/icons-material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { IoNotificationsOutline } from "react-icons/io5";
 
 export default function HeaderNotifications() {
   const dispatch = useAppDispatch();
@@ -107,10 +107,12 @@ export default function HeaderNotifications() {
   return (
     <Box sx={{ position: "relative", display: "inline-block" }}>
       <IconButton
-        size="large"
+        size="medium"
         onClick={() => setDropdownOpen(!dropdownOpen)}
         sx={{
           color: theme.currentPalette.primary,
+          border: `1px solid ${alpha(theme.currentPalette.text, 0.3)}`,
+          borderRadius: 2,
           "&:hover": {
             backgroundColor: alpha(theme.currentPalette.primary, 0.1),
           },
@@ -122,13 +124,13 @@ export default function HeaderNotifications() {
           overlap="circular"
           sx={{
             "& .MuiBadge-badge": {
-              fontSize: "0.7rem",
-              height: "18px",
-              minWidth: "18px",
+              fontSize: "0.6rem",
+              height: "15px",
+              minWidth: "15px",
             },
           }}
         >
-          <IoMdNotifications size={isMobile ? 20 : 25} />
+          <IoNotificationsOutline size={20} />
         </Badge>
       </IconButton>
 
@@ -174,7 +176,7 @@ export default function HeaderNotifications() {
                     ml: 1,
                     color: theme.currentPalette.primary,
                     fontSize: "0.8rem",
-                    display: {xs: 'block', md:'flex'}
+                    display: { xs: "block", md: "flex" },
                   }}
                 >
                   ({unreadCount} unread)
@@ -308,7 +310,9 @@ export default function HeaderNotifications() {
                               variant="body2"
                               sx={{
                                 mt: 0.5,
-                                cursor: notification.refId ? "pointer" : "default",
+                                cursor: notification.refId
+                                  ? "pointer"
+                                  : "default",
                               }}
                             >
                               {notification.message}

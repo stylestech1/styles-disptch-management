@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Dayjs } from "dayjs";
 import toast, { Toaster } from "react-hot-toast";
 
 // Components
@@ -12,16 +11,16 @@ import Pagination from "@/components/ui/Pagination";
 import StatsCard from "@/components/ui/StatsCard";
 import StatusBadge from "@/components/ui/StatusBadge";
 import SearchInput from "@/components/ui/SearchInput";
-import DateRangeFilter from "@/components/ui/Filter";
 import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 
 // Hooks
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
+import { useFilter } from '@/providers/FilterProvider';
 
 // Types
-import { TLoads, TStats } from "@/types/globalTypes";
+import { TLoads } from "@/types/globalTypes";
 
 // API & Data
 import { loadColumns } from "@/data/loadTables";
@@ -56,7 +55,6 @@ import {
   Button,
   SxProps,
   TableRow,
-  Typography,
 } from "@mui/material";
 
 // Styles
@@ -69,6 +67,8 @@ const LoadsPageDetails = () => {
   const userRole = useAppSelector((state: RootState) => state.auth.user?.role);
   const theme = useAppSelector((state: RootState) => state.palette);
 
+  const { fromDate, toDate, isFiltered } = useFilter();
+
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [selectedLoadForNotes, setSelectedLoadForNotes] =
@@ -78,11 +78,6 @@ const LoadsPageDetails = () => {
   // Loading & Error states
   const { loading, setLoading } = useLoading();
   const { error, setError } = useError();
-
-  // Filter states
-  const [fromDate, setFromDate] = useState<Dayjs | null>(null);
-  const [toDate, setToDate] = useState<Dayjs | null>(null);
-  const [isFiltered, setIsFiltered] = useState(false);
 
   const [
     triggerSearchQuery,
@@ -144,7 +139,13 @@ const LoadsPageDetails = () => {
       }
     );
 
-  //  Process data
+  useEffect(() => {
+    if (isFiltered && fromDate && toDate) {
+      setPage(1);
+    }
+  }, [isFiltered, fromDate, toDate]);
+
+  // Process data
   const load = useMemo(() => {
     if (isSearching && Array.isArray(loadByIdData?.data)) {
       return loadByIdData.data.flat();
@@ -459,7 +460,7 @@ const LoadsPageDetails = () => {
         </Box>
       </Box>
 
-      {/* Search & Filter Section */}
+      {/* Search Section */}
       <Box sx={searchFilterContainerSx}>
         <SearchInput
           searchHook={searchHook}
@@ -476,23 +477,6 @@ const LoadsPageDetails = () => {
                 borderColor: theme.currentPalette.primary,
               },
             },
-          }}
-        />
-
-        <DateRangeFilter
-          onApply={(from, to) => {
-            if (!from || !to) {
-              setIsFiltered(false);
-              setFromDate(null);
-              setToDate(null);
-              setPage(1);
-            } else {
-              setIsFiltered(true);
-              setFromDate(from);
-              setToDate(to);
-              setPage(1);
-            }
-            searchHook.handleSearchReset();
           }}
         />
       </Box>
