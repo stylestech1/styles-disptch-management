@@ -79,13 +79,6 @@ export default function HeaderNotifications() {
     try {
       await markSpecificAsRead(id).unwrap();
       dispatch(updateNotificationStatus({ id, status: "read" }));
-      toast.success("Notification marked as read", {
-        style: {
-          borderColor: theme.currentPalette.primary,
-          color: theme.currentPalette.primary,
-          borderRadius: "8px",
-        },
-      });
     } catch {
       toast.error("Failed to mark as read ❌");
     }
@@ -95,10 +88,6 @@ export default function HeaderNotifications() {
     setDropdownOpen(false);
   };
 
-  const extractIdFromMessage = (message: string): string | null => {
-    const match = message.match(/\(([^)]+)\)/);
-    return match ? match[1] : null;
-  };
   const navigateToLoadDetails = (id: string) => {
     const path =
       userRole === "admin"
@@ -255,7 +244,6 @@ export default function HeaderNotifications() {
             ) : (
               <List sx={{ p: 0 }}>
                 {notifications.map((notification, index) => {
-                  const loadId = extractIdFromMessage(notification.message);
                   return (
                     <Box key={`${notification.id}-${index}`}>
                       <ListItemButton
@@ -263,9 +251,9 @@ export default function HeaderNotifications() {
                           handleNotificationClick(notification);
                           handleMarkAsRead(notification.id);
                           setDropdownOpen(false);
-                          if (loadId) {
+                          if (notification.refId) {
                             e.stopPropagation();
-                            navigateToLoadDetails(loadId);
+                            navigateToLoadDetails(notification.refId);
                           }
                         }}
                         sx={{
@@ -319,13 +307,10 @@ export default function HeaderNotifications() {
                               variant="body2"
                               sx={{
                                 mt: 0.5,
-                                cursor: loadId ? "pointer" : "default",
+                                cursor: notification.refId ? "pointer" : "default",
                               }}
                             >
-                              {notification.message
-                                .replace(/\([^)]*\)/g, "")
-                                .replace(/\s+/g, " ")
-                                .trim()}
+                              {notification.message}
                             </Typography>
                           }
                         />

@@ -38,7 +38,7 @@ export default function Navbar({
               variant="h1"
               sx={{
                 fontWeight: "bold",
-                color: theme.currentPalette.text,
+                color: theme.currentPalette.primary,
                 fontSize: "24px",
               }}
             >

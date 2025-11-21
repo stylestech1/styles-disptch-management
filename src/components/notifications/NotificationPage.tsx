@@ -386,10 +386,7 @@ const NotificationPage = () => {
                             lineHeight: 1.5,
                           }}
                         >
-                          {notification.message
-                            .replace(/\([^)]*\)/g, "")
-                            .replace(/\s+/g, " ")
-                            .trim()}
+                          {notification.message}
                         </Typography>
                         <Typography
                           variant="caption"

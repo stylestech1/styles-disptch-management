@@ -4,6 +4,7 @@ export type TNotification = {
   title: string;
   id: string;
   message: string;
+  refId: string;
   module: "system" | "loads" | "trucks" | "drivers" | "identity";
   importance: "low" | "medium" | "high";
   from: string;
