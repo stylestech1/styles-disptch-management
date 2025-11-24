@@ -345,7 +345,7 @@ export default function HeaderNotifications() {
           </Box>
 
           {/* Footer */}
-          {notifications.length > 0 && (
+          {notifications && (
             <Box
               sx={{
                 p: 1,

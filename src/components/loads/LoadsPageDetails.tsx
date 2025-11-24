@@ -375,11 +375,9 @@ const LoadsPageDetails = () => {
     minHeight: "100vh",
     p: 3,
   };
-
   const headerContainerSx: SxProps = {
     mb: 4,
   };
-
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },
@@ -391,7 +389,6 @@ const LoadsPageDetails = () => {
     borderRadius: 1,
     backgroundColor: theme.currentPalette.background,
   };
-
   const newLoadButtonSx: SxProps = {
     py: 1.5,
     px: 4,

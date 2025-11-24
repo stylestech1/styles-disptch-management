@@ -8,7 +8,7 @@ import {
 import { setLoading } from "@/redux/slices/uiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
 import { getErrorMessage } from "@/utils/getErrorMessage";
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import Loading from "../ui/Loading";
 import {
@@ -43,9 +43,11 @@ import {
   TNotification,
   TNotificationsResponse,
 } from "../../types/notificationType";
+import Pagination from "../ui/Pagination";
 
 const NotificationPage = () => {
   const { error, setError } = useError();
+  const [page, setPage] = useState(1);
   const theme = useAppSelector((state: RootState) => state.palette);
 
   // API Queries
@@ -54,17 +56,22 @@ const NotificationPage = () => {
     isLoading: notifyLoading,
     error: notifyError,
     refetch: refetchNotify,
-  } = useGetAllNotificationsQuery({
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    refetchOnMountOrArgChange: false,
-  });
+  } = useGetAllNotificationsQuery(
+    { page, limit: 10 },
+    {
+      refetchOnFocus: false,
+      refetchOnReconnect: false,
+      // refetchOnMountOrArgChange: false,
+    }
+  );
 
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [markSpecificAsRead] = useMarkSpecificAsReadMutation();
 
   const notifications: TNotification[] =
     (notifyData as TNotificationsResponse)?.data || [];
+
+  const pagination = notifyData?.paginationResult || null;
 
   // handling Loading
   useEffect(() => {
@@ -414,6 +421,19 @@ const NotificationPage = () => {
           </List>
         )}
       </Card>
+
+      {/* Pagination */}
+      {pagination && notifications.length > 0 && (
+        <Box sx={{ mt: 3 }}>
+          <Pagination
+            pagination={pagination}
+            page={page}
+            setPage={setPage}
+            pageSize={10}
+            showInfo={true}
+          />
+        </Box>
+      )}
     </Box>
   );
 };

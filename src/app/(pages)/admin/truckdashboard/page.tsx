@@ -14,6 +14,7 @@ import {
   MenuItem,
   FormControl,
 } from "@mui/material";
+import { AiFillTool } from "react-icons/ai";
 import Select from "@mui/material/Select";
 import { useRouter } from "next/navigation";
 import Erros from "@/components/ui/Erros";
@@ -71,17 +72,23 @@ const TruckDashboard = () => {
   );
 
   // Search function
-  const searchTrucks = (trucks: TTruckWithSummary[] | TTruckSummary[], term: string): TTruckWithSummary[] => {
-  if (!term.trim()) return trucks as TTruckWithSummary[];
+  const searchTrucks = (
+    trucks: TTruckWithSummary[] | TTruckSummary[],
+    term: string
+  ): TTruckWithSummary[] => {
+    if (!term.trim()) return trucks as TTruckWithSummary[];
 
-  const searchTermLower = term.toLowerCase().trim();
-  
-  return (trucks as TTruckWithSummary[]).filter(truck => 
-    truck.plateNumber.toLowerCase().includes(searchTermLower) ||
-    (truck.source && truck.source.toLowerCase().includes(searchTermLower)) ||
-    (truck.truckId && String(truck.truckId).toLowerCase().includes(searchTermLower))
-  );
-};
+    const searchTermLower = term.toLowerCase().trim();
+
+    return (trucks as TTruckWithSummary[]).filter(
+      (truck) =>
+        truck.plateNumber.toLowerCase().includes(searchTermLower) ||
+        (truck.source &&
+          truck.source.toLowerCase().includes(searchTermLower)) ||
+        (truck.truckId &&
+          String(truck.truckId).toLowerCase().includes(searchTermLower))
+    );
+  };
 
   // Get base data based on filter state
   const baseData = useMemo(() => {
@@ -98,7 +105,7 @@ const TruckDashboard = () => {
 
   // Debounced search for better performance
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
-  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -200,8 +207,8 @@ const TruckDashboard = () => {
     };
 
     const summary = truckItem.summary;
-    const profitMargin = summary?.avgRevenuePerMile
-      ? (summary.netProfit / summary.avgRevenuePerMile) * 100
+    const profitMargin = summary?.totalRevenue
+      ? (summary.netProfit / summary?.totalRevenue) * 100
       : 0;
 
     return (
@@ -411,10 +418,12 @@ const TruckDashboard = () => {
 
   const selectedConfig = tableConfig[currentTable];
 
+  // handling Loading
   useEffect(() => {
     setLoading(isLoading);
   }, [isLoading, setLoading]);
 
+  // handling Errors
   useEffect(() => {
     if (error) {
       const errorMessage = getErrorMessage(error);
@@ -625,7 +634,10 @@ const TruckDashboard = () => {
       {/* Search Results Info */}
       {debouncedSearchTerm && (
         <Box sx={{ mb: 2, p: 1 }}>
-          <Typography variant="body2" sx={{ color: theme.currentPalette.primary }}>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary }}
+          >
             Showing {finalDisplayData.length} results for {debouncedSearchTerm}
             {finalDisplayData.length === 0 && " - No matching trucks found"}
           </Typography>
@@ -639,6 +651,40 @@ const TruckDashboard = () => {
         renderRow={selectedConfig.render}
         loading={isLoading}
       />
+
+      {/* Operational Costs */}
+      <Box>
+        <Typography
+          variant="h5"
+          sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+        >
+          Operational Costs
+        </Typography>
+        <Box
+          sx={{
+            display: "grid",
+            gridColumn: 2,
+            gridRow: 2,
+            gap: 5,
+          }}
+        >
+          <Box>
+            <Typography
+              variant="body2"
+              sx={{
+                display: "flex",
+                gap: 1,
+                color: theme.currentPalette.primary,
+              }}
+            >
+              <span
+                className={`bg-[${theme.currentPalette.primary}/0.3] text-[${theme.currentPalette.primary}] p-1 rounded-lg`}
+              ><AiFillTool /></span>
+              <span></span>
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 };
