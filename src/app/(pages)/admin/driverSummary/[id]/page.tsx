@@ -172,7 +172,7 @@ const DriverSummary = () => {
     >
       {/* Load ID */}
       <td className="p-4 font-medium text-slate-900">
-        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded">
+        <span className="text-xs bg-slate-100 px-2 py-1 rounded">
           {load.loadId}
         </span>
       </td>
@@ -239,7 +239,7 @@ const DriverSummary = () => {
 
   return (
     <section className="container mx-auto p-6">
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
 
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
@@ -314,7 +314,7 @@ const DriverSummary = () => {
                   <IoIdCardOutline className="text-slate-400" size={18} />
                   <span className="text-slate-600">License Number</span>
                 </div>
-                <span className="font-mono font-medium text-slate-800">
+                <span className="font-medium text-slate-800">
                   {profile.licenseNumber}
                 </span>
               </div>
@@ -354,7 +354,7 @@ const DriverSummary = () => {
               <div className="space-y-3">
                 <Box sx={{borderColor: theme.currentPalette.text}} className="flex justify-between items-center p-3 border-b rounded-lg">
                   <span className="text-slate-600">Driver ID</span>
-                  <span className="font-mono font-semibold text-slate-800">
+                  <span className="font-semibold text-slate-800">
                     {profile.driverId}
                   </span>
                 </Box>

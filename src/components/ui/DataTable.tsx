@@ -137,14 +137,13 @@ const DataTable = <T,>({
       sx={{
         borderRadius: 2,
         border: "1px solid",
-        borderColor: alpha(theme.currentPalette.primary, 0.2),
+        borderColor:  alpha(theme.currentPalette.primary, 0.3),
         overflowX: "auto",
       }}
-      className={className}
     >
       <TableContainer>
         <Table size="small">
-          <TableHead sx={{ bgcolor: "action.hover" }}>
+          <TableHead>
             <TableRow>
               {columns.map((column) => (
                 <TableCell
@@ -152,12 +151,10 @@ const DataTable = <T,>({
                   align={column.align || "center"}
                   sx={{
                     fontWeight: 600,
-                    color: theme.currentPalette.background,
-                    borderBottom: 1,
-                    borderColor: theme.currentPalette.primary,
-                    backgroundColor: theme.currentPalette.primary,
+                    color: theme.currentPalette.primary,
+                    backgroundColor: alpha(theme.currentPalette.text, 0.05),
                     width: column.width,
-                    py: 2,
+                    py: 1,
                   }}
                 >
                   {column.header}

@@ -295,7 +295,7 @@ const TrucksPage: React.FC = () => {
       >
         {/* Truck ID */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded text-slate-700 font-medium">
             {truck.truckId}
           </span>
         </td>
@@ -424,7 +424,7 @@ const TrucksPage: React.FC = () => {
   };
   return (
     <Box sx={containerSx}>
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
 
       {/* Stats Summary */}
       <Box sx={{ mt: 4, mb: 5 }}>

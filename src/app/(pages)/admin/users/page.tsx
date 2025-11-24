@@ -330,7 +330,7 @@ const Users = () => {
 
         {/* Job ID */}
         <td className="p-4">
-          <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
+          <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
             {dispatcher.jobId}
           </span>
         </td>
@@ -452,7 +452,7 @@ const Users = () => {
         </Button>
       </Box>
 
-      <Toaster position="top-right" reverseOrder={false} />
+      <Toaster position="top-center" reverseOrder={false} />
 
       {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>

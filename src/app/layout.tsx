@@ -29,7 +29,7 @@ export default function RootLayout({
         <Providers>
           <MuiThemeProvider>
             {children}
-            <Toaster position="top-right" reverseOrder={false} />
+            <Toaster position="top-center" reverseOrder={false} />
           </MuiThemeProvider>
         </Providers>
       </body>

@@ -1,3 +1,4 @@
+"use client";
 import {
   Chart as ChartJS,
   BarElement,
@@ -5,11 +6,13 @@ import {
   LinearScale,
   Tooltip,
   Legend,
+  TooltipItem,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
 import { alpha, Box, Typography } from "@mui/material";
 import { TTruckWithSummary } from "@/types/globalTypes";
 import { RootState, useAppSelector } from "@/redux/store";
+import { useEffect, useRef, useState } from "react";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
@@ -20,29 +23,66 @@ type Props = {
 const BarChartTruckDashboard = ({ data }: Props) => {
   const theme = useAppSelector((state: RootState) => state.palette);
   const labels = data.map((t) => `${t.plateNumber}`);
+  const patternCanvas = useRef<HTMLCanvasElement>(
+    document.createElement("canvas")
+  );
+  const [negativePattern, setNegativePattern] = useState<
+    CanvasPattern | string
+  >("#FF6B6B");
+
+  const profitPerMileData = data.map((t) =>
+    t.summary?.totalMiles
+      ? Number((t.summary?.netProfit / t.summary?.totalMiles).toFixed(2))
+      : 0
+  );
+
+  useEffect(() => {
+    const ctx = patternCanvas.current.getContext("2d");
+    if (!ctx) return;
+
+    patternCanvas.current.width = 10;
+    patternCanvas.current.height = 10;
+
+    ctx.clearRect(0, 0, 10, 10);
+
+    ctx.strokeStyle = "#FF6B6B";
+    ctx.lineWidth = 2;
+
+    ctx.beginPath();
+    ctx.moveTo(0, 10);
+    ctx.lineTo(10, 0);
+    ctx.stroke();
+
+    const newPattern = ctx.createPattern(patternCanvas.current, "repeat");
+    if (newPattern) {
+      setNegativePattern(newPattern);
+    }
+  }, []);
 
   const chartData = {
     labels,
     datasets: [
       {
         label: "Cost/Mile",
-        data: data.map((t) => t.summary?.avgExpensePerMile),
+        data: data.map((t) => t.summary?.avgExpensePerMile || 0),
         backgroundColor: "#DC3545",
         borderRadius: 6,
       },
       {
         label: "Profit/Mile",
-        data: data.map((t) =>
-          t.summary?.totalMiles
-            ? Number((t.summary?.netProfit / t.summary?.totalMiles).toFixed(2))
-            : 0
-        ),
-        backgroundColor: "#28A745",
+        data: profitPerMileData,
+        backgroundColor: profitPerMileData.map((value) => {
+          if (value < 0) {
+            return negativePattern;
+          } else {
+            return "#28A745";
+          }
+        }),
         borderRadius: 6,
       },
       {
         label: "Revenue/Mile",
-        data: data.map((t) => t.summary?.avgRevenuePerMile),
+        data: data.map((t) => t.summary?.avgRevenuePerMile || 0),
         backgroundColor: theme.currentPalette.primary,
         borderRadius: 6,
       },
@@ -61,6 +101,23 @@ const BarChartTruckDashboard = ({ data }: Props) => {
           padding: 20,
           font: {
             size: window.innerWidth < 768 ? 5 : 13,
+          },
+        },
+      },
+      tooltip: {
+        callbacks: {
+          label: function (context: TooltipItem<"bar">) {
+            let label = context.dataset.label || "";
+            if (label) {
+              label += ": ";
+            }
+            if (context.parsed.y !== null) {
+              label += new Intl.NumberFormat("en-US", {
+                style: "currency",
+                currency: "USD",
+              }).format(context.parsed.y);
+            }
+            return label;
           },
         },
       },
@@ -114,7 +171,7 @@ const BarChartTruckDashboard = ({ data }: Props) => {
         variant="body2"
         sx={{ mb: 3, color: theme.currentPalette.primary }}
       >
-        Per-mile profitability analysis
+        Per-mile profitability analysis (Red stripes indicate loss)
       </Typography>
 
       <Bar data={chartData} options={options} />

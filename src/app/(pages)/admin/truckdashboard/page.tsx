@@ -205,6 +205,7 @@ const TruckDashboard = () => {
   const renderProfitabilityRow = (truckItem: TTruckWithSummary) => {
     const tableRowSx: SxProps = {
       bgcolor: theme.currentPalette.background,
+      color: theme.currentPalette.primary,
       "&:hover": {
         bgcolor: alpha(theme.currentPalette.primary, 0.1),
         cursor: "pointer",
@@ -227,33 +228,40 @@ const TruckDashboard = () => {
       >
         {/* Plate Number */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {truckItem.plateNumber}
           </span>
         </td>
 
         {/* Source */}
         <td className="p-4 text-center">
-          <Chip label={truckItem.source || "Unknown"} />
+          <Chip
+            sx={{
+              borderRadius: 2,
+              bgcolor: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+            }}
+            label={truckItem.source === "other" ? "Owner-Operator" : "Company"}
+          />
         </td>
 
         {/* Revenue */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.avgRevenuePerMile?.toFixed(2) || "0.00"}`}
           </span>
         </td>
 
         {/* Cost */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.avgExpensePerMile?.toFixed(2) || "0.00"}`}
           </span>
         </td>
 
         {/* Net Profit */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.netProfit?.toFixed(2) || "0.00"}`}
           </span>
         </td>
@@ -261,16 +269,12 @@ const TruckDashboard = () => {
         {/* Profit Margin */}
         <td className="p-4 text-center">
           <Chip
+            sx={{
+              borderRadius: 2,
+              bgcolor: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+            }}
             label={`${profitMargin.toFixed(0)}%`}
-            color={
-              profitMargin > 20
-                ? "success"
-                : profitMargin > 10
-                ? "warning"
-                : "error"
-            }
-            sx={{px: 2}}
-            variant={profitMargin > 15 ? "filled" : "outlined"}
           />
         </td>
       </TableRow>
@@ -280,6 +284,7 @@ const TruckDashboard = () => {
   // Table Revenue renderer
   const renderRevenueRow = (truckItem: TTruckWithSummary) => {
     const tableRowSx: SxProps = {
+      color: theme.currentPalette.primary,
       bgcolor: theme.currentPalette.background,
       "&:hover": {
         bgcolor: alpha(theme.currentPalette.primary, 0.1),
@@ -300,33 +305,40 @@ const TruckDashboard = () => {
       >
         {/* Plate Number */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {truckItem.plateNumber}
           </span>
         </td>
 
         {/* Source */}
         <td className="p-4 text-center">
-          <Chip label={truckItem.source || "Unknown"} />
+          <Chip
+            sx={{
+              borderRadius: 2,
+              bgcolor: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+            }}
+            label={truckItem.source === "other" ? "Owner-Operator" : "Company"}
+          />
         </td>
 
         {/* Net Rev/Mile  */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.avgRevenuePerMile?.toFixed(2) || "0.00"}`}
           </span>
         </td>
 
         {/* Loads */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`${summary?.totalLoads || "0"}`}
           </span>
         </td>
 
         {/* Avg/Load */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${(summary && summary.totalLoads > 0
               ? summary.totalRevenue / summary.totalLoads
               : 0
@@ -340,6 +352,7 @@ const TruckDashboard = () => {
   // Table cost renderer
   const renderCostRow = (truckItem: TTruckWithSummary) => {
     const tableRowSx: SxProps = {
+      color: theme.currentPalette.primary,
       bgcolor: theme.currentPalette.background,
       "&:hover": {
         bgcolor: alpha(theme.currentPalette.primary, 0.1),
@@ -360,47 +373,54 @@ const TruckDashboard = () => {
       >
         {/* Plate Number */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {truckItem.plateNumber}
           </span>
         </td>
 
         {/* Source */}
         <td className="p-4 text-center">
-          <Chip label={truckItem.source || "Unknown"} />
+          <Chip
+            sx={{
+              borderRadius: 2,
+              bgcolor: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+            }}
+            label={truckItem.source === "other" ? "Owner-Operator" : "Company"}
+          />
         </td>
 
         {/* Fuel  */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.fuelCost?.toFixed(2) || "0.00"}`}
           </span>
         </td>
 
         {/* Maintenance */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.repairCost?.toFixed(2) || "0.00"}`}
           </span>
         </td>
 
         {/* Driver Pay */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.driverPay?.toFixed(2) || "0.00"}`}
           </span>
         </td>
 
         {/* Insurance */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.insuranceCost?.toFixed(2) || "0.00"}`}
           </span>
         </td>
 
         {/* Total Cost */}
         <td className="p-4 text-center">
-          <span className="font-mono text-sm px-2 py-1 rounded text-slate-700 font-medium">
+          <span className="text-sm px-2 py-1 rounded">
             {`$${summary?.totalExpenses?.toFixed(2) || "0.00"}`}
           </span>
         </td>
@@ -507,7 +527,6 @@ const TruckDashboard = () => {
     backgroundColor: theme.currentPalette.background,
   };
 
-
   return (
     <Box sx={containerSx}>
       {/* Stats Cards */}
@@ -531,9 +550,7 @@ const TruckDashboard = () => {
           <StatCard
             title="Total Revenue/Mile"
             value={`$${
-              totalSummaryData?.avgRevenuePerMile?.toFixed(
-                2
-              ) || "0.00"
+              totalSummaryData?.avgRevenuePerMile?.toFixed(2) || "0.00"
             }`}
             change={12.5}
             positive={true}
@@ -542,9 +559,7 @@ const TruckDashboard = () => {
           <StatCard
             title="Total Cost/Mile"
             value={`$${
-              totalSummaryData?.avgExpensePerMile?.toFixed(
-                2
-              ) || "0.00"
+              totalSummaryData?.avgExpensePerMile?.toFixed(2) || "0.00"
             }`}
             change={8.2}
             positive={false}
@@ -677,8 +692,10 @@ const TruckDashboard = () => {
             variant="body2"
             sx={{ color: theme.currentPalette.primary }}
           >
-            Showing {finalDisplayTruckData.length} results for {debouncedSearchTerm}
-            {finalDisplayTruckData.length === 0 && " - No matching trucks found"}
+            Showing {finalDisplayTruckData.length} results for{" "}
+            {debouncedSearchTerm}
+            {finalDisplayTruckData.length === 0 &&
+              " - No matching trucks found"}
           </Typography>
         </Box>
       )}

@@ -213,7 +213,7 @@ const UserProfile = () => {
         </div>
       </div>
 
-      <Toaster position="top-right" />
+      <Toaster position="top-center" />
 
       {/* Errors */}
       {error && (
