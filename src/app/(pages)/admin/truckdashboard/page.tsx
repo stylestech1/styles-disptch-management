@@ -642,7 +642,7 @@ const TruckDashboard = () => {
               value={searchTerm}
               onChange={handleSearchChange}
               onClear={handleClearSearch}
-              placeholder="Search by plate number or source..."
+              placeholder="Search by plate number..."
               fullWidth
               showClearButton
               inputSx={{
