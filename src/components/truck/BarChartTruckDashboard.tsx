@@ -28,7 +28,7 @@ const BarChartTruckDashboard = ({ data }: Props) => {
   );
   const [negativePattern, setNegativePattern] = useState<
     CanvasPattern | string
-  >("#FF6B6B");
+  >("#00A63E");
 
   const profitPerMileData = data.map((t) =>
     t.summary?.totalMiles
@@ -45,7 +45,7 @@ const BarChartTruckDashboard = ({ data }: Props) => {
 
     ctx.clearRect(0, 0, 10, 10);
 
-    ctx.strokeStyle = "#FF6B6B";
+    ctx.strokeStyle = "#00A63E";
     ctx.lineWidth = 2;
 
     ctx.beginPath();

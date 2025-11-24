@@ -35,14 +35,14 @@ import { setError, setLoading } from "@/redux/slices/uiSlice";
 import toast from "react-hot-toast";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 
-type TableType = "profitability" | "Revenue" | "cost";
+type TableType = "Profit" | "Revenue" | "cost";
 
 const TruckDashboard = () => {
   const router = useRouter();
   const token = useAppSelector((state: RootState) => state.auth.token);
   const theme = useAppSelector((state: RootState) => state.palette);
   const [page, setPage] = useState(1);
-  const [currentTable, setCurrentTable] = useState<TableType>("profitability");
+  const [currentTable, setCurrentTable] = useState<TableType>("Profit");
   const { fromDate, toDate, isFiltered } = useFilter();
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -429,7 +429,7 @@ const TruckDashboard = () => {
   };
 
   const tableConfig = {
-    profitability: {
+    Profit: {
       columns: profitabilityColumns,
       render: renderProfitabilityRow,
     },
@@ -611,7 +611,7 @@ const TruckDashboard = () => {
             variant="h6"
             sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
           >
-            {currentTable === "profitability" &&
+            {currentTable === "Profit" &&
               "Profitability Breakdown per Truck"}
             {currentTable === "Revenue" && "Revenue Breakdown per Truck"}
             {currentTable === "cost" && "Cost Breakdown per Truck"}
@@ -620,7 +620,7 @@ const TruckDashboard = () => {
             variant="body2"
             sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
           >
-            {currentTable === "profitability" &&
+            {currentTable === "Profit" &&
               "Net profit margins and profitability metrics"}
             {currentTable === "Revenue" && "Total revenue and rates per truck"}
             {currentTable === "cost" &&
@@ -671,15 +671,15 @@ const TruckDashboard = () => {
                 }
                 return selected;
               }}
-              sx={{ py: 0.5, borderRadius: 2 }}
+              sx={{ py: 0.5, borderRadius: 2, color: theme.currentPalette.primary }}
             >
-              <MenuItem disabled value="">
+              <MenuItem sx={{color: theme.currentPalette.primary}} disabled value="">
                 <em>Select table type...</em>
               </MenuItem>
 
-              <MenuItem value="profitability">Profitability</MenuItem>
-              <MenuItem value="Revenue">Revenue</MenuItem>
-              <MenuItem value="cost">Cost</MenuItem>
+              <MenuItem sx={{color: theme.currentPalette.primary}} value="Profit">Profit</MenuItem>
+              <MenuItem sx={{color: theme.currentPalette.primary}} value="Revenue">Revenue</MenuItem>
+              <MenuItem sx={{color: theme.currentPalette.primary}} value="cost">Cost</MenuItem>
             </Select>
           </FormControl>
         </Box>

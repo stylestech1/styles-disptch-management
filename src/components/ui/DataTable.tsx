@@ -139,6 +139,7 @@ const DataTable = <T,>({
         border: "1px solid",
         borderColor:  alpha(theme.currentPalette.primary, 0.3),
         overflowX: "auto",
+        boxShadow: 'none'
       }}
     >
       <TableContainer>
@@ -154,7 +155,7 @@ const DataTable = <T,>({
                     color: theme.currentPalette.primary,
                     backgroundColor: alpha(theme.currentPalette.text, 0.05),
                     width: column.width,
-                    py: 1,
+                    py: 2,
                   }}
                 >
                   {column.header}
