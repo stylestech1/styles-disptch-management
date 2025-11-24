@@ -15,6 +15,9 @@ import {
   FormControl,
 } from "@mui/material";
 import { AiFillTool } from "react-icons/ai";
+import { FiDollarSign } from "react-icons/fi";
+import { MdOutlineShield } from "react-icons/md";
+import { LuFuel } from "react-icons/lu";
 import Select from "@mui/material/Select";
 import { useRouter } from "next/navigation";
 import Erros from "@/components/ui/Erros";
@@ -90,18 +93,21 @@ const TruckDashboard = () => {
     );
   };
 
-  // Get base data based on filter state
-  const baseData = useMemo(() => {
+  // Get Truck Summary data based on filter state
+  const TrucksSummaryData = useMemo(() => {
     if (isFiltered && filteredData) {
       return filteredData?.data?.trucksSummary || [];
     }
     return allTrucksData?.data?.trucksSummary || [];
   }, [isFiltered, filteredData, allTrucksData]);
 
-  // Apply search to base data
-  const displayData = useMemo(() => {
-    return searchTrucks(baseData, searchTerm);
-  }, [baseData, searchTerm]);
+  // Get Total Summary data based on filter state
+  const totalSummaryData = useMemo(() => {
+    if (isFiltered && filteredData) {
+      return filteredData?.data?.totalSummary;
+    }
+    return allTrucksData?.data?.totalSummary;
+  }, [isFiltered, filteredData, allTrucksData]);
 
   // Debounced search for better performance
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
@@ -116,9 +122,9 @@ const TruckDashboard = () => {
     };
   }, [searchTerm]);
 
-  const finalDisplayData = useMemo(() => {
-    return searchTrucks(baseData, debouncedSearchTerm);
-  }, [baseData, debouncedSearchTerm]);
+  const finalDisplayTruckData = useMemo(() => {
+    return searchTrucks(TrucksSummaryData, debouncedSearchTerm);
+  }, [TrucksSummaryData, debouncedSearchTerm]);
 
   const isLoading = useMemo(() => {
     return trucksLoading || (isFiltered && filterLoading);
@@ -255,7 +261,7 @@ const TruckDashboard = () => {
         {/* Profit Margin */}
         <td className="p-4 text-center">
           <Chip
-            label={`${profitMargin.toFixed(2)}%`}
+            label={`${profitMargin.toFixed(0)}%`}
             color={
               profitMargin > 20
                 ? "success"
@@ -263,6 +269,7 @@ const TruckDashboard = () => {
                 ? "warning"
                 : "error"
             }
+            sx={{px: 2}}
             variant={profitMargin > 15 ? "filled" : "outlined"}
           />
         </td>
@@ -415,8 +422,39 @@ const TruckDashboard = () => {
       render: renderCostRow,
     },
   } as const;
-
   const selectedConfig = tableConfig[currentTable];
+
+  // Operational Cost Cards
+  const operationalCostCards = [
+    {
+      id: 1,
+      icon: <AiFillTool size={20} />,
+      title: "Maintenance & Repairs",
+      totalCost: `$${totalSummaryData?.repairCost}`,
+      changeVsLastMonth: "--",
+    },
+    {
+      id: 2,
+      icon: <FiDollarSign size={20} />,
+      title: "Driver Pay",
+      totalCost: `$${totalSummaryData?.driverPay}`,
+      changeVsLastMonth: "--",
+    },
+    {
+      id: 3,
+      icon: <MdOutlineShield size={20} />,
+      title: "Insurance",
+      totalCost: `$${totalSummaryData?.insuranceCost}`,
+      changeVsLastMonth: "--",
+    },
+    {
+      id: 4,
+      icon: <LuFuel size={20} />,
+      title: "Fuel Costs",
+      totalCost: `$${totalSummaryData?.fuelCost}`,
+      changeVsLastMonth: "--",
+    },
+  ];
 
   // handling Loading
   useEffect(() => {
@@ -469,6 +507,7 @@ const TruckDashboard = () => {
     backgroundColor: theme.currentPalette.background,
   };
 
+
   return (
     <Box sx={containerSx}>
       {/* Stats Cards */}
@@ -492,7 +531,7 @@ const TruckDashboard = () => {
           <StatCard
             title="Total Revenue/Mile"
             value={`$${
-              allTrucksData?.data?.totalSummary?.avgRevenuePerMile?.toFixed(
+              totalSummaryData?.avgRevenuePerMile?.toFixed(
                 2
               ) || "0.00"
             }`}
@@ -503,7 +542,7 @@ const TruckDashboard = () => {
           <StatCard
             title="Total Cost/Mile"
             value={`$${
-              allTrucksData?.data?.totalSummary?.avgExpensePerMile?.toFixed(
+              totalSummaryData?.avgExpensePerMile?.toFixed(
                 2
               ) || "0.00"
             }`}
@@ -514,8 +553,8 @@ const TruckDashboard = () => {
           <StatCard
             title="Total Profit/Mile"
             value={`$${(
-              (allTrucksData?.data?.totalSummary?.avgRevenuePerMile || 0) -
-              (allTrucksData?.data?.totalSummary?.avgExpensePerMile || 0)
+              (totalSummaryData?.avgRevenuePerMile || 0) -
+              (totalSummaryData?.avgExpensePerMile || 0)
             ).toFixed(2)}`}
             change={24.3}
             positive={true}
@@ -523,10 +562,10 @@ const TruckDashboard = () => {
 
           <StatCard
             title="Profit Margin %"
-            value={`${(allTrucksData?.data?.totalSummary?.avgRevenuePerMile
-              ? ((allTrucksData.data.totalSummary.avgRevenuePerMile -
-                  allTrucksData.data.totalSummary.avgExpensePerMile) /
-                  allTrucksData.data.totalSummary.avgRevenuePerMile) *
+            value={`${(totalSummaryData?.avgRevenuePerMile
+              ? ((totalSummaryData?.avgRevenuePerMile -
+                  totalSummaryData?.avgExpensePerMile) /
+                  totalSummaryData?.avgRevenuePerMile) *
                 100
               : 0
             ).toFixed(2)}%`}
@@ -546,7 +585,7 @@ const TruckDashboard = () => {
         </Typography>
 
         <Box sx={{ my: 3 }}>
-          <BarChartTruckDashboard data={finalDisplayData} />
+          <BarChartTruckDashboard data={finalDisplayTruckData} />
         </Box>
       </Box>
 
@@ -638,8 +677,8 @@ const TruckDashboard = () => {
             variant="body2"
             sx={{ color: theme.currentPalette.primary }}
           >
-            Showing {finalDisplayData.length} results for {debouncedSearchTerm}
-            {finalDisplayData.length === 0 && " - No matching trucks found"}
+            Showing {finalDisplayTruckData.length} results for {debouncedSearchTerm}
+            {finalDisplayTruckData.length === 0 && " - No matching trucks found"}
           </Typography>
         </Box>
       )}
@@ -647,42 +686,92 @@ const TruckDashboard = () => {
       {/* Data Table */}
       <DataTable
         columns={selectedConfig.columns}
-        data={finalDisplayData}
+        data={finalDisplayTruckData}
         renderRow={selectedConfig.render}
         loading={isLoading}
       />
 
       {/* Operational Costs */}
-      <Box>
+      <Box sx={{ my: 5 }}>
         <Typography
           variant="h5"
           sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
         >
           Operational Costs
         </Typography>
-        <Box
-          sx={{
-            display: "grid",
-            gridColumn: 2,
-            gridRow: 2,
-            gap: 5,
-          }}
-        >
-          <Box>
-            <Typography
-              variant="body2"
+
+        <Box className="grid grid-cols-1 md:grid-cols-2 gap-5 my-5">
+          {operationalCostCards.map((cost) => (
+            <Box
+              key={cost.id}
               sx={{
-                display: "flex",
-                gap: 1,
-                color: theme.currentPalette.primary,
+                p: 3,
+                border: 1,
+                borderColor: alpha(theme.currentPalette.primary, 0.3),
+                borderRadius: 2,
               }}
             >
-              <span
-                className={`bg-[${theme.currentPalette.primary}/0.3] text-[${theme.currentPalette.primary}] p-1 rounded-lg`}
-              ><AiFillTool /></span>
-              <span></span>
-            </Typography>
-          </Box>
+              <Typography
+                variant="body2"
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1,
+                  color: theme.currentPalette.primary,
+                  mb: 2,
+                }}
+              >
+                <span
+                  className="p-2 rounded-md"
+                  style={{
+                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                    color: theme.currentPalette.primary,
+                  }}
+                >
+                  {cost.icon}
+                </span>
+                <span
+                  style={{ color: theme.currentPalette.primary }}
+                  className="text-lg"
+                >
+                  {cost.title}
+                </span>
+              </Typography>
+
+              <Box
+                sx={{ borderColor: alpha(theme.currentPalette.text, 0.1) }}
+                className={`flex justify-between items-center py-2 border-b`}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{ color: theme.currentPalette.primary, fontSize: "16px" }}
+                >
+                  Total Cost
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: theme.currentPalette.primary, fontSize: "16px" }}
+                >
+                  {cost.totalCost}
+                </Typography>
+              </Box>
+
+              <Box className={`flex justify-between items-center py-2`}>
+                <Typography
+                  variant="body2"
+                  sx={{ color: theme.currentPalette.primary, fontSize: "16px" }}
+                >
+                  Change vs Last Month
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{ color: theme.currentPalette.primary, fontSize: "16px" }}
+                >
+                  {cost.changeVsLastMonth}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
         </Box>
       </Box>
     </Box>

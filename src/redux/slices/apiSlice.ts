@@ -581,7 +581,8 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Notification Methods ==========
     getAllNotifications: builder.query({
-      query: ({page = 1, limit = 10}) => `/api/v1/notifications?page=${page}&limit=${limit}`,
+      query: ({ page = 1, limit = 10 }) =>
+        `/api/v1/notifications?page=${page}&limit=${limit}`,
       providesTags: ["Notifications"],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
