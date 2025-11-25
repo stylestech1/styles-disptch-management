@@ -642,6 +642,7 @@ export const {
   useGetAllTrucksQuery,
   useGetTruckSummaryQuery,
   useGetTruckWithSearchQuery,
+  useGetSpecificTruckSummaryQuery,
   useLazyGetSpecificTruckSummaryQuery,
   useGetTruckByPlateNumberQuery,
   useLazyGetTruckByPlateNumberQuery,

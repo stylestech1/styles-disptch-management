@@ -1,0 +1,181 @@
+import React from "react";
+import { Line } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+  Filler,
+  ScriptableContext,
+} from "chart.js";
+import { alpha, Box, Typography } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
+
+ChartJS.register(
+  LineElement,
+  PointElement,
+  CategoryScale,
+  LinearScale,
+  Tooltip,
+  Legend,
+  Filler
+);
+
+interface NetProfitTrendProps {
+  netProfitHistory?: {
+    current: number | string;
+    previous: number[];
+  };
+}
+
+const NetProfitTrend: React.FC<NetProfitTrendProps> = ({
+  netProfitHistory,
+}) => {
+  const theme = useAppSelector((state: RootState) => state.palette);
+
+  const processedNetProfitHistory = netProfitHistory
+    ? {
+        current:
+          typeof netProfitHistory.current === "string"
+            ? parseFloat(netProfitHistory.current)
+            : netProfitHistory.current,
+        previous: netProfitHistory.previous,
+      }
+    : undefined;
+
+  const profitData = processedNetProfitHistory
+    ? [...processedNetProfitHistory.previous, processedNetProfitHistory.current]
+    : [2500, 3200, -800, 4100, 6000, 3800, 4500, 5200];
+
+  const generateLabels = (dataLength: number) => {
+    const labels = [];
+    for (let i = 1; i <= dataLength; i++) {
+      labels.push(`Period ${i}`);
+    }
+    return labels;
+  };
+
+  const labels = generateLabels(profitData.length);
+
+  const data = {
+    labels,
+    datasets: [
+      {
+        label: "Profit",
+        data: profitData,
+        fill: true,
+        borderColor: "#22c55e",
+        backgroundColor: (ctx: ScriptableContext<"line">) => {
+          const canvas = ctx.chart.ctx;
+          const gradient = canvas.createLinearGradient(0, 0, 0, 400);
+          gradient.addColorStop(0, "rgba(34,197,94,0.25)");
+          gradient.addColorStop(1, "rgba(34,197,94,0.05)");
+          return gradient;
+        },
+        borderWidth: 3,
+        pointBackgroundColor: profitData.map((v) =>
+          v < 0 ? "#dc2626" : "#22c55e"
+        ),
+        pointBorderColor: profitData.map((v) =>
+          v < 0 ? "#dc2626" : "#22c55e"
+        ),
+        pointRadius: profitData.map((v) => (v < 0 ? 8 : 6)),
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const options = {
+    responsive: true,
+    scales: {
+      y: {
+        beginAtZero: false,
+        grid: {
+          color: "rgba(0,0,0,0.05)",
+        },
+        ticks: {
+          callback: (value: string | number) => {
+            const numValue =
+              typeof value === "string" ? parseFloat(value) : value;
+            return numValue >= 0
+              ? `$${numValue / 1000}k`
+              : `-$${Math.abs(numValue) / 1000}k`;
+          },
+        },
+      },
+      x: {
+        grid: { display: false },
+      },
+    },
+
+    plugins: {
+      legend: {
+        display: false,
+      },
+      annotation: {
+        annotations: {
+          zeroLine: {
+            type: "line",
+            yMin: 0,
+            yMax: 0,
+            borderColor: "#1d4ed8",
+            borderWidth: 2,
+            label: {
+              display: true,
+              content: "Break Even",
+              position: "end",
+              color: "#1d4ed8",
+            },
+          },
+        },
+      },
+    },
+  };
+
+  return (
+    <Box
+      sx={{
+        borderColor: alpha(theme.currentPalette.primary, 0.3),
+        borderRadius: 2,
+      }}
+      className="border p-5 h-full"
+    >
+      <Box sx={{mb: 5}}>
+        <Typography
+          variant="h5"
+          sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+        >
+          Net Profit Trend
+        </Typography>
+        <Typography sx={{ color: theme.currentPalette.text }}>
+          Click on any point to filter load details
+        </Typography>
+      </Box>
+
+      <Line data={data} options={options} />
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-6 mt-4">
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 bg-green-600 rounded-full"></span>
+          <span style={{ color: theme.currentPalette.text }}>Profit</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 bg-red-600 rounded-full"></span>
+          <span style={{ color: theme.currentPalette.text }}>Loss</span>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <span className="w-3 h-3 border-2 border-blue-600 rounded-full"></span>
+          <span style={{ color: theme.currentPalette.text }}>Current Week</span>
+        </div>
+      </div>
+    </Box>
+  );
+};
+
+export default NetProfitTrend;

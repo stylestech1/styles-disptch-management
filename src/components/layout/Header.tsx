@@ -21,14 +21,14 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     "/admin/loads",
     "/admin/truckdashboard",
     // "/admin/driversummary", 
-    // "/admin/trucksummary",
+    "/admin/truckSummary2",
     "/dispatchers/loads",
   ].some(path => pathname.includes(path));
 
   const getFilterType = () => {
     if (pathname.includes('loads')) return 'loads';
     if (pathname.includes('driversummary')) return 'drivers';
-    if (pathname.includes('trucksummary')) return 'trucks';
+    if (pathname.includes('truckSummary2')) return 'trucks';
     return 'default';
   };
 

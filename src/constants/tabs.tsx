@@ -10,7 +10,7 @@ import { TUserRole } from "@/types/globalTypes";
 type TabItem = {
   label: string;
   subtitle: string;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
 };
 
 export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
@@ -57,6 +57,14 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       subtitle: "Handle your customers with love",
       icon: <RiCustomerService2Fill />,
     },
+    {
+      label: "Truck Summary",
+      subtitle: "Detailed overview of truck information and performance.",
+    },
+    {
+      label: "Load Details",
+      subtitle: "Manage and track all your shipments and deliveries in one place.",
+    },
   ],
   employee: [
     {
@@ -73,6 +81,10 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       label: "Customers",
       subtitle: "Manage your trucks and their access",
       icon: <RiCustomerService2Fill />,
+    },
+    {
+      label: "Load Details",
+      subtitle: "Manage and track all your shipments and deliveries in one place.",
     },
   ],
   driver: [

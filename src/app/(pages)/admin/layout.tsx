@@ -1,9 +1,6 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  AppBar,
-  Toolbar,
-  IconButton,
   Drawer,
   List,
   ListItemButton,
@@ -68,6 +65,24 @@ export default function AdminLayout({
 
   const getActiveTabInfo = () => {
     const cleanedPath = pathname.split("/").pop();
+    // 🟢 Detect dynamic truck summary route
+    if (pathname.includes("/admin/truckSummary2")) {
+      return {
+        label: "Truck Summary",
+        subtitle: "Detailed overview of truck information and performance.",
+      };
+    }
+    if (
+      pathname.includes("/admin/loadDetails") ||
+      pathname.includes("/dispatchers/loadDetails")
+    ) {
+      return {
+        label: "Load Details",
+        subtitle:
+          "Manage and track all your shipments and deliveries in one place.",
+      };
+    }
+    // 🟢 regular tabs
     const activeTab = tabs.find(
       (tab) => tab.label.replace(/\s+/g, "").toLowerCase() === cleanedPath
     );
@@ -121,38 +136,40 @@ export default function AdminLayout({
       {/* Navigation */}
       <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
         {tabs.map(({ label, icon }, i) => {
-          const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
-          const active = pathname.startsWith(link);
-          return (
-            <ListItemButton
-              key={i}
-              component={NextLink}
-              href={link}
-              onClick={() => !isDesktop && setIsSidebarOpen(false)}
-              sx={{
-                borderRadius: 2,
-                mx: 1,
-                my: 0.5,
-                backgroundColor: active
-                  ? themePalette.currentPalette.primary
-                  : "transparent",
-                color: active
-                  ? theme.palette.primary.contrastText || "#fff"
-                  : themePalette.currentPalette.text,
-                "&:hover": {
+          if (label !== "Truck Summary" && label !== "Load Details") {
+            const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
+            const active = pathname.startsWith(link);
+            return (
+              <ListItemButton
+                key={i}
+                component={NextLink}
+                href={link}
+                onClick={() => !isDesktop && setIsSidebarOpen(false)}
+                sx={{
+                  borderRadius: 2,
+                  mx: 1,
+                  my: 0.5,
                   backgroundColor: active
-                    ? alpha(themePalette.currentPalette.primary, 0.9)
-                    : alpha(themePalette.currentPalette.primary, 0.1),
+                    ? themePalette.currentPalette.primary
+                    : "transparent",
                   color: active
-                    ? themePalette.currentPalette.background
-                    : themePalette.currentPalette.primary,
-                },
-              }}
-            >
-              <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
-              <ListItemText primary={label} />
-            </ListItemButton>
-          );
+                    ? theme.palette.primary.contrastText || "#fff"
+                    : themePalette.currentPalette.text,
+                  "&:hover": {
+                    backgroundColor: active
+                      ? alpha(themePalette.currentPalette.primary, 0.9)
+                      : alpha(themePalette.currentPalette.primary, 0.1),
+                    color: active
+                      ? themePalette.currentPalette.background
+                      : themePalette.currentPalette.primary,
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
+                <ListItemText primary={label} />
+              </ListItemButton>
+            );
+          }
         })}
       </List>
 

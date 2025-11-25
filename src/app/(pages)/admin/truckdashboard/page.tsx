@@ -150,12 +150,10 @@ const TruckDashboard = () => {
     title,
     value,
     change,
-    positive,
   }: {
     title: string;
     value: string;
     change: number;
-    positive: boolean;
   }) => {
     return (
       <Box
@@ -189,12 +187,12 @@ const TruckDashboard = () => {
             display: "flex",
             alignItems: "center",
             gap: 0.5,
-            color: positive ? "#16a34a" : "#dc2626",
+            color: change > 0 ? "#16a34a" : "#dc2626",
             fontSize: "14px",
           }}
         >
-          {positive ? <FaArrowTrendUp /> : <FaArrowTrendDown />}
-          {positive ? "+" : "-"}
+          {change > 0 ? <FaArrowTrendUp /> : <FaArrowTrendDown />}
+          {change != 0 ? (change > 0 ? "+" : "-") : ""}
           {change}% vs last month
         </Typography>
       </Box>
@@ -223,7 +221,7 @@ const TruckDashboard = () => {
         sx={tableRowSx}
         key={truckItem._id}
         onClick={() => {
-          // router.push(`/trucks/${truckItem.truckId}`);
+          router.push(`/admin/truckSummary2/${truckItem._id}`);
         }}
       >
         {/* Plate Number */}
@@ -300,7 +298,7 @@ const TruckDashboard = () => {
         sx={tableRowSx}
         key={truckItem._id}
         onClick={() => {
-          // router.push(`/trucks/${truckItem.truckId}`);
+          router.push(`/admin/truckSummary2/${truckItem._id}`);
         }}
       >
         {/* Plate Number */}
@@ -368,7 +366,7 @@ const TruckDashboard = () => {
         sx={tableRowSx}
         key={truckItem._id}
         onClick={() => {
-          // router.push(`/trucks/${truckItem.truckId}`);
+          router.push(`/admin/truckSummary2/${truckItem._id}`);
         }}
       >
         {/* Plate Number */}
@@ -451,28 +449,28 @@ const TruckDashboard = () => {
       icon: <AiFillTool size={20} />,
       title: "Maintenance & Repairs",
       totalCost: `$${totalSummaryData?.repairCost}`,
-      changeVsLastMonth: "--",
+      changeVsLastMonth: `${totalSummaryData?.repairCostChange}%`,
     },
     {
       id: 2,
       icon: <FiDollarSign size={20} />,
       title: "Driver Pay",
       totalCost: `$${totalSummaryData?.driverPay}`,
-      changeVsLastMonth: "--",
+      changeVsLastMonth: `${totalSummaryData?.driverPayChange}%`,
     },
     {
       id: 3,
       icon: <MdOutlineShield size={20} />,
       title: "Insurance",
       totalCost: `$${totalSummaryData?.insuranceCost}`,
-      changeVsLastMonth: "--",
+      changeVsLastMonth: `${totalSummaryData?.insuranceCostChange}%`,
     },
     {
       id: 4,
       icon: <LuFuel size={20} />,
       title: "Fuel Costs",
       totalCost: `$${totalSummaryData?.fuelCost}`,
-      changeVsLastMonth: "--",
+      changeVsLastMonth: `${totalSummaryData?.fuelCostChange}%`,
     },
   ];
 
@@ -549,43 +547,26 @@ const TruckDashboard = () => {
         >
           <StatCard
             title="Total Revenue/Mile"
-            value={`$${
-              totalSummaryData?.avgRevenuePerMile?.toFixed(2) || "0.00"
-            }`}
-            change={12.5}
-            positive={true}
+            value={`$${totalSummaryData?.avgRevenuePerMile || "0.00"}`}
+            change={totalSummaryData?.avgRevenuePerMileChange || 0}
           />
 
           <StatCard
             title="Total Cost/Mile"
-            value={`$${
-              totalSummaryData?.avgExpensePerMile?.toFixed(2) || "0.00"
-            }`}
-            change={8.2}
-            positive={false}
+            value={`$${totalSummaryData?.avgExpensePerMile || "0.00"}`}
+            change={totalSummaryData?.avgExpensePerMileChange || 0}
           />
 
           <StatCard
             title="Total Profit/Mile"
-            value={`$${(
-              (totalSummaryData?.avgRevenuePerMile || 0) -
-              (totalSummaryData?.avgExpensePerMile || 0)
-            ).toFixed(2)}`}
-            change={24.3}
-            positive={true}
+            value={`$${totalSummaryData?.avgProfitPerMile}`}
+            change={totalSummaryData?.avgProfitPerMileChange || 0}
           />
 
           <StatCard
             title="Profit Margin %"
-            value={`${(totalSummaryData?.avgRevenuePerMile
-              ? ((totalSummaryData?.avgRevenuePerMile -
-                  totalSummaryData?.avgExpensePerMile) /
-                  totalSummaryData?.avgRevenuePerMile) *
-                100
-              : 0
-            ).toFixed(2)}%`}
-            change={3.1}
-            positive={true}
+            value={`${totalSummaryData?.profitMargin}%`}
+            change={totalSummaryData?.profitMarginChange || 0}
           />
         </Box>
       </Box>
@@ -611,8 +592,7 @@ const TruckDashboard = () => {
             variant="h6"
             sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
           >
-            {currentTable === "Profit" &&
-              "Profitability Breakdown per Truck"}
+            {currentTable === "Profit" && "Profitability Breakdown per Truck"}
             {currentTable === "Revenue" && "Revenue Breakdown per Truck"}
             {currentTable === "cost" && "Cost Breakdown per Truck"}
           </Typography>
@@ -671,15 +651,38 @@ const TruckDashboard = () => {
                 }
                 return selected;
               }}
-              sx={{ py: 0.5, borderRadius: 2, color: theme.currentPalette.primary }}
+              sx={{
+                py: 0.5,
+                borderRadius: 2,
+                color: theme.currentPalette.primary,
+              }}
             >
-              <MenuItem sx={{color: theme.currentPalette.primary}} disabled value="">
+              <MenuItem
+                sx={{ color: theme.currentPalette.primary }}
+                disabled
+                value=""
+              >
                 <em>Select table type...</em>
               </MenuItem>
 
-              <MenuItem sx={{color: theme.currentPalette.primary}} value="Profit">Profit</MenuItem>
-              <MenuItem sx={{color: theme.currentPalette.primary}} value="Revenue">Revenue</MenuItem>
-              <MenuItem sx={{color: theme.currentPalette.primary}} value="cost">Cost</MenuItem>
+              <MenuItem
+                sx={{ color: theme.currentPalette.primary }}
+                value="Profit"
+              >
+                Profit
+              </MenuItem>
+              <MenuItem
+                sx={{ color: theme.currentPalette.primary }}
+                value="Revenue"
+              >
+                Revenue
+              </MenuItem>
+              <MenuItem
+                sx={{ color: theme.currentPalette.primary }}
+                value="cost"
+              >
+                Cost
+              </MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -782,7 +785,15 @@ const TruckDashboard = () => {
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{ color: theme.currentPalette.primary, fontSize: "16px" }}
+                  sx={{
+                    fontSize: "16px",
+                    color:
+                      Number(cost.changeVsLastMonth) === 0
+                        ? theme.currentPalette.primary
+                        : Number(cost.changeVsLastMonth) > 0
+                        ? "#065f46"
+                        : "#b91c1c",
+                  }}
                 >
                   {cost.changeVsLastMonth}
                 </Typography>

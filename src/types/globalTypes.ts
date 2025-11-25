@@ -200,6 +200,16 @@ export type TTruckSummary = {
   netProfit: number;
   avgRevenuePerMile: number;
   avgExpensePerMile: number;
+  avgProfitPerMile: number;
+  profitMargin: number;
+  avgRevenuePerMileChange: number;
+  avgExpensePerMileChange: number;
+  avgProfitPerMileChange: number;
+  profitMarginChange: number;
+  fuelCostChange: number;
+  repairCostChange: number;
+  insuranceCostChange: number;
+  driverPayChange: number;
   currency: string;
   loads: TLoads;
   period: TPeriod;
@@ -218,6 +228,11 @@ export type TTruckSummaryResponse = {
     trucksSummary: TTruckSummary[];
     totalSummary: TTruckSummary;
   };
+  summary?: TTruckSummary
+  netProfitHistory?: {
+    current: string
+    previous: number[]
+  }
 };
 export interface TabPanelProps {
   children?: React.ReactNode;
@@ -255,8 +270,8 @@ export type TTrucksSummaryResponse = {
       to: string;
     };
     totalTrucks: number;
-    source: TTruckSource
-    trucksSummary: TTruckWithSummary[]; 
+    source: TTruckSource;
+    trucksSummary: TTruckWithSummary[];
     totalSummary: TTruckSummary;
   };
 };
