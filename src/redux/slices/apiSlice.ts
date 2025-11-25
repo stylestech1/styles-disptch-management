@@ -2,6 +2,7 @@ import {
   TCustomer,
   TDriver,
   TLoadSummary,
+  TPagination,
   TTrucksSummaryResponse,
   TTruckSummaryResponse,
   TTruckWithSummary,
@@ -581,8 +582,10 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Notification Methods ==========
     getAllNotifications: builder.query({
-      query: ({ page = 1, limit = 10 } = {}) =>
-        `/api/v1/notifications?page=${page}&limit=${limit}`,
+      query: (args = { page: 1, limit: 10 }) => {
+        const { page, limit } = args;
+        return `/api/v1/notifications?page=${page}&limit=${limit}`;
+      },
       providesTags: ["Notifications"],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
