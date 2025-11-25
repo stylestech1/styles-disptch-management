@@ -123,38 +123,40 @@ export default function AdminLayout({
       {/* Navigation */}
       <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
         {tabs.map(({ label, icon }, i) => {
-          const link = `${base}/${label.toLowerCase()}`;
-          const active = pathname.startsWith(link);
-          return (
-            <ListItemButton
-              key={i}
-              component={NextLink}
-              href={link}
-              onClick={() => !isDesktop && setIsSidebarOpen(false)}
-              sx={{
-                borderRadius: 2,
-                mx: 1,
-                my: 0.5,
-                backgroundColor: active
-                  ? themePalette.currentPalette.primary
-                  : "transparent",
-                color: active
-                  ? theme.palette.primary.contrastText || "#fff"
-                  : themePalette.currentPalette.text,
-                "&:hover": {
+          if (label !== "Load Details") {
+            const link = `${base}/${label.toLowerCase()}`;
+            const active = pathname.startsWith(link);
+            return (
+              <ListItemButton
+                key={i}
+                component={NextLink}
+                href={link}
+                onClick={() => !isDesktop && setIsSidebarOpen(false)}
+                sx={{
+                  borderRadius: 2,
+                  mx: 1,
+                  my: 0.5,
                   backgroundColor: active
-                    ? alpha(themePalette.currentPalette.primary, 0.9)
-                    : alpha(themePalette.currentPalette.primary, 0.1),
+                    ? themePalette.currentPalette.primary
+                    : "transparent",
                   color: active
-                    ? themePalette.currentPalette.background
-                    : themePalette.currentPalette.primary,
-                },
-              }}
-            >
-              <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
-              <ListItemText primary={label} />
-            </ListItemButton>
-          );
+                    ? theme.palette.primary.contrastText || "#fff"
+                    : themePalette.currentPalette.text,
+                  "&:hover": {
+                    backgroundColor: active
+                      ? alpha(themePalette.currentPalette.primary, 0.9)
+                      : alpha(themePalette.currentPalette.primary, 0.1),
+                    color: active
+                      ? themePalette.currentPalette.background
+                      : themePalette.currentPalette.primary,
+                  },
+                }}
+              >
+                <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
+                <ListItemText primary={label} />
+              </ListItemButton>
+            );
+          }
         })}
       </List>
 
