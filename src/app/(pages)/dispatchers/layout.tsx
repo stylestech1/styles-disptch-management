@@ -71,6 +71,13 @@ export default function AdminLayout({
 
   const getActiveTabInfo = () => {
     const cleanedPath = pathname.split("/").pop();
+    if (pathname.includes("/dispatchers/loadDetails")) {
+      return {
+        label: "Load Details",
+        subtitle:
+          "Manage and track all your shipments and deliveries in one place.",
+      };
+    }
     const activeTab = tabs.find(
       (tab) => tab.label.replace(/\s+/g, "").toLowerCase() === cleanedPath
     );

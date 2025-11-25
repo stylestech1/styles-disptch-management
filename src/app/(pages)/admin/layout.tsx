@@ -72,10 +72,7 @@ export default function AdminLayout({
         subtitle: "Detailed overview of truck information and performance.",
       };
     }
-    if (
-      pathname.includes("/admin/loadDetails") ||
-      pathname.includes("/dispatchers/loadDetails")
-    ) {
+    if (pathname.includes("/admin/loadDetails")) {
       return {
         label: "Load Details",
         subtitle:
