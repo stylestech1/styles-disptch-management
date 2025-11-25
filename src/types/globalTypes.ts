@@ -228,11 +228,15 @@ export type TTruckSummaryResponse = {
     trucksSummary: TTruckSummary[];
     totalSummary: TTruckSummary;
   };
-  summary?: TTruckSummary
+  summary?: TTruckSummary;
   netProfitHistory?: {
-    current: string
-    previous: number[]
-  }
+    current: string;
+    previous: number[];
+  };
+  period?: {
+    from: string;
+    to: string;
+  };
 };
 export interface TabPanelProps {
   children?: React.ReactNode;

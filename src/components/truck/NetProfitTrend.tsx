@@ -11,7 +11,7 @@ import {
   Filler,
   ScriptableContext,
 } from "chart.js";
-import { alpha, Box, Typography } from "@mui/material";
+import { Alert, alpha, Box, Typography } from "@mui/material";
 import { RootState, useAppSelector } from "@/redux/store";
 
 ChartJS.register(
@@ -29,10 +29,15 @@ interface NetProfitTrendProps {
     current: number | string;
     previous: number[];
   };
+  period?: {
+    from: string;
+    to: string;
+  };
 }
 
 const NetProfitTrend: React.FC<NetProfitTrendProps> = ({
   netProfitHistory,
+  period,
 }) => {
   const theme = useAppSelector((state: RootState) => state.palette);
 
@@ -143,7 +148,7 @@ const NetProfitTrend: React.FC<NetProfitTrendProps> = ({
       }}
       className="border p-5 h-full"
     >
-      <Box sx={{mb: 5}}>
+      <Box sx={{ mb: 5 }}>
         <Typography
           variant="h5"
           sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
@@ -154,11 +159,9 @@ const NetProfitTrend: React.FC<NetProfitTrendProps> = ({
           Click on any point to filter load details
         </Typography>
       </Box>
-
       <Line data={data} options={options} />
-
       {/* Legend */}
-      <div className="flex items-center justify-center gap-6 mt-4">
+      <div className="flex items-center justify-center gap-6 my-5">
         <div className="flex items-center gap-2">
           <span className="w-3 h-3 bg-green-600 rounded-full"></span>
           <span style={{ color: theme.currentPalette.text }}>Profit</span>
@@ -174,6 +177,36 @@ const NetProfitTrend: React.FC<NetProfitTrendProps> = ({
           <span style={{ color: theme.currentPalette.text }}>Current Week</span>
         </div>
       </div>
+
+      {/* Alert */}
+      <Alert severity="info" sx={{ mt: 2 }}>
+        {period?.from && period?.to
+          ? (() => {
+              const fromDate = new Date(period.from);
+              const toDate = new Date(period.to);
+
+              if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+                return (
+                  <>
+                    Selected Period: {period.from} to {period.to}
+                  </>
+                );
+              }
+
+              const diffTime = toDate.getTime() - fromDate.getTime();
+              const days = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+              return (
+                <>
+                  Period: Day {period.from} to Day {period.to} →{" "}
+                  <strong>
+                    {days} day{days > 1 ? "s" : ""}
+                  </strong>
+                </>
+              );
+            })()
+          : "No period data"}
+      </Alert>
     </Box>
   );
 };

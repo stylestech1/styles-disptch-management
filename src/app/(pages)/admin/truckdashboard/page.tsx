@@ -192,7 +192,7 @@ const TruckDashboard = () => {
           }}
         >
           {change > 0 ? <FaArrowTrendUp /> : <FaArrowTrendDown />}
-          {change != 0 ? (change > 0 ? "+" : "-") : ""}
+          {change != 0 ? (change > 0 ? "+" : "") : ""}
           {change}% vs last month
         </Typography>
       </Box>

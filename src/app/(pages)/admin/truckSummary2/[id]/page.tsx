@@ -84,6 +84,14 @@ const TruckSummary = () => {
     return specificTruckSummaryData?.data?.netProfitHistory;
   }, [isFiltered, truckSummaryFilterData, specificTruckSummaryData]);
 
+  // Get Period data based on filter state
+  const currentPeriod = useMemo(() => {
+    if (isFiltered && truckSummaryFilterData?.data?.period) {
+      return truckSummaryFilterData.data.period;
+    }
+    return specificTruckSummaryData?.data?.period;
+  }, [isFiltered, truckSummaryFilterData, specificTruckSummaryData]);
+
   const loading =
     profileLoading || summaryFilterLoading || specificTruckSummaryLoading;
   if (loading) return <Loading />;
@@ -346,7 +354,7 @@ const TruckSummary = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 my-5">
           <div className="col-span-2">
-            <NetProfitTrend netProfitHistory={NetProfitData} />
+            <NetProfitTrend netProfitHistory={NetProfitData} period={currentPeriod} />
           </div>
           <div className="flex flex-col gap-5">
             <ProfitMarginChart
