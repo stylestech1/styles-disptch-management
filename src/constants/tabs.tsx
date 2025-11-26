@@ -85,14 +85,15 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <FaCirclePlus />,
     },
     {
-      label: "Calculation",
-      subtitle: "Manage your driver team members and their access",
-      icon: <ImCalculator />,
+      label: "Rate Calculator",
+      subtitle:
+        "Calculate rates and plan your routes with real-time distance measurements",
+      icon: <CircleDivide />,
     },
     {
       label: "Customers",
-      subtitle: "Manage your trucks and their access",
-      icon: <RiCustomerService2Fill />,
+      subtitle: "Handle your customers with love",
+      icon: <UserStar />,
     },
     {
       label: "Load Details",
