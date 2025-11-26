@@ -25,8 +25,25 @@ const CostBreakdownChart: React.FC<CostBreakdownProps> = ({ costs }) => {
     (costs?.maintenance || 0) +
     (costs?.insurance || 0);
 
+  const value = [
+    costs?.fuel || 0,
+    costs?.driverPay || 0,
+    costs?.maintenance || 0,
+    costs?.insurance || 0,
+  ];
+
+  const sorted = [...value].sort((a, b) => b - a);
+  const opacitySteps = [1, 0.8, 0.6, 0.4];
+  const backgroundColor = value.map((value) => {
+    const indexInSorted = sorted.indexOf(value);
+    const opacity = opacitySteps[indexInSorted];
+    return alpha(theme.currentPalette.primary, opacity);
+  });
+
+  const labels = ["Fuel", "Driver Pay", "Maintenance", "Insurance"];
+
   const data = {
-    labels: ["Fuel", "Driver Pay", "Maintenance", "Insurance"],
+    labels: labels,
     datasets: [
       {
         data: [
@@ -35,12 +52,7 @@ const CostBreakdownChart: React.FC<CostBreakdownProps> = ({ costs }) => {
           costs?.maintenance || 0,
           costs?.insurance || 0,
         ],
-        backgroundColor: [
-          theme.currentPalette.primary,
-          alpha(theme.currentPalette.primary, 0.8),
-          alpha(theme.currentPalette.primary, 0.6),
-          alpha(theme.currentPalette.primary, 0.4),
-        ],
+        backgroundColor: backgroundColor,
         borderWidth: 3,
         cutout: "65%",
       },
@@ -73,34 +85,15 @@ const CostBreakdownChart: React.FC<CostBreakdownProps> = ({ costs }) => {
 
       {/* Labels */}
       <Box className="grid grid-cols-2 gap-2 mt-4">
-        <Box display="flex" alignItems="center" gap={1}>
-          <span
-            className="w-3 h-3 block rounded"
-            style={{ background: theme.currentPalette.primary }}
-          />
-          Fuel: ${costs?.fuel}
-        </Box>
-        <Box display="flex" alignItems="center" gap={1}>
-          <span
-            className="w-3 h-3 block rounded"
-            style={{ background: alpha(theme.currentPalette.primary, 0.8) }}
-          />
-          Driver Pay: ${costs?.driverPay}
-        </Box>
-        <Box display="flex" alignItems="center" gap={1}>
-          <span
-            className="w-3 h-3 block rounded"
-            style={{ background: alpha(theme.currentPalette.primary, 0.6) }}
-          />
-          Maintenance: ${costs?.maintenance}
-        </Box>
-        <Box display="flex" alignItems="center" gap={1}>
-          <span
-            className="w-3 h-3 block rounded"
-            style={{ background: alpha(theme.currentPalette.primary, 0.4) }}
-          />
-          Insurance: ${costs?.insurance}
-        </Box>
+        {labels.map((label, i) => (
+          <Box key={label} display="flex" alignItems="center" gap={1}>
+            <span
+              className="w-3 h-3 block rounded"
+              style={{ background: backgroundColor[i] }}
+            />
+            {label}: ${value[i]}
+          </Box>
+        ))}
       </Box>
 
       {/* TOTAL */}
