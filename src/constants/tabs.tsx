@@ -1,11 +1,17 @@
-import { FaCirclePlus, FaTruckFast } from "react-icons/fa6";
-import { PiUsersFill } from "react-icons/pi";
+import { FaCirclePlus } from "react-icons/fa6";
 import { ImCalculator } from "react-icons/im";
-import { IoPeopleOutline } from "react-icons/io5";
 import { RiCustomerService2Fill } from "react-icons/ri";
-import { SiGoogleanalytics } from "react-icons/si";
-import { MdOutlineCommentBank } from "react-icons/md";
 import { TUserRole } from "@/types/globalTypes";
+import {
+  Boxes,
+  ChartNoAxesCombined,
+  CircleDivide,
+  Handshake,
+  ShipWheel,
+  Truck,
+  Users,
+  UserStar,
+} from "lucide-react";
 
 type TabItem = {
   label: string;
@@ -19,43 +25,44 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       label: "Loads",
       subtitle:
         "Manage and track all your shipments and deliveries in one place.",
-      icon: <FaCirclePlus />,
+      icon: <Boxes />,
     },
     {
-      label: "Users",
-      subtitle: "Manage your dispatch team members and their access",
-      icon: <IoPeopleOutline />,
-    },
-    {
-      label: "Drivers",
-      subtitle: "Manage your driver team members and their access",
-      icon: <PiUsersFill />,
+      label: "Rate Calculator",
+      subtitle:
+        "Calculate rates and plan your routes with real-time distance measurements",
+      icon: <CircleDivide />,
     },
     {
       label: "Trucks",
       subtitle: "Manage your trucks and their access",
-      icon: <FaTruckFast />,
+      icon: <Truck />,
+    },
+    {
+      label: "Drivers",
+      subtitle: "Manage your driver team members and their access",
+      icon: <ShipWheel />,
+    },
+    {
+      label: "Users",
+      subtitle: "Manage your dispatch team members and their access",
+      icon: <Users />,
     },
     {
       label: "Truck Dashboard",
-      subtitle: "View detailed revenue metrics per truck to track earnings. Identify high-performing vehicles and monitor overall fleet performance.",
-      icon: <SiGoogleanalytics />,
-    },
-    {
-      label: "Calculation",
       subtitle:
-        "Calculate rates and plan your routes with real-time distance measurements",
-      icon: <ImCalculator />,
-    },
-    {
-      label: "Broker",
-      subtitle: "Manage your broker team members and their access",
-      icon: <MdOutlineCommentBank />,
+        "View detailed revenue metrics per truck to track earnings. Identify high-performing vehicles and monitor overall fleet performance.",
+      icon: <ChartNoAxesCombined />,
     },
     {
       label: "Customers",
       subtitle: "Handle your customers with love",
-      icon: <RiCustomerService2Fill />,
+      icon: <UserStar />,
+    },
+    {
+      label: "Broker",
+      subtitle: "Manage your broker team members and their access",
+      icon: <Handshake />,
     },
     {
       label: "Truck Summary",
@@ -63,7 +70,8 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     },
     {
       label: "Load Details",
-      subtitle: "Manage and track all your shipments and deliveries in one place.",
+      subtitle:
+        "Manage and track all your shipments and deliveries in one place.",
     },
     {
       label: "Driver Summary",
@@ -88,7 +96,8 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     },
     {
       label: "Load Details",
-      subtitle: "Manage and track all your shipments and deliveries in one place.",
+      subtitle:
+        "Manage and track all your shipments and deliveries in one place.",
     },
   ],
   driver: [
