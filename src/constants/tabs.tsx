@@ -65,6 +65,10 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       label: "Load Details",
       subtitle: "Manage and track all your shipments and deliveries in one place.",
     },
+    {
+      label: "Driver Summary",
+      subtitle: "Detailed overview of driver information and performance.",
+    },
   ],
   employee: [
     {

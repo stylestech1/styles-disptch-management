@@ -30,6 +30,7 @@ import ProfitMarginChart from "@/components/truck/ProfitMarginChart";
 import CostBreakdownChart from "@/components/truck/CostBreakdownChart";
 import { useFilter } from "@/providers/FilterProvider";
 import { useMemo } from "react";
+import Breadcrumb from "@/components/ui/Breadcrumb";
 
 const TruckSummary = () => {
   const { id } = useParams();
@@ -155,20 +156,15 @@ const TruckSummary = () => {
       <Toaster position="top-center" />
 
       {/* Bread Crumb */}
-      <div className="flex items-center gap-1">
-        <Link
-          href={"/admin/truckdashboard"}
-          style={{ color: theme.currentPalette.primary }}
-        >
-          Financial Dashboard
-        </Link>
-        <span style={{ color: alpha(theme.currentPalette.text, 0.5) }}>
-          <IoMdArrowDropright size={16} />
-        </span>
-        <p style={{ color: alpha(theme.currentPalette.text, 0.8) }}>
-          Truck Summary
-        </p>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: "Financial Dashboard", href: "/admin/truckdashboard" },
+          { label: "Truck Summary" },
+        ]}
+        color={theme.currentPalette.primary}
+        textColor={alpha(theme.currentPalette.text, 0.8)}
+        separatorColor={alpha(theme.currentPalette.text, 0.5)}
+      />
 
       {/* Profile */}
       <Box className="grid grid-cols-1 lg:grid-cols-3 gap-5 mt-6">
@@ -354,7 +350,10 @@ const TruckSummary = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 my-5">
           <div className="col-span-2">
-            <NetProfitTrend netProfitHistory={NetProfitData} period={currentPeriod} />
+            <NetProfitTrend
+              netProfitHistory={NetProfitData}
+              period={currentPeriod}
+            />
           </div>
           <div className="flex flex-col gap-5">
             <ProfitMarginChart

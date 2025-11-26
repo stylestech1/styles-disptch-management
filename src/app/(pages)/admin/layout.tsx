@@ -79,6 +79,13 @@ export default function AdminLayout({
           "Manage and track all your shipments and deliveries in one place.",
       };
     }
+    if (pathname.includes("/admin/driverSummary")) {
+      return {
+        label: "Driver Summary",
+        subtitle:
+          "Detailed overview of driver information and performance.",
+      };
+    }
     // 🟢 regular tabs
     const activeTab = tabs.find(
       (tab) => tab.label.replace(/\s+/g, "").toLowerCase() === cleanedPath
@@ -133,7 +140,7 @@ export default function AdminLayout({
       {/* Navigation */}
       <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
         {tabs.map(({ label, icon }, i) => {
-          if (label !== "Truck Summary" && label !== "Load Details") {
+          if (label !== "Truck Summary" && label !== "Load Details" && label !== "Driver Summary") {
             const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
             const active = pathname.startsWith(link);
             return (
