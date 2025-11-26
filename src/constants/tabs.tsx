@@ -1,6 +1,4 @@
 import { FaCirclePlus } from "react-icons/fa6";
-import { ImCalculator } from "react-icons/im";
-import { RiCustomerService2Fill } from "react-icons/ri";
 import { TUserRole } from "@/types/globalTypes";
 import {
   Boxes,
