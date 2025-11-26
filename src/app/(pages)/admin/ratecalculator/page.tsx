@@ -1,4 +1,4 @@
-import CalculationPage from "@/components/calculation/CalculationPage";
+import CalculationPage from "@/components/ratecalculator/CalculationPage";
 
 const Calculation = () => {
   return <CalculationPage />;
