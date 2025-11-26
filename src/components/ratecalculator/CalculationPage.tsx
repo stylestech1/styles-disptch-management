@@ -419,7 +419,7 @@ const CalculationPage = () => {
         sx={{
           mb: 6,
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "start",
           flexDirection: "row",
         }}

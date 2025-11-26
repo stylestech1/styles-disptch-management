@@ -85,6 +85,12 @@ export default function AdminLayout({
   };
   const { label: title, subtitle } = getActiveTabInfo();
 
+  const getInitials = (fullName: string) => {
+    const names = fullName.split(" ");
+    const initials = names.map((n) => n[0].toUpperCase()).join("");
+    return initials;
+  };
+
   const SidebarContent = (
     <Box
       sx={{
@@ -106,10 +112,10 @@ export default function AdminLayout({
           underline="none"
         >
           <Avatar sx={{ bgcolor: themePalette.currentPalette.primary }}>
-            <IoPersonCircleOutline />
+            {getInitials(user.name)}
           </Avatar>
           <Box>
-            <Typography variant="subtitle1" fontWeight={600} noWrap>
+            <Typography variant="subtitle1" fontWeight={600} sx={{color: themePalette.currentPalette.text}} noWrap>
               {user.name}
             </Typography>
             <div className="flex items-center gap-2">
