@@ -65,14 +65,14 @@ const DriverSummary = () => {
 
   //
   const {
-      data: specificDriverSummaryData,
-      isLoading: specificDriverSummaryLoading,
-    } = useGetSpecificDriverSummaryQuery(id as string, {
-      skip: !id,
-      refetchOnFocus: false,
-      refetchOnReconnect: false,
-      refetchOnMountOrArgChange: false,
-    });
+    data: specificDriverSummaryData,
+    isLoading: specificDriverSummaryLoading,
+  } = useGetSpecificDriverSummaryQuery(id as string, {
+    skip: !id,
+    refetchOnFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMountOrArgChange: false,
+  });
 
   // Get Truck Summary data based on filter state
   const displayedData = useMemo(() => {
@@ -149,9 +149,7 @@ const DriverSummary = () => {
         </td>
 
         {/* Plate Number */}
-        <td className="p-4 text-center">
-          {load.truckId.plateNumber}
-        </td>
+        <td className="p-4 text-center">{load.truckId.plateNumber}</td>
 
         {/* Origin */}
         <td className="p-4 text-left max-w-10">
@@ -182,14 +180,10 @@ const DriverSummary = () => {
         </td>
 
         {/* Price/Mile */}
-        <td className="p-4 text-right">
-          ${load.pricePerMile?.toFixed(2)}
-        </td>
+        <td className="p-4 text-right">${load.pricePerMile?.toFixed(2)}</td>
 
         {/* Total */}
-        <td className="p-4 text-right">
-          ${load.totalPrice?.toLocaleString()}
-        </td>
+        <td className="p-4 text-right">${load.totalPrice?.toLocaleString()}</td>
 
         {/* Delivered */}
         <td className="p-4 text-center">
@@ -464,13 +458,7 @@ const DriverSummary = () => {
 
       {/* ✅ Loads Table Section */}
       {displayedData && (
-        <Box
-          sx={{
-            borderRadius: 2,
-            borderColor: alpha(theme.currentPalette.primary, 0.3),
-          }}
-          className="border overflow-hidden"
-        >
+        <Box className="overflow-hidden">
           {/* Table For Driver Loads Summary */}
           {displayedData.length > 0 ? (
             <DataTable
@@ -528,7 +516,7 @@ const DriverSummary = () => {
       )}
 
       {!profile && !isInitialLoading && (
-        <div className="rounded-xl border shadow-sm p-12 text-center">
+        <div className="rounded-xl border p-12 text-center">
           <div className="text-4xl mb-4">👨‍💼</div>
           <h3 className="text-xl font-semibold text-slate-800 mb-2">
             Driver Not Found

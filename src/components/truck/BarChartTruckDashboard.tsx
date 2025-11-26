@@ -157,7 +157,7 @@ const BarChartTruckDashboard = ({ data }: Props) => {
         p: 3,
         border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
         borderRadius: "12px",
-        background: "white",
+        background: theme.currentPalette.background,
       }}
     >
       <Typography

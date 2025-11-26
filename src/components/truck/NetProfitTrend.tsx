@@ -55,15 +55,38 @@ const NetProfitTrend: React.FC<NetProfitTrendProps> = ({
     ? [...processedNetProfitHistory.previous, processedNetProfitHistory.current]
     : [2500, 3200, -800, 4100, 6000, 3800, 4500, 5200];
 
-  const generateLabels = (dataLength: number) => {
+  const getDateDiffInDays = (from: string, to: string) => {
+    const f = new Date(from);
+    const t = new Date(to);
+    const diff = t.getTime() - f.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24)) + 1;
+  };
+  const detectLabelType = (days: number) => {
+    if (days <= 7) return "day";
+    if (days <= 31) return "week";
+    if (days <= 365) return "month";
+    return "year";
+  };
+  const generateDynamicLabels = (count: number, type: string) => {
     const labels = [];
-    for (let i = 1; i <= dataLength; i++) {
-      labels.push(`Period ${i}`);
+    for (let i = 1; i <= count; i++) {
+      if (type === "day") labels.push(`${i} Day`);
+      else if (type === "week") labels.push(`${i} Week`);
+      else if (type === "month") labels.push(`${i} Month`);
+      else if (type === "year") labels.push(`${i} Year`);
     }
     return labels;
   };
+  const labels = React.useMemo(() => {
+    if (!period?.from || !period?.to) {
+      return generateDynamicLabels(profitData.length, "week");
+    }
 
-  const labels = generateLabels(profitData.length);
+    const diffDays = getDateDiffInDays(period.from, period.to);
+    const type = detectLabelType(diffDays);
+
+    return generateDynamicLabels(profitData.length, type);
+  }, [period, profitData]);
 
   const data = {
     labels,
