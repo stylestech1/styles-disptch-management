@@ -9,7 +9,7 @@ import {
   TooltipItem,
 } from "chart.js";
 import { Bar } from "react-chartjs-2";
-import { alpha, Box, Typography } from "@mui/material";
+import { alpha, Box, darken, Typography } from "@mui/material";
 import { TTruckWithSummary } from "@/types/globalTypes";
 import { RootState, useAppSelector } from "@/redux/store";
 import { useEffect, useRef, useState } from "react";
@@ -65,7 +65,7 @@ const BarChartTruckDashboard = ({ data }: Props) => {
       {
         label: "Cost/Mile",
         data: data.map((t) => t.summary?.avgExpensePerMile || 0),
-        backgroundColor: "#DC3545",
+        backgroundColor: darken(theme.currentPalette.primary, 0.2),
         borderRadius: 6,
       },
       {
@@ -75,7 +75,7 @@ const BarChartTruckDashboard = ({ data }: Props) => {
           if (value < 0) {
             return negativePattern;
           } else {
-            return "#28A745";
+            return theme.currentPalette.primary;
           }
         }),
         borderRadius: 6,
@@ -83,7 +83,7 @@ const BarChartTruckDashboard = ({ data }: Props) => {
       {
         label: "Revenue/Mile",
         data: data.map((t) => t.summary?.avgRevenuePerMile || 0),
-        backgroundColor: theme.currentPalette.primary,
+        backgroundColor: alpha(theme.currentPalette.primary, 0.8),
         borderRadius: 6,
       },
     ],
