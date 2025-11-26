@@ -790,9 +790,9 @@ const TruckDashboard = () => {
                     color:
                       Number(cost.changeVsLastMonth) === 0
                         ? theme.currentPalette.primary
-                        : Number(cost.changeVsLastMonth) > 0
-                        ? "#065f46"
-                        : "#b91c1c",
+                        : parseFloat(cost.changeVsLastMonth) > 0
+                        ? "#b91c1c"
+                        : "#065f46",
                   }}
                 >
                   {cost.changeVsLastMonth}
