@@ -168,6 +168,7 @@ const NetProfitTrend: React.FC<NetProfitTrendProps> = ({
       sx={{
         borderColor: alpha(theme.currentPalette.primary, 0.3),
         borderRadius: 2,
+        bgcolor: theme.currentPalette.background,
       }}
       className="border p-5 h-full"
     >

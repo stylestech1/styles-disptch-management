@@ -61,6 +61,7 @@ const ProfitMarginChart: React.FC<ProfitMarginChartProps> = ({
         borderRadius: 2,
         p: 3,
         textAlign: "left",
+        bgcolor: theme.currentPalette.background,
       }}
     >
       <Typography

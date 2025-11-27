@@ -71,6 +71,7 @@ const CostBreakdownChart: React.FC<CostBreakdownProps> = ({ costs }) => {
         border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
         borderRadius: 2,
         p: 3,
+        bgcolor: theme.currentPalette.background,
       }}
     >
       <Typography

@@ -507,7 +507,6 @@ const TruckDashboard = () => {
 
   // Container styles
   const containerSx: SxProps = {
-    backgroundColor: theme.currentPalette.background,
     minHeight: "100vh",
     p: 3,
   };
@@ -543,6 +542,7 @@ const TruckDashboard = () => {
             border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
             borderRadius: "12px",
             overflow: "hidden",
+            bgcolor: theme.currentPalette.background
           }}
         >
           <StatCard
@@ -729,6 +729,7 @@ const TruckDashboard = () => {
                 border: 1,
                 borderColor: alpha(theme.currentPalette.primary, 0.3),
                 borderRadius: 2,
+                bgcolor: theme.currentPalette.background
               }}
             >
               <Typography

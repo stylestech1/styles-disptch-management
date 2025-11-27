@@ -371,7 +371,6 @@ const LoadsPageDetails = () => {
 
   // Container styles
   const containerSx: SxProps = {
-    backgroundColor: theme.currentPalette.background,
     minHeight: "100vh",
     p: 3,
   };

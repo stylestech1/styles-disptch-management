@@ -175,6 +175,7 @@ const TruckSummary = () => {
             borderRadius: 2,
             borderColor: alpha(theme.currentPalette.primary, 0.3),
             p: 3,
+            bgcolor: theme.currentPalette.background,
           }}
           className="lg:col-span-2"
         >
@@ -235,6 +236,7 @@ const TruckSummary = () => {
               border: 1,
               borderColor: alpha(theme.currentPalette.primary, 0.3),
               borderRadius: 2,
+              bgcolor: theme.currentPalette.background,
             }}
             className="flex flex-col justify-center"
           >
@@ -261,6 +263,7 @@ const TruckSummary = () => {
               border: 1,
               borderColor: alpha(theme.currentPalette.primary, 0.3),
               borderRadius: 2,
+              bgcolor: theme.currentPalette.background,
             }}
             className="flex flex-col justify-center"
           >
@@ -287,6 +290,7 @@ const TruckSummary = () => {
               border: 1,
               borderColor: alpha(theme.currentPalette.primary, 0.3),
               borderRadius: 2,
+              bgcolor: theme.currentPalette.background,
             }}
             className="flex flex-col justify-center"
           >
@@ -313,6 +317,7 @@ const TruckSummary = () => {
               border: 1,
               borderColor: alpha(theme.currentPalette.primary, 0.3),
               borderRadius: 2,
+              bgcolor: theme.currentPalette.background,
             }}
             className="flex flex-col justify-center"
           >

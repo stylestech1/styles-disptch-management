@@ -228,7 +228,7 @@ export default function AdminLayout({
             display: "flex",
             flexDirection: "column",
             minHeight: "100vh",
-            bgcolor: themePalette.currentPalette.background,
+            bgcolor: alpha(themePalette.currentPalette.primary, 0.05),
           }}
         >
           {/* Page content */}
