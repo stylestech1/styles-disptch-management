@@ -127,8 +127,9 @@ const CustomerPage = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    const statsCustomerData = customersData?.stats || []
-    if (!statsCustomerData || statsCustomerData.length === 0) return { totalCustomers: 0 };
+    const statsCustomerData = customersData?.stats || [];
+    if (!statsCustomerData || statsCustomerData.length === 0)
+      return { totalCustomers: 0 };
     return {
       totalCustomers: statsCustomerData.total,
       shipper: statsCustomerData.shipper,
@@ -410,19 +411,15 @@ const CustomerPage = () => {
     minHeight: "100vh",
     p: 3,
   };
-  const headerContainerSx: SxProps = {
-    mb: 4,
-  };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },
-    alignItems: "end",
-    gap: 2,
-    p: 3,
-    my: 5,
-    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
-    borderRadius: 1,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    p: 2,
+    my: 2,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
+    borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
@@ -486,17 +483,36 @@ const CustomerPage = () => {
 
       {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>
+        {/* Search */}
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+          >
+            Customer Details
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+          >
+            Ckeck list of all customers
+          </Typography>
+        </Box>
+
+        {/* Search */}
         <SearchInput
           searchHook={searchHook}
           placeholder="Search Customers by ID"
-          fullWidth
           showClearButton
-          sx={{ width: "100%" }}
+          sx={{ width: 350 }}
           inputSx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
               backgroundColor: theme.currentPalette.background,
               py: 0.5,
+              "&:hover": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
           }}
         />
