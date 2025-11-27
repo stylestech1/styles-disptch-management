@@ -389,19 +389,15 @@ const TrucksPage: React.FC = () => {
     minHeight: "100vh",
     p: 3,
   };
-  const headerContainerSx: SxProps = {
-    mb: 4,
-  };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },
-    alignItems: "end",
-    gap: 2,
-    p: 3,
-    my: 5,
-    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
-    borderRadius: 1,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    p: 2,
+    my: 2,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
+    borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
@@ -473,18 +469,35 @@ const TrucksPage: React.FC = () => {
       {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>
         {/* Search */}
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+          >
+            Truck Details
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+          >
+            Ckeck list of all trucks
+          </Typography>
+        </Box>
+
+        {/* Search */}
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search drivers by ID"
-          fullWidth
+          placeholder="Search trucks by ID...."
           showClearButton
-          sx={{ width: "100%" }}
+          sx={{ width: 350 }}
           inputSx={{
             "& .MuiOutlinedInput-root": {
               borderRadius: 2,
-              backgroundColor: "#fff",
+              backgroundColor: theme.currentPalette.background,
               py: 0.5,
-              bgcolor: theme.currentPalette.background,
+              "&:hover": {
+                borderColor: theme.currentPalette.primary,
+              },
             },
           }}
         />

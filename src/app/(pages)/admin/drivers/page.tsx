@@ -6,13 +6,7 @@ import { TDriver } from "@/types/globalTypes";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
 import Erros from "@/components/ui/Erros";
-import {
-  IoAdd,
-  IoPencil,
-  IoTrash,
-  IoStatsChart,
-  IoPerson,
-} from "react-icons/io5";
+import { IoAdd, IoPencil, IoTrash, IoPerson } from "react-icons/io5";
 import { FaUserCheck, FaUserLargeSlash } from "react-icons/fa6";
 import {
   Dialog,
@@ -26,7 +20,6 @@ import {
   alpha,
   SxProps,
 } from "@mui/material";
-
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {
@@ -35,7 +28,6 @@ import {
   useGetDriversWithPaginationQuery,
   useGetDriverWithFilterQuery,
   useLazyGetDriverByDriverIdQuery,
-  useLazyGetDriverByIdQuery,
   useUpdateDriverMutation,
 } from "@/redux/slices/apiSlice";
 import { DriverForm } from "@/components/drivers/DriverForm";
@@ -49,6 +41,7 @@ import { StatusChip } from "@/components/ui/TablesMUI";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
 import { setLoading } from "@/redux/slices/uiSlice";
 import SearchInput from "@/components/ui/SearchInput";
+import { IoMdEye } from "react-icons/io";
 
 const DriversPage = () => {
   const router = useRouter();
@@ -141,7 +134,7 @@ const DriversPage = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    const statsDriverData = driversData?.stats || []
+    const statsDriverData = driversData?.stats || [];
     if (!statsDriverData || statsDriverData.length === 0)
       return { totalDrivers: 0, available: 0, busy: 0, inactive: 0 };
     return {
@@ -407,7 +400,7 @@ const DriversPage = () => {
                   },
                 }}
               >
-                <IoStatsChart size={16} />
+                <IoMdEye size={16} />
               </IconButton>
             </Tooltip>
 
@@ -461,19 +454,15 @@ const DriversPage = () => {
     minHeight: "100vh",
     p: 3,
   };
-  const headerContainerSx: SxProps = {
-    mb: 4,
-  };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
-    flexDirection: { xs: "column", lg: "row" },
-    alignItems: "end",
-    gap: 2,
-    p: 3,
-    my: 5,
-    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
-    borderRadius: 1,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    flexDirection: { xs: "column", lg: 'row' },
+    alignItems: "flex-start",
+    justifyContent: 'space-between',
+    p: 2,
+    my: 2,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
+    borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
@@ -544,16 +533,30 @@ const DriversPage = () => {
 
       {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+          >
+            Driver Details
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+          >
+            Ckeck list of all drivers
+          </Typography>
+        </Box>
+
         {/* Search */}
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search drivers by ID"
-          fullWidth
+          placeholder="Search drivers by ID...."
           showClearButton
-          sx={{ width: "100%" }}
+          sx={{width: 350}}
           inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
+              borderRadius: 2,
               backgroundColor: theme.currentPalette.background,
               py: 0.5,
               "&:hover": {

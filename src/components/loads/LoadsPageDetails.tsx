@@ -17,7 +17,7 @@ import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 import useError from "@/hook/useError";
 import useLoading from "@/hook/useLoading";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
-import { useFilter } from '@/providers/FilterProvider';
+import { useFilter } from "@/providers/FilterProvider";
 
 // Types
 import { TLoads } from "@/types/globalTypes";
@@ -55,6 +55,7 @@ import {
   Button,
   SxProps,
   TableRow,
+  Typography,
 } from "@mui/material";
 
 // Styles
@@ -185,7 +186,7 @@ const LoadsPageDetails = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    const statLoadData = loadsData?.stats || []
+    const statLoadData = loadsData?.stats || [];
     if (!statLoadData || statLoadData.length === 0)
       return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
     return {
@@ -380,12 +381,12 @@ const LoadsPageDetails = () => {
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },
-    alignItems: "end",
-    gap: 2,
-    p: 3,
-    my: 5,
-    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
-    borderRadius: 1,
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    p: 2,
+    my: 2,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
+    borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
@@ -456,17 +457,33 @@ const LoadsPageDetails = () => {
         </Box>
       </Box>
 
-      {/* Search Section */}
+      {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>
+        {/* Search */}
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+          >
+            Load Details
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+          >
+            Ckeck list of all loads
+          </Typography>
+        </Box>
+
+        {/* Search */}
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search by Load ID"
-          fullWidth
+          placeholder="Search loads by ID...."
           showClearButton
-          sx={{ width: "100%" }}
+          sx={{ width: 350 }}
           inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
+              borderRadius: 2,
               backgroundColor: theme.currentPalette.background,
               py: 0.5,
               "&:hover": {

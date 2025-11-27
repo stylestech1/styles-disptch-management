@@ -158,7 +158,7 @@ const Users = () => {
 
   // Stats cards
   const statsData = useMemo(() => {
-    const statsUsersData = dispatchersData?.stats || []
+    const statsUsersData = dispatchersData?.stats || [];
     if (!statsUsersData || statsUsersData.length === 0)
       return { totalUsers: 0, drivers: 0, admins: 0, employees: 0 };
     return {
@@ -371,19 +371,15 @@ const Users = () => {
     minHeight: "100vh",
     p: 3,
   };
-  const headerContainerSx: SxProps = {
-    mb: 4,
-  };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },
-    alignItems: "end",
-    gap: 2,
-    p: 3,
-    my: 5,
-    border: `1px solid ${alpha(theme.currentPalette.primary, 0.2)}`,
-    borderRadius: 1,
-    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    p: 2,
+    my: 2,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
+    borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
@@ -456,15 +452,30 @@ const Users = () => {
       {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>
         {/* Search */}
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+          >
+            User Details
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+          >
+            Ckeck list of all users
+          </Typography>
+        </Box>
+
+        {/* Search */}
         <SearchInput
           searchHook={searchHook}
-          placeholder="Search users by job ID"
-          fullWidth
+          placeholder="Search users by ID...."
           showClearButton
-          sx={{ width: "100%" }}
+          sx={{ width: 350 }}
           inputSx={{
             "& .MuiOutlinedInput-root": {
-              borderRadius: 1,
+              borderRadius: 2,
               backgroundColor: theme.currentPalette.background,
               py: 0.5,
               "&:hover": {
