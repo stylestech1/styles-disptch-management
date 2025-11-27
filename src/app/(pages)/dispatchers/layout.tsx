@@ -115,7 +115,12 @@ export default function AdminLayout({
             {getInitials(user.name)}
           </Avatar>
           <Box>
-            <Typography variant="subtitle1" fontWeight={600} sx={{color: themePalette.currentPalette.text}} noWrap>
+            <Typography
+              variant="subtitle1"
+              fontWeight={600}
+              sx={{ color: themePalette.currentPalette.text }}
+              noWrap
+            >
               {user.name}
             </Typography>
             <div className="flex items-center gap-2">
@@ -166,7 +171,12 @@ export default function AdminLayout({
                 }}
               >
                 <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
-                <ListItemText primary={label} />
+                <ListItemText
+                  primary={label}
+                  primaryTypographyProps={{
+                    fontWeight: 500,
+                  }}
+                />
               </ListItemButton>
             );
           }

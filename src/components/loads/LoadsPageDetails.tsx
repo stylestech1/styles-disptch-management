@@ -308,18 +308,13 @@ const LoadsPageDetails = () => {
         </td>
 
         {/* Driver */}
-        <td className="p-4">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center">
-              <IoCar size={12} className="text-slate-600" />
+        <td className="p-4 text-center">
+          <div>
+            <div className="font-medium text-slate-900 text-sm">
+              {loadItem.driverId?.name || "-"}
             </div>
-            <div>
-              <div className="font-medium text-slate-900 text-sm">
-                {loadItem.driverId?.name || "-"}
-              </div>
-              <div className="text-xs text-slate-500">
-                {loadItem.driverId?.phone || "-"}
-              </div>
+            <div className="text-xs text-slate-500">
+              {loadItem.driverId?.phone || "-"}
             </div>
           </div>
         </td>
