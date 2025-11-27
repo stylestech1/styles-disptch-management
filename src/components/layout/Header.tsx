@@ -50,6 +50,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
           justifyContent: "space-between",
           py: { xs: 2, sm: 3 },
           gap: { xs: 2, sm: 0 },
+          px: {xs: 2, sm: 7}
         }}
       >
         {/* Left Side */}
