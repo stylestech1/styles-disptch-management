@@ -172,7 +172,7 @@ export default function AdminLayout({
                     : "transparent",
                   color: active
                     ? theme.palette.primary.contrastText || "#fff"
-                    : themePalette.currentPalette.text,
+                    : themePalette.currentPalette.primary,
                   "&:hover": {
                     backgroundColor: active
                       ? alpha(themePalette.currentPalette.primary, 0.9)
