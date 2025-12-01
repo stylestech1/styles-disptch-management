@@ -101,7 +101,7 @@ export type TDriver = {
   currency: string;
   assignedTruck?: string;
   updatedBy?: string;
-  user: TUser;
+  user: TUser | string;
 };
 export type TTruck = {
   id: string;
