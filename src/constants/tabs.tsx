@@ -5,7 +5,7 @@ import {
   ChartNoAxesCombined,
   CircleDivide,
   Handshake,
-  ShipWheel,
+  ShieldUser,
   Truck,
   Users,
   UserStar,
@@ -39,7 +39,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     {
       label: "Drivers",
       subtitle: "Manage your driver team members and their access",
-      icon: <ShipWheel />,
+      icon: <ShieldUser />,
     },
     {
       label: "Users",

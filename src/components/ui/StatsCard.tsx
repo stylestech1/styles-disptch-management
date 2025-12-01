@@ -72,12 +72,22 @@ const StatsCard = ({
       }}
     >
       <CardContent>
-        <Box display="flex" alignItems="center" justifyContent="space-between">
+        <Box
+          display="flex"
+          alignItems="flex-start"
+          justifyContent="space-between"
+        >
           <Box>
-            <Typography variant="body2" sx={{ color: "text.secondary", fontWeight: 600 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+            >
               {title}
             </Typography>
-            <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary", mt: 0.5 }}>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 500, color: "text.primary", mt: 0.5 }}
+            >
               {value}
             </Typography>
             {trend && (
@@ -99,7 +109,7 @@ const StatsCard = ({
             sx={{
               p: 1.5,
               bgcolor: bgColor,
-              borderRadius: 2,
+              borderRadius: 50,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",

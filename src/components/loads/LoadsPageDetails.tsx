@@ -53,6 +53,7 @@ import {
   alpha,
   Box,
   Button,
+  darken,
   SxProps,
   TableRow,
   Typography,
@@ -385,22 +386,19 @@ const LoadsPageDetails = () => {
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
-    py: 1.5,
-    px: 4,
-    fontWeight: "bold",
-    fontSize: "1rem",
-    borderRadius: 2,
-    textTransform: "none",
-    width: { xs: "100%", lg: "auto" },
-    background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
-    color: "#fff",
-    "&:hover": {
-      background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
-      transform: "translateY(-1px)",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-    },
-    transition: "all 0.3s ease",
-  };
+      py: 1.5,
+      px: 4,
+      fontWeight: "bold",
+      fontSize: "1rem",
+      borderRadius: 2,
+      width: { xs: "100%", lg: "auto" },
+      background: theme.currentPalette.primary,
+      color: theme.currentPalette.background,
+      textTransform: 'capitalize',
+      "&:hover": {
+      background: darken(theme.currentPalette.primary, 0.1),
+      }
+    };
 
   return (
     <Box sx={containerSx}>

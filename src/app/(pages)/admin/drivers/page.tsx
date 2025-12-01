@@ -19,6 +19,14 @@ import {
   Typography,
   alpha,
   SxProps,
+  ToggleButtonGroup,
+  ToggleButton,
+  ToggleButtonGroupProps,
+  darken,
+  Menu,
+  MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from "@mui/material";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
@@ -43,6 +51,17 @@ import { setLoading } from "@/redux/slices/uiSlice";
 import SearchInput from "@/components/ui/SearchInput";
 import { IoMdEye } from "react-icons/io";
 import LinkDriverPopup from "@/components/drivers/Stepper";
+import {
+  CircleEllipsis,
+  Dot,
+  Link,
+  Pen,
+  Trash2,
+  UserRoundCheck,
+  UserRoundX,
+  UsersRound,
+} from "lucide-react";
+import { MoreVert } from "@mui/icons-material";
 
 const DriversPage = () => {
   const router = useRouter();
@@ -57,6 +76,7 @@ const DriversPage = () => {
   const [page, setPage] = useState(1);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
   const [openStepper, setOpenStepper] = useState(false);
+  const [togglePage, setTogglePage] = useState("drivers");
 
   // 🔹 API Queries
   const {
@@ -272,6 +292,8 @@ const DriversPage = () => {
     id: string;
     driverId?: number;
   } | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [selectedDriver, setSelectedDriver] = useState<TDriver | null>(null);
 
   // ✅ Delete Driver handler
   const handleDelete = async (id: string, driverId?: number) => {
@@ -314,7 +336,6 @@ const DriversPage = () => {
       bgcolor: theme.currentPalette.background,
       "&:hover": {
         bgcolor: alpha(theme.currentPalette.primary, 0.1),
-        cursor: "pointer",
       },
       transition: "all 0.2s ease-in-out",
     };
@@ -327,7 +348,13 @@ const DriversPage = () => {
       >
         {/* Driver ID */}
         <td className="p-4 text-center">
-          <span className="text-sm bg-slate-100 px-2 py-1 rounded text-slate-700 font-medium">
+          <span
+            className="text-sm px-2 py-1 rounded font-medium"
+            style={{
+              background: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+            }}
+          >
             {driver.driverId}
           </span>
         </td>
@@ -335,109 +362,235 @@ const DriversPage = () => {
         {/* Name */}
         <td className="p-4">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 bg-slate-100 rounded-full flex items-center justify-center">
-              <IoPerson size={12} className="text-slate-600" />
-            </div>
-            <div>
-              <div className="font-medium text-slate-900 text-sm">
-                {driver.name || "-"}
-              </div>
-              <div className="text-xs text-slate-500">
-                {driver.email || "-"}
-              </div>
+            <div
+              className="font-medium text-sm"
+              style={{
+                color: theme.currentPalette.primary,
+              }}
+            >
+              {driver.name || "-"}
             </div>
           </div>
         </td>
 
         {/* Phone */}
-        <td className="p-4 text-center text-slate-700 font-medium">
+        <td
+          className="p-4 text-center font-medium"
+          style={{
+            color: theme.currentPalette.primary,
+          }}
+        >
           {driver.phone || "-"}
         </td>
 
         {/* License Number */}
-        <td className="p-4 text-center text-slate-700">
+        <td
+          className="p-4 text-center"
+          style={{
+            color: theme.currentPalette.primary,
+          }}
+        >
           {driver.licenseNumber || "-"}
         </td>
 
         {/* Price Per Mile */}
-        <td className="p-4 text-center font-semibold text-emerald-700">
-          {driver.pricePerMile ? `${driver.pricePerMile} $` : "-"}
+        <td
+          className="p-4 text-center"
+          style={{
+            color: theme.currentPalette.primary,
+          }}
+        >
+          {driver.pricePerMile ? `${driver.pricePerMile}$` : "-"}
         </td>
 
         {/* Hire Date */}
         <td className="p-4 text-center">
           <Chip
             label={driver.hireDate.split("T")[0]}
-            variant="outlined"
+            variant="filled"
+            sx={{
+              bgcolor: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+              borderRadius: 1,
+            }}
             size="small"
           />
         </td>
 
         {/* Status */}
         <td className="p-4 text-center">
-          <StatusChip status={driver.status} />
+          {driver.status === "available" && (
+            <Chip
+              label={driver.status}
+              variant="filled"
+              sx={{
+                bgcolor: alpha(theme.currentPalette.primary, 0.5),
+                color: theme.currentPalette.primary,
+                borderRadius: 1,
+                pl: 0.5,
+              }}
+              size="small"
+              icon={
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: theme.currentPalette.primary,
+                  }}
+                />
+              }
+            />
+          )}
+          {driver.status === "busy" && (
+            <Chip
+              label={driver.status}
+              variant="filled"
+              sx={{
+                bgcolor: theme.currentPalette.primary,
+                color: theme.currentPalette.background,
+                borderRadius: 1,
+                pl: 0.5,
+              }}
+              size="small"
+              icon={
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: theme.currentPalette.background,
+                  }}
+                />
+              }
+            />
+          )}
+          {driver.status === "inactive" && (
+            <Chip
+              label={driver.status}
+              variant="filled"
+              sx={{
+                bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                color: theme.currentPalette.primary,
+                borderRadius: 1,
+                pl: 0.5,
+              }}
+              size="small"
+              icon={
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: theme.currentPalette.primary,
+                  }}
+                />
+              }
+            />
+          )}
         </td>
 
         {/* Actions */}
         <td className="p-4 text-center">
-          <div className="flex items-center justify-center gap-1">
-            <Tooltip title="View Statistics">
-              <IconButton
-                size="small"
-                color="info"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleViewStats(driver.id);
-                }}
-                sx={{
-                  "&:hover": {
-                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
-                  },
-                }}
-              >
-                <IoMdEye size={16} />
-              </IconButton>
-            </Tooltip>
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setAnchorEl(e.currentTarget);
+              setSelectedDriver(driver);
+            }}
+            sx={{
+              color: theme.currentPalette.primary,
+              "&:hover": {
+                backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+              },
+            }}
+          >
+            <CircleEllipsis fontSize="small" />
+          </IconButton>
 
-            <Tooltip title="Edit Driver">
-              <IconButton
-                size="small"
-                color="primary"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleEditClick(driver);
-                }}
-                sx={{
-                  "&:hover": {
-                    backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+          {/* Menu */}
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={() => setAnchorEl(null)}
+            PaperProps={{
+              sx: {
+                borderRadius: 2,
+                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                mt: 1,
+              },
+            }}
+          >
+            <MenuItem
+              onClick={() => {
+                if (selectedDriver) handleViewStats(selectedDriver.id);
+                setAnchorEl(null);
+              }}
+              sx={{ fontSize: "14px" }}
+            >
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <IoMdEye size={18} color={theme.currentPalette.primary} />
+              </ListItemIcon>
+              <ListItemText
+                primary="View"
+                slotProps={{
+                  primary: {
+                    sx: { color: theme.currentPalette.primary },
                   },
                 }}
-              >
-                <IoPencil size={16} />
-              </IconButton>
-            </Tooltip>
+              />
+            </MenuItem>
 
-            <Tooltip title="Delete Driver">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(driver.id, driver.driverId);
-                }}
-                sx={{
-                  "&:hover": {
-                    backgroundColor: alpha("#dc2626", 0.1),
+            <MenuItem
+              onClick={() => {
+                if (selectedDriver) handleEditClick(selectedDriver);
+                setAnchorEl(null);
+              }}
+              sx={{ fontSize: "14px" }}
+            >
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <Pen size={18} color={theme.currentPalette.primary} />
+              </ListItemIcon>
+              <ListItemText
+                primary="Edit Details"
+                slotProps={{
+                  primary: {
+                    sx: { color: theme.currentPalette.primary },
                   },
                 }}
-              >
-                <IoTrash size={16} />
-              </IconButton>
-            </Tooltip>
-          </div>
+              />
+            </MenuItem>
+
+            <MenuItem
+              onClick={() => {
+                if (selectedDriver)
+                  handleDelete(selectedDriver.id, selectedDriver.driverId);
+                setAnchorEl(null);
+              }}
+              sx={{ fontSize: "14px", color: "#dc2626" }}
+            >
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                <Trash2 size={18} color="#dc2626" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Delete"
+                slotProps={{
+                  primary: {
+                    sx: { color: "#dc2626" },
+                  },
+                }}
+              />
+            </MenuItem>
+          </Menu>
         </td>
       </TableRow>
     );
+  };
+
+  // ✅ handling toggle page
+  const handleChange: ToggleButtonGroupProps["onChange"] = (_, newValue) => {
+    if (newValue !== null) setTogglePage(newValue);
   };
 
   // Loading state
@@ -466,49 +619,88 @@ const DriversPage = () => {
     fontWeight: "bold",
     fontSize: "1rem",
     borderRadius: 2,
-    textTransform: "none",
     width: { xs: "100%", lg: "auto" },
-    background: `linear-gradient(135deg, ${theme.currentPalette.primary}, ${theme.currentPalette.secondary})`,
-    color: "#fff",
+    background: theme.currentPalette.primary,
+    color: theme.currentPalette.background,
+    textTransform: "capitalize",
     "&:hover": {
-      background: `linear-gradient(135deg, ${theme.currentPalette.secondary}, ${theme.currentPalette.primary})`,
-      transform: "translateY(-1px)",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+      background: darken(theme.currentPalette.primary, 0.1),
     },
-    transition: "all 0.3s ease",
   };
   return (
     <Box sx={containerSx}>
       <Toaster position="top-center" />
 
+      <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+        <ToggleButtonGroup
+          value={togglePage}
+          exclusive
+          onChange={handleChange}
+          sx={{
+            borderRadius: 2,
+            overflow: "hidden",
+            border: `1px solid ${alpha(theme.currentPalette.primary, 0.5)}`,
+          }}
+        >
+          <ToggleButton
+            value="drivers"
+            sx={{
+              textTransform: "none",
+              px: 2,
+              py: 1,
+              "&.Mui-selected": {
+                backgroundColor: alpha(theme.currentPalette.primary, 0.9),
+                color: theme.currentPalette.background,
+              },
+              "&.Mui-selected:hover": {
+                backgroundColor: alpha(theme.currentPalette.primary, 0.5),
+              },
+            }}
+          >
+            Driver Management
+          </ToggleButton>
+
+          <ToggleButton
+            value="timeoff"
+            sx={{
+              textTransform: "none",
+              px: 2,
+              py: 1,
+              "&.Mui-selected": {
+                backgroundColor: alpha(theme.currentPalette.primary, 0.9),
+                color: theme.currentPalette.background,
+              },
+              "&.Mui-selected:hover": {
+                backgroundColor: alpha(theme.currentPalette.primary, 0.5),
+              },
+            }}
+          >
+            Time off requests
+          </ToggleButton>
+        </ToggleButtonGroup>
+      </Box>
+
       {/* Stats Summary */}
       <Box sx={{ mt: 4, mb: 5 }}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 my-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-10">
           <StatsCard
             title="Total Drivers"
             value={statsData.totalDrivers}
-            icon={IoPerson}
+            icon={UsersRound}
             iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
-            title="Available"
+            title="Available Drivers"
             value={statsData.available}
-            icon={FaUserCheck}
+            icon={UserRoundCheck}
             iconColor={theme.currentPalette.primary}
           />
 
           <StatsCard
-            title="Busy"
+            title="Busy Drivers"
             value={statsData.busy}
-            icon={FaUserMinus}
-            iconColor={theme.currentPalette.primary}
-          />
-
-          <StatsCard
-            title="Inactive"
-            value={statsData.inactive}
-            icon={FaUserLargeSlash}
+            icon={UserRoundX}
             iconColor={theme.currentPalette.primary}
           />
         </div>
@@ -527,7 +719,7 @@ const DriversPage = () => {
             variant="body2"
             sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
           >
-            Ckeck list of all drivers
+            Check the list of all drivers
           </Typography>
         </Box>
 
@@ -542,7 +734,7 @@ const DriversPage = () => {
           {/* Search */}
           <SearchInput
             searchHook={searchHook}
-            placeholder="Search drivers by ID...."
+            placeholder="Search By Driver ID..."
             showClearButton
             sx={{ width: 350 }}
             inputSx={{
@@ -559,39 +751,27 @@ const DriversPage = () => {
 
           {/* Add Button */}
           <Box>
-            {/* <Button
-              onClick={handleOpenAdd}
+            <Button
+              onClick={() => setOpenStepper(true)}
               variant="contained"
-              startIcon={<IoAdd size={22} />}
+              startIcon={<Link size={18} />}
               sx={newLoadButtonSx}
             >
-              Add Driver
-            </Button> */}
-            <Box>
-              <Button
-                onClick={() => setOpenStepper(true)}
-                variant="contained"
-                startIcon={<IoAdd size={22} />}
-                sx={newLoadButtonSx}
-              >
-                Add Driver
-              </Button>
+              Link Driver
+            </Button>
 
-              {/* Stepper Popup */}
-              <Dialog
-                open={openStepper}
-                onClose={() => setOpen(false)}
-                PaperProps={{
+            {/* Stepper Popup */}
+            <Dialog
+              open={openStepper}
+              onClose={() => setOpen(false)}
+              slotProps={{
+                paper: {
                   sx: { borderRadius: "10px" },
-                }}
-              >
-                <LinkDriverPopup
-                  // activeStep={0}
-                  onClose={() => setOpenStepper(false)}
-                  // onNext={() => console.log("Next Step")}
-                />
-              </Dialog>
-            </Box>
+                },
+              }}
+            >
+              <LinkDriverPopup onClose={() => setOpenStepper(false)} />
+            </Dialog>
           </Box>
         </Box>
       </Box>
