@@ -42,6 +42,7 @@ import { useSearchSubmit } from "@/hook/useSearchSubmit";
 import { setLoading } from "@/redux/slices/uiSlice";
 import SearchInput from "@/components/ui/SearchInput";
 import { IoMdEye } from "react-icons/io";
+import LinkDriverPopup from "@/components/drivers/Stepper";
 
 const DriversPage = () => {
   const router = useRouter();
@@ -55,6 +56,7 @@ const DriversPage = () => {
   const [isFiltered, setIsFiltered] = useState(false);
   const [page, setPage] = useState(1);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
+  const [openStepper, setOpenStepper] = useState(false);
 
   // 🔹 API Queries
   const {
@@ -149,13 +151,6 @@ const DriversPage = () => {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<TDriver>>({});
   const [editMode, setEditMode] = useState(false);
-
-  // ✅ Handle Open (Add / Edit)
-  const handleOpenAdd = () => {
-    setFormData({});
-    setEditMode(false);
-    setOpen(true);
-  };
 
   // ✅ Handle Edit
   const handleEditClick = (driver: TDriver) => {
@@ -561,17 +556,42 @@ const DriversPage = () => {
               },
             }}
           />
-          
+
           {/* Add Button */}
           <Box>
-            <Button
+            {/* <Button
               onClick={handleOpenAdd}
               variant="contained"
               startIcon={<IoAdd size={22} />}
               sx={newLoadButtonSx}
             >
               Add Driver
-            </Button>
+            </Button> */}
+            <Box>
+              <Button
+                onClick={() => setOpenStepper(true)}
+                variant="contained"
+                startIcon={<IoAdd size={22} />}
+                sx={newLoadButtonSx}
+              >
+                Add Driver
+              </Button>
+
+              {/* Stepper Popup */}
+              <Dialog
+                open={openStepper}
+                onClose={() => setOpen(false)}
+                PaperProps={{
+                  sx: { borderRadius: "10px" },
+                }}
+              >
+                <LinkDriverPopup
+                  // activeStep={0}
+                  onClose={() => setOpenStepper(false)}
+                  // onNext={() => console.log("Next Step")}
+                />
+              </Dialog>
+            </Box>
           </Box>
         </Box>
       </Box>

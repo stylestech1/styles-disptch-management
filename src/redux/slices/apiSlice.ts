@@ -111,7 +111,7 @@ export const apiSlice = api.injectEndpoints({
     // Get User has driver role
     getUserDriverRole: builder.query({
       query: (email) => {
-        const url = `/api/v1/adminDashboard?limit=50`;
+        const url = `/api/v1/adminDashboard`;
         const params = [];
         if (email) params.push(`&email=${email}`);
         return url;
@@ -129,7 +129,7 @@ export const apiSlice = api.injectEndpoints({
 
     // 🔹 Get all drivers without pagination
     getAllDrivers: builder.query<{ data: TDriver[] }, void>({
-      query: () => `/api/v1/drivers?limit=50`,
+      query: () => `/api/v1/drivers`,
       providesTags: ["Drivers"],
     }),
 
@@ -156,6 +156,12 @@ export const apiSlice = api.injectEndpoints({
         const queryString = params.join("&");
         return `/api/v1/drivers?${queryString}`;
       },
+      providesTags: ["Drivers"],
+    }),
+
+    // 🔹 Get Drivers' emails
+    getDriverEmails: builder.query({
+      query: () => `/api/v1/drivers?fields=email`,
       providesTags: ["Drivers"],
     }),
 
@@ -406,6 +412,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Dispatchers"],
     }),
 
+    // Get Users has Driver Roles with their emails
+    getUsersWithDriverRoles: builder.query({
+      query: () => `/api/v1/adminDashboard?fields=email&role=driver`,
+      providesTags: ["Dispatchers"],
+    }),
+
     // Create User
     createUser: builder.mutation({
       query: (body) => ({
@@ -629,6 +641,7 @@ export const {
   useGetDriverByDriverIdQuery,
   useLazyGetDriverByIdQuery,
   useLazyGetDriverByDriverIdQuery,
+  useGetDriverEmailsQuery,
   useGetSpecificDriverSummaryQuery,
   useLazyGetSpecificDriverSummaryQuery,
   useGetDriverSummaryWithFilterQuery,
@@ -663,6 +676,7 @@ export const {
   useGetUserByIdQuery,
   useLazyGetUserByIdQuery,
   useGetUserWithSearchQuery,
+  useGetUsersWithDriverRolesQuery,
   useCreateUserMutation,
   useUpdateUserRoleMutation,
   useActivateUserMutation,
