@@ -456,9 +456,9 @@ const DriversPage = () => {
   };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
-    flexDirection: { xs: "column", lg: 'row' },
+    flexDirection: { xs: "column", lg: "row" },
     alignItems: "flex-start",
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
     p: 2,
     my: 2,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
@@ -519,18 +519,6 @@ const DriversPage = () => {
         </div>
       </Box>
 
-      {/* Add Button */}
-      <Box display="flex" justifyContent="end" sx={{ mt: 3 }}>
-        <Button
-          onClick={handleOpenAdd}
-          variant="contained"
-          startIcon={<IoAdd size={22} />}
-          sx={newLoadButtonSx}
-        >
-          Add Driver
-        </Button>
-      </Box>
-
       {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>
         <Box>
@@ -548,23 +536,44 @@ const DriversPage = () => {
           </Typography>
         </Box>
 
-        {/* Search */}
-        <SearchInput
-          searchHook={searchHook}
-          placeholder="Search drivers by ID...."
-          showClearButton
-          sx={{width: 350}}
-          inputSx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-              backgroundColor: theme.currentPalette.background,
-              py: 0.5,
-              "&:hover": {
-                borderColor: theme.currentPalette.primary,
-              },
-            },
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexDirection: { xs: "column", lg: "row" },
+            gap: 2,
           }}
-        />
+        >
+          {/* Search */}
+          <SearchInput
+            searchHook={searchHook}
+            placeholder="Search drivers by ID...."
+            showClearButton
+            sx={{ width: 350 }}
+            inputSx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: theme.currentPalette.background,
+                py: 0.5,
+                "&:hover": {
+                  borderColor: theme.currentPalette.primary,
+                },
+              },
+            }}
+          />
+          
+          {/* Add Button */}
+          <Box>
+            <Button
+              onClick={handleOpenAdd}
+              variant="contained"
+              startIcon={<IoAdd size={22} />}
+              sx={newLoadButtonSx}
+            >
+              Add Driver
+            </Button>
+          </Box>
+        </Box>
       </Box>
 
       {error && (

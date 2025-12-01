@@ -454,18 +454,6 @@ const TrucksPage: React.FC = () => {
         </div>
       </Box>
 
-      {/* Add Button */}
-      <Box display="flex" justifyContent="end" sx={{ mt: 2 }}>
-        <Button
-          onClick={handleOpenAdd}
-          variant="contained"
-          startIcon={<IoAdd size={22} />}
-          sx={newLoadButtonSx}
-        >
-          Add Truck
-        </Button>
-      </Box>
-
       {/* Search & Filter */}
       <Box sx={searchFilterContainerSx}>
         {/* Search */}
@@ -484,23 +472,44 @@ const TrucksPage: React.FC = () => {
           </Typography>
         </Box>
 
-        {/* Search */}
-        <SearchInput
-          searchHook={searchHook}
-          placeholder="Search trucks by ID...."
-          showClearButton
-          sx={{ width: 350 }}
-          inputSx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-              backgroundColor: theme.currentPalette.background,
-              py: 0.5,
-              "&:hover": {
-                borderColor: theme.currentPalette.primary,
-              },
-            },
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexDirection: { xs: "column", lg: "row" },
+            gap: 2,
           }}
-        />
+        >
+          {/* Search */}
+          <SearchInput
+            searchHook={searchHook}
+            placeholder="Search trucks by ID...."
+            showClearButton
+            sx={{ width: 350 }}
+            inputSx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: theme.currentPalette.background,
+                py: 0.5,
+                "&:hover": {
+                  borderColor: theme.currentPalette.primary,
+                },
+              },
+            }}
+          />
+          
+          {/* Add Button */}
+          <Box>
+            <Button
+              onClick={handleOpenAdd}
+              variant="contained"
+              startIcon={<IoAdd size={22} />}
+              sx={newLoadButtonSx}
+            >
+              Add Truck
+            </Button>
+          </Box>
+        </Box>
       </Box>
 
       {error && (

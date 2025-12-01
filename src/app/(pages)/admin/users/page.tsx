@@ -435,18 +435,6 @@ const Users = () => {
         </div>
       </Box>
 
-      {/* Add User */}
-      <Box display="flex" justifyContent="end" sx={{ mt: 3 }}>
-        <Button
-          onClick={() => setPopup(true)}
-          variant="contained"
-          startIcon={<IoAdd size={22} />}
-          sx={newLoadButtonSx}
-        >
-          New User
-        </Button>
-      </Box>
-
       <Toaster position="top-center" reverseOrder={false} />
 
       {/* Search & Filter */}
@@ -467,23 +455,44 @@ const Users = () => {
           </Typography>
         </Box>
 
-        {/* Search */}
-        <SearchInput
-          searchHook={searchHook}
-          placeholder="Search users by ID...."
-          showClearButton
-          sx={{ width: 350 }}
-          inputSx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 2,
-              backgroundColor: theme.currentPalette.background,
-              py: 0.5,
-              "&:hover": {
-                borderColor: theme.currentPalette.primary,
-              },
-            },
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexDirection: { xs: "column", lg: "row" },
+            gap: 2,
           }}
-        />
+        >
+          {/* Search */}
+          <SearchInput
+            searchHook={searchHook}
+            placeholder="Search users by ID...."
+            showClearButton
+            sx={{ width: 350 }}
+            inputSx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: theme.currentPalette.background,
+                py: 0.5,
+                "&:hover": {
+                  borderColor: theme.currentPalette.primary,
+                },
+              },
+            }}
+          />
+          
+          {/* Add User */}
+          <Box>
+            <Button
+              onClick={() => setPopup(true)}
+              variant="contained"
+              startIcon={<IoAdd size={22} />}
+              sx={newLoadButtonSx}
+            >
+              New User
+            </Button>
+          </Box>
+        </Box>
       </Box>
 
       {error && (

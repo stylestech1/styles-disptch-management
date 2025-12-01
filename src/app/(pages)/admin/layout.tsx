@@ -211,7 +211,7 @@ export default function AdminLayout({
               textTransform: "capitalize",
             }}
           >
-            settings
+            Theme
           </Button>
         )}
         <Button
