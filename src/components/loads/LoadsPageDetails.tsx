@@ -53,6 +53,7 @@ import {
   alpha,
   Box,
   Button,
+  Chip,
   darken,
   SxProps,
   TableRow,
@@ -305,7 +306,101 @@ const LoadsPageDetails = () => {
 
         {/* Status */}
         <td className="p-4 text-center">
-          <StatusBadge status={loadItem.status} size="md" />
+          {/* <StatusBadge status={loadItem.status} size="md" />  */}
+          {loadItem.status === "pending" && (
+            <Chip
+              label={loadItem.status}
+              variant="filled"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                color: '#E2852E',
+                border: '1px solid #E2852E',
+                borderRadius: 1,
+                pl: 0.5,
+              }}
+              size="small"
+              icon={
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: '#E2852E',
+                  }}
+                />
+              }
+            />
+          )}
+          {loadItem.status === 'delivered' && (
+            <Chip
+              label={loadItem.status}
+              variant="filled"
+              sx={{
+                bgcolor: alpha(theme.currentPalette.primary, 0.5),
+                color: theme.currentPalette.primary,
+                borderRadius: 1,
+                pl: 0.5,
+              }}
+              size="small"
+              icon={
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: theme.currentPalette.primary,
+                  }}
+                />
+              }
+            />
+          )}
+          {loadItem.status === "in_transit" && (
+            <Chip
+              label={loadItem.status}
+              variant="filled"
+              sx={{
+                bgcolor: theme.currentPalette.primary,
+                color: theme.currentPalette.background,
+                borderRadius: 1,
+                pl: 0.5,
+              }}
+              size="small"
+              icon={
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: theme.currentPalette.background,
+                  }}
+                />
+              }
+            />
+          )}
+          {loadItem.status === "cancelled" && (
+            <Chip
+              label={loadItem.status}
+              variant="filled"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                color: '#dc2626',
+                border: '1px solid #dc2626',
+                borderRadius: 1,
+                pl: 0.5,
+              }}
+              size="small"
+              icon={
+                <span
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: "50%",
+                    backgroundColor: '#dc2626',
+                  }}
+                />
+              }
+            />
+          )}
         </td>
 
         {/* Driver */}
@@ -386,19 +481,19 @@ const LoadsPageDetails = () => {
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
-      py: 1.5,
-      px: 4,
-      fontWeight: "bold",
-      fontSize: "1rem",
-      borderRadius: 2,
-      width: { xs: "100%", lg: "auto" },
-      background: theme.currentPalette.primary,
-      color: theme.currentPalette.background,
-      textTransform: 'capitalize',
-      "&:hover": {
+    py: 1.5,
+    px: 4,
+    fontWeight: "bold",
+    fontSize: "1rem",
+    borderRadius: 2,
+    width: { xs: "100%", lg: "auto" },
+    background: theme.currentPalette.primary,
+    color: theme.currentPalette.background,
+    textTransform: "capitalize",
+    "&:hover": {
       background: darken(theme.currentPalette.primary, 0.1),
-      }
-    };
+    },
+  };
 
   return (
     <Box sx={containerSx}>
