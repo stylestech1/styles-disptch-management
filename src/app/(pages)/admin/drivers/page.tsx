@@ -1315,7 +1315,7 @@ const DriversPage = () => {
       />
 
       {/* Pagination */}
-      {currentPagination && currentData.length > 0 && (
+      {currentPagination && timeOffFilter === 'all' && currentData.length > 0 && (
         <Pagination
           pagination={currentPagination}
           page={page}
