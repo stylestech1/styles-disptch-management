@@ -145,6 +145,7 @@ export const apiSlice = api.injectEndpoints({
       query: (id) => `/api/v1/drivers/${id}`,
       providesTags: ["Drivers"],
     }),
+    
 
     // 🔹 Get Driver with Filter and Search
     getDriverWithFilter: builder.query({
