@@ -10,3 +10,13 @@ export const driverColumns: Column[] = [
   { key: "status", header: "Status", align: "center" },
   { key: "actions", header: "Actions", align: "center" },
 ];
+
+export const timeOffColumns: Column[] = [
+  { key: "requestId", header: "Request ID", align: "center" },
+  { key: "name", header: "Driver Name", align: "left" },
+  { key: "phone", header: "Phone Number", align: "left" },
+  { key: "reason", header: "Reason", align: "center" },
+  { key: "dateFromTo", header: "Date From/To", align: "center" },
+  { key: "status", header: "Status", align: "center" },
+  { key: "actions", header: "Actions", align: "center" },
+];

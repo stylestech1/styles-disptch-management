@@ -6,7 +6,6 @@ import HeaderSourceTruckDashboard from "../truck/HeaderSourceTruckDashboard";
 import { usePathname } from "next/navigation";
 import { IoMenu } from "react-icons/io5";
 import GlobalFilter from "@/components/ui/GlobalFilter";
-import { PanelLeftDashed } from "lucide-react";
 
 interface NavbarProps {
   title: string;
@@ -23,12 +22,14 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     "/admin/truckdashboard",
     "/admin/driverSummary", 
     "/admin/truckSummary2",
+    "admin/drivers",
     "/dispatchers/loads",
   ].some(path => pathname.includes(path));
 
   const getFilterType = () => {
     if (pathname.includes('loads')) return 'loads';
     if (pathname.includes('driverSummary')) return 'drivers';
+    if (pathname.includes('drivers')) return 'drivers';
     if (pathname.includes('truckSummary2')) return 'trucks';
     return 'default';
   };

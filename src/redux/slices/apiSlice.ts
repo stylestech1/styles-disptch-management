@@ -15,6 +15,7 @@ import {
   TUpdatePaletteRequest,
 } from "@/types/themeType";
 import { get } from "http";
+import { TTimeOffs } from "@/types/driverType";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -133,7 +134,7 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Drivers"],
     }),
 
-    // Get driver using Id
+    // 🔹 Get driver using Id
     getDriverByDriverId: builder.query<{ data: TDriver }, string>({
       query: (driverId) => `/api/v1/drivers?driverId=${driverId}`,
       providesTags: (result, error, driverId) => [
@@ -145,7 +146,7 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Drivers"],
     }),
 
-    // Get Driver with Filter and Search
+    // 🔹 Get Driver with Filter and Search
     getDriverWithFilter: builder.query({
       query: ({ from, to, page, limit }) => {
         const params = [`page=${page}`, `limit=${limit}`];
@@ -212,6 +213,73 @@ export const apiSlice = api.injectEndpoints({
         method: "DELETE",
       }),
       invalidatesTags: ["Drivers"],
+    }),
+
+    // ! ========== Time Off Requests =======
+
+    // 🔹 Get All Time Off Requests
+    getAllTimeOffs: builder.query({
+      query: ({ page = 1, limit = 10 }) =>
+        `/api/v1/driver-dashboard/time-off/all?page=${page}&limit=${limit}`,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.map(({ id }: { id: string }) => ({
+                type: "TimeOffs" as const,
+                id,
+              })),
+              { type: "TimeOffs", id: "LIST" },
+            ]
+          : [{ type: "TimeOffs", id: "LIST" }],
+      keepUnusedDataFor: 60 * 60 * 24,
+    }),
+    
+    // 🔹 Filter Time Off Requests
+    getFilterTimeOffs: builder.query({
+      query: ({ from, to, page = 1, limit = 10 }) => {
+        const params = [`page=${page}`, `limit=${limit}`];
+
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
+
+        const queryString = params.join("&");
+        return `/api/v1/driver-dashboard/time-off/all?${queryString}`;
+      },
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.map(({ id }: { id: string }) => ({
+                type: "TimeOffs" as const,
+                id,
+              })),
+              { type: "TimeOffs", id: "LIST" },
+            ]
+          : [{ type: "TimeOffs", id: "LIST" }],
+      keepUnusedDataFor: 60 * 60 * 24,
+    }),
+
+    // 🔹 Get Specific Time Off Requests
+    getSpecificTimeOffs: builder.query<{ data: TTimeOffs }, string>({
+      query: (requestId) => `/api/v1/driver-dashboard/time-off/all?requestId=${requestId}`,
+      providesTags: (result, error, requestId) => [
+        { type: "TimeOffs", requestId: requestId },
+      ],
+    }),
+
+    // 🔹 Update Time Off Request Status
+    updateTimeOffStatus: builder.mutation<
+      TTimeOffs,
+      {
+        id: string;
+        body: { status: "approved" | "rejected"; adminNote?: string };
+      }
+    >({
+      query: ({ id, body }) => ({
+        url: `/api/v1/driver-dashboard/time-off/status/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: [{ type: "TimeOffs", id: "LIST" }],
     }),
 
     // ! ========== Trucks Methods ==========
@@ -646,6 +714,11 @@ export const {
   useLazyGetSpecificDriverSummaryQuery,
   useGetDriverSummaryWithFilterQuery,
   useLazyGetDriverSummaryWithFilterQuery,
+  useGetAllTimeOffsQuery,
+  useGetFilterTimeOffsQuery,
+  useGetSpecificTimeOffsQuery,
+  useLazyGetSpecificTimeOffsQuery,
+  useUpdateTimeOffStatusMutation,
   useCreateDriverMutation,
   useUpdateDriverMutation,
   useDeleteDriverMutation,

@@ -27,41 +27,56 @@ import {
   MenuItem,
   ListItemIcon,
   ListItemText,
+  CircularProgress,
 } from "@mui/material";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
 import {
   useCreateDriverMutation,
   useDeleteDriverMutation,
+  useGetAllTimeOffsQuery,
   useGetDriversWithPaginationQuery,
   useGetDriverWithFilterQuery,
+  useGetFilterTimeOffsQuery,
+  useGetSpecificTimeOffsQuery,
   useLazyGetDriverByDriverIdQuery,
+  useLazyGetSpecificTimeOffsQuery,
   useUpdateDriverMutation,
+  useUpdateTimeOffStatusMutation,
 } from "@/redux/slices/apiSlice";
 import { DriverForm } from "@/components/drivers/DriverForm";
 import useError from "@/hook/useError";
 import StatsCard from "@/components/ui/StatsCard";
-import { FaUserMinus } from "react-icons/fa";
 import { Dayjs } from "dayjs";
 import DataTable from "@/components/ui/DataTable";
-import { driverColumns } from "@/data/driverTables";
-import { StatusChip } from "@/components/ui/TablesMUI";
+import { driverColumns, timeOffColumns } from "@/data/driverTables";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
-import { setLoading } from "@/redux/slices/uiSlice";
 import SearchInput from "@/components/ui/SearchInput";
 import { IoMdEye } from "react-icons/io";
 import LinkDriverPopup from "@/components/drivers/Stepper";
 import {
+  BadgeCheck,
+  Calendar,
+  Check,
   CircleEllipsis,
-  Dot,
+  ClipboardCheck,
+  ClipboardClock,
+  ClipboardX,
+  Clock3,
+  Eye,
   Link,
+  NotebookText,
+  OctagonX,
   Pen,
+  StickyNote,
   Trash2,
   UserRoundCheck,
   UserRoundX,
   UsersRound,
+  X,
 } from "lucide-react";
-import { MoreVert } from "@mui/icons-material";
+import { TTimeOffs } from "@/types/driverType";
+import { useFilter } from "@/providers/FilterProvider";
 
 const DriversPage = () => {
   const router = useRouter();
@@ -70,15 +85,19 @@ const DriversPage = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
 
   // ✅ Search And Filter
-  const [fromDate, setFromDate] = useState<Dayjs | null>(null);
-  const [toDate, setToDate] = useState<Dayjs | null>(null);
-  const [isFiltered, setIsFiltered] = useState(false);
   const [page, setPage] = useState(1);
   const [deleteToast, setDeleteToast] = useState({ open: false, message: "" });
   const [openStepper, setOpenStepper] = useState(false);
-  const [togglePage, setTogglePage] = useState("drivers");
+  const [togglePage, setTogglePage] = useState<"drivers" | "timeoff">(
+    "drivers"
+  );
+  const [openTimeOffDialog, setOpenTimeOffDialog] = useState(false);
+  const [selectedTimeOff, setSelectedTimeOff] = useState<TTimeOffs | null>(
+    null
+  );
+  const { fromDate, toDate, isFiltered } = useFilter();
 
-  // 🔹 API Queries
+  // 🔹 API Driver Management Queries
   const {
     data: driversData,
     isLoading: driversLoading,
@@ -89,7 +108,7 @@ const DriversPage = () => {
     {
       refetchOnFocus: false,
       refetchOnReconnect: false,
-      refetchOnMountOrArgChange: false,
+      refetchOnMountOrArgChange: true,
     }
   );
 
@@ -100,8 +119,27 @@ const DriversPage = () => {
       page,
       limit: 10,
     },
-    { skip: !isFiltered }
+    { skip: !isFiltered || !fromDate || !toDate, refetchOnFocus: false }
   );
+  const { data: timeOffsFilteredData } = useGetFilterTimeOffsQuery(
+    {
+      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+      page,
+      limit: 10,
+    },
+    { skip: !isFiltered || !fromDate || !toDate, refetchOnFocus: false }
+  );
+
+  useEffect(() => {
+    if (isFiltered && fromDate && toDate) {
+      setPage(1);
+      if (searchHook.isSearching) {
+        searchHook.handleSearchReset();
+      }
+    }
+  }, [isFiltered, fromDate, toDate, togglePage]);
+
   const [
     triggerSearchQuery,
     {
@@ -112,65 +150,216 @@ const DriversPage = () => {
     },
   ] = useLazyGetDriverByDriverIdQuery();
 
+  // 🔹 API Time Off Requests Queries
+  const {
+    data: timeOffsData,
+    isLoading: timeOffsLoading,
+    error: timeOffsError,
+    refetch: refetchTimeOffs,
+  } = useGetAllTimeOffsQuery(
+    { page, limit: 10 },
+    {
+      refetchOnFocus: true,
+      refetchOnReconnect: true,
+      refetchOnMountOrArgChange: 5,
+    }
+  );
+
+  const [
+    triggerTimeOffSearch,
+    {
+      data: timeOffSearchData,
+      isLoading: timeOffSearchLoading,
+      error: timeOffSearchError,
+      reset: resetTimeOffSearch,
+    },
+  ] = useLazyGetSpecificTimeOffsQuery();
+
   // Search Hook
   const searchHook = useSearchSubmit({
     onSearch: (term) => {
+      if (!term.trim()) return;
+
       setPage(1);
-      if (term.trim()) {
+
+      if (togglePage === "drivers") {
         triggerSearchQuery(encodeURIComponent(term));
+      } else if (togglePage === "timeoff") {
+        triggerTimeOffSearch(encodeURIComponent(term));
       }
     },
     onReset: () => {
       setPage(1);
-      resetSearchQuery();
-      refetchDrivers();
+
+      if (togglePage === "drivers") {
+        resetSearchQuery();
+        refetchDrivers();
+      } else if (togglePage === "timeoff") {
+        resetTimeOffSearch();
+        refetchTimeOffs();
+      }
     },
   });
-
-  const { searchTerm, isSearching } = searchHook;
 
   // 🔹 API Mutations
   const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
   const [updateDriver, { isLoading: isUpdating }] = useUpdateDriverMutation();
   const [deleteDriver] = useDeleteDriverMutation();
+  const [updateTimeOffs] = useUpdateTimeOffStatusMutation();
   const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
 
-  const driver = useMemo(() => {
-    if (isSearching && Array.isArray(driverByIdData?.data)) {
-      return driverByIdData.data.flat();
-    }
-    if (isFiltered && filteredData?.data) {
-      return filteredData.data;
-    }
-    return driversData?.data || [];
-  }, [isSearching, isFiltered, driverByIdData, filteredData, driversData]);
+  // 🔹 Dynamic Data toggle
+  const currentData = useMemo(() => {
+    if (togglePage === "drivers") {
+      if (isFiltered && filteredData?.data) {
+        return filteredData.data;
+      }
 
-  const pagination = isFiltered
-    ? filteredData?.paginationResult || null
-    : driversData?.paginationResult || null;
+      if (searchHook.isSearching && driverByIdData?.data) {
+        return Array.isArray(driverByIdData.data)
+          ? driverByIdData.data.flat()
+          : driverByIdData.data;
+      }
 
-  // Loading state
-  useEffect(() => {
-    setLoading(driversLoading && !driversData);
-  }, [driversLoading, driversData]);
+      return driversData?.data || [];
+    }
+
+    if (togglePage === "timeoff") {
+      if (isFiltered && timeOffsFilteredData?.data) {
+        return timeOffsFilteredData.data;
+      }
+
+      if (searchHook.isSearching && timeOffSearchData?.data) {
+        return Array.isArray(timeOffSearchData.data)
+          ? timeOffSearchData.data
+          : [timeOffSearchData.data];
+      }
+
+      return timeOffsData?.data || [];
+    }
+
+    return [];
+  }, [
+    togglePage,
+    isFiltered,
+    searchHook.isSearching,
+    filteredData,
+    timeOffsFilteredData,
+    driverByIdData,
+    driversData,
+    timeOffSearchData,
+    timeOffsData,
+  ]);
+
+  // 🔹 Dynamic Pagination
+  const currentPagination = useMemo(() => {
+    if (togglePage === "drivers") {
+      if (isFiltered && filteredData?.paginationResult) {
+        return filteredData.paginationResult;
+      }
+      return driversData?.paginationResult;
+    }
+
+    if (togglePage === "timeoff") {
+      if (isFiltered && timeOffsFilteredData?.paginationResult) {
+        return timeOffsFilteredData.paginationResult;
+      }
+      return timeOffsData?.paginationResult;
+    }
+
+    return null;
+  }, [
+    togglePage,
+    isFiltered,
+    filteredData,
+    timeOffsFilteredData,
+    driversData,
+    timeOffsData,
+  ]);
+
+  const isLoading = useMemo(() => {
+    if (togglePage === "drivers") {
+      return (
+        driversLoading ||
+        (searchHook.isSearching && driverByIdLoading) ||
+        (isFiltered && !filteredData)
+      );
+    }
+
+    if (togglePage === "timeoff") {
+      return (
+        timeOffsLoading ||
+        (searchHook.isSearching && timeOffSearchLoading) ||
+        (isFiltered && !timeOffsFilteredData)
+      );
+    }
+
+    return false;
+  }, [
+    togglePage,
+    driversLoading,
+    timeOffsLoading,
+    searchHook.isSearching,
+    driverByIdLoading,
+    timeOffSearchLoading,
+    isFiltered,
+    filteredData,
+    timeOffsFilteredData,
+  ]);
 
   // Stats cards
   const statsData = useMemo(() => {
-    const statsDriverData = driversData?.stats || [];
-    if (!statsDriverData || statsDriverData.length === 0)
-      return { totalDrivers: 0, available: 0, busy: 0, inactive: 0 };
-    return {
-      totalDrivers: statsDriverData.total,
-      available: statsDriverData.available,
-      busy: statsDriverData.busy,
-      inactive: statsDriverData.inactive,
-    };
-  }, [driversData?.stats]);
+    if (togglePage === "drivers") {
+      const stats = isFiltered ? filteredData?.stats : driversData?.stats;
+      return stats
+        ? {
+            total: stats.total || 0,
+            available: stats.available || 0,
+            busy: stats.busy || 0,
+            inactive: stats.inactive || 0,
+          }
+        : { total: 0, available: 0, busy: 0, inactive: 0 };
+    } else {
+      const stats = isFiltered
+        ? timeOffsFilteredData?.stats
+        : timeOffsData?.stats || {};
+      return {
+        total: stats.total || 0,
+        approved: stats.approved || 0,
+        pending: stats.pending || 0,
+        rejected: stats.rejected || 0,
+      };
+    }
+  }, [
+    togglePage,
+    isFiltered,
+    driversData?.stats,
+    filteredData?.stats,
+    timeOffsData?.stats,
+    timeOffsFilteredData?.stats,
+  ]);
+
+  // 🔹 Dynamic Columns
+  const currentColumns =
+    togglePage === "drivers" ? driverColumns : timeOffColumns;
+
+  // 🔹 Toggle Handler
+  const handleToggleChange: ToggleButtonGroupProps["onChange"] = (
+    _,
+    newValue
+  ) => {
+    if (newValue !== null) {
+      setTogglePage(newValue);
+      setPage(1);
+      searchHook.handleSearchReset();
+    }
+  };
 
   // ✅ Modal States
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Partial<TDriver>>({});
   const [editMode, setEditMode] = useState(false);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   // ✅ Handle Edit
   const handleEditClick = (driver: TDriver) => {
@@ -284,6 +473,34 @@ const DriversPage = () => {
       const errorMessage = getErrorMessage(err);
       toast.error(errorMessage || "Updating driver failed ❌");
       throw err;
+    }
+  };
+
+  // ✅ handling TimeOffs Status
+  const handleTimeOffStatus = async (
+    id: string,
+    status: "approved" | "rejected",
+    adminNote?: string
+  ) => {
+    if (updatingId) return;
+    setUpdatingId(id);
+    try {
+      await updateTimeOffs({
+        id,
+        body: { status, adminNote: adminNote?.trim() || undefined },
+      }).unwrap();
+
+      toast.success(
+        status === "approved"
+          ? "Time off request approved successfully"
+          : "Time off request rejected successfully"
+      );
+      refetchTimeOffs();
+    } catch (err: unknown) {
+      const msg = getErrorMessage(err);
+      toast.error(msg || `Failed to ${status} the request`);
+    } finally {
+      setUpdatingId(null);
     }
   };
 
@@ -424,7 +641,7 @@ const DriversPage = () => {
               label={driver.status}
               variant="filled"
               sx={{
-                bgcolor: alpha(theme.currentPalette.primary, 0.5),
+                bgcolor: alpha(theme.currentPalette.primary, 0.2),
                 color: theme.currentPalette.primary,
                 borderRadius: 1,
                 pl: 0.5,
@@ -588,9 +805,214 @@ const DriversPage = () => {
     );
   };
 
-  // ✅ handling toggle page
-  const handleChange: ToggleButtonGroupProps["onChange"] = (_, newValue) => {
-    if (newValue !== null) setTogglePage(newValue);
+  const renderTimeOffRow = (timeOffs: TTimeOffs) => {
+    // Styles
+    const tableRowSx: SxProps = {
+      bgcolor: theme.currentPalette.background,
+      "&:hover": {
+        bgcolor: alpha(theme.currentPalette.primary, 0.1),
+      },
+      transition: "all 0.2s ease-in-out",
+    };
+
+    const isUpdating = updatingId === timeOffs.id;
+
+    return (
+      <TableRow
+        sx={tableRowSx}
+        key={timeOffs.id}
+        className="transition-colors group"
+      >
+        {/* Request ID */}
+        <td className="p-4 text-center">
+          <span
+            className="text-sm px-2 py-1 rounded font-medium"
+            style={{
+              background: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+            }}
+          >
+            {timeOffs.requestId}
+          </span>
+        </td>
+
+        {/* Name */}
+        <td className="p-4">
+          <div className="flex items-center gap-2">
+            <div
+              className="font-medium text-sm"
+              style={{
+                color: theme.currentPalette.primary,
+              }}
+            >
+              {timeOffs.driver.split("(")[0] || "-"}
+            </div>
+          </div>
+        </td>
+
+        {/* Phone */}
+        <td
+          className="p-4 text-center font-medium"
+          style={{
+            color: theme.currentPalette.primary,
+          }}
+        >
+          {timeOffs.phone || "-"}
+        </td>
+
+        {/* Reason */}
+        <td
+          className="p-4 text-center truncate block max-w-[150px]"
+          style={{
+            color: theme.currentPalette.primary,
+          }}
+        >
+          {timeOffs.reason || "-"}
+        </td>
+
+        {/* Date From / To */}
+        <td className="p-4 text-center">
+          <span
+            style={{
+              backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+              color: theme.currentPalette.primary,
+              borderRadius: "5px",
+              padding: "5px",
+            }}
+          >
+            {`${timeOffs.from.split("T")[0]} - ${timeOffs.to.split("T")[0]}`}
+          </span>
+        </td>
+
+        {/* Status */}
+        <td className="p-4 text-center">
+          {timeOffs.status === "pending" && (
+            <Chip
+              label={timeOffs.status}
+              variant="filled"
+              sx={{
+                bgcolor: alpha(theme.currentPalette.primary, 0.2),
+                color: theme.currentPalette.primary,
+                borderRadius: 2,
+              }}
+              size="small"
+            />
+          )}
+          {timeOffs.status === "approved" && (
+            <Chip
+              label={timeOffs.status}
+              variant="filled"
+              sx={{
+                bgcolor: theme.currentPalette.primary,
+                color: theme.currentPalette.background,
+                borderRadius: 2,
+              }}
+              size="small"
+            />
+          )}
+          {timeOffs.status === "rejected" && (
+            <Chip
+              label={timeOffs.status}
+              variant="filled"
+              sx={{
+                bgcolor: "#FFE2E2",
+                color: "#C10007",
+                borderRadius: 2,
+              }}
+              size="small"
+            />
+          )}
+          {timeOffs.status === "cancelled" && (
+            <Chip
+              label={timeOffs.status}
+              variant="filled"
+              sx={{
+                bgcolor: theme.currentPalette.background,
+                color: "#C10007",
+                borderRadius: 2,
+                border: "1px solid #C10007",
+              }}
+              size="small"
+            />
+          )}
+        </td>
+
+        {/* Actions */}
+        <td className="p-4 text-center">
+          {timeOffs.status === "pending" ? (
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              gap={1}
+            >
+              {/* Approve */}
+              <IconButton
+                size="small"
+                disabled={!!isUpdating}
+                onClick={() => {
+                  handleTimeOffStatus(timeOffs.id, "approved", "Yes");
+                }}
+                sx={{
+                  color: "success.main",
+                  "&:hover": { bgcolor: alpha("#4caf50", 0.1) },
+                }}
+              >
+                {isUpdating ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : (
+                  <Check fontSize="small" />
+                )}
+              </IconButton>
+
+              {/* Reject */}
+              <IconButton
+                size="small"
+                disabled={!!isUpdating}
+                onClick={() => {
+                  handleTimeOffStatus(timeOffs.id, "rejected", "No");
+                }}
+                sx={{
+                  color: "error.main",
+                  "&:hover": { bgcolor: alpha("#f44336", 0.1) },
+                }}
+              >
+                <X fontSize="small" />
+              </IconButton>
+
+              <IconButton
+                size="small"
+                sx={{ color: theme.currentPalette.primary }}
+                onClick={() => {
+                  setSelectedTimeOff(timeOffs);
+                  setOpenTimeOffDialog(true);
+                }}
+              >
+                <Eye fontSize="small" />
+              </IconButton>
+            </Box>
+          ) : (
+            <IconButton
+              size="small"
+              sx={{ color: theme.currentPalette.primary }}
+              onClick={() => {
+                setSelectedTimeOff(timeOffs);
+                setOpenTimeOffDialog(true);
+              }}
+            >
+              <Eye fontSize="small" />
+            </IconButton>
+          )}
+        </td>
+      </TableRow>
+    );
+  };
+
+  const renderRow = (item: TDriver | TTimeOffs) => {
+    if (togglePage === "drivers") {
+      return renderDriverRow(item as TDriver);
+    }
+    return renderTimeOffRow(item as TTimeOffs);
   };
 
   // Loading state
@@ -635,7 +1057,7 @@ const DriversPage = () => {
         <ToggleButtonGroup
           value={togglePage}
           exclusive
-          onChange={handleChange}
+          onChange={handleToggleChange}
           sx={{
             borderRadius: 2,
             overflow: "hidden",
@@ -680,29 +1102,46 @@ const DriversPage = () => {
         </ToggleButtonGroup>
       </Box>
 
-      {/* Stats Summary */}
+      {/* Dynamic Stats Cards */}
       <Box sx={{ mt: 4, mb: 5 }}>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-10">
-          <StatsCard
-            title="Total Drivers"
-            value={statsData.totalDrivers}
-            icon={UsersRound}
-            iconColor={theme.currentPalette.primary}
-          />
-
-          <StatsCard
-            title="Available Drivers"
-            value={statsData.available}
-            icon={UserRoundCheck}
-            iconColor={theme.currentPalette.primary}
-          />
-
-          <StatsCard
-            title="Busy Drivers"
-            value={statsData.busy}
-            icon={UserRoundX}
-            iconColor={theme.currentPalette.primary}
-          />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {togglePage === "drivers" ? (
+            <>
+              <StatsCard
+                title="Total Drivers"
+                value={statsData.total}
+                icon={UsersRound}
+              />
+              <StatsCard
+                title="Available"
+                value={statsData.available}
+                icon={UserRoundCheck}
+              />
+              <StatsCard
+                title="Busy"
+                value={statsData.busy}
+                icon={UserRoundX}
+              />
+            </>
+          ) : (
+            <>
+              <StatsCard
+                title="Approved Requests"
+                value={statsData.approved}
+                icon={ClipboardCheck}
+              />
+              <StatsCard
+                title="Pending Requests"
+                value={statsData.pending}
+                icon={ClipboardClock}
+              />
+              <StatsCard
+                title="Rejected Requests"
+                value={statsData.rejected}
+                icon={ClipboardX}
+              />
+            </>
+          )}
         </div>
       </Box>
 
@@ -734,7 +1173,11 @@ const DriversPage = () => {
           {/* Search */}
           <SearchInput
             searchHook={searchHook}
-            placeholder="Search By Driver ID..."
+            placeholder={
+              togglePage === "drivers"
+                ? "Search By Driver ID..."
+                : "Search By Request ID..."
+            }
             showClearButton
             sx={{ width: 350 }}
             inputSx={{
@@ -748,31 +1191,34 @@ const DriversPage = () => {
               },
             }}
           />
-
           {/* Add Button */}
-          <Box>
-            <Button
-              onClick={() => setOpenStepper(true)}
-              variant="contained"
-              startIcon={<Link size={18} />}
-              sx={newLoadButtonSx}
-            >
-              Link Driver
-            </Button>
+          {togglePage === "drivers" ? (
+            <Box>
+              <Button
+                onClick={() => setOpenStepper(true)}
+                variant="contained"
+                startIcon={<Link size={18} />}
+                sx={newLoadButtonSx}
+              >
+                Link Driver
+              </Button>
 
-            {/* Stepper Popup */}
-            <Dialog
-              open={openStepper}
-              onClose={() => setOpen(false)}
-              slotProps={{
-                paper: {
-                  sx: { borderRadius: "10px" },
-                },
-              }}
-            >
-              <LinkDriverPopup onClose={() => setOpenStepper(false)} />
-            </Dialog>
-          </Box>
+              {/* Stepper Popup */}
+              <Dialog
+                open={openStepper}
+                onClose={() => setOpen(false)}
+                slotProps={{
+                  paper: {
+                    sx: { borderRadius: "10px" },
+                  },
+                }}
+              >
+                <LinkDriverPopup onClose={() => setOpenStepper(false)} />
+              </Dialog>
+            </Box>
+          ) : (
+            <></>
+          )}
         </Box>
       </Box>
 
@@ -782,26 +1228,21 @@ const DriversPage = () => {
         </Box>
       )}
 
-      {/* Table For Drivers - Using DataTable Component */}
+      {/* Dynamic Table */}
       <DataTable
-        columns={driverColumns}
-        data={driver}
-        renderRow={renderDriverRow}
-        loading={
-          (isSearching && driverByIdLoading) ||
-          (isFiltered && filteredData) ||
-          (driversLoading && !driversData)
-        }
+        columns={currentColumns}
+        data={currentData}
+        renderRow={renderRow}
+        loading={isLoading}
       />
 
       {/* Pagination */}
-      {!isFiltered && !isSearching && pagination && driver.length > 0 && (
+      {currentPagination && currentData.length > 0 && (
         <Pagination
-          pagination={pagination}
+          pagination={currentPagination}
           page={page}
           setPage={setPage}
           pageSize={10}
-          showInfo={false}
         />
       )}
 
@@ -899,6 +1340,261 @@ const DriversPage = () => {
             </Button>
           </Box>
         </Box>
+      </Dialog>
+
+      {/* Time Off Details Dialog */}
+      <Dialog
+        open={openTimeOffDialog}
+        onClose={() => setOpenTimeOffDialog(false)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            overflow: "hidden",
+            width: 400,
+          },
+        }}
+      >
+        {selectedTimeOff && selectedTimeOff.from && selectedTimeOff.to && (
+          <>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                p: 2,
+                borderBottom: 1,
+                borderColor: alpha(theme.currentPalette.text, 0.1),
+              }}
+            >
+              <Typography
+                sx={{
+                  color: darken(theme.currentPalette.primary, 0.5),
+                  fontWeight: 600,
+                  fontSize: "24px",
+                }}
+              >
+                Request details
+              </Typography>
+
+              <IconButton
+                onClick={() => setOpenTimeOffDialog(false)}
+                sx={{
+                  position: "absolute",
+                  right: 12,
+                  top: 12,
+                  color: theme.currentPalette.text,
+                }}
+              >
+                <X size={20} />
+              </IconButton>
+            </Box>
+
+            <Box sx={{ p: 4 }}>
+              <Box>
+                {/* Status */}
+                <Box
+                  display={"flex"}
+                  flexDirection={"column"}
+                  alignItems={"flex-start"}
+                  gap={1}
+                >
+                  <Typography
+                    color={theme.currentPalette.primary}
+                    display={"flex"}
+                    alignItems={"center"}
+                    gap={1}
+                  >
+                    <span>
+                      <StickyNote />
+                    </span>
+                    <span className="font-semibold">Status</span>
+                  </Typography>
+                  {selectedTimeOff.status === "approved" && (
+                    <Chip
+                      sx={{
+                        bgcolor: theme.currentPalette.primary,
+                        color: theme.currentPalette.background,
+                        px: 0.5,
+                        py: 0.5,
+                      }}
+                      icon={
+                        <BadgeCheck
+                          style={{ color: theme.currentPalette.background }}
+                        />
+                      }
+                      label={selectedTimeOff.status}
+                    />
+                  )}
+                  {selectedTimeOff.status === "pending" && (
+                    <Chip
+                      sx={{
+                        bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                        color: theme.currentPalette.primary,
+                        px: 0.5,
+                        py: 0.5,
+                      }}
+                      icon={
+                        <Clock3
+                          style={{ color: theme.currentPalette.primary }}
+                        />
+                      }
+                      label={selectedTimeOff.status}
+                    />
+                  )}
+                  {(selectedTimeOff.status === "rejected" ||
+                    selectedTimeOff.status === "cancelled") && (
+                    <Chip
+                      sx={{
+                        bgcolor: "#B52C17",
+                        color: theme.currentPalette.background,
+                        px: 0.5,
+                        py: 0.5,
+                      }}
+                      icon={
+                        <OctagonX
+                          style={{ color: theme.currentPalette.background }}
+                        />
+                      }
+                      label={selectedTimeOff.status}
+                    />
+                  )}
+                </Box>
+
+                {/* Requested Dates */}
+                <Box
+                  sx={{ my: 2 }}
+                  display={"flex"}
+                  flexDirection={"column"}
+                  alignItems={"flex-start"}
+                  gap={1}
+                >
+                  <Typography
+                    color={theme.currentPalette.primary}
+                    display={"flex"}
+                    alignItems={"center"}
+                    gap={1}
+                  >
+                    <span>
+                      <Calendar />
+                    </span>
+                    <span className="font-semibold">Requested dates</span>
+                  </Typography>
+
+                  <Box display={"flex"} alignItems={"center"} gap={1}>
+                    <Chip
+                      label={(() => {
+                        const from = new Date(selectedTimeOff.from);
+                        const to = new Date(selectedTimeOff.to);
+                        if (isNaN(from.getTime()) || isNaN(to.getTime()))
+                          return "Invalid date";
+                        const diffTime = Math.abs(
+                          to.getTime() - from.getTime()
+                        );
+                        const diffDays = Math.ceil(
+                          diffTime / (1000 * 60 * 60 * 24)
+                        );
+                        return `${diffDays} day${diffDays !== 1 ? "s" : ""}`;
+                      })()}
+                      sx={{
+                        color: theme.currentPalette.primary,
+                        fontWeight: "bold",
+                        bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                        borderRadius: 2,
+                      }}
+                    />
+                    <span style={{ color: theme.currentPalette.primary }}>
+                      {new Date(selectedTimeOff.from).toLocaleDateString()} -{" "}
+                      {new Date(selectedTimeOff.to).toLocaleDateString()}
+                    </span>
+                  </Box>
+                </Box>
+
+                {/* Requested Dates */}
+                <Box
+                  display={"flex"}
+                  flexDirection={"column"}
+                  alignItems={"flex-start"}
+                  gap={1}
+                >
+                  <Typography
+                    color={theme.currentPalette.primary}
+                    display={"flex"}
+                    alignItems={"center"}
+                    gap={1}
+                  >
+                    <span>
+                      <NotebookText />
+                    </span>
+                    <span className="font-semibold">Requested dates</span>
+                  </Typography>
+                  <Typography color={theme.currentPalette.primary}>
+                    {selectedTimeOff.reason}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* pending */}
+              {selectedTimeOff.status === "pending" && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1,
+                    justifyContent: "center",
+                  }}
+                >
+                  <Button
+                    variant="contained"
+                    sx={{
+                      bgcolor: theme.currentPalette.primary,
+                      color: theme.currentPalette.background,
+                      borderRadius: 2,
+                      width: "full",
+                      py: 1,
+                      textTransform: "capitalize",
+                    }}
+                    disabled={updatingId === selectedTimeOff.id}
+                    onClick={() => {
+                      handleTimeOffStatus(
+                        selectedTimeOff.id,
+                        "approved",
+                        "Approved by admin"
+                      );
+                      setOpenTimeOffDialog(false);
+                    }}
+                  >
+                    {updatingId === selectedTimeOff.id
+                      ? "Approving..."
+                      : "Approve"}
+                  </Button>
+
+                  <Button
+                    variant="outlined"
+                    sx={{
+                      border: `1px solid ${theme.currentPalette.primary}`,
+                      color: theme.currentPalette.primary,
+                      borderRadius: 2,
+                      width: "full",
+                      py: 1,
+                      textTransform: "capitalize",
+                    }}
+                    disabled={updatingId === selectedTimeOff.id}
+                    onClick={() => {
+                      handleTimeOffStatus(
+                        selectedTimeOff.id,
+                        "rejected",
+                        "Not available"
+                      );
+                      setOpenTimeOffDialog(false);
+                    }}
+                  >
+                    Reject
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          </>
+        )}
       </Dialog>
     </Box>
   );
