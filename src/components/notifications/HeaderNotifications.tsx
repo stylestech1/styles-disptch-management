@@ -88,14 +88,32 @@ export default function HeaderNotifications() {
     setDropdownOpen(false);
   };
 
-  const navigateToLoadDetails = (id: string) => {
-    const path =
-      userRole === "admin"
-        ? `/admin/loadDetails/${encodeURIComponent(id)}`
-        : `/dispatchers/loadDetails/${encodeURIComponent(id)}`;
+  const navigateByModule = (module: TNotification["module"], refId: string) => {
+    let path = "";
+
+    switch (module) {
+      case "loads":
+        path =
+          userRole === "admin"
+            ? `/admin/loadDetails/${encodeURIComponent(refId)}`
+            : `/dispatchers/loadDetails/${encodeURIComponent(refId)}`;
+        break;
+
+      case "trucks":
+        path = `/admin/truckdashboard/${encodeURIComponent(refId)}`;
+        break;
+
+      case "drivers":
+        path = `/admin/drivers`;
+        break;
+
+      default:
+        path = `/${userRole}/notifications`;
+    }
 
     router.push(path);
   };
+
   const icons = {
     system: <SettingsRounded sx={{ fontSize: 24 }} />,
     loads: <LocalShippingRounded sx={{ fontSize: 24 }} />,
@@ -256,7 +274,10 @@ export default function HeaderNotifications() {
                           setDropdownOpen(false);
                           if (notification.refId) {
                             e.stopPropagation();
-                            navigateToLoadDetails(notification.refId);
+                            navigateByModule(
+                              notification.module,
+                              notification.refId
+                            );
                           }
                         }}
                         sx={{
