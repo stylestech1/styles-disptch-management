@@ -1,15 +1,21 @@
+export type TTimeOffStatus =
+  | "all"
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "cancelled";
 export type TTimeOffs = {
   id: string;
   requestId: number;
   driver: string;
-  phone: string
+  phone: string;
   from: string;
   to: string;
   reason: string;
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  status: TTimeOffStatus;
   adminNote?: string;
   approvedBy?: string;
-  rejectedBy?: string
+  rejectedBy?: string;
   createdAt: string;
   updatedAt: string;
 };

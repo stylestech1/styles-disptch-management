@@ -28,6 +28,8 @@ import {
   ListItemIcon,
   ListItemText,
   CircularProgress,
+  FormControl,
+  Select,
 } from "@mui/material";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
@@ -75,7 +77,7 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { TTimeOffs } from "@/types/driverType";
+import { TTimeOffs, TTimeOffStatus } from "@/types/driverType";
 import { useFilter } from "@/providers/FilterProvider";
 
 const DriversPage = () => {
@@ -91,6 +93,7 @@ const DriversPage = () => {
   const [togglePage, setTogglePage] = useState<"drivers" | "timeoff">(
     "drivers"
   );
+  const [timeOffFilter, setTimeOffFilter] = useState<TTimeOffStatus>("all");
   const [openTimeOffDialog, setOpenTimeOffDialog] = useState(false);
   const [selectedTimeOff, setSelectedTimeOff] = useState<TTimeOffs | null>(
     null
@@ -225,17 +228,24 @@ const DriversPage = () => {
     }
 
     if (togglePage === "timeoff") {
-      if (isFiltered && timeOffsFilteredData?.data) {
-        return timeOffsFilteredData.data;
-      }
+      let data;
 
-      if (searchHook.isSearching && timeOffSearchData?.data) {
-        return Array.isArray(timeOffSearchData.data)
+      if (isFiltered && timeOffsFilteredData?.data) {
+        data = timeOffsFilteredData.data;
+      } else if (searchHook.isSearching && timeOffSearchData?.data) {
+        data = Array.isArray(timeOffSearchData.data)
           ? timeOffSearchData.data
           : [timeOffSearchData.data];
+      } else {
+        data = timeOffsData?.data || [];
       }
 
-      return timeOffsData?.data || [];
+      // Apply status filter
+      if (timeOffFilter !== "all") {
+        data = data.filter((item: TTimeOffs) => item.status === timeOffFilter);
+      }
+
+      return data;
     }
 
     return [];
@@ -249,6 +259,7 @@ const DriversPage = () => {
     driversData,
     timeOffSearchData,
     timeOffsData,
+    timeOffFilter,
   ]);
 
   // 🔹 Dynamic Pagination
@@ -277,6 +288,7 @@ const DriversPage = () => {
     timeOffsData,
   ]);
 
+  // Loading
   const isLoading = useMemo(() => {
     if (togglePage === "drivers") {
       return (
@@ -546,7 +558,7 @@ const DriversPage = () => {
     setDriverToDelete(null);
   };
 
-  // ✅ Render Table Row - Similar to LoadsPage
+  // ✅ Render Driver Table Row
   const renderDriverRow = (driver: TDriver) => {
     // Styles
     const tableRowSx: SxProps = {
@@ -805,6 +817,7 @@ const DriversPage = () => {
     );
   };
 
+  // ✅ Render TimeOff Table Row
   const renderTimeOffRow = (timeOffs: TTimeOffs) => {
     // Styles
     const tableRowSx: SxProps = {
@@ -1217,7 +1230,69 @@ const DriversPage = () => {
               </Dialog>
             </Box>
           ) : (
-            <></>
+            <FormControl size="small">
+              <Select
+                displayEmpty
+                value={timeOffFilter}
+                onChange={(e) =>
+                  setTimeOffFilter(e.target.value as TTimeOffStatus)
+                }
+                renderValue={(selected) => {
+                  if (!selected) {
+                    return (
+                      <span style={{ color: theme.currentPalette.primary }}>
+                        Select table status...
+                      </span>
+                    );
+                  }
+                  return selected;
+                }}
+                sx={{
+                  py: 0.5,
+                  borderRadius: 2,
+                  color: theme.currentPalette.primary,
+                }}
+              >
+                <MenuItem
+                  sx={{ color: theme.currentPalette.primary }}
+                  disabled
+                  value=""
+                >
+                  <em>Select table status...</em>
+                </MenuItem>
+
+                <MenuItem
+                  sx={{ color: theme.currentPalette.primary }}
+                  value="all"
+                >
+                  All
+                </MenuItem>
+                <MenuItem
+                  sx={{ color: theme.currentPalette.primary }}
+                  value="pending"
+                >
+                  Pending
+                </MenuItem>
+                <MenuItem
+                  sx={{ color: theme.currentPalette.primary }}
+                  value="approved"
+                >
+                  Approved
+                </MenuItem>
+                <MenuItem
+                  sx={{ color: theme.currentPalette.primary }}
+                  value="rejected"
+                >
+                  Rejected
+                </MenuItem>
+                <MenuItem
+                  sx={{ color: theme.currentPalette.primary }}
+                  value="cancelled"
+                >
+                  Cancelled
+                </MenuItem>
+              </Select>
+            </FormControl>
           )}
         </Box>
       </Box>
