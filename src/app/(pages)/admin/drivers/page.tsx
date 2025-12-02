@@ -1249,8 +1249,11 @@ const DriversPage = () => {
                 }}
                 sx={{
                   py: 0.5,
+                  width: 150,
+                  textAlign: 'center',
                   borderRadius: 2,
                   color: theme.currentPalette.primary,
+                  textTransform: 'capitalize'
                 }}
               >
                 <MenuItem
