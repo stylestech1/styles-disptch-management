@@ -405,10 +405,9 @@ const DriversPage = () => {
         ? timeOffsFilteredData?.stats
         : timeOffsData?.stats || {};
       return {
-        total: stats.total || 0,
-        approved: stats.approved || 0,
-        pending: stats.pending || 0,
-        rejected: stats.rejected || 0,
+        approved: stats?.approved || 0,
+        pending: stats?.pending || 0,
+        rejected: stats?.rejected || 0,
       };
     }
   }, [
