@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import { notificationSocketService } from "@/services/NotificationSocketService";
+import { socketService } from "@/services/socketService";
 import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { addNotification } from "@/redux/slices/notificationSlice";
 import toast from "react-hot-toast";
@@ -18,11 +18,11 @@ export default function NotificationListener() {
 
   useEffect(() => {
     if (auth?.token && !hasConnected.current && auth?.user?.id) {
-      notificationSocketService.setAuth(auth);
-      notificationSocketService.connect();
+      socketService.setAuth(auth);
+      socketService.connect();
       hasConnected.current = true;
 
-      notificationSocketService.onNotificationReceived( async (data) => {
+      socketService.on("newNotification", async (data) => {
         if (audioRef.current) {
           try {
             audioRef.current.currentTime = 0;
@@ -34,7 +34,7 @@ export default function NotificationListener() {
 
         await dispatch(addNotification(data));
         toast.success(
-          `${data.message
+          `🔔 ${data.message
             .replace(/\([^)]*\)/g, "")
             .replace(/\s+/g, " ")
             .trim()}`,
@@ -45,10 +45,11 @@ export default function NotificationListener() {
 
     return () => {
       if (hasConnected.current) {
-        notificationSocketService.disconnect();
+        socketService.disconnect();
         hasConnected.current = false;
       }
       
+      // تنظيف عنصر الصوت
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
