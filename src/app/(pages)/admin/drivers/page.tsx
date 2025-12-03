@@ -1165,13 +1165,15 @@ const DriversPage = () => {
             variant="h6"
             sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
           >
-            Driver Details
+            {togglePage === "drivers" ? "Driver Details" : "Time off requests"}
           </Typography>
           <Typography
             variant="body2"
             sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
           >
-            Check the list of all drivers
+            {togglePage === "drivers"
+              ? "Check the list of all drivers"
+              : "Manage your driver time off requests"}
           </Typography>
         </Box>
 
