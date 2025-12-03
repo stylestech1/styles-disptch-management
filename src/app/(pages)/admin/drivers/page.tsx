@@ -1578,7 +1578,7 @@ const DriversPage = () => {
                         color: theme.currentPalette.primary,
                         fontWeight: "bold",
                         bgcolor: alpha(theme.currentPalette.primary, 0.1),
-                        borderRadius: 2,
+                        borderRadius: 1,
                       }}
                     />
                     <span style={{ color: theme.currentPalette.primary }}>
@@ -1588,7 +1588,7 @@ const DriversPage = () => {
                   </Box>
                 </Box>
 
-                {/* Requested Dates */}
+                {/* Reason */}
                 <Box
                   display={"flex"}
                   flexDirection={"column"}
@@ -1604,9 +1604,17 @@ const DriversPage = () => {
                     <span>
                       <NotebookText />
                     </span>
-                    <span className="font-semibold">Requested dates</span>
+                    <span className="font-semibold">Reason</span>
                   </Typography>
-                  <Typography color={theme.currentPalette.primary}>
+                  <Typography
+                    sx={{
+                      color: theme.currentPalette.text,
+                      bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                      p: 2,
+                      width: "100%",
+                      borderRadius: 1,
+                    }}
+                  >
                     {selectedTimeOff.reason}
                   </Typography>
                 </Box>
