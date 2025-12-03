@@ -100,7 +100,7 @@ export default function HeaderNotifications() {
         break;
 
       case "trucks":
-        path = `/admin/truckdashboard/${encodeURIComponent(refId)}`;
+        path = `/admin/truckSummary2/${encodeURIComponent(refId)}`;
         break;
 
       case "drivers":

@@ -95,8 +95,6 @@ const DriversPage = () => {
   );
   const [timeOffFilter, setTimeOffFilter] = useState<TTimeOffStatus>("all");
   const [openTimeOffDialog, setOpenTimeOffDialog] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [selectedTimeOff, setSelectedTimeOff] = useState<TTimeOffs | null>(
     null
   );
@@ -142,20 +140,8 @@ const DriversPage = () => {
       if (searchHook.isSearching) {
         searchHook.handleSearchReset();
       }
-      handleClearSearch();
     }
   }, [isFiltered, fromDate, toDate, togglePage]);
-
-  // 🔹 Debounced Search Effect
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
-
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [searchTerm]);
 
   const [
     triggerSearchQuery,
@@ -192,53 +178,12 @@ const DriversPage = () => {
     },
   ] = useLazyGetSpecificTimeOffsQuery();
 
-  // Search function for drivers
-  const searchDrivers = (drivers: TDriver[], term: string): TDriver[] => {
-    if (!term.trim()) return drivers;
-
-    const searchTermLower = term.toLowerCase().trim();
-
-    return drivers.filter(
-      (driver) =>
-        driver.name.toLowerCase().includes(searchTermLower) ||
-        (driver.driverId &&
-          String(driver.driverId).toLowerCase().includes(searchTermLower)) ||
-        (driver.phone &&
-          driver.phone.toLowerCase().includes(searchTermLower)) ||
-        (driver.licenseNumber &&
-          driver.licenseNumber.toLowerCase().includes(searchTermLower))
-    );
-  };
-
-  // Search function for timeoffs
-  const searchTimeOffs = (timeoffs: TTimeOffs[], term: string): TTimeOffs[] => {
-    if (!term.trim()) return timeoffs;
-
-    const searchTermLower = term.toLowerCase().trim();
-
-    return timeoffs.filter(
-      (timeoff) =>
-        timeoff.driver.toLowerCase().includes(searchTermLower) ||
-        (timeoff.requestId &&
-          String(timeoff.requestId).toLowerCase().includes(searchTermLower)) ||
-        (timeoff.phone && timeoff.phone.toLowerCase().includes(searchTermLower))
-    );
-  };
-
-  // 🔹 API Mutations
-  const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
-  const [updateDriver, { isLoading: isUpdating }] = useUpdateDriverMutation();
-  const [deleteDriver] = useDeleteDriverMutation();
-  const [updateTimeOffs] = useUpdateTimeOffStatusMutation();
-  const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
-
   // Search Hook
   const searchHook = useSearchSubmit({
     onSearch: (term) => {
       if (!term.trim()) return;
 
       setPage(1);
-      handleClearSearch();
 
       if (togglePage === "drivers") {
         triggerSearchQuery(encodeURIComponent(term));
@@ -248,7 +193,6 @@ const DriversPage = () => {
     },
     onReset: () => {
       setPage(1);
-      handleClearSearch();
 
       if (togglePage === "drivers") {
         resetSearchQuery();
@@ -260,63 +204,62 @@ const DriversPage = () => {
     },
   });
 
+  // 🔹 API Mutations
+  const [createDriver, { isLoading: isCreating }] = useCreateDriverMutation();
+  const [updateDriver, { isLoading: isUpdating }] = useUpdateDriverMutation();
+  const [deleteDriver] = useDeleteDriverMutation();
+  const [updateTimeOffs] = useUpdateTimeOffStatusMutation();
+  const [originalData, setOriginalData] = useState<Partial<TDriver>>({});
+
   // 🔹 Dynamic Data toggle
   const currentData = useMemo(() => {
-    let data: (TDriver | TTimeOffs)[] = [];
-
     if (togglePage === "drivers") {
       if (isFiltered && filteredData?.data) {
-        data = filteredData.data as TDriver[];
-      } else if (searchHook.isSearching && driverByIdData?.data) {
-        if (Array.isArray(driverByIdData.data)) {
-          data = driverByIdData.data as TDriver[];
-        } else {
-          data = [driverByIdData.data as TDriver];
-        }
-      } else {
-        data = driversData?.data || [];
+        return filteredData.data;
       }
-    } else if (togglePage === "timeoff") {
+
+      if (searchHook.isSearching && driverByIdData?.data) {
+        return Array.isArray(driverByIdData.data)
+          ? driverByIdData.data.flat()
+          : driverByIdData.data;
+      }
+
+      return driversData?.data || [];
+    }
+
+    if (togglePage === "timeoff") {
+      let data;
+
       if (isFiltered && timeOffsFilteredData?.data) {
-        data = timeOffsFilteredData.data as TTimeOffs[];
+        data = timeOffsFilteredData.data;
       } else if (searchHook.isSearching && timeOffSearchData?.data) {
-        if (Array.isArray(timeOffSearchData.data)) {
-          data = timeOffSearchData.data as TTimeOffs[];
-        } else {
-          data = [timeOffSearchData.data as TTimeOffs];
-        }
+        data = Array.isArray(timeOffSearchData.data)
+          ? timeOffSearchData.data
+          : [timeOffSearchData.data];
       } else {
         data = timeOffsData?.data || [];
       }
 
+      // Apply status filter
       if (timeOffFilter !== "all") {
-        data = (data as TTimeOffs[]).filter(
-          (item: TTimeOffs) => item.status === timeOffFilter
-        );
+        data = data.filter((item: TTimeOffs) => item.status === timeOffFilter);
       }
+
+      return data;
     }
 
-    if (debouncedSearchTerm.trim()) {
-      if (togglePage === "drivers") {
-        data = searchDrivers(data as TDriver[], debouncedSearchTerm);
-      } else {
-        data = searchTimeOffs(data as TTimeOffs[], debouncedSearchTerm);
-      }
-    }
-
-    return data;
+    return [];
   }, [
     togglePage,
     isFiltered,
     searchHook.isSearching,
-    filteredData?.data,
-    timeOffsFilteredData?.data,
-    driverByIdData?.data,
-    driversData?.data,
-    timeOffSearchData?.data,
-    timeOffsData?.data,
+    filteredData,
+    timeOffsFilteredData,
+    driverByIdData,
+    driversData,
+    timeOffSearchData,
+    timeOffsData,
     timeOffFilter,
-    debouncedSearchTerm,
   ]);
 
   // 🔹 Dynamic Pagination
@@ -376,18 +319,6 @@ const DriversPage = () => {
     timeOffsFilteredData,
   ]);
 
-  // Handle local search
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    setPage(1);
-  };
-
-  const handleClearSearch = () => {
-    setSearchTerm("");
-    setDebouncedSearchTerm("");
-    setPage(1);
-  };
-
   // Stats cards
   const statsData = useMemo(() => {
     if (togglePage === "drivers") {
@@ -405,9 +336,10 @@ const DriversPage = () => {
         ? timeOffsFilteredData?.stats
         : timeOffsData?.stats || {};
       return {
-        approved: stats?.approved || 0,
-        pending: stats?.pending || 0,
-        rejected: stats?.rejected || 0,
+        total: stats.total || 0,
+        approved: stats.approved || 0,
+        pending: stats.pending || 0,
+        rejected: stats.rejected || 0,
       };
     }
   }, [
@@ -432,7 +364,6 @@ const DriversPage = () => {
       setTogglePage(newValue);
       setPage(1);
       searchHook.handleSearchReset();
-      handleClearSearch();
     }
   };
 
@@ -1254,13 +1185,11 @@ const DriversPage = () => {
         >
           {/* Search */}
           <SearchInput
-            value={searchTerm}
-            onChange={handleSearchChange}
-            onClear={handleClearSearch}
+            searchHook={searchHook}
             placeholder={
               togglePage === "drivers"
-                ? "Search by name, ID, phone..."
-                : "Search by name, request ID, phone..."
+                ? "Search By Driver Id..."
+                : "Search By Request Id..."
             }
             showClearButton
             sx={{ width: 350 }}
@@ -1387,7 +1316,6 @@ const DriversPage = () => {
 
       {/* Pagination */}
       {currentPagination &&
-        !debouncedSearchTerm &&
         timeOffFilter === "all" &&
         currentData.length > 0 && (
           <Pagination
