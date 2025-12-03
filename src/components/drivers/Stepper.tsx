@@ -55,10 +55,6 @@ export default function LinkDriverPopup({ onClose }: { onClose: () => void }) {
     (u: TUser) => !driverEmailList.includes(u.email.toLowerCase())
   );
 
-  console.log("usersData", usersData?.data);
-  console.log("driversEmails", driversEmails);
-  console.log("availableUsers", availableUsers);
-
   const [activeStep, setActiveStep] = useState(0);
 
   // Step 1

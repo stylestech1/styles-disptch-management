@@ -9,6 +9,7 @@ import modalsSlice from "./slices/modalsSlice";
 import uiSlice from "./slices/uiSlice";
 import paletteSlice from "./slices/paletteSlice";
 import notificationsSlice from "./slices/notificationSlice";
+import chatSlice from "./slices/chatSlice";
 import { apiSlice } from "./slices/apiSlice";
 import { googleMapsApi } from "./slices/googleMapsSlice";
 
@@ -25,6 +26,7 @@ const rootReducer = combineReducers({
   modals: modalsSlice,
   ui: uiSlice,
   notifications: notificationsSlice,
+  chat: chatSlice,
   [apiSlice.reducerPath]: apiSlice.reducer,
   [googleMapsApi.reducerPath]: googleMapsApi.reducer,
 });
