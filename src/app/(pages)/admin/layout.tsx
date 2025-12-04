@@ -157,7 +157,7 @@ export default function AdminLayout({
             label !== "Notifications"
           ) {
             const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
-            const active = pathname.startsWith(link);
+            const active = pathname === link;
             return (
               <ListItemButton
                 key={i}

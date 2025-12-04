@@ -37,6 +37,8 @@ export type TStats = {
   inTransit: number;
   delivered: number;
   cancelled: number;
+  upcoming?: number;
+  overdue?: number;
 };
 export type TLoadsForm = {
   dho: string;

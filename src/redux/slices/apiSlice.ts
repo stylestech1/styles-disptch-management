@@ -145,7 +145,6 @@ export const apiSlice = api.injectEndpoints({
       query: (id) => `/api/v1/drivers/${id}`,
       providesTags: ["Drivers"],
     }),
-    
 
     // 🔹 Get Driver with Filter and Search
     getDriverWithFilter: builder.query({
@@ -234,7 +233,7 @@ export const apiSlice = api.injectEndpoints({
           : [{ type: "TimeOffs", id: "LIST" }],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
-    
+
     // 🔹 Filter Time Off Requests
     getFilterTimeOffs: builder.query({
       query: ({ from, to, page = 1, limit = 10 }) => {
@@ -261,7 +260,8 @@ export const apiSlice = api.injectEndpoints({
 
     // 🔹 Get Specific Time Off Requests
     getSpecificTimeOffs: builder.query<{ data: TTimeOffs }, string>({
-      query: (requestId) => `/api/v1/driver-dashboard/time-off/all?requestId=${requestId}`,
+      query: (requestId) =>
+        `/api/v1/driver-dashboard/time-off/all?requestId=${requestId}`,
       providesTags: (result, error, requestId) => [
         { type: "TimeOffs", requestId: requestId },
       ],
@@ -427,6 +427,64 @@ export const apiSlice = api.injectEndpoints({
         { type: "TruckSummary", id: "LIST" },
         { type: "TruckSummary", id },
       ],
+    }),
+
+    // ! ========== Trucks Maintenance Methods ==========
+
+    // 🛠 Get All Maintenances
+    getAllMaintenances: builder.query({
+      query: ({ page = 1, limit = 10 }) =>
+        `/api/v1/maintenances?page=${page}&limit=${limit}`,
+      providesTags: ["Maintenances"],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // 🛠 Get Single Maintenance
+    getSingleMaintenances: builder.query({
+      query: (id) => `/api/v1/maintenances/${id}`,
+      providesTags: (result, error, id) => [{ type: "Maintenances", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // 🛠 Get Maintenance with filter
+    getMaintenanceWithFilter: builder.query({
+      query: ({ from, to }) => {
+        const params = new URLSearchParams();
+        if (from) params.append("from", from);
+        if (to) params.append("to", to);
+        return `/api/v1/maintenances?${params.toString()}`;
+      },
+      providesTags: (result, error, id) => [{ type: "Maintenances", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // 🛠 Create Maintenance
+    createMaintenance: builder.mutation({
+      query: (body) => ({
+        url: `/api/v1/maintenances`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Maintenances"],
+    }),
+
+    // 🛠 Update Maintenance
+    updateMaintenance: builder.mutation({
+      query: ({id, ...body}) => ({
+        url: `/api/v1/maintenances/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: (result, error, id) => [{ type: "Maintenances", id }],
+    }),
+
+    // 🛠 Delete Maintenance
+    deleteMaintenance: builder.mutation({
+      query: ({id}) => ({
+        url: `/api/v1/maintenances/${id}`,
+        method: "Delete",
+      }),
+      invalidatesTags: (result, error, id) => [{ type: "Maintenances", id }],
     }),
 
     // ! ========== Notes Methods ==========
@@ -742,6 +800,13 @@ export const {
   useCreateTruckMutation,
   useUpdateTruckMutation,
   useDeleteTruckMutation,
+  // TODO: ----- Trucks Maintenance -----
+  useGetAllMaintenancesQuery,
+  useGetSingleMaintenancesQuery,
+  useGetMaintenanceWithFilterQuery,
+  useCreateMaintenanceMutation,
+  useUpdateMaintenanceMutation,
+  useDeleteMaintenanceMutation,
   // TODO: ----- Notes -----
   useAddNoteMutation,
   useGetNotesQuery,

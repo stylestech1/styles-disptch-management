@@ -6,15 +6,12 @@ import { TDriver } from "@/types/globalTypes";
 import Loading from "@/components/ui/Loading";
 import toast, { Toaster } from "react-hot-toast";
 import Erros from "@/components/ui/Erros";
-import { IoAdd, IoPencil, IoTrash, IoPerson } from "react-icons/io5";
-import { FaUserCheck, FaUserLargeSlash } from "react-icons/fa6";
 import {
   Dialog,
   Button,
   TableRow,
   Box,
   IconButton,
-  Tooltip,
   Chip,
   Typography,
   alpha,
@@ -40,7 +37,6 @@ import {
   useGetDriversWithPaginationQuery,
   useGetDriverWithFilterQuery,
   useGetFilterTimeOffsQuery,
-  useGetSpecificTimeOffsQuery,
   useLazyGetDriverByDriverIdQuery,
   useLazyGetSpecificTimeOffsQuery,
   useUpdateDriverMutation,
@@ -49,7 +45,6 @@ import {
 import { DriverForm } from "@/components/drivers/DriverForm";
 import useError from "@/hook/useError";
 import StatsCard from "@/components/ui/StatsCard";
-import { Dayjs } from "dayjs";
 import DataTable from "@/components/ui/DataTable";
 import { driverColumns, timeOffColumns } from "@/data/driverTables";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
@@ -635,7 +630,7 @@ const DriversPage = () => {
         {/* Hire Date */}
         <td className="p-4 text-center">
           <Chip
-            label={driver.hireDate.split("T")[0]}
+            label={driver.hireDate?.split('T')[0] || '-'}
             variant="filled"
             sx={{
               bgcolor: alpha(theme.currentPalette.primary, 0.1),

@@ -22,6 +22,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     "/admin/truckdashboard",
     "/admin/driverSummary", 
     "/admin/truckSummary",
+    "/admin/trucksmaintenance",
     "admin/drivers",
     "/dispatchers/loads",
   ].some(path => pathname.includes(path));
@@ -31,6 +32,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     if (pathname.includes('driverSummary')) return 'drivers';
     if (pathname.includes('drivers')) return 'drivers';
     if (pathname.includes('truckSummary')) return 'trucks';
+    if (pathname.includes('trucksmaintenance')) return 'trucks';
     return 'default';
   };
 
@@ -113,7 +115,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
             gap: 1,
           }}
         >
-          {pathname === "/admin/truckdashboard" && (
+          {(pathname === "/admin/truckdashboard" || pathname === "/admin/trucksmaintenance") && (
             <div className="hidden sm:flex"><HeaderSourceTruckDashboard /></div>
           )}
           {shouldShowFilter && (

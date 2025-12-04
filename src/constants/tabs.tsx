@@ -10,6 +10,7 @@ import {
   Users,
   UserStar,
 } from "lucide-react";
+import HandymanIcon from "@mui/icons-material/Handyman";
 
 type TabItem = {
   label: string;
@@ -51,6 +52,12 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       subtitle:
         "View detailed revenue metrics per truck to track earnings. Identify high-performing vehicles and monitor overall fleet performance.",
       icon: <ChartNoAxesCombined />,
+    },
+    {
+      label: "Trucks Maintenance",
+      subtitle:
+        "Monitor and manage maintenance schedules across your entire fleet",
+      icon: <HandymanIcon />,
     },
     {
       label: "Customers",

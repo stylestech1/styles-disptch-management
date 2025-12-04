@@ -7,7 +7,6 @@ export const dispatcherColumns: Column[] = [
   { key: "phone", header: "Phone", align: "left" },
   { key: "role", header: "Role", align: "center" },
   { key: "position", header: "Position", align: "left" },
-  { key: "jobId", header: "Job ID", align: "center" },
   { key: "status", header: "Status", align: "center" },
   { key: "setting", header: "Setting", align: "center" },
 ];

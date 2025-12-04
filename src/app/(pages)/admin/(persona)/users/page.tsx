@@ -329,13 +329,6 @@ const Users = () => {
         {/* Position */}
         <td className="p-4 text-slate-700">{dispatcher.position}</td>
 
-        {/* Job ID */}
-        <td className="p-4">
-          <span className="text-xs bg-slate-100 px-2 py-1 rounded text-slate-700">
-            {dispatcher.jobId}
-          </span>
-        </td>
-
         {/* Status */}
         <td className="p-4 text-center">
           {dispatcher.active ? (
