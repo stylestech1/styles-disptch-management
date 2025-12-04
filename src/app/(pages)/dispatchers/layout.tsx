@@ -21,11 +21,7 @@ import {
   alpha,
 } from "@mui/material";
 import NextLink from "next/link";
-import {
-  IoLogOutOutline,
-  IoPersonCircleOutline,
-  IoMenu,
-} from "react-icons/io5";
+import { IoLogOutOutline } from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
@@ -141,7 +137,7 @@ export default function AdminLayout({
       {/* Navigation */}
       <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
         {tabs.map(({ label, icon }, i) => {
-          if (label !== "Load Details") {
+          if (label !== "Load Details" && label !== "Notifications") {
             const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
             const active = pathname.startsWith(link);
             return (
@@ -222,6 +218,7 @@ export default function AdminLayout({
               bgcolor: themePalette.currentPalette.background,
               borderRight: `1px solid ${theme.palette.divider}`,
               boxShadow: isDesktop ? "none" : undefined,
+              overflowX: 'hidden'
             },
           }}
         >

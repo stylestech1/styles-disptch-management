@@ -5,7 +5,7 @@ export type TNotification = {
   id: string;
   message: string;
   refId: string;
-  module: "system" | "loads" | "trucks" | "drivers" | "identity";
+  module: "system" | "loads" | "trucks" | "drivers" | "identity" | "maintenance";
   importance: "low" | "medium" | "high";
   from: string;
   toRole: string;

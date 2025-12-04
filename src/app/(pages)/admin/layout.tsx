@@ -153,7 +153,8 @@ export default function AdminLayout({
           if (
             label !== "Truck Summary" &&
             label !== "Load Details" &&
-            label !== "Driver Summary"
+            label !== "Driver Summary" &&
+            label !== "Notifications"
           ) {
             const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
             const active = pathname.startsWith(link);
@@ -250,6 +251,7 @@ export default function AdminLayout({
               bgcolor: themePalette.currentPalette.background,
               borderRight: `1px solid ${theme.palette.divider}`,
               boxShadow: isDesktop ? "none" : undefined,
+              overflowX: 'hidden'
             },
           }}
         >

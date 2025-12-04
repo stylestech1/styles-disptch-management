@@ -39,6 +39,7 @@ import {
   PersonPinRounded,
   BadgeRounded,
 } from "@mui/icons-material";
+import HandymanIcon from '@mui/icons-material/Handyman';
 import {
   TNotification,
   TNotificationsResponse,
@@ -155,6 +156,7 @@ const NotificationPage = () => {
     trucks: <AirportShuttleRounded sx={{ fontSize: 24 }} />,
     drivers: <PersonPinRounded sx={{ fontSize: 24 }} />,
     identity: <BadgeRounded sx={{ fontSize: 24 }} />,
+    maintenance: <HandymanIcon sx={{fontSize: 24}} />
   };
 
   return (
