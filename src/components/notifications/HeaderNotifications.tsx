@@ -34,6 +34,7 @@ import {
   PersonPinRounded,
   BadgeRounded,
 } from "@mui/icons-material";
+import HandymanIcon from "@mui/icons-material/Handyman";
 import { ArrowForward, Close, MarkEmailRead } from "@mui/icons-material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -120,6 +121,7 @@ export default function HeaderNotifications() {
     trucks: <AirportShuttleRounded sx={{ fontSize: 24 }} />,
     drivers: <PersonPinRounded sx={{ fontSize: 24 }} />,
     identity: <BadgeRounded sx={{ fontSize: 24 }} />,
+    maintenance: <HandymanIcon sx={{ fontSize: 24 }} />,
   };
 
   return (
