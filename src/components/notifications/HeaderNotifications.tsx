@@ -108,6 +108,10 @@ export default function HeaderNotifications() {
         path = `/admin/drivers`;
         break;
 
+      case "maintenance":
+        path = `/admin/trucksmaintenance`;
+        break;
+
       default:
         path = `/${userRole}/notifications`;
     }
