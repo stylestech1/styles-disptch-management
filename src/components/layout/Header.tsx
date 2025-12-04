@@ -21,7 +21,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     "/admin/loads",
     "/admin/truckdashboard",
     "/admin/driverSummary", 
-    "/admin/truckSummary2",
+    "/admin/truckSummary",
     "admin/drivers",
     "/dispatchers/loads",
   ].some(path => pathname.includes(path));
@@ -30,7 +30,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     if (pathname.includes('loads')) return 'loads';
     if (pathname.includes('driverSummary')) return 'drivers';
     if (pathname.includes('drivers')) return 'drivers';
-    if (pathname.includes('truckSummary2')) return 'trucks';
+    if (pathname.includes('truckSummary')) return 'trucks';
     return 'default';
   };
 

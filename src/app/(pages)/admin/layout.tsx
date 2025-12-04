@@ -66,7 +66,7 @@ export default function AdminLayout({
   const getActiveTabInfo = () => {
     const cleanedPath = pathname.split("/").pop();
     // 🟢 Detect dynamic truck summary route
-    if (pathname.includes("/admin/truckSummary2")) {
+    if (pathname.includes("/admin/truckSummary")) {
       return {
         label: "Truck Summary",
         subtitle: "Detailed overview of truck information and performance.",

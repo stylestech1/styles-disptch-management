@@ -221,7 +221,7 @@ const TruckDashboard = () => {
         sx={tableRowSx}
         key={truckItem._id}
         onClick={() => {
-          router.push(`/admin/truckSummary2/${truckItem._id}`);
+          router.push(`/admin/truckSummary/${truckItem._id}`);
         }}
       >
         {/* Plate Number */}
@@ -298,7 +298,7 @@ const TruckDashboard = () => {
         sx={tableRowSx}
         key={truckItem._id}
         onClick={() => {
-          router.push(`/admin/truckSummary2/${truckItem._id}`);
+          router.push(`/admin/truckSummary/${truckItem._id}`);
         }}
       >
         {/* Plate Number */}
@@ -366,7 +366,7 @@ const TruckDashboard = () => {
         sx={tableRowSx}
         key={truckItem._id}
         onClick={() => {
-          router.push(`/admin/truckSummary2/${truckItem._id}`);
+          router.push(`/admin/truckSummary/${truckItem._id}`);
         }}
       >
         {/* Plate Number */}
