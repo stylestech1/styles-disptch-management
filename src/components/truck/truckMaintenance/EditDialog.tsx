@@ -54,7 +54,6 @@ interface EditDialogProps {
     field: "lastDoneMile" | "lastDoneAt",
     value: string
   ) => void;
-  onRemoveTruck: (index: number) => void;
   onAddTruck: () => void;
   getAvailableTrucks: (currentIndex: number) => TTruck[];
   isUpdating: boolean;
@@ -83,7 +82,6 @@ const EditDialog: React.FC<EditDialogProps> = ({
   onEditSubmit,
   onTruckChange,
   onTruckFieldChange,
-  onRemoveTruck,
   onAddTruck,
   getAvailableTrucks,
   isUpdating,
@@ -260,14 +258,6 @@ const EditDialog: React.FC<EditDialogProps> = ({
                       )}
                     </Select>
                   </FormControl>
-
-                  <IconButton
-                    onClick={() => onRemoveTruck(index)}
-                    sx={{ color: "#dc2626" }}
-                    disabled={editForm.trucks.length === 1}
-                  >
-                    <Trash2 size={18} />
-                  </IconButton>
                 </Stack>
 
                 {selectedMaintenance?.repeatBy === "mile" ? (

@@ -1322,7 +1322,6 @@ const TruckMaintenance = () => {
         onEditSubmit={handleEditSubmit}
         onTruckChange={handleTruckChange}
         onTruckFieldChange={handleTruckFieldChange}
-        onRemoveTruck={handleRemoveTruck}
         onAddTruck={handleAddTruck}
         getAvailableTrucks={getAvailableTrucks}
         isUpdating={isUpdating}
