@@ -6,9 +6,7 @@ import {
   useGetTruckSummaryWithFilterQuery,
 } from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
-import Link from "next/link";
 import { useParams } from "next/navigation";
-import { IoMdArrowDropright } from "react-icons/io";
 import { Toaster } from "react-hot-toast";
 import { alpha, Box, Chip, Typography } from "@mui/material";
 import {

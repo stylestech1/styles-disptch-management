@@ -45,5 +45,5 @@ next-env.d.ts
 
 # !Folders
 /src/components/loadsModal/
-/src/app/(pages)/admin/truckSummary/
-/src/app/(pages)/admin/truckdashboard/old.tsx
+/src/app/(pages)/admin/(truck)/truckSummary/
+/src/app/(pages)/admin/(truck)/truckdashboard/old.tsx
