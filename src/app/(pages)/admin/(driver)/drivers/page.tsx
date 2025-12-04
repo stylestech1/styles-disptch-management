@@ -1061,6 +1061,7 @@ const DriversPage = () => {
     <Box sx={containerSx}>
       <Toaster position="top-center" />
 
+      {/* Toggle Button */}
       <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
         <ToggleButtonGroup
           value={togglePage}

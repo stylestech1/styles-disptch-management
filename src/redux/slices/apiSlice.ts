@@ -480,7 +480,7 @@ export const apiSlice = api.injectEndpoints({
 
     // 🛠 Delete Maintenance
     deleteMaintenance: builder.mutation({
-      query: ({id}) => ({
+      query: (id) => ({
         url: `/api/v1/maintenances/${id}`,
         method: "Delete",
       }),

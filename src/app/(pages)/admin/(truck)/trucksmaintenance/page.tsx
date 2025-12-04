@@ -10,6 +10,8 @@ import {
   useGetMaintenanceWithFilterQuery,
   useGetAllTrucksQuery,
   useCreateMaintenanceMutation,
+  useUpdateMaintenanceMutation,
+  useDeleteMaintenanceMutation,
 } from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TMaintenance, TStatusPerTruck } from "@/types/truckType";
@@ -36,15 +38,17 @@ import {
   IconButton,
   DialogTitle,
   DialogContent,
-  DialogActions,
   Card,
   CardContent,
   Divider,
   Avatar,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  DialogActions,
 } from "@mui/material";
 import {
   ClockAlert,
-  Eye,
   Save,
   TriangleAlert,
   TruckElectric,
@@ -53,9 +57,10 @@ import {
   AlertCircle,
   Calendar,
   Gauge,
-  MapPin,
-  Hash,
   TrendingUp,
+  CircleEllipsis,
+  Trash2,
+  Edit,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -66,6 +71,11 @@ import {
 } from "@/data/trucksMaintenanceTable";
 import { TPagination, TTruck } from "@/types/globalTypes";
 import Pagination from "@/components/ui/Pagination";
+import { IoMdEye } from "react-icons/io";
+import dayjs from "dayjs";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 const TruckMaintenance = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
@@ -86,8 +96,26 @@ const TruckMaintenance = () => {
 
   // Dialog State
   const [openTrucksDialog, setOpenTrucksDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [selectedMaintenance, setSelectedMaintenance] =
     useState<TMaintenance | null>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({
+    type: "",
+    intervalMile: "",
+    remindBeforeMile: "",
+    intervalDays: "",
+    remindBeforeDays: "",
+    trucks: [] as {
+      truckId: string;
+      plateNumber: string;
+      lastDoneMile?: string;
+      lastDoneAt?: string | null;
+    }[],
+  });
 
   // Get all trucks from API
   const {
@@ -103,6 +131,10 @@ const TruckMaintenance = () => {
   // Create maintenance mutation
   const [createMaintenance, { isLoading: isCreating }] =
     useCreateMaintenanceMutation();
+  const [updateMaintenance, { isLoading: isUpdating }] =
+    useUpdateMaintenanceMutation();
+  const [deleteMaintenance, { isLoading: isDeleting }] =
+    useDeleteMaintenanceMutation();
 
   const serviceTypes = [
     "Oil Change",
@@ -423,6 +455,133 @@ const TruckMaintenance = () => {
     }
   };
 
+  // Handle edit form submission
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedMaintenance) return;
+
+    try {
+      const isMileBased = selectedMaintenance.repeatBy === "mile";
+
+      type TMaintenanceUpdate = Pick<TMaintenance, "type"> & {
+        intervalMile?: number;
+        remindBeforeMile?: number;
+        intervalDays?: number;
+        remindBeforeDays?: number;
+        statusPerTruck: Array<{
+          truck: string;
+          lastDoneMile?: number;
+          lastDoneAt?: string;
+        }>;
+      };
+
+      const statusPerTruck = editForm.trucks.map((truck) => {
+        const truckObj: {
+          truck: string;
+          lastDoneMile?: number;
+          lastDoneAt?: string;
+        } = {
+          truck: truck.truckId,
+        };
+
+        if (isMileBased) {
+          if (truck.lastDoneMile) {
+            truckObj.lastDoneMile = parseInt(truck.lastDoneMile);
+          }
+        } else {
+          if (truck.lastDoneAt) {
+            // Format date to YYYY-MM-DD
+            const date = dayjs(truck.lastDoneAt);
+            if (date.isValid()) {
+              truckObj.lastDoneAt = date.format("YYYY-MM-DD");
+            }
+          }
+        }
+
+        return truckObj;
+      });
+
+      const updateData: TMaintenanceUpdate = {
+        type: editForm.type,
+        statusPerTruck: statusPerTruck,
+      };
+
+      if (isMileBased) {
+        if (editForm.intervalMile) {
+          updateData.intervalMile = parseInt(editForm.intervalMile);
+        }
+        if (editForm.remindBeforeMile) {
+          updateData.remindBeforeMile = parseInt(editForm.remindBeforeMile);
+        }
+      } else {
+        if (editForm.intervalDays) {
+          updateData.intervalDays = parseInt(editForm.intervalDays);
+        }
+        if (editForm.remindBeforeDays) {
+          updateData.remindBeforeDays = parseInt(editForm.remindBeforeDays);
+        }
+      }
+
+      await updateMaintenance({
+        id: selectedMaintenance.id,
+        ...updateData,
+      }).unwrap();
+
+      toast.success("Maintenance record updated successfully!", {
+        style: {
+          background: "#16a34a",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+      });
+
+      setOpenEditDialog(false);
+      maintenanceFetch();
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      toast.error(`Failed to update record: ${errorMessage}`, {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+      });
+    }
+  };
+
+  // Handle delete
+  const handleDelete = async () => {
+    if (!selectedMaintenance) return;
+
+    try {
+      await deleteMaintenance(selectedMaintenance.id!).unwrap();
+
+      toast.success("Maintenance record deleted successfully!", {
+        style: {
+          background: "#16a34a",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+      });
+
+      setOpenDeleteDialog(false);
+      maintenanceFetch();
+    } catch (error) {
+      const errorMessage = getErrorMessage(error);
+      toast.error(`Failed to delete record: ${errorMessage}`, {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+      });
+    }
+  };
+
   // Handle toggle change
   const handleToggleChange = (
     event: React.MouseEvent<HTMLElement>,
@@ -440,9 +599,57 @@ const TruckMaintenance = () => {
     setOpenTrucksDialog(true);
   };
 
+  // Handle edit click
+  const handleEditClick = (maintenanceItem: TMaintenance) => {
+    setSelectedMaintenance(maintenanceItem);
+    const trucksForEdit = maintenanceItem.statusPerTruck.map((truck) => ({
+      truckId: truck.truckId,
+      plateNumber: truck.plateNumber,
+      lastDoneMile: truck.lastDoneMile?.toString() || "",
+      lastDoneAt: truck.lastDoneAt || null,
+    }));
+
+    setEditForm({
+      type: maintenanceItem.type || "",
+      intervalMile: maintenanceItem.intervalMile?.toString() || "",
+      remindBeforeMile: maintenanceItem.remindBeforeMile?.toString() || "",
+      intervalDays: maintenanceItem.intervalDays?.toString() || "",
+      remindBeforeDays: maintenanceItem.remindBeforeDays?.toString() || "",
+      trucks: trucksForEdit,
+    });
+
+    setOpenEditDialog(true);
+    setAnchorEl(null);
+  };
+
+  // Handle delete click
+  const handleDeleteClick = (maintenanceItem: TMaintenance) => {
+    setSelectedMaintenance(maintenanceItem);
+    setOpenDeleteDialog(true);
+    setAnchorEl(null);
+  };
+
   // Close dialog
   const handleCloseDialog = () => {
     setOpenTrucksDialog(false);
+    setSelectedMaintenance(null);
+  };
+
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false);
+    setSelectedMaintenance(null);
+    setEditForm({
+      type: "",
+      intervalMile: "",
+      remindBeforeMile: "",
+      intervalDays: "",
+      remindBeforeDays: "",
+      trucks: [],
+    });
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setOpenDeleteDialog(false);
     setSelectedMaintenance(null);
   };
 
@@ -478,6 +685,78 @@ const TruckMaintenance = () => {
           text: status || "Unknown",
         };
     }
+  };
+
+  // Handle adding a new truck to edit form
+  const handleAddTruck = () => {
+    setEditForm({
+      ...editForm,
+      trucks: [
+        ...editForm.trucks,
+        {
+          truckId: "",
+          plateNumber: "",
+          lastDoneMile: "",
+          lastDoneAt: null,
+        },
+      ],
+    });
+  };
+
+  // Handle removing a truck from edit form
+  const handleRemoveTruck = (index: number) => {
+    const newTrucks = [...editForm.trucks];
+    newTrucks.splice(index, 1);
+    setEditForm({
+      ...editForm,
+      trucks: newTrucks,
+    });
+  };
+
+  // Handle truck selection change
+  const handleTruckChange = (index: number, truckId: string) => {
+    const newTrucks = [...editForm.trucks];
+    const selectedTruck = trucks.find((t: TTruck) => t.id === truckId);
+
+    newTrucks[index] = {
+      ...newTrucks[index],
+      truckId,
+      plateNumber: selectedTruck?.plateNumber || "",
+    };
+
+    setEditForm({
+      ...editForm,
+      trucks: newTrucks,
+    });
+  };
+
+  // Handle truck field change
+  const handleTruckFieldChange = (
+    index: number,
+    field: "lastDoneMile" | "lastDoneAt",
+    value: string
+  ) => {
+    const newTrucks = [...editForm.trucks];
+    newTrucks[index] = {
+      ...newTrucks[index],
+      [field]: value,
+    };
+
+    setEditForm({
+      ...editForm,
+      trucks: newTrucks,
+    });
+  };
+
+  // Get available trucks (excluding already selected ones)
+  const getAvailableTrucks = (currentIndex: number) => {
+    const selectedTruckIds = editForm.trucks
+      .map((truck, index) => (index === currentIndex ? null : truck.truckId))
+      .filter(Boolean);
+
+    return trucks.filter(
+      (truck: TTruck) => !selectedTruckIds.includes(truck.id)
+    );
   };
 
   // Stats cards
@@ -545,22 +824,29 @@ const TruckMaintenance = () => {
           {item.remindBeforeMile || "--"}
         </td>
 
-        {/* view */}
+        {/* Actions */}
         <td
           style={{ color: theme.currentPalette.primary }}
           className="p-4 text-center"
         >
-          <Button
-            onClick={() => handleViewTrucks(item)}
-            sx={{
-              color: theme.currentPalette.primary,
-              minWidth: "auto",
-              px: 1,
-            }}
-            title="View Trucks"
-          >
-            <Eye size={20} />
-          </Button>
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setAnchorEl(e.currentTarget);
+                setSelectedMaintenance(item);
+              }}
+              sx={{
+                color: theme.currentPalette.primary,
+                "&:hover": {
+                  backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                },
+              }}
+            >
+              <CircleEllipsis fontSize="small" />
+            </IconButton>
+          </Box>
         </td>
       </TableRow>
     );
@@ -617,22 +903,29 @@ const TruckMaintenance = () => {
           {item.remindBeforeDays || "--"}
         </td>
 
-        {/* view */}
+        {/* Actions */}
         <td
           style={{ color: theme.currentPalette.primary }}
           className="p-4 text-center"
         >
-          <Button
-            onClick={() => handleViewTrucks(item)}
-            sx={{
-              color: theme.currentPalette.primary,
-              minWidth: "auto",
-              px: 1,
-            }}
-            title="View Trucks"
-          >
-            <Eye size={20} />
-          </Button>
+          <Box sx={{ display: "flex", justifyContent: "center", gap: 1 }}>
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                setAnchorEl(e.currentTarget);
+                setSelectedMaintenance(item);
+              }}
+              sx={{
+                color: theme.currentPalette.primary,
+                "&:hover": {
+                  backgroundColor: alpha(theme.currentPalette.primary, 0.1),
+                },
+              }}
+            >
+              <CircleEllipsis fontSize="small" />
+            </IconButton>
+          </Box>
         </td>
       </TableRow>
     );
@@ -1111,7 +1404,7 @@ const TruckMaintenance = () => {
                               0.3
                             )}`,
                             boxShadow: "none",
-                            my: 1
+                            my: 1,
                           }}
                         >
                           <CardContent sx={{ p: 2.5 }}>
@@ -1298,6 +1591,424 @@ const TruckMaintenance = () => {
             </>
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Menu for Actions */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={() => setAnchorEl(null)}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+            mt: 1,
+          },
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            if (selectedMaintenance) handleViewTrucks(selectedMaintenance);
+            setAnchorEl(null);
+          }}
+          sx={{ fontSize: "14px" }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <IoMdEye size={18} color={theme.currentPalette.primary} />
+          </ListItemIcon>
+          <ListItemText
+            primary="View Trucks"
+            slotProps={{
+              primary: {
+                sx: { color: theme.currentPalette.primary },
+              },
+            }}
+          />
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedMaintenance) handleEditClick(selectedMaintenance);
+          }}
+          sx={{ fontSize: "14px" }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Edit size={18} color={theme.currentPalette.primary} />
+          </ListItemIcon>
+          <ListItemText
+            primary="Edit Details"
+            slotProps={{
+              primary: {
+                sx: { color: theme.currentPalette.primary },
+              },
+            }}
+          />
+        </MenuItem>
+
+        <MenuItem
+          onClick={() => {
+            if (selectedMaintenance) handleDeleteClick(selectedMaintenance);
+          }}
+          sx={{ fontSize: "14px", color: "#dc2626" }}
+        >
+          <ListItemIcon sx={{ minWidth: 32 }}>
+            <Trash2 size={18} color="#dc2626" />
+          </ListItemIcon>
+          <ListItemText
+            primary="Delete"
+            slotProps={{
+              primary: {
+                sx: { color: "#dc2626" },
+              },
+            }}
+          />
+        </MenuItem>
+      </Menu>
+
+      {/* Edit Dialog */}
+      <Dialog
+        open={openEditDialog}
+        onClose={handleCloseEditDialog}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            overflow: "hidden",
+            maxHeight: "90vh",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            borderBottom: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            py: 2,
+            px: 3,
+          }}
+        >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Edit size={24} color={theme.currentPalette.primary} />
+            <Typography
+              variant="h6"
+              sx={{
+                fontWeight: 600,
+                color: theme.currentPalette.primary,
+              }}
+            >
+              Edit Maintenance
+            </Typography>
+          </Box>
+
+          <IconButton
+            onClick={handleCloseEditDialog}
+            sx={{
+              color: theme.currentPalette.text,
+              "&:hover": {
+                bgcolor: alpha(theme.currentPalette.primary, 0.1),
+              },
+            }}
+          >
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent>
+          <Box component="form" onSubmit={handleEditSubmit}>
+            {/* Service Type */}
+            <FormControl fullWidth size="medium" sx={{ my: 3 }}>
+              <InputLabel id="edit-service-type-label">Service Type</InputLabel>
+              <Select
+                labelId="edit-service-type-label"
+                value={editForm.type}
+                label="Service Type"
+                onChange={(e) =>
+                  setEditForm({ ...editForm, type: e.target.value })
+                }
+                sx={{
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
+              >
+                {serviceTypes.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {selectedMaintenance?.repeatBy === "mile" ? (
+              <>
+                <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Interval (Miles)"
+                    value={editForm.intervalMile}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, intervalMile: e.target.value })
+                    }
+                    type="text"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Remind Before (Miles)"
+                    value={editForm.remindBeforeMile}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        remindBeforeMile: e.target.value,
+                      })
+                    }
+                    type="text"
+                  />
+                </Stack>
+              </>
+            ) : (
+              <>
+                <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Interval (Days)"
+                    value={editForm.intervalDays}
+                    onChange={(e) =>
+                      setEditForm({ ...editForm, intervalDays: e.target.value })
+                    }
+                    type="text"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Remind Before (Days)"
+                    value={editForm.remindBeforeDays}
+                    onChange={(e) =>
+                      setEditForm({
+                        ...editForm,
+                        remindBeforeDays: e.target.value,
+                      })
+                    }
+                    type="text"
+                  />
+                </Stack>
+              </>
+            )}
+
+            {/* Trucks Section */}
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
+                Trucks
+              </Typography>
+
+              {editForm.trucks.map((truck, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    p: 2,
+                    mb: 2,
+                    border: `1px solid ${alpha(
+                      theme.currentPalette.text,
+                      0.1
+                    )}`,
+                    borderRadius: 2,
+                    bgcolor: alpha(theme.currentPalette.background, 0.5),
+                  }}
+                >
+                  <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                    <FormControl fullWidth size="small">
+                      <InputLabel>Truck</InputLabel>
+                      <Select
+                        value={truck.truckId}
+                        label="Truck"
+                        onChange={(e) =>
+                          handleTruckChange(index, e.target.value)
+                        }
+                      >
+                        {getAvailableTrucks(index).map(
+                          (availableTruck: TTruck) => (
+                            <MenuItem
+                              key={availableTruck.id}
+                              value={availableTruck.id}
+                            >
+                              {availableTruck.plateNumber}
+                            </MenuItem>
+                          )
+                        )}
+                      </Select>
+                    </FormControl>
+
+                    <IconButton
+                      onClick={() => handleRemoveTruck(index)}
+                      sx={{ color: "#dc2626" }}
+                      disabled={editForm.trucks.length === 1}
+                    >
+                      <Trash2 size={18} />
+                    </IconButton>
+                  </Stack>
+
+                  {selectedMaintenance?.repeatBy === "mile" ? (
+                    <TextField
+                      fullWidth
+                      label="Last Done Mile"
+                      value={truck.lastDoneMile}
+                      onChange={(e) =>
+                        handleTruckFieldChange(
+                          index,
+                          "lastDoneMile",
+                          e.target.value
+                        )
+                      }
+                      type="number"
+                      placeholder="e.g., 300"
+                    />
+                  ) : (
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <DatePicker
+                        label="Last Done Date"
+                        value={
+                          truck.lastDoneAt ? dayjs(truck.lastDoneAt) : null
+                        }
+                        onChange={(newValue) =>
+                          handleTruckFieldChange(
+                            index,
+                            "lastDoneAt",
+                            newValue ? newValue.format("YYYY-MM-DD") : ""
+                          )
+                        }
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  )}
+                </Box>
+              ))}
+
+              <Button
+                onClick={handleAddTruck}
+                variant="outlined"
+                fullWidth
+                sx={{
+                  borderStyle: "dashed",
+                  borderColor: alpha(theme.currentPalette.primary, 0.3),
+                  color: theme.currentPalette.primary,
+                  "&:hover": {
+                    borderColor: theme.currentPalette.primary,
+                    bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                  },
+                }}
+              >
+                + Add Truck
+              </Button>
+            </Box>
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3 }}>
+          <Button
+            onClick={handleEditSubmit}
+            variant="contained"
+            fullWidth
+            disabled={isUpdating}
+            sx={{
+              bgcolor: theme.currentPalette.primary,
+              color: theme.currentPalette.background,
+              "&:hover": {
+                bgcolor: darken(theme.currentPalette.primary, 0.2),
+              },
+              textTransform: "capitalize",
+            }}
+          >
+            {isUpdating ? "Updating..." : "Update"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            overflow: "hidden",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            borderBottom: `1px solid ${alpha(theme.currentPalette.text, 0.1)}`,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            py: 2,
+            px: 3,
+          }}
+        >
+          <Trash2 size={24} color="#dc2626" />
+          <Typography sx={{ fontWeight: 600, color: "#dc2626" }}>
+            Delete Maintenance
+          </Typography>
+        </DialogTitle>
+
+        <DialogContent sx={{ mt: 5 }}>
+          <Typography sx={{ mb: 2 }}>
+            Are you sure you want to delete this maintenance record?
+          </Typography>
+          {selectedMaintenance && (
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                bgcolor: alpha("#dc2626", 0.05),
+                border: `1px solid ${alpha("#dc2626", 0.1)}`,
+              }}
+            >
+              <Typography sx={{ fontWeight: 500 }}>
+                Type: {selectedMaintenance.type}
+              </Typography>
+              <Typography>Repeat By: {selectedMaintenance.repeatBy}</Typography>
+              <Typography>
+                Trucks: {selectedMaintenance.statusPerTruck?.length || 0}
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ p: 3, pt: 2 }}>
+          <Button
+            onClick={handleCloseDeleteDialog}
+            variant="outlined"
+            fullWidth
+            sx={{
+              border: `1px solid #dc2626`,
+              color: "#dc2626",
+              textTransform: "capitalize",
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDelete}
+            variant="contained"
+            fullWidth
+            disabled={isDeleting}
+            sx={{
+              bgcolor: "#dc2626",
+              color: "#fff",
+              "&:hover": {
+                bgcolor: "#b91c1c",
+              },
+              textTransform: "capitalize",
+            }}
+          >
+            {isDeleting ? "Deleting..." : "Delete"}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
