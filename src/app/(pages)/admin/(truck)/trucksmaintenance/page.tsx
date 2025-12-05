@@ -688,16 +688,6 @@ const TruckMaintenance = () => {
     });
   };
 
-  // Handle removing a truck from edit form
-  const handleRemoveTruck = (index: number) => {
-    const newTrucks = [...editForm.trucks];
-    newTrucks.splice(index, 1);
-    setEditForm({
-      ...editForm,
-      trucks: newTrucks,
-    });
-  };
-
   // Handle truck selection change
   const handleTruckChange = (index: number, truckId: string) => {
     const newTrucks = [...editForm.trucks];
@@ -798,7 +788,7 @@ const TruckMaintenance = () => {
           style={{ color: theme.currentPalette.primary }}
           className="p-4 text-right"
         >
-          {item.intervalMile || "--"}
+          {item.intervalMile || "--"} Miles
         </td>
 
         {/* remindBeforeMile */}
@@ -806,7 +796,7 @@ const TruckMaintenance = () => {
           style={{ color: theme.currentPalette.primary }}
           className="p-4 text-right"
         >
-          {item.remindBeforeMile || "--"}
+          {item.remindBeforeMile || "--"} Miles
         </td>
 
         {/* Actions */}
@@ -877,7 +867,7 @@ const TruckMaintenance = () => {
           style={{ color: theme.currentPalette.primary }}
           className="p-4 text-right"
         >
-          {item.intervalDays || "--"}
+          {item.intervalDays || "--"} Days
         </td>
 
         {/* remindBeforeDays */}
@@ -885,7 +875,7 @@ const TruckMaintenance = () => {
           style={{ color: theme.currentPalette.primary }}
           className="p-4 text-right"
         >
-          {item.remindBeforeDays || "--"}
+          {item.remindBeforeDays || "--"} Days
         </td>
 
         {/* Actions */}
