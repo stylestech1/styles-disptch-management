@@ -35,6 +35,7 @@ import {
   ToggleButtonGroup,
   Stack,
   IconButton,
+  Autocomplete,
 } from "@mui/material";
 import {
   ClockAlert,
@@ -84,6 +85,7 @@ const TruckMaintenance = () => {
   const [intervalDays, setIntervalDays] = useState("");
   const [remindBeforeDays, setRemindBeforeDays] = useState("");
   const [togglePage, setTogglePage] = useState<"Miles" | "Times">("Miles");
+  const [inputValue, setInputValue] = useState("");
 
   // Truck Inputs State
   const [truckInputs, setTruckInputs] = useState<
@@ -1163,25 +1165,30 @@ const TruckMaintenance = () => {
         >
           {/* Service Type */}
           <FormControl fullWidth size="medium" required>
-            <InputLabel id="service-type-label">Service Type</InputLabel>
-            <Select
-              labelId="service-type-label"
+            <Autocomplete
+              freeSolo
+              options={serviceTypes} 
               value={serviceType}
-              label="Service Type"
-              onChange={(e) => setServiceType(e.target.value)}
-              disabled={isTrucksLoading || trucks.length === 0}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
+              onChange={(event, newValue) => {
+                if (newValue) setServiceType(newValue);
               }}
-            >
-              {serviceTypes.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </Select>
+              onInputChange={(event, newInputValue) => {
+                setServiceType(newInputValue);
+              }}
+              disabled={isTrucksLoading || trucks.length === 0}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Service Type"
+                  required
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
 
           {togglePage === "Miles" ? (
