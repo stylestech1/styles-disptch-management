@@ -436,13 +436,20 @@ export const apiSlice = api.injectEndpoints({
       query: ({ page = 1, limit = 10 }) =>
         `/api/v1/maintenances?page=${page}&limit=${limit}`,
       providesTags: ["Maintenances"],
-      keepUnusedDataFor: 60 * 60,
+      keepUnusedDataFor: 60 * 60 * 24,
     }),
 
     // 🛠 Get Single Maintenance
     getSingleMaintenances: builder.query({
       query: (id) => `/api/v1/maintenances/${id}`,
       providesTags: (result, error, id) => [{ type: "Maintenances", id }],
+      keepUnusedDataFor: 60 * 60,
+    }),
+
+    // 🛠 Get Single Maintenance
+    searchMaintenancesWithType: builder.query({
+      query: (type) => `/api/v1/maintenances?type=${type}`,
+      providesTags: (result, error, type) => [{ type: "Maintenances", id: type }],
       keepUnusedDataFor: 60 * 60,
     }),
 
@@ -803,6 +810,8 @@ export const {
   // TODO: ----- Trucks Maintenance -----
   useGetAllMaintenancesQuery,
   useGetSingleMaintenancesQuery,
+  useSearchMaintenancesWithTypeQuery,
+  useLazySearchMaintenancesWithTypeQuery,
   useGetMaintenanceWithFilterQuery,
   useCreateMaintenanceMutation,
   useUpdateMaintenanceMutation,

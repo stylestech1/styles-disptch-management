@@ -12,6 +12,7 @@ import {
   useCreateMaintenanceMutation,
   useUpdateMaintenanceMutation,
   useDeleteMaintenanceMutation,
+  useLazySearchMaintenancesWithTypeQuery,
 } from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
 import { TMaintenance, TStatusPerTruck } from "@/types/truckType";
@@ -61,6 +62,8 @@ import TrucksDialog from "@/components/truck/truckMaintenance/TrucksDialog";
 import ActionsMenu from "@/components/truck/truckMaintenance/ActionsMenu";
 import EditDialog from "@/components/truck/truckMaintenance/EditDialog";
 import DeleteDialog from "@/components/truck/truckMaintenance/DeleteDialog";
+import SearchInput from "@/components/ui/SearchInput";
+import { useSearchSubmit } from "@/hook/useSearchSubmit";
 
 const TruckMaintenance = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
@@ -163,6 +166,33 @@ const TruckMaintenance = () => {
     }
   }, [isFiltered, fromDate, toDate, togglePage]);
 
+  const [
+    triggerSearchQuery,
+    {
+      data: maintenanceType,
+      isLoading: maintenanceTypeLoading,
+      error: maintenanceTypeError,
+      reset: resetSearchQuery,
+    },
+  ] = useLazySearchMaintenancesWithTypeQuery();
+
+  // Search Hook
+  const searchHook = useSearchSubmit({
+    onSearch: (term) => {
+      setPage(1);
+      if (term.trim()) {
+        triggerSearchQuery(term);
+      }
+    },
+    onReset: () => {
+      setPage(1);
+      resetSearchQuery();
+      maintenanceFetch();
+    },
+  });
+
+  const { searchTerm, isSearching } = searchHook;
+
   // Process trucks data
   const trucks = useMemo(() => {
     if (!trucksData?.data) return [];
@@ -176,19 +206,29 @@ const TruckMaintenance = () => {
   const maintenance = useMemo(() => {
     let data: TMaintenance[] = [];
 
-    if (isFiltered && filteredData?.data) {
+    if (isSearching && maintenanceType?.data) {
+      data = maintenanceType.data;
+    } else if (isSearching && isFiltered && filteredData?.data) {
+      data = filteredData.data;
+    } else if (isFiltered && filteredData?.data) {
       data = filteredData.data;
     } else if (maintenanceData?.data) {
       data = maintenanceData.data;
     }
 
-    // Filter based on togglePage
     if (togglePage === "Miles") {
       return data.filter((item: TMaintenance) => item.repeatBy === "mile");
     } else {
       return data.filter((item: TMaintenance) => item.repeatBy === "time");
     }
-  }, [isFiltered, maintenanceData?.data, filteredData?.data, togglePage]);
+  }, [
+    isSearching,
+    maintenanceType?.data,
+    isFiltered,
+    filteredData?.data,
+    maintenanceData?.data,
+    togglePage,
+  ]);
 
   const pagination: TPagination = isFiltered
     ? filteredData?.paginationResult || null
@@ -911,6 +951,17 @@ const TruckMaintenance = () => {
     minHeight: "100vh",
     p: 3,
   };
+  const searchFilterContainerSx: SxProps = {
+    display: "flex",
+    flexDirection: { xs: "column", lg: "row" },
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    p: 2,
+    my: 2,
+    border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
+    borderRadius: 2,
+    backgroundColor: theme.currentPalette.background,
+  };
 
   return (
     <Box sx={containerSx}>
@@ -1257,6 +1308,51 @@ const TruckMaintenance = () => {
         </Box>
       </Box>
 
+      {/* Search & Filter */}
+      <Box sx={searchFilterContainerSx}>
+        <Box>
+          <Typography
+            variant="h6"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 500 }}
+          >
+            Fleet Maintenance Status
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{ color: theme.currentPalette.primary, fontWeight: 400 }}
+          >
+            Real-time maintenance tracking across all vehicles
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexDirection: { xs: "column", lg: "row" },
+            gap: 2,
+          }}
+        >
+          {/* Search */}
+          <SearchInput
+            searchHook={searchHook}
+            placeholder={"Search By Service Type..."}
+            showClearButton
+            sx={{ width: 350 }}
+            inputSx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: theme.currentPalette.background,
+                py: 0.5,
+                "&:hover": {
+                  borderColor: theme.currentPalette.primary,
+                },
+              },
+            }}
+          />
+        </Box>
+      </Box>
+
       {/* Data Table */}
       <DataTable
         columns={
@@ -1267,13 +1363,13 @@ const TruckMaintenance = () => {
         data={maintenance}
         renderRow={togglePage === "Miles" ? renderMileRow : renderTimeRow}
         loading={
-          (isFiltered && !filteredData) ||
+          (isSearching && isFiltered && !filteredData) ||
           (isMaintenanceLoading && !maintenanceData)
         }
       />
 
       {/* Pagination */}
-      {pagination && maintenance.length > 0 && (
+      {!isSearching && pagination && maintenance.length > 0 && (
         <Box sx={{ mt: 3 }}>
           <Pagination
             pagination={pagination}
