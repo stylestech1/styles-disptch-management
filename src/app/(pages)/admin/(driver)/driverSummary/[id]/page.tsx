@@ -189,7 +189,7 @@ const DriverSummary = () => {
       id: 4,
       icon: <Calendar size={25} />,
       name: "Hire Date",
-      value: profile?.hireDate,
+      value: profile?.hireDate.split('T')[0],
     },
   ];
 
