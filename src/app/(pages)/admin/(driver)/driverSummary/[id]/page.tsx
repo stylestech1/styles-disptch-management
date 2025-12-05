@@ -59,8 +59,8 @@ const DriverSummary = () => {
     error: summaryError,
   } = useGetDriverSummaryWithFilterQuery({
     id: id as string,
-    from: fromDate ? fromDate.toISOString() : undefined,
-    to: toDate ? toDate.toISOString() : undefined,
+    from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+    to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
   });
 
   //
@@ -95,39 +95,6 @@ const DriverSummary = () => {
 
   const profile = profileData?.data;
   const summaryData = driverSummaryData?.data;
-
-  // Load Status badge component
-  const LoadStatusBadge = ({ status }: { status: TStatusLoad }) => {
-    const statusConfig = {
-      pending: {
-        color: "bg-amber-100 text-amber-800 border-amber-300",
-        icon: <IoTimeOutline size={14} className="mr-1" />,
-      },
-      in_transit: {
-        color: "bg-blue-100 text-blue-800 border-blue-300",
-        icon: <IoNavigate size={14} className="mr-1" />,
-      },
-      delivered: {
-        color: "bg-emerald-100 text-emerald-800 border-emerald-300",
-        icon: <IoCheckmarkCircleOutline size={14} className="mr-1" />,
-      },
-      cancelled: {
-        color: "bg-red-100 text-red-800 border-red-300",
-        icon: <IoTimeOutline size={14} className="mr-1" />,
-      },
-    };
-
-    const config = statusConfig[status] || statusConfig.pending;
-
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${config.color}`}
-      >
-        {config.icon}
-        {status.replace("_", " ")}
-      </span>
-    );
-  };
 
   // ✅ Table Row Renderer for Loads
   const renderDriverSummaryRow = (load: TLoads, index: number) => {
