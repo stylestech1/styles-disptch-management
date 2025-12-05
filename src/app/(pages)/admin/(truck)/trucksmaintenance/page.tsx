@@ -1277,7 +1277,7 @@ const TruckMaintenance = () => {
         data={maintenance}
         renderRow={togglePage === "Miles" ? renderMileRow : renderTimeRow}
         loading={
-          (isFiltered && filteredData) ||
+          (isFiltered && !filteredData) ||
           (isMaintenanceLoading && !maintenanceData)
         }
       />
