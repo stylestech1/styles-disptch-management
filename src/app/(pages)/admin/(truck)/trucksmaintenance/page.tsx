@@ -13,15 +13,15 @@ import {
   useUpdateMaintenanceMutation,
   useDeleteMaintenanceMutation,
   useLazySearchMaintenancesWithTypeQuery,
+  useLazyFilterMaintenancesWithTypeQuery,
 } from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
-import { TMaintenance, TStatusPerTruck } from "@/types/truckType";
+import { TMaintenance } from "@/types/truckType";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import {
   alpha,
   Box,
   Button,
-  Chip,
   darken,
   FormControl,
   InputLabel,
@@ -34,7 +34,6 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Stack,
-  Checkbox,
   IconButton,
 } from "@mui/material";
 import {
@@ -45,6 +44,7 @@ import {
   CircleEllipsis,
   AlertCircle,
   CheckCircle,
+  X,
 } from "lucide-react";
 import React, { useEffect, useMemo, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
@@ -56,6 +56,7 @@ import {
 import { TPagination, TTruck } from "@/types/globalTypes";
 import Pagination from "@/components/ui/Pagination";
 import dayjs from "dayjs";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 // Import the separated components
 import TrucksDialog from "@/components/truck/truckMaintenance/TrucksDialog";
@@ -64,6 +65,8 @@ import EditDialog from "@/components/truck/truckMaintenance/EditDialog";
 import DeleteDialog from "@/components/truck/truckMaintenance/DeleteDialog";
 import SearchInput from "@/components/ui/SearchInput";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 const TruckMaintenance = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
@@ -81,6 +84,15 @@ const TruckMaintenance = () => {
   const [intervalDays, setIntervalDays] = useState("");
   const [remindBeforeDays, setRemindBeforeDays] = useState("");
   const [togglePage, setTogglePage] = useState<"Miles" | "Times">("Miles");
+
+  // Truck Inputs State
+  const [truckInputs, setTruckInputs] = useState<
+    Array<{
+      truckId: string;
+      lastDoneMile?: string;
+      lastDoneAt?: string;
+    }>
+  >([]);
 
   // Dialog State
   const [openTrucksDialog, setOpenTrucksDialog] = useState(false);
@@ -142,7 +154,7 @@ const TruckMaintenance = () => {
     error: isMaintenanceError,
     refetch: maintenanceFetch,
   } = useGetAllMaintenancesQuery(
-    { page, limit: 10 },
+    { page, limit: 10, repeatBy: togglePage === "Miles" ? "mile" : "time" },
     {
       refetchOnFocus: false,
       refetchOnReconnect: false,
@@ -176,6 +188,17 @@ const TruckMaintenance = () => {
     },
   ] = useLazySearchMaintenancesWithTypeQuery();
 
+  //
+
+  const [
+    triggerSearchByType,
+    {
+      data: filteredByTypeData,
+      isLoading: isFilteringByType,
+      error: filterByTypeError,
+    },
+  ] = useLazyFilterMaintenancesWithTypeQuery();
+
   // Search Hook
   const searchHook = useSearchSubmit({
     onSearch: (term) => {
@@ -202,37 +225,53 @@ const TruckMaintenance = () => {
     }));
   }, [trucksData]);
 
-  // Process maintenance data - flatten the array
+  // Process maintenance data
   const maintenance = useMemo(() => {
     let data: TMaintenance[] = [];
 
     if (isSearching && maintenanceType?.data) {
       data = maintenanceType.data;
-    } else if (isSearching && isFiltered && filteredData?.data) {
-      data = filteredData.data;
     } else if (isFiltered && filteredData?.data) {
       data = filteredData.data;
+    } else if (togglePage && filteredByTypeData?.data) {
+      data = filteredByTypeData.data;
     } else if (maintenanceData?.data) {
       data = maintenanceData.data;
     }
 
-    if (togglePage === "Miles") {
-      return data.filter((item: TMaintenance) => item.repeatBy === "mile");
-    } else {
-      return data.filter((item: TMaintenance) => item.repeatBy === "time");
-    }
+    return data;
   }, [
     isSearching,
     maintenanceType?.data,
     isFiltered,
     filteredData?.data,
-    maintenanceData?.data,
     togglePage,
+    filteredByTypeData?.data,
+    maintenanceData?.data,
   ]);
 
-  const pagination: TPagination = isFiltered
-    ? filteredData?.paginationResult || null
-    : maintenanceData?.paginationResult || null;
+  const pagination: TPagination = useMemo(() => {
+    if (isSearching && maintenanceType?.paginationResult) {
+      return maintenanceType.paginationResult;
+    }
+    if (isFiltered && filteredData?.paginationResult) {
+      return filteredData.paginationResult;
+    }
+    if (filteredByTypeData?.paginationResult) {
+      return filteredByTypeData.paginationResult;
+    }
+    if (maintenanceData?.paginationResult) {
+      return maintenanceData.paginationResult;
+    }
+    return null;
+  }, [
+    isSearching,
+    maintenanceType?.paginationResult,
+    isFiltered,
+    filteredData?.paginationResult,
+    filteredByTypeData?.paginationResult,
+    maintenanceData?.paginationResult,
+  ]);
 
   // Loading state
   useEffect(() => {
@@ -273,12 +312,38 @@ const TruckMaintenance = () => {
     }
   }, [trucksError]);
 
+  // Helper function to get available trucks for selection
+  const getAvailableTrucksForSelection = (currentTruckId: string) => {
+    const otherSelectedTruckIds = truckInputs
+      .filter((input) => input.truckId && input.truckId !== currentTruckId)
+      .map((input) => input.truckId);
+
+    return trucks.filter(
+      (truck: TTruck) => !otherSelectedTruckIds.includes(truck.id)
+    );
+  };
+
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedTrucks.length === 0) {
-      toast.error("Please select at least one truck", {
+    // Validate truck inputs
+    const validTruckInputs = truckInputs.filter((input) => input.truckId);
+    if (validTruckInputs.length === 0) {
+      toast.error("Please add at least one truck with details", {
+        style: {
+          background: "#dc2626",
+          color: "#fff",
+          borderRadius: "8px",
+          fontSize: "14px",
+        },
+      });
+      return;
+    }
+
+    // Validate service type
+    if (!serviceType) {
+      toast.error("Please select service type", {
         style: {
           background: "#dc2626",
           color: "#fff",
@@ -291,7 +356,7 @@ const TruckMaintenance = () => {
 
     // Validate form based on maintenance type
     if (togglePage === "Miles") {
-      if (!mileage || !serviceType || !intervalMile || !remindBeforeMile) {
+      if (!intervalMile || !remindBeforeMile) {
         toast.error(
           "Please fill all required fields for Mile-based maintenance",
           {
@@ -307,13 +372,10 @@ const TruckMaintenance = () => {
       }
 
       // Validate mileage is a number
-      const mileageNum = parseInt(mileage);
       const intervalMileNum = parseInt(intervalMile);
       const remindBeforeMileNum = parseInt(remindBeforeMile);
 
       if (
-        isNaN(mileageNum) ||
-        mileageNum < 0 ||
         isNaN(intervalMileNum) ||
         intervalMileNum <= 0 ||
         isNaN(remindBeforeMileNum) ||
@@ -330,10 +392,25 @@ const TruckMaintenance = () => {
         return;
       }
 
+      // Validate last done mileage for each truck
+      for (const input of validTruckInputs) {
+        if (!input.lastDoneMile || isNaN(parseInt(input.lastDoneMile))) {
+          toast.error(`Please enter valid last done mileage for all trucks`, {
+            style: {
+              background: "#dc2626",
+              color: "#fff",
+              borderRadius: "8px",
+              fontSize: "14px",
+            },
+          });
+          return;
+        }
+      }
+
       try {
-        const statusPerTruck = selectedTrucks.map((truckId) => ({
-          truck: truckId,
-          lastDoneMile: mileageNum,
+        const statusPerTruck = validTruckInputs.map((input) => ({
+          truck: input.truckId,
+          lastDoneMile: parseInt(input.lastDoneMile!),
         }));
 
         // Prepare request body according to API spec
@@ -350,7 +427,7 @@ const TruckMaintenance = () => {
 
         // Show success message
         toast.success(
-          `Maintenance record saved for ${selectedTrucks.length} truck(s)!`,
+          `Maintenance record saved for ${validTruckInputs.length} truck(s)!`,
           {
             style: {
               background: "#16a34a",
@@ -362,11 +439,12 @@ const TruckMaintenance = () => {
         );
 
         // Reset form
-        setSelectedTrucks([]);
+        setTruckInputs([]);
         setMileage("");
         setServiceType("");
         setIntervalMile("");
         setRemindBeforeMile("");
+        setSelectedTrucks([]);
 
         // Refresh maintenance data
         maintenanceFetch();
@@ -383,7 +461,7 @@ const TruckMaintenance = () => {
       }
     } else {
       // Time-based maintenance
-      if (!mileage || !serviceType || !intervalDays || !remindBeforeDays) {
+      if (!intervalDays || !remindBeforeDays) {
         toast.error(
           "Please fill all required fields for Time-based maintenance",
           {
@@ -399,13 +477,10 @@ const TruckMaintenance = () => {
       }
 
       // Validate values
-      const mileageNum = parseInt(mileage);
       const intervalDaysNum = parseInt(intervalDays);
       const remindBeforeDaysNum = parseInt(remindBeforeDays);
 
       if (
-        isNaN(mileageNum) ||
-        mileageNum < 0 ||
         isNaN(intervalDaysNum) ||
         intervalDaysNum <= 0 ||
         isNaN(remindBeforeDaysNum) ||
@@ -422,14 +497,25 @@ const TruckMaintenance = () => {
         return;
       }
 
-      try {
-        // Create a date string in YYYY-MM-DD format
-        const today = new Date();
-        const lastDoneAt = today.toISOString().split("T")[0];
+      // Validate last done date for each truck
+      for (const input of validTruckInputs) {
+        if (!input.lastDoneAt) {
+          toast.error(`Please select last done date for all trucks`, {
+            style: {
+              background: "#dc2626",
+              color: "#fff",
+              borderRadius: "8px",
+              fontSize: "14px",
+            },
+          });
+          return;
+        }
+      }
 
-        const statusPerTruck = selectedTrucks.map((truckId) => ({
-          truck: truckId,
-          lastDoneAt: lastDoneAt,
+      try {
+        const statusPerTruck = validTruckInputs.map((input) => ({
+          truck: input.truckId,
+          lastDoneAt: input.lastDoneAt!,
         }));
 
         // Prepare request body according to API spec
@@ -446,7 +532,7 @@ const TruckMaintenance = () => {
 
         // Show success message
         toast.success(
-          `Maintenance record saved for ${selectedTrucks.length} truck(s)!`,
+          `Maintenance record saved for ${validTruckInputs.length} truck(s)!`,
           {
             style: {
               background: "#16a34a",
@@ -458,11 +544,12 @@ const TruckMaintenance = () => {
         );
 
         // Reset form
-        setSelectedTrucks([]);
+        setTruckInputs([]);
         setMileage("");
         setServiceType("");
         setIntervalDays("");
         setRemindBeforeDays("");
+        setSelectedTrucks([]);
 
         // Refresh maintenance data
         maintenanceFetch();
@@ -615,6 +702,11 @@ const TruckMaintenance = () => {
     if (newToggle !== null) {
       setTogglePage(newToggle);
       setPage(1);
+      setTruckInputs([]);
+      setSelectedTrucks([]);
+
+      const repeatBy = newToggle === "Miles" ? "mile" : "time";
+      triggerSearchByType({ repeatBy, page: 1, limit: 10 });
     }
   };
 
@@ -963,6 +1055,11 @@ const TruckMaintenance = () => {
     backgroundColor: theme.currentPalette.background,
   };
 
+  const isLoading =
+    isMaintenanceLoading ||
+    isFilteringByType ||
+    (isSearching && maintenanceTypeLoading);
+
   return (
     <Box sx={containerSx}>
       <Toaster position="top-center" />
@@ -1009,7 +1106,7 @@ const TruckMaintenance = () => {
       <Box sx={{ mt: 4, mb: 5 }}>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 my-10">
           <StatsCard
-            title="Total Trucks"
+            title="Total Maintenance"
             value={statsData.totalMaintenance}
             icon={TruckElectric}
             iconColor={theme.currentPalette.primary}
@@ -1089,26 +1186,6 @@ const TruckMaintenance = () => {
 
           {togglePage === "Miles" ? (
             <>
-              {/* Current Mileage for mile-based maintenance */}
-              <TextField
-                fullWidth
-                label="Last Done Mileage"
-                value={mileage}
-                onChange={(e) => setMileage(e.target.value)}
-                placeholder="e.g., 300"
-                type="text"
-                required
-                disabled={isTrucksLoading || trucks.length === 0}
-                InputProps={{
-                  inputProps: { min: 0 },
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                  },
-                }}
-              />
-
               {/* Interval Mile for mile-based maintenance */}
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
@@ -1117,7 +1194,7 @@ const TruckMaintenance = () => {
                   value={intervalMile}
                   onChange={(e) => setIntervalMile(e.target.value)}
                   placeholder="e.g., 5000"
-                  type="text"
+                  type="number"
                   required
                   disabled={isTrucksLoading || trucks.length === 0}
                   InputProps={{
@@ -1135,7 +1212,7 @@ const TruckMaintenance = () => {
                   value={remindBeforeMile}
                   onChange={(e) => setRemindBeforeMile(e.target.value)}
                   placeholder="e.g., 500"
-                  type="text"
+                  type="number"
                   required
                   disabled={isTrucksLoading || trucks.length === 0}
                   InputProps={{
@@ -1151,25 +1228,6 @@ const TruckMaintenance = () => {
             </>
           ) : (
             <>
-              {/* Current Mileage for time-based maintenance (optional for time-based) */}
-              <TextField
-                fullWidth
-                label="Current Mileage (Per Day)"
-                value={mileage}
-                onChange={(e) => setMileage(e.target.value)}
-                placeholder="e.g., 65500"
-                type="text"
-                disabled={isTrucksLoading || trucks.length === 0}
-                InputProps={{
-                  inputProps: { min: 0 },
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                  },
-                }}
-              />
-
               {/* Interval Days for time-based maintenance */}
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
@@ -1178,7 +1236,7 @@ const TruckMaintenance = () => {
                   value={intervalDays}
                   onChange={(e) => setIntervalDays(e.target.value)}
                   placeholder="e.g., 30"
-                  type="text"
+                  type="number"
                   required
                   disabled={isTrucksLoading || trucks.length === 0}
                   InputProps={{
@@ -1196,7 +1254,7 @@ const TruckMaintenance = () => {
                   value={remindBeforeDays}
                   onChange={(e) => setRemindBeforeDays(e.target.value)}
                   placeholder="e.g., 7"
-                  type="text"
+                  type="number"
                   required
                   disabled={isTrucksLoading || trucks.length === 0}
                   InputProps={{
@@ -1212,59 +1270,252 @@ const TruckMaintenance = () => {
             </>
           )}
 
-          {/* Select Truck ID */}
-          <FormControl fullWidth size="medium" required>
-            <InputLabel id="truck-id-label">Select Truck(s)</InputLabel>
-            <Select
-              labelId="truck-id-label"
-              multiple
-              value={selectedTrucks}
-              label="Select Truck(s)"
-              onChange={(e) => setSelectedTrucks(e.target.value as string[])}
-              disabled={isTrucksLoading || trucks.length === 0}
+          {/* Select Truck(s)*/}
+          <Box sx={{ width: "100%" }}>
+            <Box
               sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
+                mb: 2,
               }}
-              renderValue={(selected) => (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {selected.map((value) => {
-                    const truck = trucks.find((t: TTruck) => t.id === value);
-                    return (
-                      <Chip
-                        key={value}
-                        label={truck?.plateNumber || value}
-                        size="small"
-                        sx={{
-                          bgcolor: alpha(theme.currentPalette.primary, 0.1),
-                          color: theme.currentPalette.primary,
-                        }}
-                      />
-                    );
-                  })}
-                </Box>
-              )}
             >
-              {trucks.length === 0 ? (
-                <MenuItem value="" disabled>
-                  No trucks available
-                </MenuItem>
-              ) : (
-                trucks.map((truck: TTruck) => (
-                  <MenuItem key={truck.id} value={truck.id}>
-                    <Checkbox checked={selectedTrucks.includes(truck.id)} />
-                    {truck.plateNumber}
-                  </MenuItem>
-                ))
-              )}
-            </Select>
-            {trucks.length === 0 && !isTrucksLoading && (
-              <Typography variant="caption" color="error" sx={{ mt: 1 }}>
-                No trucks found. Please add trucks first.
-              </Typography>
-            )}
-          </FormControl>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant="subtitle2"
+                  sx={{ color: theme.currentPalette.primary }}
+                >
+                  Truck Maintenance Details
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="medium"
+                  onClick={() => {
+                    setTruckInputs((prev) => [
+                      ...prev,
+                      {
+                        truckId: "",
+                        lastDoneMile: togglePage === "Miles" ? "" : undefined,
+                        lastDoneAt: togglePage === "Times" ? "" : undefined,
+                      },
+                    ]);
+                  }}
+                  disabled={trucks.length === 0 || isTrucksLoading}
+                  sx={{
+                    borderColor: theme.currentPalette.primary,
+                    color: theme.currentPalette.primary,
+                    borderRadius: 2,
+                    "&:hover": {
+                      borderColor: darken(theme.currentPalette.primary, 0.2),
+                      backgroundColor: alpha(
+                        theme.currentPalette.primary,
+                        0.05
+                      ),
+                    },
+                  }}
+                >
+                  Add Truck
+                </Button>
+              </Box>
+
+              {/* Dynamic Truck Inputs */}
+              {truckInputs.map((input, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    mb: 3,
+                    p: 2,
+                    border: `1px solid ${alpha(
+                      theme.currentPalette.primary,
+                      0.2
+                    )}`,
+                    borderRadius: 2,
+                    backgroundColor: alpha(
+                      theme.currentPalette.background,
+                      0.5
+                    ),
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      mb: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ color: theme.currentPalette.primary }}
+                    >
+                      Truck #{index + 1}
+                    </Typography>
+                    {truckInputs.length > 1 && (
+                      <IconButton
+                        size="small"
+                        onClick={() => {
+                          const newInputs = [...truckInputs];
+                          newInputs.splice(index, 1);
+                          setTruckInputs(newInputs);
+                          if (input.truckId) {
+                            setSelectedTrucks((prev) =>
+                              prev.filter((id) => id !== input.truckId)
+                            );
+                          }
+                        }}
+                        sx={{
+                          color: theme.currentPalette.primary,
+                          "&:hover": {
+                            backgroundColor: alpha(
+                              theme.currentPalette.primary,
+                              0.1
+                            ),
+                          },
+                        }}
+                      >
+                        <X size={16} />
+                      </IconButton>
+                    )}
+                  </Box>
+
+                  <Stack
+                    direction={{ xs: "column", sm: "row" }}
+                    spacing={2}
+                    sx={{ mb: 2 }}
+                  >
+                    <FormControl fullWidth size="small">
+                      <InputLabel id={`truck-select-${index}`}>
+                        Select Truck
+                      </InputLabel>
+                      <Select
+                        labelId={`truck-select-${index}`}
+                        value={input.truckId}
+                        label="Select Truck"
+                        onChange={(e) => {
+                          const newInputs = [...truckInputs];
+                          newInputs[index].truckId = e.target.value;
+                          setTruckInputs(newInputs);
+                          const selectedTruckId = e.target.value;
+                          if (
+                            selectedTruckId &&
+                            !selectedTrucks.includes(selectedTruckId)
+                          ) {
+                            setSelectedTrucks((prev) => [
+                              ...prev,
+                              selectedTruckId,
+                            ]);
+                          }
+                        }}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: 4,
+                          },
+                          py: 1,
+                        }}
+                      >
+                        <MenuItem value="">
+                          <em>Select a truck</em>
+                        </MenuItem>
+                        {getAvailableTrucksForSelection(input.truckId).map(
+                          (truck: TTruck) => (
+                            <MenuItem key={truck.id} value={truck.id}>
+                              {truck.plateNumber}
+                            </MenuItem>
+                          )
+                        )}
+                      </Select>
+                    </FormControl>
+
+                    {/* Last Done Mileage/Date Input */}
+                    {input.truckId &&
+                      (togglePage === "Miles" ? (
+                        <TextField
+                          fullWidth
+                          label="Last Done Mileage"
+                          value={input.lastDoneMile || ""}
+                          onChange={(e) => {
+                            const newInputs = [...truckInputs];
+                            newInputs[index].lastDoneMile = e.target.value;
+                            setTruckInputs(newInputs);
+                          }}
+                          placeholder="e.g., 30000"
+                          type="number"
+                          required
+                          InputProps={{
+                            inputProps: { min: 0 },
+                          }}
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 2,
+                            },
+                          }}
+                        />
+                      ) : (
+                        <LocalizationProvider dateAdapter={AdapterDayjs}>
+                          <DatePicker
+                            label="Last Done Date"
+                            value={
+                              input.lastDoneAt ? dayjs(input.lastDoneAt) : null
+                            }
+                            onChange={(newValue) => {
+                              const newInputs = [...truckInputs];
+                              newInputs[index].lastDoneAt = newValue
+                                ? newValue.format("YYYY-MM-DD")
+                                : "";
+                              setTruckInputs(newInputs);
+                            }}
+                            slotProps={{
+                              textField: {
+                                fullWidth: true,
+                                required: true,
+                                sx: {
+                                  "& .MuiOutlinedInput-root": {
+                                    borderRadius: 2,
+                                  },
+                                },
+                              },
+                            }}
+                            format="DD/MM/YYYY"
+                          />
+                        </LocalizationProvider>
+                      ))}
+                  </Stack>
+
+                  {input.truckId && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        p: 1,
+                        bgcolor: alpha(theme.currentPalette.primary, 0.05),
+                        borderRadius: 1,
+                      }}
+                    >
+                      <CheckCircle
+                        size={16}
+                        style={{ color: theme.currentPalette.primary }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{ color: theme.currentPalette.text }}
+                      >
+                        {
+                          trucks.find((t: TTruck) => t.id === input.truckId)
+                            ?.plateNumber
+                        }{" "}
+                        selected
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
+              ))}
+            </Box>
+          </Box>
 
           {/* Save Button */}
           <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
@@ -1276,7 +1527,7 @@ const TruckMaintenance = () => {
                 isTrucksLoading ||
                 trucks.length === 0 ||
                 isCreating ||
-                selectedTrucks.length === 0
+                truckInputs.filter((input) => input.truckId).length === 0
               }
               sx={{
                 bgcolor: theme.currentPalette.primary,
@@ -1300,8 +1551,12 @@ const TruckMaintenance = () => {
                 ? "Saving..."
                 : isTrucksLoading
                 ? "Loading Trucks..."
-                : `Save Record (${selectedTrucks.length} truck${
-                    selectedTrucks.length !== 1 ? "s" : ""
+                : `Save Record (${
+                    truckInputs.filter((input) => input.truckId).length
+                  } truck${
+                    truckInputs.filter((input) => input.truckId).length !== 1
+                      ? "s"
+                      : ""
                   })`}
             </Button>
           </Box>
@@ -1362,10 +1617,7 @@ const TruckMaintenance = () => {
         }
         data={maintenance}
         renderRow={togglePage === "Miles" ? renderMileRow : renderTimeRow}
-        loading={
-          (isSearching && isFiltered && !filteredData) ||
-          (isMaintenanceLoading && !maintenanceData)
-        }
+        loading={isLoading}
       />
 
       {/* Pagination */}

@@ -433,8 +433,15 @@ export const apiSlice = api.injectEndpoints({
 
     // 🛠 Get All Maintenances
     getAllMaintenances: builder.query({
-      query: ({ page = 1, limit = 10 }) =>
-        `/api/v1/maintenances?page=${page}&limit=${limit}`,
+      query: ({ page = 1, limit = 10, repeatBy }) => {
+        const params = new URLSearchParams();
+        params.append("page", page.toString());
+        params.append("limit", limit.toString());
+        if (repeatBy) {
+          params.append("repeatBy", repeatBy);
+        }
+        return `/api/v1/maintenances?${params.toString()}`;
+      },
       providesTags: ["Maintenances"],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
@@ -446,11 +453,21 @@ export const apiSlice = api.injectEndpoints({
       keepUnusedDataFor: 60 * 60,
     }),
 
-    // 🛠 Get Single Maintenance
+    // 🛠 Search Maintenance with Type
     searchMaintenancesWithType: builder.query({
       query: (type) => `/api/v1/maintenances?type=${type}`,
-      providesTags: (result, error, type) => [{ type: "Maintenances", id: type }],
+      providesTags: (result, error, type) => [
+        { type: "Maintenances", id: type },
+      ],
       keepUnusedDataFor: 60 * 60,
+    }),
+
+    // 🛠 Filter Maintenance with Type
+    filterMaintenancesWithType: builder.query({
+      query: ({ repeatBy, page = 1, limit = 10 }) =>
+        `/api/v1/maintenances?repeatBy=${repeatBy}&page=${page}&limit=${limit}`,
+      providesTags: ["Maintenances"],
+      keepUnusedDataFor: 60 * 60 * 24,
     }),
 
     // 🛠 Get Maintenance with filter
@@ -477,7 +494,7 @@ export const apiSlice = api.injectEndpoints({
 
     // 🛠 Update Maintenance
     updateMaintenance: builder.mutation({
-      query: ({id, ...body}) => ({
+      query: ({ id, ...body }) => ({
         url: `/api/v1/maintenances/${id}`,
         method: "PATCH",
         body,
@@ -812,6 +829,8 @@ export const {
   useGetSingleMaintenancesQuery,
   useSearchMaintenancesWithTypeQuery,
   useLazySearchMaintenancesWithTypeQuery,
+  useFilterMaintenancesWithTypeQuery,
+  useLazyFilterMaintenancesWithTypeQuery,
   useGetMaintenanceWithFilterQuery,
   useCreateMaintenanceMutation,
   useUpdateMaintenanceMutation,
