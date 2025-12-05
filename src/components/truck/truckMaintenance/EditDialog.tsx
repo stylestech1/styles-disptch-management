@@ -3,6 +3,7 @@
 import React from "react";
 import {
   alpha,
+  Autocomplete,
   Box,
   Button,
   darken,
@@ -33,6 +34,7 @@ interface EditDialogProps {
   onClose: () => void;
   selectedMaintenance: TMaintenance | null;
   serviceTypes: string[];
+  initialServiceTypes: string[]
   editForm: {
     type: string;
     intervalMile: string;
@@ -57,19 +59,21 @@ interface EditDialogProps {
   onAddTruck: () => void;
   getAvailableTrucks: (currentIndex: number) => TTruck[];
   isUpdating: boolean;
-  setEditForm: React.Dispatch<React.SetStateAction<{
-    type: string;
-    intervalMile: string;
-    remindBeforeMile: string;
-    intervalDays: string;
-    remindBeforeDays: string;
-    trucks: Array<{
-      truckId: string;
-      plateNumber: string;
-      lastDoneMile?: string;
-      lastDoneAt?: string | null;
-    }>;
-  }>>;
+  setEditForm: React.Dispatch<
+    React.SetStateAction<{
+      type: string;
+      intervalMile: string;
+      remindBeforeMile: string;
+      intervalDays: string;
+      remindBeforeDays: string;
+      trucks: Array<{
+        truckId: string;
+        plateNumber: string;
+        lastDoneMile?: string;
+        lastDoneAt?: string | null;
+      }>;
+    }>
+  >;
 }
 
 const EditDialog: React.FC<EditDialogProps> = ({
@@ -77,6 +81,7 @@ const EditDialog: React.FC<EditDialogProps> = ({
   onClose,
   selectedMaintenance,
   serviceTypes,
+  initialServiceTypes,
   editForm,
   trucks,
   onEditSubmit,
@@ -90,8 +95,11 @@ const EditDialog: React.FC<EditDialogProps> = ({
   const theme = useAppSelector((state: RootState) => state.palette);
 
   // Handle text field changes
-  const handleTextFieldChange = (field: keyof typeof editForm, value: string) => {
-    setEditForm(prev => ({
+  const handleTextFieldChange = (
+    field: keyof typeof editForm,
+    value: string
+  ) => {
+    setEditForm((prev) => ({
       ...prev,
       [field]: value,
     }));
@@ -151,26 +159,29 @@ const EditDialog: React.FC<EditDialogProps> = ({
         <Box component="form" onSubmit={onEditSubmit}>
           {/* Service Type */}
           <FormControl fullWidth size="medium" sx={{ my: 3 }}>
-            <InputLabel id="edit-service-type-label">Service Type</InputLabel>
-            <Select
-              labelId="edit-service-type-label"
+            <Autocomplete
+              freeSolo
+              options={serviceTypes}
               value={editForm.type}
-              label="Service Type"
-              onChange={(e) =>
-                handleTextFieldChange("type", e.target.value)
-              }
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                },
+              onChange={(event, newValue) => {
+                setEditForm({ ...editForm, type: newValue || "" });
               }}
-            >
-              {serviceTypes.map((type) => (
-                <MenuItem key={type} value={type}>
-                  {type}
-                </MenuItem>
-              ))}
-            </Select>
+              onInputChange={(event, newInputValue) => {
+                setEditForm({ ...editForm, type: newInputValue });
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Service Type"
+                  required
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 2,
+                    },
+                  }}
+                />
+              )}
+            />
           </FormControl>
 
           {selectedMaintenance?.repeatBy === "mile" ? (

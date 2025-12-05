@@ -1662,6 +1662,7 @@ const TruckMaintenance = () => {
         onClose={handleCloseEditDialog}
         selectedMaintenance={selectedMaintenance}
         serviceTypes={serviceTypes}
+        initialServiceTypes={serviceTypes} 
         editForm={editForm}
         trucks={trucks}
         onEditSubmit={handleEditSubmit}
