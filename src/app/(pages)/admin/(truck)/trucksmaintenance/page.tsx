@@ -1066,11 +1066,11 @@ const TruckMaintenance = () => {
         >
           {/* Service Type */}
           <FormControl fullWidth size="medium" required>
-            <InputLabel id="service-type-label">Service Type *</InputLabel>
+            <InputLabel id="service-type-label">Service Type</InputLabel>
             <Select
               labelId="service-type-label"
               value={serviceType}
-              label="Service Type *"
+              label="Service Type"
               onChange={(e) => setServiceType(e.target.value)}
               disabled={isTrucksLoading || trucks.length === 0}
               sx={{
@@ -1092,7 +1092,7 @@ const TruckMaintenance = () => {
               {/* Current Mileage for mile-based maintenance */}
               <TextField
                 fullWidth
-                label="Last Done Mileage *"
+                label="Last Done Mileage"
                 value={mileage}
                 onChange={(e) => setMileage(e.target.value)}
                 placeholder="e.g., 300"
@@ -1113,7 +1113,7 @@ const TruckMaintenance = () => {
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
                   fullWidth
-                  label="Interval (Miles) *"
+                  label="Interval (Miles)"
                   value={intervalMile}
                   onChange={(e) => setIntervalMile(e.target.value)}
                   placeholder="e.g., 5000"
@@ -1131,7 +1131,7 @@ const TruckMaintenance = () => {
                 />
                 <TextField
                   fullWidth
-                  label="Remind Before (Miles) *"
+                  label="Remind Before (Miles)"
                   value={remindBeforeMile}
                   onChange={(e) => setRemindBeforeMile(e.target.value)}
                   placeholder="e.g., 500"
@@ -1154,7 +1154,7 @@ const TruckMaintenance = () => {
               {/* Current Mileage for time-based maintenance (optional for time-based) */}
               <TextField
                 fullWidth
-                label="Current Mileage (Optional)"
+                label="Current Mileage (Per Day)"
                 value={mileage}
                 onChange={(e) => setMileage(e.target.value)}
                 placeholder="e.g., 65500"
@@ -1174,7 +1174,7 @@ const TruckMaintenance = () => {
               <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
                 <TextField
                   fullWidth
-                  label="Interval (Days) *"
+                  label="Interval (Days)"
                   value={intervalDays}
                   onChange={(e) => setIntervalDays(e.target.value)}
                   placeholder="e.g., 30"
@@ -1192,7 +1192,7 @@ const TruckMaintenance = () => {
                 />
                 <TextField
                   fullWidth
-                  label="Remind Before (Days) *"
+                  label="Remind Before (Days)"
                   value={remindBeforeDays}
                   onChange={(e) => setRemindBeforeDays(e.target.value)}
                   placeholder="e.g., 7"
@@ -1214,12 +1214,12 @@ const TruckMaintenance = () => {
 
           {/* Select Truck ID */}
           <FormControl fullWidth size="medium" required>
-            <InputLabel id="truck-id-label">Select Truck(s) *</InputLabel>
+            <InputLabel id="truck-id-label">Select Truck(s)</InputLabel>
             <Select
               labelId="truck-id-label"
               multiple
               value={selectedTrucks}
-              label="Select Truck(s) *"
+              label="Select Truck(s)"
               onChange={(e) => setSelectedTrucks(e.target.value as string[])}
               disabled={isTrucksLoading || trucks.length === 0}
               sx={{
