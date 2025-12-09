@@ -513,15 +513,16 @@ const TruckDashboard = () => {
 
   const searchFilterContainerSx: SxProps = {
     display: "flex",
-    flexDirection: { xs: "column", lg: "row" },
-    alignItems: "center",
+    flexDirection: { xs: "column", md: "row" },
+    alignItems: { xs: "flex-start", md: "center" },
     justifyContent: "space-between",
-    gap: 2,
+    gap: { xs: 2, md: 0 },
     p: 2,
     my: 2,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
     borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
+    width: "100%",
   };
 
   return (
@@ -542,7 +543,7 @@ const TruckDashboard = () => {
             border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
             borderRadius: "12px",
             overflow: "hidden",
-            bgcolor: theme.currentPalette.background
+            bgcolor: theme.currentPalette.background,
           }}
         >
           <StatCard
@@ -611,13 +612,18 @@ const TruckDashboard = () => {
         <Box
           sx={{
             display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            alignItems: { xs: "stretch", md: "center" },
             gap: 2,
-            alignItems: "center",
-            width: { xs: "100%", lg: "auto" },
+            width: { xs: "100%", md: "auto" },
           }}
         >
           {/* Search Input */}
-          <Box sx={{ minWidth: 250, flexGrow: { xs: 1, lg: 0 } }}>
+          <Box
+            sx={{
+              width: { xs: "100%", md: 300, lg: 350 },
+            }}
+          >
             <SearchInput
               value={searchTerm}
               onChange={handleSearchChange}
@@ -729,7 +735,7 @@ const TruckDashboard = () => {
                 border: 1,
                 borderColor: alpha(theme.currentPalette.primary, 0.3),
                 borderRadius: 2,
-                bgcolor: theme.currentPalette.background
+                bgcolor: theme.currentPalette.background,
               }}
             >
               <Typography

@@ -1048,13 +1048,15 @@ const TruckMaintenance = () => {
   const searchFilterContainerSx: SxProps = {
     display: "flex",
     flexDirection: { xs: "column", lg: "row" },
-    alignItems: "flex-start",
+    alignItems: { xs: "flex-start", lg: "center" },
     justifyContent: "space-between",
+    gap: { xs: 3, lg: 0 },
     p: 2,
     my: 2,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
     borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
+    width: "100%",
   };
 
   const isLoading =
@@ -1167,7 +1169,7 @@ const TruckMaintenance = () => {
           <FormControl fullWidth size="medium" required>
             <Autocomplete
               freeSolo
-              options={serviceTypes} 
+              options={serviceTypes}
               value={serviceType}
               onChange={(event, newValue) => {
                 if (newValue) setServiceType(newValue);
@@ -1593,6 +1595,7 @@ const TruckMaintenance = () => {
             alignItems: "center",
             flexDirection: { xs: "column", lg: "row" },
             gap: 2,
+            width: { xs: "100%", lg: "auto" },
           }}
         >
           {/* Search */}
@@ -1600,7 +1603,7 @@ const TruckMaintenance = () => {
             searchHook={searchHook}
             placeholder={"Search By Service Type..."}
             showClearButton
-            sx={{ width: 350 }}
+            sx={{ width: { xs: "100%", sm: "350px" } }}
             inputSx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -1662,7 +1665,7 @@ const TruckMaintenance = () => {
         onClose={handleCloseEditDialog}
         selectedMaintenance={selectedMaintenance}
         serviceTypes={serviceTypes}
-        initialServiceTypes={serviceTypes} 
+        initialServiceTypes={serviceTypes}
         editForm={editForm}
         trucks={trucks}
         onEditSubmit={handleEditSubmit}
