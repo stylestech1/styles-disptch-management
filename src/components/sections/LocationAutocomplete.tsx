@@ -2,7 +2,12 @@
 import { RootState, useAppSelector } from "@/redux/store";
 import { alpha, Box, Button, TextField, Typography } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
-import { Loader } from "@googlemaps/js-api-loader";
+
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
 
 export type TPlace = {
   display_name: string;
@@ -10,6 +15,8 @@ export type TPlace = {
   lon: string;
   place_id: string;
   postcode?: string;
+  city?: string;
+  state?: string;
   address?: {
     [key: string]: string;
   };
@@ -21,7 +28,6 @@ interface Props {
   setValue: (place: TPlace | null) => void;
   placeholder?: string;
   showZipCode?: boolean;
-  googleMapsApiKey: string; // Add this prop for Google API key
 }
 
 const LocationAutocomplete = ({
@@ -30,7 +36,6 @@ const LocationAutocomplete = ({
   setValue,
   placeholder,
   showZipCode = true,
-  googleMapsApiKey, // Receive API key as prop
 }: Props) => {
   const [input, setInput] = useState(value?.display_name || "");
   const [suggestions, setSuggestions] = useState<TPlace[]>([]);
@@ -41,39 +46,31 @@ const LocationAutocomplete = ({
   const [isSelecting, setIsSelecting] = useState(false);
   const [shouldSearch, setShouldSearch] = useState(true);
   const theme = useAppSelector((state: RootState) => state.palette);
-  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
-  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+  const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(null);
 
-  // Initialize Google Maps services
+  // Initialize Google Places API
   useEffect(() => {
-    const initGoogleMaps = async () => {
-      if (!googleMapsApiKey) {
-        console.error('Google Maps API key is required');
-        return;
-      }
-
-      try {
-        const loader = new Loader({
-          apiKey: googleMapsApiKey,
-          version: "weekly",
-          libraries: ["places"]
-        });
-
-        await loader.load();
+    const initGooglePlaces = () => {
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        const script = document.createElement('script');
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
+        script.async = true;
+        script.defer = true;
         
-        // Initialize services
-        autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
+        script.onload = () => {
+          if (window.google && window.google.maps && window.google.maps.places) {
+            autocompleteRef.current = new google.maps.places.AutocompleteService();
+          }
+        };
         
-        // Create a dummy div for PlacesService
-        const dummyDiv = document.createElement('div');
-        placesServiceRef.current = new google.maps.places.PlacesService(dummyDiv);
-      } catch (error) {
-        console.error('Error loading Google Maps:', error);
+        document.head.appendChild(script);
+      } else {
+        autocompleteRef.current = new google.maps.places.AutocompleteService();
       }
     };
 
-    initGoogleMaps();
-  }, [googleMapsApiKey]);
+    initGooglePlaces();
+  }, []);
 
   useEffect(() => {
     if (value?.display_name && value.display_name !== input) {
@@ -81,9 +78,9 @@ const LocationAutocomplete = ({
     }
   }, [value, input]);
 
-  // Fetch suggestions using Google Places API
+  // البحث عن الاقتراحات باستخدام Google Places API
   useEffect(() => {
-    if (isSelecting || !shouldSearch || input.length < 2 || !autocompleteServiceRef.current) {
+    if (isSelecting || !shouldSearch || input.length < 2 || !autocompleteRef.current) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -92,35 +89,72 @@ const LocationAutocomplete = ({
     const timeout = setTimeout(async () => {
       setLoading(true);
       try {
-        // Request autocomplete predictions
-        const request: google.maps.places.AutocompletionRequest = {
-          input,
-          componentRestrictions: { country: 'us' },
-          types: ['address'], // You can change this to ['geocode'] for more general results
-        };
+        // تجربة عدة أنواع من البحث
+        const requestTypes = [
+          { types: ['geocode'] }, // بحث عام
+          { types: ['(cities)'] }, // مدن فقط
+          { types: ['(regions)'] } // مناطق فقط
+        ];
 
-        autocompleteServiceRef.current!.getPlacePredictions(
-          request,
-          (predictions, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
-              const formattedPredictions: TPlace[] = predictions.map(prediction => ({
-                place_id: prediction.place_id,
-                display_name: prediction.description,
-                lat: '',
-                lon: '',
-                postcode: undefined,
-                address: {}
-              }));
+        let allPredictions: google.maps.places.AutocompletePrediction[] = [];
+        
+        // تنفيذ عمليات البحث المختلفة
+        for (const requestConfig of requestTypes) {
+          try {
+            const request: google.maps.places.AutocompletionRequest = {
+              input,
+              componentRestrictions: { country: 'us' },
+              ...requestConfig
+            };
 
-              setSuggestions(formattedPredictions);
-              setShowSuggestions(true);
-            } else {
-              setSuggestions([]);
-              setShowSuggestions(false);
-            }
-            setLoading(false);
+            await new Promise<void>((resolve) => {
+              autocompleteRef.current!.getPlacePredictions(
+                request,
+                (predictions, status) => {
+                  if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                    allPredictions = [...allPredictions, ...predictions];
+                  }
+                  resolve();
+                }
+              );
+            });
+            
+            // توقف مؤقت بين الطلبات لتجنب rate limiting
+            await new Promise(resolve => setTimeout(resolve, 100));
+          } catch (error) {
+            console.log(`Request type ${requestConfig.types} failed, trying next...`);
           }
-        );
+        }
+
+        // فلترة وإزالة التكرارات
+        const uniquePredictions = allPredictions.filter(
+          (prediction, index, self) =>
+            index === self.findIndex((p) => 
+              p.place_id === prediction.place_id
+            )
+        ).slice(0, 10); // الحد الأقصى 10 نتائج
+
+        if (uniquePredictions.length > 0) {
+          const formattedPredictions = uniquePredictions.map(prediction => ({
+            place_id: prediction.place_id,
+            display_name: prediction.description,
+            lat: '',
+            lon: '',
+            postcode: undefined,
+            city: '',
+            state: '',
+            address: {}
+          }));
+
+          setSuggestions(formattedPredictions);
+          setShowSuggestions(true);
+        } else {
+          setSuggestions([]);
+          setShowSuggestions(true);
+        }
+        
+        setLoading(false);
+        
       } catch (err) {
         console.error("Error fetching places:", err);
         setShowSuggestions(false);
@@ -131,14 +165,107 @@ const LocationAutocomplete = ({
     return () => clearTimeout(timeout);
   }, [input, isSelecting, shouldSearch]);
 
-  // Get place details when a suggestion is selected
-  const getPlaceDetails = (placeId: string): Promise<TPlace | null> => {
+  // بدلاً من استخدام Places API للتفاصيل، استخدم Geocoding API للحصول على تنسيق أفضل
+  const getGeocodedAddress = async (placeId: string): Promise<TPlace | null> => {
     return new Promise((resolve) => {
-      if (!placesServiceRef.current) {
+      if (!window.google || !window.google.maps) {
         resolve(null);
         return;
       }
 
+      const geocoder = new google.maps.Geocoder();
+      
+      geocoder.geocode({ placeId }, (results, status) => {
+        if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
+          const result = results[0];
+          
+          let postcode = '';
+          let city = '';
+          let state = '';
+          const formattedAddress = result.formatted_address || '';
+          
+          // استخراج المكونات من Geocoding API
+          result.address_components?.forEach(component => {
+            const types = component.types;
+            
+            if (types.includes('postal_code')) {
+              postcode = component.long_name;
+            } else if (types.includes('administrative_area_level_1')) {
+              state = component.short_name;
+            } else if (types.includes('locality')) {
+              city = component.long_name;
+            } else if (types.includes('postal_town') && !city) {
+              city = component.long_name;
+            } else if ((types.includes('sublocality') || types.includes('neighborhood')) && !city) {
+              city = component.long_name;
+            } else if (types.includes('administrative_area_level_2') && !city) {
+              city = component.long_name;
+            }
+          });
+
+          // محاولة استخراج المدينة من العنوان المنسق
+          if (!city && formattedAddress) {
+            const parts = formattedAddress.split(',');
+            if (parts.length > 0) {
+              city = parts[0].trim();
+            }
+          }
+
+          // بناء التنسيق المطلوب: CITY STATE ZIP
+          let displayName = '';
+          if (city && state && postcode) {
+            displayName = `${city.toUpperCase()} ${state} ${postcode}`;
+          } else if (city && state) {
+            displayName = `${city.toUpperCase()} ${state}`;
+          } else if (city && postcode) {
+            displayName = `${city.toUpperCase()} ${postcode}`;
+          } else if (state && postcode) {
+            displayName = `${state} ${postcode}`;
+          } else if (formattedAddress) {
+            displayName = formattedAddress;
+          } else if (result.types && result.types.includes('postal_code')) {
+            displayName = postcode;
+          }
+
+          const finalPlace: TPlace = {
+            place_id: placeId,
+            lat: result.geometry?.location?.lat().toString() || '',
+            lon: result.geometry?.location?.lng().toString() || '',
+            display_name: displayName,
+            postcode: postcode || undefined,
+            city,
+            state,
+            address: {}
+          };
+
+          // استخراج جميع مكونات العنوان
+          result.address_components?.forEach(component => {
+            component.types.forEach(type => {
+              if (!finalPlace.address![type]) {
+                finalPlace.address![type] = component.long_name;
+              }
+            });
+          });
+
+          resolve(finalPlace);
+        } else {
+          console.error("Geocoding error:", status);
+          resolve(null);
+        }
+      });
+    });
+  };
+
+  // دالة بديلة للحصول على تفاصيل المكان باستخدام Places API
+  const getPlaceDetails = async (placeId: string): Promise<TPlace | null> => {
+    return new Promise((resolve) => {
+      if (!window.google || !window.google.maps || !window.google.maps.places) {
+        resolve(null);
+        return;
+      }
+
+      const service = new google.maps.places.PlacesService(document.createElement('div'));
+      
       const request: google.maps.places.PlaceDetailsRequest = {
         placeId,
         fields: [
@@ -146,37 +273,54 @@ const LocationAutocomplete = ({
           'geometry',
           'place_id',
           'address_components',
-          'name'
+          'name',
+          'types'
         ]
       };
 
-      placesServiceRef.current.getDetails(request, (place, status) => {
+      service.getDetails(request, (place, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-          // Extract postal code from address components
-          let postcode: string | undefined;
-          const postalCodeComponent = place.address_components?.find(
-            component => component.types.includes('postal_code')
-          );
-          if (postalCodeComponent) {
-            postcode = postalCodeComponent.long_name;
-          }
+          let displayName = place.formatted_address || place.name || '';
+          let postcode = '';
+          let city = '';
+          let state = '';
 
-          // Extract address components
-          const address: { [key: string]: string } = {};
           place.address_components?.forEach(component => {
-            component.types.forEach(type => {
-              address[type] = component.long_name;
-            });
+            const types = component.types;
+            
+            if (types.includes('postal_code')) {
+              postcode = component.long_name;
+            } else if (types.includes('administrative_area_level_1')) {
+              state = component.short_name;
+            } else if (types.includes('locality')) {
+              city = component.long_name;
+            }
           });
+
+          // إذا كان لدينا المدينة والولاية والرمز البريدي، نبني التنسيق المطلوب
+          if (city && state && postcode) {
+            displayName = `${city.toUpperCase()} ${state} ${postcode}`;
+          }
 
           const result: TPlace = {
             place_id: place.place_id!,
             lat: place.geometry?.location?.lat().toString() || '',
             lon: place.geometry?.location?.lng().toString() || '',
-            display_name: place.formatted_address || place.name || '',
-            postcode,
-            address
+            display_name: displayName,
+            postcode: postcode || undefined,
+            city,
+            state,
+            address: {}
           };
+
+          place.address_components?.forEach(component => {
+            component.types.forEach(type => {
+              if (!result.address![type]) {
+                result.address![type] = component.long_name;
+              }
+            });
+          });
+
           resolve(result);
         } else {
           resolve(null);
@@ -214,14 +358,27 @@ const LocationAutocomplete = ({
     setIsSelecting(true);
     setShouldSearch(false);
 
-    // Get full place details including coordinates
-    const placeDetails = await getPlaceDetails(place.place_id);
-    
-    if (placeDetails) {
-      setValue(placeDetails);
-      setInput(placeDetails.display_name);
-    } else {
-      // Fallback to the basic info if details fetch fails
+    try {
+      // المحاولة الأولى: استخدام Geocoding API
+      let placeDetails = await getGeocodedAddress(place.place_id);
+      
+      // المحاولة الثانية: استخدام Places API إذا فشلت الأولى
+      if (!placeDetails) {
+        placeDetails = await getPlaceDetails(place.place_id);
+      }
+      
+      if (placeDetails) {
+        console.log("Setting place details:", placeDetails);
+        setValue(placeDetails);
+        setInput(placeDetails.display_name);
+      } else {
+        // استخدام المعلومات الأساسية
+        console.log("Using basic place info:", place);
+        setValue(place);
+        setInput(place.display_name);
+      }
+    } catch (error) {
+      console.error("Error selecting place:", error);
       setValue(place);
       setInput(place.display_name);
     }
@@ -277,6 +434,59 @@ const LocationAutocomplete = ({
     return place.display_name;
   };
 
+  // دالة لمعالجة البحث المباشر للـ ZIP Code
+  const handleDirectZipSearch = async () => {
+    if (input.trim().length >= 5 && /^\d{5}(-\d{4})?$/.test(input.trim())) {
+      setLoading(true);
+      try {
+        const geocoder = new google.maps.Geocoder();
+        geocoder.geocode({ address: input.trim(), componentRestrictions: { country: 'us' } }, (results, status) => {
+          if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
+            const result = results[0];
+            
+            const postcode = input.trim();
+            let city = '';
+            let state = '';
+            
+            result.address_components?.forEach(component => {
+              const types = component.types;
+              
+              if (types.includes('administrative_area_level_1')) {
+                state = component.short_name;
+              } else if (types.includes('locality')) {
+                city = component.long_name;
+              } else if (types.includes('postal_town') && !city) {
+                city = component.long_name;
+              }
+            });
+
+            const displayName = city && state ? 
+              `${city.toUpperCase()} ${state} ${postcode}` : 
+              `${postcode}`;
+
+            const place: TPlace = {
+              place_id: result.place_id || `zip_${postcode}`,
+              lat: result.geometry?.location?.lat().toString() || '',
+              lon: result.geometry?.location?.lng().toString() || '',
+              display_name: displayName,
+              postcode,
+              city,
+              state,
+              address: {}
+            };
+
+            setValue(place);
+            setInput(displayName);
+          }
+          setLoading(false);
+        });
+      } catch (error) {
+        console.error("Error in direct zip search:", error);
+        setLoading(false);
+      }
+    }
+  };
+
   return (
     <div ref={containerRef} className="relative w-full">
       <Typography
@@ -300,7 +510,7 @@ const LocationAutocomplete = ({
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             onKeyDown={handleInputKeyDown}
-            placeholder={placeholder || "Enter address, city, state or ZIP"}
+            placeholder={placeholder || "Enter city, state and ZIP (e.g., ABINGDON VA 24210)"}
             variant="outlined"
             fullWidth
             size="small"

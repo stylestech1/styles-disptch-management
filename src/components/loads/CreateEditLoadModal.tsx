@@ -753,7 +753,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     </p>
                     {dho && origin && (
                       <p className="text-sm text-green-600 mt-1">
-                        • DHO to Origin:{" "}
+                        • DH to Origin:{" "}
                         {dhoToOriginDistance?.toFixed(2) || "0"} miles
                       </p>
                     )}
@@ -776,7 +776,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     value={dho}
                     setValue={(place) => dispatch(setDho(place))}
                     placeholder="Enter driver's starting location"
-                    googleMapsApiKey={googleMapsApiKey!}
+                    // googleMapsApiKey={googleMapsApiKey!}
                     showZipCode={true}
                   />
 
@@ -785,7 +785,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     value={origin}
                     setValue={(place) => dispatch(setOrigin(place))}
                     placeholder="Enter origin address"
-                    googleMapsApiKey={googleMapsApiKey!}
+                    // googleMapsApiKey={googleMapsApiKey!}
                     showZipCode={true}
                   />
 
@@ -888,7 +888,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                             placeholder={`Enter destination ${
                               index + 1
                             } address`}
-                            googleMapsApiKey={googleMapsApiKey!}
+                            // googleMapsApiKey={googleMapsApiKey!}
                             showZipCode={true}
                           />
                         </div>

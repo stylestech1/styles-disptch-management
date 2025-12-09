@@ -753,7 +753,7 @@ const CalculationPage = () => {
                 value={dho}
                 setValue={setDho}
                 placeholder="Enter driver's starting location"
-                googleMapsApiKey={googleMapsApiKey!}
+                // googleMapsApiKey={googleMapsApiKey!}
                 showZipCode={true}
               />
 
@@ -764,7 +764,7 @@ const CalculationPage = () => {
                 value={origin}
                 setValue={setOrigin}
                 placeholder="Enter origin address"
-                googleMapsApiKey={googleMapsApiKey!}
+                // googleMapsApiKey={googleMapsApiKey!}
                 showZipCode={true}
               />
 
@@ -852,7 +852,7 @@ const CalculationPage = () => {
                             handleUpdateDestination(index, place)
                           }
                           placeholder={`Enter destination ${index + 1} address`}
-                          googleMapsApiKey={googleMapsApiKey!}
+                          // googleMapsApiKey={googleMapsApiKey!}
                           showZipCode={true}
                         />
                       </Box>
