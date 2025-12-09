@@ -6,7 +6,9 @@ let mapsLoadCallbacks: Array<(loaded: boolean) => void> = [];
 
 declare global {
   interface Window {
-    google: string;
+    google: {
+      maps: typeof google.maps
+    };
   }
 }
 

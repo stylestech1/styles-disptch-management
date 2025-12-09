@@ -3,11 +3,11 @@ import { RootState, useAppSelector } from "@/redux/store";
 import { alpha, Box, Button, TextField, Typography } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 
-declare global {
-  interface Window {
-    google: typeof google;
-  }
-}
+// declare global {
+//   interface Window {
+//     google: typeof google.maps;
+//   }
+// }
 
 export type TPlace = {
   display_name: string;
