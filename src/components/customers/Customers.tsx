@@ -414,9 +414,10 @@ const CustomerPage = () => {
   };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
-    flexDirection: { xs: "column", lg: "row" },
-    alignItems: "flex-start",
+    flexDirection: { xs: "column", md: "row" },
+    alignItems: { xs: "flex-start", md: "center" },
     justifyContent: "space-between",
+    gap: { xs: 2, md: 0 },
     p: 2,
     my: 2,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
@@ -424,19 +425,20 @@ const CustomerPage = () => {
     backgroundColor: theme.currentPalette.background,
   };
   const newLoadButtonSx: SxProps = {
-      py: 1.5,
-      px: 4,
-      fontWeight: "bold",
-      fontSize: "1rem",
-      borderRadius: 2,
-      width: { xs: "100%", lg: "auto" },
-      background: theme.currentPalette.primary,
-      color: theme.currentPalette.background,
-      textTransform: 'capitalize',
-      "&:hover": {
+    py: 1.5,
+    px: 4,
+    fontWeight: "bold",
+    fontSize: "1rem",
+    borderRadius: 2,
+    width: { xs: "100%", md: "auto" },
+    background: theme.currentPalette.primary,
+    color: theme.currentPalette.background,
+    textTransform: "capitalize",
+    "&:hover": {
       background: darken(theme.currentPalette.primary, 0.1),
-      }
-    };
+    },
+  };
+
   return (
     <Box sx={containerSx}>
       <Toaster position="top-center" />
@@ -467,9 +469,8 @@ const CustomerPage = () => {
         </div>
       </Box>
 
-      {/* Search & Filter */}
+      {/* Search */}
       <Box sx={searchFilterContainerSx}>
-        {/* Search */}
         <Box>
           <Typography
             variant="h6"
@@ -488,9 +489,10 @@ const CustomerPage = () => {
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            flexDirection: { xs: "column", lg: "row" },
+            flexDirection: { xs: "column", md: "row" },
+            alignItems: { xs: "stretch", md: "center" },
             gap: 2,
+            width: { xs: "100%", md: "auto" },
           }}
         >
           {/* Search */}
@@ -498,7 +500,9 @@ const CustomerPage = () => {
             searchHook={searchHook}
             placeholder="Search Customers by ID"
             showClearButton
-            sx={{ width: 350 }}
+            sx={{
+              width: { xs: "100%", sm: "100%", md: 280, lg: 350 },
+            }}
             inputSx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
@@ -510,7 +514,7 @@ const CustomerPage = () => {
               },
             }}
           />
-          
+
           {/* Add Button */}
           <Box>
             <Button

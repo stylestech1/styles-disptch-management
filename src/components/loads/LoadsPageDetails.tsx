@@ -313,8 +313,8 @@ const LoadsPageDetails = () => {
               variant="filled"
               sx={{
                 bgcolor: theme.currentPalette.background,
-                color: '#E2852E',
-                border: '1px solid #E2852E',
+                color: "#E2852E",
+                border: "1px solid #E2852E",
                 borderRadius: 1,
                 pl: 0.5,
               }}
@@ -325,13 +325,13 @@ const LoadsPageDetails = () => {
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    backgroundColor: '#E2852E',
+                    backgroundColor: "#E2852E",
                   }}
                 />
               }
             />
           )}
-          {loadItem.status === 'delivered' && (
+          {loadItem.status === "delivered" && (
             <Chip
               label={loadItem.status}
               variant="filled"
@@ -383,8 +383,8 @@ const LoadsPageDetails = () => {
               variant="filled"
               sx={{
                 bgcolor: theme.currentPalette.background,
-                color: '#dc2626',
-                border: '1px solid #dc2626',
+                color: "#dc2626",
+                border: "1px solid #dc2626",
                 borderRadius: 1,
                 pl: 0.5,
               }}
@@ -395,7 +395,7 @@ const LoadsPageDetails = () => {
                     width: 8,
                     height: 8,
                     borderRadius: "50%",
-                    backgroundColor: '#dc2626',
+                    backgroundColor: "#dc2626",
                   }}
                 />
               }
@@ -471,28 +471,16 @@ const LoadsPageDetails = () => {
   };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
-    flexDirection: { xs: "column", lg: "row" },
-    alignItems: "flex-start",
+    flexDirection: { xs: "column", md: "row" },
+    alignItems: { xs: "flex-start", md: "center" },
     justifyContent: "space-between",
+    gap: { xs: 2, md: 0 },
     p: 2,
     my: 2,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
     borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
-  };
-  const newLoadButtonSx: SxProps = {
-    py: 1.5,
-    px: 4,
-    fontWeight: "bold",
-    fontSize: "1rem",
-    borderRadius: 2,
-    width: { xs: "100%", lg: "auto" },
-    background: theme.currentPalette.primary,
-    color: theme.currentPalette.background,
-    textTransform: "capitalize",
-    "&:hover": {
-      background: darken(theme.currentPalette.primary, 0.1),
-    },
+    width: "100%",
   };
 
   return (
@@ -551,9 +539,11 @@ const LoadsPageDetails = () => {
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            flexDirection: { xs: "column", lg: "row" },
+            flexDirection: { xs: "column", sm: "column", md: "row" },
+            alignItems: { xs: "stretch", md: "center" },
+            justifyContent: "flex-end",
             gap: 2,
+            width: { xs: "100%", md: "auto" },
           }}
         >
           {/* Search */}
@@ -561,9 +551,9 @@ const LoadsPageDetails = () => {
             searchHook={searchHook}
             placeholder="Search loads by ID...."
             showClearButton
-            sx={{ width: 350 }}
             inputSx={{
               "& .MuiOutlinedInput-root": {
+                width: { xs: "100%", md: 250 },
                 borderRadius: 2,
                 backgroundColor: theme.currentPalette.background,
                 py: 0.5,
@@ -575,19 +565,22 @@ const LoadsPageDetails = () => {
           />
 
           {/* Action Button */}
-          <Box>
-            <Button
-              onClick={() => {
-                setEditingLoad(null);
-                setShowCreateEditModal(true);
-              }}
-              variant="contained"
-              startIcon={<IoAdd size={22} />}
-              sx={newLoadButtonSx}
-            >
-              New Load
-            </Button>
-          </Box>
+          <Button
+            onClick={() => {
+              setEditingLoad(null);
+              setShowCreateEditModal(true);
+            }}
+            variant="contained"
+            startIcon={<IoAdd size={22} />}
+            sx={{
+              width: { xs: "100%", md: "100%" },
+              borderRadius: 2,
+              px: 3,
+              py: 2
+            }}
+          >
+            New Load
+          </Button>
         </Box>
       </Box>
 

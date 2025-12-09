@@ -630,7 +630,7 @@ const DriversPage = () => {
         {/* Hire Date */}
         <td className="p-4 text-center">
           <Chip
-            label={driver.hireDate?.split('T')[0] || '-'}
+            label={driver.hireDate?.split("T")[0] || "-"}
             variant="filled"
             sx={{
               bgcolor: alpha(theme.currentPalette.primary, 0.1),
@@ -1034,14 +1034,16 @@ const DriversPage = () => {
   };
   const searchFilterContainerSx: SxProps = {
     display: "flex",
-    flexDirection: { xs: "column", lg: "row" },
-    alignItems: "flex-start",
+    flexDirection: { xs: "column", md: "row" },
+    alignItems: { xs: "flex-start", md: "center" },
     justifyContent: "space-between",
+    gap: { xs: 2, md: 0 },
     p: 2,
     my: 2,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.3)}`,
     borderRadius: 2,
     backgroundColor: theme.currentPalette.background,
+    width: "100%",
   };
   const newLoadButtonSx: SxProps = {
     py: 1.5,
@@ -1049,7 +1051,7 @@ const DriversPage = () => {
     fontWeight: "bold",
     fontSize: "1rem",
     borderRadius: 2,
-    width: { xs: "100%", lg: "auto" },
+    width: { xs: "100%", md: "auto" },
     background: theme.currentPalette.primary,
     color: theme.currentPalette.background,
     textTransform: "capitalize",
@@ -1057,6 +1059,7 @@ const DriversPage = () => {
       background: darken(theme.currentPalette.primary, 0.1),
     },
   };
+
   return (
     <Box sx={containerSx}>
       <Toaster position="top-center" />
@@ -1176,9 +1179,10 @@ const DriversPage = () => {
         <Box
           sx={{
             display: "flex",
-            alignItems: "center",
-            flexDirection: { xs: "column", lg: "row" },
+            flexDirection: { xs: "column", md: "row" },
+            alignItems: { xs: "stretch", md: "center" },
             gap: 2,
+            width: { xs: "100%", md: "auto" },
           }}
         >
           {/* Search */}
@@ -1190,7 +1194,9 @@ const DriversPage = () => {
                 : "Search By Request Id..."
             }
             showClearButton
-            sx={{ width: 350 }}
+            sx={{
+              width: { xs: "100%", md: 300, lg: 350 },
+            }}
             inputSx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
