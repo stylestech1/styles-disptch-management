@@ -322,6 +322,8 @@ const CalculationPage = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
   const [resetKey, setResetKey] = useState(0);
 
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
   const {
     dhoToOriginDistance,
     dhoToOriginTime,
@@ -751,6 +753,8 @@ const CalculationPage = () => {
                 value={dho}
                 setValue={setDho}
                 placeholder="Enter driver's starting location"
+                googleMapsApiKey={googleMapsApiKey!}
+                showZipCode={true}
               />
 
               {/* Origin Input */}
@@ -760,6 +764,8 @@ const CalculationPage = () => {
                 value={origin}
                 setValue={setOrigin}
                 placeholder="Enter origin address"
+                googleMapsApiKey={googleMapsApiKey!}
+                showZipCode={true}
               />
 
               {/* Distance Statistics */}
@@ -846,6 +852,8 @@ const CalculationPage = () => {
                             handleUpdateDestination(index, place)
                           }
                           placeholder={`Enter destination ${index + 1} address`}
+                          googleMapsApiKey={googleMapsApiKey!}
+                          showZipCode={true}
                         />
                       </Box>
                       {destinations.length > 1 && (
