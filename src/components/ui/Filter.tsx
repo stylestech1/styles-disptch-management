@@ -164,7 +164,7 @@ const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
             bgcolor: theme.currentPalette.background,
             "--date-range-bg": theme.currentPalette.background,
           }}
-          className="date-range-container absolute top-12 right-0 z-50 border border-gray-200 rounded-xl shadow-xl p-4 w-[370px]"
+          className="date-range-container absolute top-12 -right-15 md:right-0 z-50 border border-gray-200 rounded-xl shadow-xl p-4 w-[370px]"
         >
           {dateRange[0].startDate === undefined &&
           dateRange[0].endDate === undefined ? (
