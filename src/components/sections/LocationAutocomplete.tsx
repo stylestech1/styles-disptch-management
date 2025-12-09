@@ -1,8 +1,8 @@
 "use client";
 import { RootState, useAppSelector } from "@/redux/store";
-import { Label } from "@mui/icons-material";
 import { alpha, Box, Button, TextField, Typography } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
+import { Loader } from "@googlemaps/js-api-loader";
 
 export type TPlace = {
   display_name: string;
@@ -15,31 +15,13 @@ export type TPlace = {
   };
 };
 
-type NominatimResult = {
-  place_id: string;
-  lat: string;
-  lon: string;
-  display_name: string;
-  address: {
-    house_number?: string;
-    road?: string;
-    city?: string;
-    town?: string;
-    village?: string;
-    state?: string;
-    country?: string;
-    county?: string;
-    postcode?: string;
-    suburb?: string;
-  };
-};
-
 interface Props {
   label: string;
   value: TPlace | null;
   setValue: (place: TPlace | null) => void;
   placeholder?: string;
   showZipCode?: boolean;
+  googleMapsApiKey: string; // Add this prop for Google API key
 }
 
 const LocationAutocomplete = ({
@@ -48,6 +30,7 @@ const LocationAutocomplete = ({
   setValue,
   placeholder,
   showZipCode = true,
+  googleMapsApiKey, // Receive API key as prop
 }: Props) => {
   const [input, setInput] = useState(value?.display_name || "");
   const [suggestions, setSuggestions] = useState<TPlace[]>([]);
@@ -58,6 +41,39 @@ const LocationAutocomplete = ({
   const [isSelecting, setIsSelecting] = useState(false);
   const [shouldSearch, setShouldSearch] = useState(true);
   const theme = useAppSelector((state: RootState) => state.palette);
+  const autocompleteServiceRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const placesServiceRef = useRef<google.maps.places.PlacesService | null>(null);
+
+  // Initialize Google Maps services
+  useEffect(() => {
+    const initGoogleMaps = async () => {
+      if (!googleMapsApiKey) {
+        console.error('Google Maps API key is required');
+        return;
+      }
+
+      try {
+        const loader = new Loader({
+          apiKey: googleMapsApiKey,
+          version: "weekly",
+          libraries: ["places"]
+        });
+
+        await loader.load();
+        
+        // Initialize services
+        autocompleteServiceRef.current = new google.maps.places.AutocompleteService();
+        
+        // Create a dummy div for PlacesService
+        const dummyDiv = document.createElement('div');
+        placesServiceRef.current = new google.maps.places.PlacesService(dummyDiv);
+      } catch (error) {
+        console.error('Error loading Google Maps:', error);
+      }
+    };
+
+    initGoogleMaps();
+  }, [googleMapsApiKey]);
 
   useEffect(() => {
     if (value?.display_name && value.display_name !== input) {
@@ -65,8 +81,9 @@ const LocationAutocomplete = ({
     }
   }, [value, input]);
 
+  // Fetch suggestions using Google Places API
   useEffect(() => {
-    if (isSelecting || !shouldSearch || input.length < 2) {
+    if (isSelecting || !shouldSearch || input.length < 2 || !autocompleteServiceRef.current) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -75,84 +92,98 @@ const LocationAutocomplete = ({
     const timeout = setTimeout(async () => {
       setLoading(true);
       try {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          input
-        )}&countrycodes=US&addressdetails=1&limit=5&dedupe=1`;
+        // Request autocomplete predictions
+        const request: google.maps.places.AutocompletionRequest = {
+          input,
+          componentRestrictions: { country: 'us' },
+          types: ['address'], // You can change this to ['geocode'] for more general results
+        };
 
-        const res = await fetch(url, {
-          headers: {
-            "User-Agent": "MyApp/1.0 (stylestech1@gmail.com)",
-            Referrer: window.location.origin,
-          },
-        });
+        autocompleteServiceRef.current!.getPlacePredictions(
+          request,
+          (predictions, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+              const formattedPredictions: TPlace[] = predictions.map(prediction => ({
+                place_id: prediction.place_id,
+                display_name: prediction.description,
+                lat: '',
+                lon: '',
+                postcode: undefined,
+                address: {}
+              }));
 
-        const data: NominatimResult[] = await res.json();
-
-        const filtered: TPlace[] = data
-          .map((p): TPlace | null => {
-            const { address, display_name } = p;
-
-            const houseNumber = address.house_number || "";
-            const road = address.road || "";
-            const city =
-              address.city ||
-              address.town ||
-              address.village ||
-              address.suburb ||
-              "";
-            const state = address.state || "";
-            const country = address.country || "";
-            const postcode = address.postcode || "";
-
-            const streetAddress = [houseNumber, road].filter(Boolean).join(" ");
-            const formattedDisplayName = [
-              streetAddress,
-              city,
-              state,
-              postcode,
-              country,
-            ]
-              .filter(Boolean)
-              .join(", ");
-
-            if (!streetAddress && !city && !state && !postcode) {
-              return {
-                place_id: p.place_id,
-                lat: p.lat,
-                lon: p.lon,
-                display_name: display_name,
-                postcode: postcode || undefined,
-              };
+              setSuggestions(formattedPredictions);
+              setShowSuggestions(true);
+            } else {
+              setSuggestions([]);
+              setShowSuggestions(false);
             }
-
-            return {
-              place_id: p.place_id,
-              lat: p.lat,
-              lon: p.lon,
-              display_name: formattedDisplayName || display_name,
-              postcode: postcode || undefined,
-            };
-          })
-          .filter((p): p is TPlace => p !== null);
-
-        const uniqueSuggestions = filtered.filter(
-          (place, index, self) =>
-            index ===
-            self.findIndex((p) => p.display_name === place.display_name)
+            setLoading(false);
+          }
         );
-
-        setSuggestions(uniqueSuggestions);
-        setShowSuggestions(true);
       } catch (err) {
         console.error("Error fetching places:", err);
         setShowSuggestions(false);
-      } finally {
         setLoading(false);
       }
     }, 400);
 
     return () => clearTimeout(timeout);
   }, [input, isSelecting, shouldSearch]);
+
+  // Get place details when a suggestion is selected
+  const getPlaceDetails = (placeId: string): Promise<TPlace | null> => {
+    return new Promise((resolve) => {
+      if (!placesServiceRef.current) {
+        resolve(null);
+        return;
+      }
+
+      const request: google.maps.places.PlaceDetailsRequest = {
+        placeId,
+        fields: [
+          'formatted_address',
+          'geometry',
+          'place_id',
+          'address_components',
+          'name'
+        ]
+      };
+
+      placesServiceRef.current.getDetails(request, (place, status) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && place) {
+          // Extract postal code from address components
+          let postcode: string | undefined;
+          const postalCodeComponent = place.address_components?.find(
+            component => component.types.includes('postal_code')
+          );
+          if (postalCodeComponent) {
+            postcode = postalCodeComponent.long_name;
+          }
+
+          // Extract address components
+          const address: { [key: string]: string } = {};
+          place.address_components?.forEach(component => {
+            component.types.forEach(type => {
+              address[type] = component.long_name;
+            });
+          });
+
+          const result: TPlace = {
+            place_id: place.place_id!,
+            lat: place.geometry?.location?.lat().toString() || '',
+            lon: place.geometry?.location?.lng().toString() || '',
+            display_name: place.formatted_address || place.name || '',
+            postcode,
+            address
+          };
+          resolve(result);
+        } else {
+          resolve(null);
+        }
+      });
+    });
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -179,12 +210,22 @@ const LocationAutocomplete = ({
     setShouldSearch(true);
   };
 
-  const handleSelectPlace = (place: TPlace) => {
+  const handleSelectPlace = async (place: TPlace) => {
     setIsSelecting(true);
     setShouldSearch(false);
 
-    setValue(place);
-    setInput(place.display_name);
+    // Get full place details including coordinates
+    const placeDetails = await getPlaceDetails(place.place_id);
+    
+    if (placeDetails) {
+      setValue(placeDetails);
+      setInput(placeDetails.display_name);
+    } else {
+      // Fallback to the basic info if details fetch fails
+      setValue(place);
+      setInput(place.display_name);
+    }
+    
     setSuggestions([]);
     setShowSuggestions(false);
 

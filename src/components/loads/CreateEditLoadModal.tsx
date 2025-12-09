@@ -118,6 +118,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   } = useSelector((state: RootState) => state.loadsForm);
 
   const theme = useAppSelector((state: RootState) => state.palette);
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // For Documents
   const [selectedDocuments, setSelectedDocuments] = useState<File[]>([]);
@@ -775,6 +776,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     value={dho}
                     setValue={(place) => dispatch(setDho(place))}
                     placeholder="Enter driver's starting location"
+                    googleMapsApiKey={googleMapsApiKey!}
+                    showZipCode={true}
                   />
 
                   <LocationAutocomplete
@@ -782,6 +785,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     value={origin}
                     setValue={(place) => dispatch(setOrigin(place))}
                     placeholder="Enter origin address"
+                    googleMapsApiKey={googleMapsApiKey!}
+                    showZipCode={true}
                   />
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -883,6 +888,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                             placeholder={`Enter destination ${
                               index + 1
                             } address`}
+                            googleMapsApiKey={googleMapsApiKey!}
+                            showZipCode={true}
                           />
                         </div>
 
