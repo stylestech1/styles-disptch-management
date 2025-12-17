@@ -3,14 +3,9 @@ import { RootState, useAppSelector } from "@/redux/store";
 import { alpha, Box, Button, TextField, Typography } from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 
-// declare global {
-//   interface Window {
-//     google: typeof google.maps;
-//   }
-// }
-
 export type TPlace = {
   display_name: string;
+  secondary_text?: string;
   lat: string;
   lon: string;
   place_id: string;
@@ -46,23 +41,30 @@ const LocationAutocomplete = ({
   const [isSelecting, setIsSelecting] = useState(false);
   const [shouldSearch, setShouldSearch] = useState(true);
   const theme = useAppSelector((state: RootState) => state.palette);
-  const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(null);
+  const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(
+    null
+  );
 
   // Initialize Google Places API
   useEffect(() => {
     const initGooglePlaces = () => {
       if (!window.google || !window.google.maps || !window.google.maps.places) {
-        const script = document.createElement('script');
+        const script = document.createElement("script");
         script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=places`;
         script.async = true;
         script.defer = true;
-        
+
         script.onload = () => {
-          if (window.google && window.google.maps && window.google.maps.places) {
-            autocompleteRef.current = new google.maps.places.AutocompleteService();
+          if (
+            window.google &&
+            window.google.maps &&
+            window.google.maps.places
+          ) {
+            autocompleteRef.current =
+              new google.maps.places.AutocompleteService();
           }
         };
-        
+
         document.head.appendChild(script);
       } else {
         autocompleteRef.current = new google.maps.places.AutocompleteService();
@@ -78,9 +80,13 @@ const LocationAutocomplete = ({
     }
   }, [value, input]);
 
-  // البحث عن الاقتراحات باستخدام Google Places API
   useEffect(() => {
-    if (isSelecting || !shouldSearch || input.length < 2 || !autocompleteRef.current) {
+    if (
+      isSelecting ||
+      !shouldSearch ||
+      input.length < 2 ||
+      !autocompleteRef.current
+    ) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -89,61 +95,66 @@ const LocationAutocomplete = ({
     const timeout = setTimeout(async () => {
       setLoading(true);
       try {
-        // تجربة عدة أنواع من البحث
         const requestTypes = [
-          { types: ['geocode'] }, // بحث عام
-          { types: ['(cities)'] }, // مدن فقط
-          { types: ['(regions)'] } // مناطق فقط
+          { types: ["geocode"] }, // بحث عام
+          { types: ["(cities)"] }, // مدن فقط
+          { types: ["(regions)"] }, // مناطق فقط
         ];
 
         let allPredictions: google.maps.places.AutocompletePrediction[] = [];
-        
-        // تنفيذ عمليات البحث المختلفة
+
         for (const requestConfig of requestTypes) {
           try {
             const request: google.maps.places.AutocompletionRequest = {
               input,
-              componentRestrictions: { country: 'us' },
-              ...requestConfig
+              componentRestrictions: { country: "us" },
+              ...requestConfig,
             };
 
             await new Promise<void>((resolve) => {
               autocompleteRef.current!.getPlacePredictions(
                 request,
                 (predictions, status) => {
-                  if (status === google.maps.places.PlacesServiceStatus.OK && predictions) {
+                  if (
+                    status === google.maps.places.PlacesServiceStatus.OK &&
+                    predictions
+                  ) {
                     allPredictions = [...allPredictions, ...predictions];
                   }
                   resolve();
                 }
               );
             });
-            
+
             // توقف مؤقت بين الطلبات لتجنب rate limiting
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise((resolve) => setTimeout(resolve, 100));
           } catch (error) {
-            console.log(`Request type ${requestConfig.types} failed, trying next...`);
+            console.log(
+              `Request type ${requestConfig.types} failed, trying next...`
+            );
           }
         }
 
         // فلترة وإزالة التكرارات
-        const uniquePredictions = allPredictions.filter(
-          (prediction, index, self) =>
-            index === self.findIndex((p) => 
-              p.place_id === prediction.place_id
-            )
-        ).slice(0, 10); // الحد الأقصى 10 نتائج
+        const uniquePredictions = allPredictions
+          .filter(
+            (prediction, index, self) =>
+              index ===
+              self.findIndex((p) => p.place_id === prediction.place_id)
+          )
+          .slice(0, 10);
 
         if (uniquePredictions.length > 0) {
-          const formattedPredictions = uniquePredictions.map(prediction => ({
+          const formattedPredictions = uniquePredictions.map((prediction) => ({
             place_id: prediction.place_id,
-            display_name: prediction.description,
-            lat: '',
-            lon: '',
+            display_name: prediction.structured_formatting.main_text,
+            secondary_text: prediction.structured_formatting.secondary_text,
+            lat: "",
+            lon: "",
             postcode: undefined,
-            city: '',
-            state: '',
-            address: {}
+            city: "",
+            state: "",
+            address: {},
           }));
 
           setSuggestions(formattedPredictions);
@@ -152,9 +163,8 @@ const LocationAutocomplete = ({
           setSuggestions([]);
           setShowSuggestions(true);
         }
-        
+
         setLoading(false);
-        
       } catch (err) {
         console.error("Error fetching places:", err);
         setShowSuggestions(false);
@@ -166,7 +176,9 @@ const LocationAutocomplete = ({
   }, [input, isSelecting, shouldSearch]);
 
   // بدلاً من استخدام Places API للتفاصيل، استخدم Geocoding API للحصول على تنسيق أفضل
-  const getGeocodedAddress = async (placeId: string): Promise<TPlace | null> => {
+  const getGeocodedAddress = async (
+    placeId: string
+  ): Promise<TPlace | null> => {
     return new Promise((resolve) => {
       if (!window.google || !window.google.maps) {
         resolve(null);
@@ -174,45 +186,49 @@ const LocationAutocomplete = ({
       }
 
       const geocoder = new google.maps.Geocoder();
-      
+
       geocoder.geocode({ placeId }, (results, status) => {
         if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
           const result = results[0];
-          
-          let postcode = '';
-          let city = '';
-          let state = '';
-          const formattedAddress = result.formatted_address || '';
-          
+
+          let postcode = "";
+          let city = "";
+          let state = "";
+          const formattedAddress = result.formatted_address || "";
+
           // استخراج المكونات من Geocoding API
-          result.address_components?.forEach(component => {
+          result.address_components?.forEach((component) => {
             const types = component.types;
-            
-            if (types.includes('postal_code')) {
+
+            if (types.includes("postal_code")) {
               postcode = component.long_name;
-            } else if (types.includes('administrative_area_level_1')) {
+            } else if (types.includes("administrative_area_level_1")) {
               state = component.short_name;
-            } else if (types.includes('locality')) {
+            } else if (types.includes("locality")) {
               city = component.long_name;
-            } else if (types.includes('postal_town') && !city) {
+            } else if (types.includes("postal_town") && !city) {
               city = component.long_name;
-            } else if ((types.includes('sublocality') || types.includes('neighborhood')) && !city) {
+            } else if (
+              (types.includes("sublocality") ||
+                types.includes("neighborhood")) &&
+              !city
+            ) {
               city = component.long_name;
-            } else if (types.includes('administrative_area_level_2') && !city) {
+            } else if (types.includes("administrative_area_level_2") && !city) {
               city = component.long_name;
             }
           });
 
           // محاولة استخراج المدينة من العنوان المنسق
           if (!city && formattedAddress) {
-            const parts = formattedAddress.split(',');
+            const parts = formattedAddress.split(",");
             if (parts.length > 0) {
               city = parts[0].trim();
             }
           }
 
           // بناء التنسيق المطلوب: CITY STATE ZIP
-          let displayName = '';
+          let displayName = "";
           if (city && state && postcode) {
             displayName = `${city.toUpperCase()} ${state} ${postcode}`;
           } else if (city && state) {
@@ -223,24 +239,24 @@ const LocationAutocomplete = ({
             displayName = `${state} ${postcode}`;
           } else if (formattedAddress) {
             displayName = formattedAddress;
-          } else if (result.types && result.types.includes('postal_code')) {
+          } else if (result.types && result.types.includes("postal_code")) {
             displayName = postcode;
           }
 
           const finalPlace: TPlace = {
             place_id: placeId,
-            lat: result.geometry?.location?.lat().toString() || '',
-            lon: result.geometry?.location?.lng().toString() || '',
+            lat: result.geometry?.location?.lat().toString() || "",
+            lon: result.geometry?.location?.lng().toString() || "",
             display_name: displayName,
             postcode: postcode || undefined,
             city,
             state,
-            address: {}
+            address: {},
           };
 
           // استخراج جميع مكونات العنوان
-          result.address_components?.forEach(component => {
-            component.types.forEach(type => {
+          result.address_components?.forEach((component) => {
+            component.types.forEach((type) => {
               if (!finalPlace.address![type]) {
                 finalPlace.address![type] = component.long_name;
               }
@@ -264,57 +280,59 @@ const LocationAutocomplete = ({
         return;
       }
 
-      const service = new google.maps.places.PlacesService(document.createElement('div'));
-      
+      const service = new google.maps.places.PlacesService(
+        document.createElement("div")
+      );
+
       const request: google.maps.places.PlaceDetailsRequest = {
         placeId,
         fields: [
-          'formatted_address',
-          'geometry',
-          'place_id',
-          'address_components',
-          'name',
-          'types'
-        ]
+          "formatted_address",
+          "geometry",
+          "place_id",
+          "address_components",
+          "name",
+          "types",
+        ],
       };
 
       service.getDetails(request, (place, status) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && place) {
-          let displayName = place.formatted_address || place.name || '';
-          let postcode = '';
-          let city = '';
-          let state = '';
+          let displayName = place.formatted_address || place.name || "";
+          let postcode = "";
+          let city = "";
+          let state = "";
 
-          place.address_components?.forEach(component => {
+          place.address_components?.forEach((component) => {
             const types = component.types;
-            
-            if (types.includes('postal_code')) {
+
+            if (types.includes("postal_code")) {
               postcode = component.long_name;
-            } else if (types.includes('administrative_area_level_1')) {
+            } else if (types.includes("administrative_area_level_1")) {
               state = component.short_name;
-            } else if (types.includes('locality')) {
+            } else if (types.includes("locality")) {
               city = component.long_name;
             }
           });
 
           // إذا كان لدينا المدينة والولاية والرمز البريدي، نبني التنسيق المطلوب
           if (city && state && postcode) {
-            displayName = `${city.toUpperCase()} ${state} ${postcode}`;
+            displayName = `${city} ${state} ${postcode}`;
           }
 
           const result: TPlace = {
             place_id: place.place_id!,
-            lat: place.geometry?.location?.lat().toString() || '',
-            lon: place.geometry?.location?.lng().toString() || '',
+            lat: place.geometry?.location?.lat().toString() || "",
+            lon: place.geometry?.location?.lng().toString() || "",
             display_name: displayName,
             postcode: postcode || undefined,
             city,
             state,
-            address: {}
+            address: {},
           };
 
-          place.address_components?.forEach(component => {
-            component.types.forEach(type => {
+          place.address_components?.forEach((component) => {
+            component.types.forEach((type) => {
               if (!result.address![type]) {
                 result.address![type] = component.long_name;
               }
@@ -361,12 +379,12 @@ const LocationAutocomplete = ({
     try {
       // المحاولة الأولى: استخدام Geocoding API
       let placeDetails = await getGeocodedAddress(place.place_id);
-      
+
       // المحاولة الثانية: استخدام Places API إذا فشلت الأولى
       if (!placeDetails) {
         placeDetails = await getPlaceDetails(place.place_id);
       }
-      
+
       if (placeDetails) {
         console.log("Setting place details:", placeDetails);
         setValue(placeDetails);
@@ -382,7 +400,7 @@ const LocationAutocomplete = ({
       setValue(place);
       setInput(place.display_name);
     }
-    
+
     setSuggestions([]);
     setShowSuggestions(false);
 
@@ -440,46 +458,54 @@ const LocationAutocomplete = ({
       setLoading(true);
       try {
         const geocoder = new google.maps.Geocoder();
-        geocoder.geocode({ address: input.trim(), componentRestrictions: { country: 'us' } }, (results, status) => {
-          if (status === google.maps.GeocoderStatus.OK && results && results[0]) {
-            const result = results[0];
-            
-            const postcode = input.trim();
-            let city = '';
-            let state = '';
-            
-            result.address_components?.forEach(component => {
-              const types = component.types;
-              
-              if (types.includes('administrative_area_level_1')) {
-                state = component.short_name;
-              } else if (types.includes('locality')) {
-                city = component.long_name;
-              } else if (types.includes('postal_town') && !city) {
-                city = component.long_name;
-              }
-            });
+        geocoder.geocode(
+          { address: input.trim(), componentRestrictions: { country: "us" } },
+          (results, status) => {
+            if (
+              status === google.maps.GeocoderStatus.OK &&
+              results &&
+              results[0]
+            ) {
+              const result = results[0];
 
-            const displayName = city && state ? 
-              `${city.toUpperCase()} ${state} ${postcode}` : 
-              `${postcode}`;
+              const postcode = input.trim();
+              let city = "";
+              let state = "";
 
-            const place: TPlace = {
-              place_id: result.place_id || `zip_${postcode}`,
-              lat: result.geometry?.location?.lat().toString() || '',
-              lon: result.geometry?.location?.lng().toString() || '',
-              display_name: displayName,
-              postcode,
-              city,
-              state,
-              address: {}
-            };
+              result.address_components?.forEach((component) => {
+                const types = component.types;
 
-            setValue(place);
-            setInput(displayName);
+                if (types.includes("administrative_area_level_1")) {
+                  state = component.short_name;
+                } else if (types.includes("locality")) {
+                  city = component.long_name;
+                } else if (types.includes("postal_town") && !city) {
+                  city = component.long_name;
+                }
+              });
+
+              const displayName =
+                city && state
+                  ? `${city.toUpperCase()} ${state} ${postcode}`
+                  : `${postcode}`;
+
+              const place: TPlace = {
+                place_id: result.place_id || `zip_${postcode}`,
+                lat: result.geometry?.location?.lat().toString() || "",
+                lon: result.geometry?.location?.lng().toString() || "",
+                display_name: displayName,
+                postcode,
+                city,
+                state,
+                address: {},
+              };
+
+              setValue(place);
+              setInput(displayName);
+            }
+            setLoading(false);
           }
-          setLoading(false);
-        });
+        );
       } catch (error) {
         console.error("Error in direct zip search:", error);
         setLoading(false);
@@ -510,7 +536,10 @@ const LocationAutocomplete = ({
             onFocus={handleInputFocus}
             onBlur={handleInputBlur}
             onKeyDown={handleInputKeyDown}
-            placeholder={placeholder || "Enter city, state and ZIP (e.g., ABINGDON VA 24210)"}
+            placeholder={
+              placeholder ||
+              "Enter city, state and ZIP (e.g., ABINGDON VA 24210)"
+            }
             variant="outlined"
             fullWidth
             size="small"
@@ -546,17 +575,31 @@ const LocationAutocomplete = ({
           className="absolute top-17 left-0 border p-2 w-full z-50 shadow-lg rounded-b"
         >
           <div className="flex items-center justify-center">
-            <Box className="animate-spin rounded-full h-4 w-4 border-b-2 mr-2" sx={{borderColor: theme.currentPalette.primary}}></Box>
-            <Typography sx={{color: theme.currentPalette.primary}}>Searching...</Typography>
+            <Box
+              className="animate-spin rounded-full h-4 w-4 border-b-2 mr-2"
+              sx={{ borderColor: theme.currentPalette.primary }}
+            ></Box>
+            <Typography sx={{ color: theme.currentPalette.primary }}>
+              Searching...
+            </Typography>
           </div>
         </Box>
       )}
 
       {!loading && showSuggestions && suggestions.length > 0 && (
-        <Box component={'ul'} sx={{bgcolor: theme.currentPalette.background}} className="absolute top-17 left-0 border w-full max-h-60 overflow-auto z-50 shadow-lg rounded-b">
+        <Box
+          component={"ul"}
+          sx={{ bgcolor: theme.currentPalette.background }}
+          className="absolute top-17 left-0 border w-full max-h-60 overflow-auto z-50 shadow-lg rounded-b"
+        >
           {suggestions.map((s) => (
-            <Box component={'li'}
-              sx={{'&:hover': {bgcolor: alpha(theme.currentPalette.primary, 0.1)}}}
+            <Box
+              component={"li"}
+              sx={{
+                "&:hover": {
+                  bgcolor: alpha(theme.currentPalette.primary, 0.1),
+                },
+              }}
               key={s.place_id}
               className="p-3 cursor-pointer border-b last:border-b-0 transition-colors"
               onMouseDown={(e) => {
@@ -582,10 +625,12 @@ const LocationAutocomplete = ({
         suggestions.length === 0 &&
         input.length >= 2 && (
           <Box
-          sx={{ bgcolor: theme.currentPalette.background }}
-          className="absolute top-17 left-0 border p-2 w-full z-50 shadow-lg rounded-b"
-        >
-            <Typography sx={{color: theme.currentPalette.primary}}>No locations found. Try a different search term.</Typography>
+            sx={{ bgcolor: theme.currentPalette.background }}
+            className="absolute top-17 left-0 border p-2 w-full z-50 shadow-lg rounded-b"
+          >
+            <Typography sx={{ color: theme.currentPalette.primary }}>
+              No locations found. Try a different search term.
+            </Typography>
           </Box>
         )}
     </div>
