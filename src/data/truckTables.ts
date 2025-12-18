@@ -1,9 +1,8 @@
 import { Column } from "@/components/ui/DataTable";
 
 export const truckColumns: Column[] = [
-  { key: "truckId", header: "truckId", align: "center" },
+  { key: "plateNumber", header: "Truck Number", align: "center" },
   { key: "model", header: "Model", align: "center" },
-  { key: "plateNumber", header: "Plate Number", align: "center" },
   { key: "type", header: "Type", align: "center" },
   { key: "year", header: "Year", align: "center" },
   { key: "source", header: "Source", align: "center" },

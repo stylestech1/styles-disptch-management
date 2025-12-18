@@ -96,9 +96,9 @@ const LocationAutocomplete = ({
       setLoading(true);
       try {
         const requestTypes = [
-          { types: ["geocode"] }, // بحث عام
-          { types: ["(cities)"] }, // مدن فقط
-          { types: ["(regions)"] }, // مناطق فقط
+          { types: ["geocode"] },
+          { types: ["(cities)"] },
+          { types: ["(regions)"] }, 
         ];
 
         let allPredictions: google.maps.places.AutocompletePrediction[] = [];
@@ -126,7 +126,6 @@ const LocationAutocomplete = ({
               );
             });
 
-            // توقف مؤقت بين الطلبات لتجنب rate limiting
             await new Promise((resolve) => setTimeout(resolve, 100));
           } catch (error) {
             console.log(
@@ -135,7 +134,6 @@ const LocationAutocomplete = ({
           }
         }
 
-        // فلترة وإزالة التكرارات
         const uniquePredictions = allPredictions
           .filter(
             (prediction, index, self) =>
@@ -175,7 +173,6 @@ const LocationAutocomplete = ({
     return () => clearTimeout(timeout);
   }, [input, isSelecting, shouldSearch]);
 
-  // بدلاً من استخدام Places API للتفاصيل، استخدم Geocoding API للحصول على تنسيق أفضل
   const getGeocodedAddress = async (
     placeId: string
   ): Promise<TPlace | null> => {
@@ -196,7 +193,6 @@ const LocationAutocomplete = ({
           let state = "";
           const formattedAddress = result.formatted_address || "";
 
-          // استخراج المكونات من Geocoding API
           result.address_components?.forEach((component) => {
             const types = component.types;
 
@@ -219,7 +215,6 @@ const LocationAutocomplete = ({
             }
           });
 
-          // محاولة استخراج المدينة من العنوان المنسق
           if (!city && formattedAddress) {
             const parts = formattedAddress.split(",");
             if (parts.length > 0) {
@@ -227,7 +222,6 @@ const LocationAutocomplete = ({
             }
           }
 
-          // بناء التنسيق المطلوب: CITY STATE ZIP
           let displayName = "";
           if (city && state && postcode) {
             displayName = `${city.toUpperCase()} ${state} ${postcode}`;
@@ -254,7 +248,6 @@ const LocationAutocomplete = ({
             address: {},
           };
 
-          // استخراج جميع مكونات العنوان
           result.address_components?.forEach((component) => {
             component.types.forEach((type) => {
               if (!finalPlace.address![type]) {
@@ -272,7 +265,6 @@ const LocationAutocomplete = ({
     });
   };
 
-  // دالة بديلة للحصول على تفاصيل المكان باستخدام Places API
   const getPlaceDetails = async (placeId: string): Promise<TPlace | null> => {
     return new Promise((resolve) => {
       if (!window.google || !window.google.maps || !window.google.maps.places) {
@@ -315,7 +307,6 @@ const LocationAutocomplete = ({
             }
           });
 
-          // إذا كان لدينا المدينة والولاية والرمز البريدي، نبني التنسيق المطلوب
           if (city && state && postcode) {
             displayName = `${city} ${state} ${postcode}`;
           }
@@ -377,10 +368,8 @@ const LocationAutocomplete = ({
     setShouldSearch(false);
 
     try {
-      // المحاولة الأولى: استخدام Geocoding API
       let placeDetails = await getGeocodedAddress(place.place_id);
 
-      // المحاولة الثانية: استخدام Places API إذا فشلت الأولى
       if (!placeDetails) {
         placeDetails = await getPlaceDetails(place.place_id);
       }
@@ -390,7 +379,6 @@ const LocationAutocomplete = ({
         setValue(placeDetails);
         setInput(placeDetails.display_name);
       } else {
-        // استخدام المعلومات الأساسية
         console.log("Using basic place info:", place);
         setValue(place);
         setInput(place.display_name);
@@ -452,7 +440,6 @@ const LocationAutocomplete = ({
     return place.display_name;
   };
 
-  // دالة لمعالجة البحث المباشر للـ ZIP Code
   const handleDirectZipSearch = async () => {
     if (input.trim().length >= 5 && /^\d{5}(-\d{4})?$/.test(input.trim())) {
       setLoading(true);

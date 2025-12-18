@@ -294,20 +294,13 @@ const TrucksPage: React.FC = () => {
         key={truck.id || truck.truckId}
         className="transition-colors group"
       >
-        {/* Truck ID */}
-        <td className="p-4 text-center">
-          <span className="text-sm px-2 py-1 rounded text-slate-700 font-medium">
-            {truck.truckId}
-          </span>
-        </td>
-
-        {/* Modal */}
-        <td className="p-4 text-center">{truck.model || "-"}</td>
-
         {/* Plate Number */}
         <td className="p-4 text-center text-slate-700 font-medium">
           {truck.plateNumber || "-"}
         </td>
+
+        {/* Modal */}
+        <td className="p-4 text-center">{truck.model || "-"}</td>
 
         {/* Truck Type */}
         <td className="p-4 text-center text-slate-700">
