@@ -26,7 +26,9 @@ export const api = createApi({
     "Customers",
     "Notifications",
     "TimeOffs",
-    'Maintenances'
+    "Maintenances",
+    "Messages",
+    "Conversations",
   ],
   refetchOnFocus: false,
   refetchOnReconnect: false,

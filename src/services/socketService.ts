@@ -1,3 +1,4 @@
+import { SOCKET_EVENTS } from "@/constants/ChatSocketEvent";
 import { TAuthState } from "@/types/globalTypes";
 import { io, Socket } from "socket.io-client";
 
@@ -10,6 +11,10 @@ class SocketService {
     this.auth = auth;
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                               INITIALIZATION                               */
+  /* -------------------------------------------------------------------------- */
+
   connect() {
     if (!this.auth?.token) {
       console.warn("Cannot connect: No auth token available");
@@ -20,6 +25,10 @@ class SocketService {
       console.log("Socket already connected");
       return;
     }
+
+    /* -------------------------------------------------------------------------- */
+    /*                               CORE LISTENERS                                */
+    /* -------------------------------------------------------------------------- */
 
     try {
       this.socket = io(process.env.NEXT_PUBLIC_API_URL!, {
@@ -63,6 +72,10 @@ class SocketService {
     this.socket?.on("disconnect", cb);
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                             Notification HELPERS                           */
+  /* -------------------------------------------------------------------------- */
+
   joinUserRoom(userId: string) {
     if (!this.socket) {
       console.warn("Socket not initialized");
@@ -73,6 +86,42 @@ class SocketService {
     console.log(`🚀 Joined user room: user_${userId}`);
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                             CHAT HELPERS                                   */
+  /* -------------------------------------------------------------------------- */
+
+  joinConversation(conversationId: string) {
+    this.emit(SOCKET_EVENTS.JOIN_CONVERSATION, { conversationId });
+  }
+
+  leaveConversation(conversationId: string) {
+    this.emit(SOCKET_EVENTS.LEAVE_CONVERSATION, { conversationId });
+  }
+
+  sendMessage(conversationId: string, text: string) {
+    this.emit(SOCKET_EVENTS.SEND_MESSAGE, { conversationId, text });
+  }
+
+  markSeen(conversationId: string) {
+    this.emit(SOCKET_EVENTS.MARK_SEEN, { conversationId });
+  }
+
+  startTyping(conversationId: string) {
+    this.emit(SOCKET_EVENTS.TYPING, { conversationId });
+  }
+
+  stopTyping(conversationId: string) {
+    this.emit(SOCKET_EVENTS.STOP_TYPING, { conversationId });
+  }
+
+  getPresenceList() {
+    this.emit(SOCKET_EVENTS.PRESENCE_LIST, {});
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                EVENT SYSTEM                                */
+  /* -------------------------------------------------------------------------- */
+
   on<T>(event: string, callback: (data: T) => void) {
     if (!this.socket) {
       console.warn("Socket not initialized");
@@ -80,14 +129,6 @@ class SocketService {
     }
     this.socket.off(event, callback);
     this.socket.on(event, callback);
-  }
-
-  emit<T>(event: string, data: T) {
-    if (!this.socket) {
-      console.warn("Socket not initialized");
-      return;
-    }
-    this.socket?.emit(event, data);
   }
 
   off<T>(event: string, callback?: (data: T) => void) {
@@ -103,6 +144,22 @@ class SocketService {
     }
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                   EMIT                                     */
+  /* -------------------------------------------------------------------------- */
+
+  emit<T>(event: string, data: T) {
+    if (!this.socket) {
+      console.warn("Socket not initialized");
+      return;
+    }
+    this.socket?.emit(event, data);
+  }
+
+  /* -------------------------------------------------------------------------- */
+  /*                                 CLEANUP                                    */
+  /* -------------------------------------------------------------------------- */
+
   disconnect() {
     if (this.socket) {
       this.socket.disconnect();
@@ -111,8 +168,16 @@ class SocketService {
     }
   }
 
+  /* -------------------------------------------------------------------------- */
+  /*                                  GETTERS                                   */
+  /* -------------------------------------------------------------------------- */
+
   getConnectionStatus(): boolean {
     return this.isConnected && this.socket?.connected === true;
+  }
+
+  getSocket() {
+    return this.socket;
   }
 }
 

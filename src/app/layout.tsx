@@ -6,7 +6,7 @@ import { Toaster } from "react-hot-toast";
 // Fonts
 import { Roboto } from "next/font/google";
 import MuiThemeProvider from "@/providers/MuiThemeProvider";
-import { SpeedInsights } from "@vercel/speed-insights/next"
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const roboto = Roboto({
   subsets: ["latin"],

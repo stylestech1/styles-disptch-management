@@ -1,29 +1,52 @@
-import { TNotification } from "./notificationType";
+import { TPagination } from "./globalTypes";
 
-export type TMessage = {
+export type UserMini = {
   id: string;
-  from: string;
-  to: string;
-  text: string;
+  name?: string;
+};
+
+export type Conversation = {
+  id: string;
+  members: UserMini[];
+  lastMessage?: Message | null;
   createdAt: string;
+  updatedAt: string;
+  messages?: Message[];
+  unreadCount?: number;
 };
 
-export type TChatState = {
-  messages: Record<string, TMessage[]>;
-  onlineUsers: string[];
-  selectedUser: string | null;
+export type Message = {
+  id: string;
+  conversationId: string;
+  text: string;
+  sender: UserMini;
+  seen: boolean;
+  createdAt: string;
+  updatedAt?: string;
+  isTemp?: boolean;
 };
 
-export interface ClientToServerEvents {
-  send_message: (msg: TMessage) => void;
-  mark_notification_as_read: (id: string) => void;
-  join_user_room: (userId: string) => void;
+export type ApiResponse<T> = {
+  message: string;
+  results?: number;
+  data: T;
+  success?: boolean;
+  pagination?: TPagination;
+};
+
+export type MarkSeenResponse = {
+  message: string;
+};
+
+export interface Presence {
+  [userId: string]: {
+    isOnline: boolean;
+    lastSeen?: string;
+  };
 }
 
-export interface ServerToClientEvents {
-  message_received: (msg: TMessage) => void;
-  notification_received: (notification: TNotification) => void;
-  join_user_room: (userId: string) => void;
-  online_users: (users: string[]) => void;
-  receive_message: (msg: TMessage) => void;
-}
+export type PresenceItem = {
+  userId: string;
+  isOnline: boolean;
+  lastSeen?: string;
+};
