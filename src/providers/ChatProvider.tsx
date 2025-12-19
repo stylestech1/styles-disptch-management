@@ -4,7 +4,7 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { chatSocketService } from "@/services/ChatSocketService";
 import { useEffect } from "react";
 
-const SocketProvider = ({ children }: { children: React.ReactNode }) => {
+const ChatProvider = ({ children }: { children: React.ReactNode }) => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state: RootState) => state.auth.user);
   const token = useAppSelector((state: RootState) => state.auth.token);
@@ -32,4 +32,4 @@ const SocketProvider = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-export default SocketProvider;
+export default ChatProvider;

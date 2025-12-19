@@ -1,5 +1,4 @@
 import { TAuthState } from "@/types/globalTypes";
-import { TNotification } from "@/types/notificationType";
 import { io, Socket } from "socket.io-client";
 
 class SocketService {
@@ -26,8 +25,8 @@ class SocketService {
       this.socket = io(process.env.NEXT_PUBLIC_API_URL!, {
         transports: ["websocket"],
         autoConnect: true,
-        auth: { 
-          token: this.auth.token 
+        auth: {
+          token: this.auth.token,
         },
       });
 
@@ -47,10 +46,21 @@ class SocketService {
         console.error("Socket connection error:", error);
         this.isConnected = false;
       });
-
     } catch (error) {
       console.error("Failed to connect socket:", error);
     }
+  }
+
+  onConnect(cb: () => void) {
+    if (!this.socket) return;
+    this.socket.off("connect", cb);
+    this.socket.on("connect", cb);
+  }
+
+  onDisconnect(cb: () => void) {
+    if (!this.socket) return;
+    this.socket?.off("disconnect", cb);
+    this.socket?.on("disconnect", cb);
   }
 
   joinUserRoom(userId: string) {
@@ -58,25 +68,39 @@ class SocketService {
       console.warn("Socket not initialized");
       return;
     }
-    
+
     this.socket.emit("join-user-room", userId);
     console.log(`🚀 Joined user room: user_${userId}`);
   }
 
-  on(event: string, callback: (...args: TNotification[]) => void) {
+  on<T>(event: string, callback: (data: T) => void) {
     if (!this.socket) {
       console.warn("Socket not initialized");
       return;
     }
+    this.socket.off(event, callback);
     this.socket.on(event, callback);
   }
 
-  emit(event: string, data: TNotification) {
+  emit<T>(event: string, data: T) {
     if (!this.socket) {
       console.warn("Socket not initialized");
       return;
     }
     this.socket?.emit(event, data);
+  }
+
+  off<T>(event: string, callback?: (data: T) => void) {
+    if (!this.socket) {
+      console.warn("Socket not initialized");
+      return;
+    }
+
+    if (callback) {
+      this.socket.off(event, callback);
+    } else {
+      this.socket.off(event);
+    }
   }
 
   disconnect() {
