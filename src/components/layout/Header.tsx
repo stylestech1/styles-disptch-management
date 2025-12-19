@@ -38,13 +38,15 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
 
   return (
     <AppBar
-      position="static"
+      position="fixed"
       sx={{
         borderBottom: 1,
         bgcolor: theme.currentPalette.background,
         borderColor: alpha(theme.currentPalette.text, 0.1),
         color: theme.currentPalette.text,
         boxShadow: "none",
+        top: 0,
+        width: 'calc(100% - 300px)',
       }}
     >
       <Toolbar

@@ -1,9 +1,6 @@
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import {
-  AppBar,
-  Toolbar,
-  IconButton,
   Drawer,
   List,
   ListItemButton,
@@ -94,6 +91,7 @@ export default function AdminLayout({
         height: "100%",
         display: "flex",
         flexDirection: "column",
+        overflow: "hidden",
         bgcolor: themePalette.currentPalette.background,
         color: themePalette.currentPalette.text,
       }}
@@ -202,7 +200,7 @@ export default function AdminLayout({
 
   return (
     <FilterProvider>
-      <Box sx={{ display: "flex", height: "100vh" }}>
+      <Box sx={{ display: "flex", minHeight: "100vh" }}>
         {/* Sidebar Drawer */}
         <Drawer
           variant={isDesktop ? "permanent" : "temporary"}
@@ -218,7 +216,7 @@ export default function AdminLayout({
               bgcolor: themePalette.currentPalette.background,
               borderRight: `1px solid ${theme.palette.divider}`,
               boxShadow: isDesktop ? "none" : undefined,
-              overflowX: 'hidden'
+              overflowX: "hidden",
             },
           }}
         >
@@ -239,12 +237,7 @@ export default function AdminLayout({
           }}
         >
           {/* Page content */}
-          <Box
-            sx={{
-              flex: 1,
-              overflow: "auto",
-            }}
-          >
+          <Box>
             {isGoogleMapsLoaded ? (
               <>
                 <Navbar
@@ -256,8 +249,9 @@ export default function AdminLayout({
                 <Box
                   sx={{
                     flex: 1,
-                    overflow: "auto",
-                    p: { xs: 3, md: 4 },
+                    overflowY: "auto",
+                    pt: "96px",
+                    px: { xs: 3, md: 4 },
                   }}
                 >
                   {children}

@@ -18,7 +18,7 @@ import {
   alpha,
 } from "@mui/material";
 import NextLink from "next/link";
-import { IoLogOutOutline, IoPersonCircleOutline } from "react-icons/io5";
+import { IoLogOutOutline } from "react-icons/io5";
 import { useState, useEffect } from "react";
 import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
@@ -235,7 +235,7 @@ export default function AdminLayout({
 
   return (
     <FilterProvider>
-      <Box sx={{ display: "flex", height: "100vh" }}>
+      <Box sx={{ display: "flex", height: "100vh"}}>
         {/* Sidebar Drawer */}
         <Drawer
           variant={isDesktop ? "permanent" : "temporary"}
@@ -251,7 +251,7 @@ export default function AdminLayout({
               bgcolor: themePalette.currentPalette.background,
               borderRight: `1px solid ${theme.palette.divider}`,
               boxShadow: isDesktop ? "none" : undefined,
-              overflowX: 'hidden'
+              overflowX: "hidden",
             },
           }}
         >
@@ -272,12 +272,7 @@ export default function AdminLayout({
           }}
         >
           {/* Page content */}
-          <Box
-            sx={{
-              flex: 1,
-              overflow: "auto",
-            }}
-          >
+          <Box>
             {isGoogleMapsLoaded ? (
               <>
                 {/* Navbar */}
@@ -290,8 +285,9 @@ export default function AdminLayout({
                 <Box
                   sx={{
                     flex: 1,
-                    overflow: "auto",
-                    p: { xs: 3, md: 4 },
+                    overflowY: "auto",
+                    pt: "96px",
+                    px: { xs: 3, md: 4 },
                   }}
                 >
                   {children}
