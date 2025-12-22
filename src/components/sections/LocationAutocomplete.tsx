@@ -44,6 +44,7 @@ const LocationAutocomplete = ({
   const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(
     null
   );
+  const userTypedRef = useRef(false);
 
   // Initialize Google Places API
   useEffect(() => {
@@ -75,13 +76,15 @@ const LocationAutocomplete = ({
   }, []);
 
   useEffect(() => {
-    if (value?.display_name && value.display_name !== input) {
+    if (value?.display_name) {
+      userTypedRef.current = false;
       setInput(value.display_name);
     }
-  }, [value, input]);
+  }, [value]);
 
   useEffect(() => {
     if (
+      !userTypedRef.current ||
       isSelecting ||
       !shouldSearch ||
       input.length < 2 ||
@@ -172,6 +175,10 @@ const LocationAutocomplete = ({
   const getGeocodedAddress = async (
     placeId: string
   ): Promise<TPlace | null> => {
+    if (placeId.startsWith("temp_") || placeId.startsWith("geocoded_")) {
+      return null;
+    }
+
     return new Promise((resolve) => {
       if (!window.google || !window.google.maps) {
         resolve(null);
@@ -360,6 +367,7 @@ const LocationAutocomplete = ({
   };
 
   const handleSelectPlace = async (place: TPlace) => {
+    userTypedRef.current = false;
     setIsSelecting(true);
     setShouldSearch(false);
 
@@ -400,7 +408,13 @@ const LocationAutocomplete = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInput(newValue);
+    // setIsSelecting(true);
     setShouldSearch(true);
+    userTypedRef.current = true;
+
+    if (newValue === "" && value) {
+      setValue(null);
+    }
 
     if (newValue.length >= 2) {
       setShowSuggestions(true);

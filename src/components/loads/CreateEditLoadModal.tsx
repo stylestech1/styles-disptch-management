@@ -227,10 +227,37 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   // Loading when open modal
   useEffect(() => {
     if (isOpen && editingLoad) {
-      loadEditData(editingLoad);
+      dispatch(resetForm());
+      setSelectedDocuments([]);
+      setUploadError("");
+
+      setTimeout(() => {
+        loadEditData(editingLoad);
+      }, 50);
+    } else if (isOpen && !editingLoad) {
+      dispatch(resetForm());
       setSelectedDocuments([]);
       setUploadError("");
     }
+  }, [isOpen, editingLoad]);
+
+  const [isInitializing, setIsInitializing] = useState(false);
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (isOpen && editingLoad) {
+        setIsInitializing(true);
+        try {
+          await loadEditData(editingLoad);
+        } catch (error) {
+          console.error("Error loading edit data:", error);
+        } finally {
+          setTimeout(() => setIsInitializing(false), 500);
+        }
+      }
+    };
+
+    loadData();
   }, [isOpen, editingLoad]);
 
   // loading Maps on mounting
@@ -260,6 +287,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                 display_name: loadItem.DHO,
                 lat: "0",
                 lon: "0",
+                place_id: `temp_${Date.now()}_dho`,
               } as TPlace)
           )
         );
@@ -277,6 +305,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                 display_name: loadItem.origin,
                 lat: "0",
                 lon: "0",
+                place_id: `temp_${Date.now()}_origin`,
               } as TPlace)
           )
         );
@@ -299,6 +328,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                 display_name: dest,
                 lat: "0",
                 lon: "0",
+                place_id: `temp_${Date.now()}_dest_${dest}`,
               } as TPlace)
             );
           })
@@ -332,6 +362,51 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
     if (loadItem.distanceMiles) {
       setAllDistance(loadItem.distanceMiles.toString());
+    }
+  };
+
+  const updateGeocodedData = async (loadItem: TLoads) => {
+    try {
+      // DHO
+      if (loadItem.DHO) {
+        const dhoCoords = await geocodeAddress(loadItem.DHO);
+        if (dhoCoords) {
+          dispatch(setDho(dhoCoords));
+        }
+      }
+
+      // Origin
+      if (loadItem.origin) {
+        const originCoords = await geocodeAddress(loadItem.origin);
+        if (originCoords) {
+          dispatch(setOrigin(originCoords));
+        }
+      }
+
+      // Destinations
+      if (loadItem.destination) {
+        const destArray = Array.isArray(loadItem.destination)
+          ? loadItem.destination
+          : [loadItem.destination];
+
+        const destinationPlaces = await Promise.all(
+          destArray.map(async (dest) => {
+            const coords = await geocodeAddress(dest);
+            return (
+              coords || {
+                display_name: dest,
+                lat: "0",
+                lon: "0",
+                place_id: `geocoded_${Date.now()}_${dest.substring(0, 10)}`,
+              }
+            );
+          })
+        );
+
+        dispatch(setDestinations(destinationPlaces));
+      }
+    } catch (error) {
+      console.error("Error updating geocoded data:", error);
     }
   };
 
@@ -753,8 +828,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                     </p>
                     {dho && origin && (
                       <p className="text-sm text-green-600 mt-1">
-                        • DH to Origin:{" "}
-                        {dhoToOriginDistance?.toFixed(2) || "0"} miles
+                        • DH to Origin: {dhoToOriginDistance?.toFixed(2) || "0"}{" "}
+                        miles
                       </p>
                     )}
                     {destinations.filter((d) => d !== null).length > 0 && (
