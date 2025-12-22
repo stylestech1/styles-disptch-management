@@ -47,6 +47,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
         boxShadow: "none",
         top: 0,
         width: 'calc(100% - 300px)',
+        zIndex: 10
       }}
     >
       <Toolbar
