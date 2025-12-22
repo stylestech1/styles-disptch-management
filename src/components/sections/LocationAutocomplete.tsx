@@ -95,11 +95,7 @@ const LocationAutocomplete = ({
     const timeout = setTimeout(async () => {
       setLoading(true);
       try {
-        const requestTypes = [
-          { types: ["geocode"] },
-          { types: ["(cities)"] },
-          { types: ["(regions)"] }, 
-        ];
+        const requestTypes = [{ types: ["establishment", "geocode"] }];
 
         let allPredictions: google.maps.places.AutocompletePrediction[] = [];
 
@@ -145,7 +141,7 @@ const LocationAutocomplete = ({
         if (uniquePredictions.length > 0) {
           const formattedPredictions = uniquePredictions.map((prediction) => ({
             place_id: prediction.place_id,
-            display_name: prediction.structured_formatting.main_text,
+            display_name: prediction.description,
             secondary_text: prediction.structured_formatting.secondary_text,
             lat: "",
             lon: "",
@@ -222,26 +218,26 @@ const LocationAutocomplete = ({
             }
           }
 
-          let displayName = "";
-          if (city && state && postcode) {
-            displayName = `${city.toUpperCase()} ${state} ${postcode}`;
-          } else if (city && state) {
-            displayName = `${city.toUpperCase()} ${state}`;
-          } else if (city && postcode) {
-            displayName = `${city.toUpperCase()} ${postcode}`;
-          } else if (state && postcode) {
-            displayName = `${state} ${postcode}`;
-          } else if (formattedAddress) {
-            displayName = formattedAddress;
-          } else if (result.types && result.types.includes("postal_code")) {
-            displayName = postcode;
-          }
+          // let displayName = "";
+          // if (city && state && postcode) {
+          //   displayName = `${city.toUpperCase()} ${state} ${postcode}`;
+          // } else if (city && state) {
+          //   displayName = `${city.toUpperCase()} ${state}`;
+          // } else if (city && postcode) {
+          //   displayName = `${city.toUpperCase()} ${postcode}`;
+          // } else if (state && postcode) {
+          //   displayName = `${state} ${postcode}`;
+          // } else if (formattedAddress) {
+          //   displayName = formattedAddress;
+          // } else if (result.types && result.types.includes("postal_code")) {
+          //   displayName = postcode;
+          // }
 
           const finalPlace: TPlace = {
             place_id: placeId,
             lat: result.geometry?.location?.lat().toString() || "",
             lon: result.geometry?.location?.lng().toString() || "",
-            display_name: displayName,
+            display_name: result.formatted_address,
             postcode: postcode || undefined,
             city,
             state,
