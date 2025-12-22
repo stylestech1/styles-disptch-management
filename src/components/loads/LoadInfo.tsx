@@ -228,7 +228,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
         elevation={0}
         sx={{
           p: 4,
-          mb: 3,
+          my: 5,
           bgcolor: theme.currentPalette.background,
           border: `1px solid ${alpha(theme.currentPalette.text, 0.2)}`,
           borderRadius: 2,
