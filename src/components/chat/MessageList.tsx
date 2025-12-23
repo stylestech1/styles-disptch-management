@@ -54,6 +54,19 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [liveMessages.length]);
 
+  /* ----------------------- play sound on new message ----------------------- */
+  const prevMessagesCountRef = useRef(liveMessages.length);
+
+  useEffect(() => {
+    if (liveMessages.length > prevMessagesCountRef.current) {
+      const audio = new Audio("/audio/message.mp3");
+      audio.play().catch((err) => {
+        console.log("Audio play failed:", err);
+      });
+    }
+    prevMessagesCountRef.current = liveMessages.length;
+  }, [liveMessages]);
+
   return (
     <div className="h-full p-4 space-y-4 overflow-y-auto">
       {liveMessages.map((message) => (
