@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { IoClose, IoSettingsOutline } from "react-icons/io5";
-import { TDispatcher } from "@/types/globalTypes";
+import { TDispatcher, TUserRole } from "@/types/globalTypes";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import toast from "react-hot-toast";
 import {
@@ -20,7 +20,7 @@ interface UserSettingsModalProps {
   user: TDispatcher | null;
   onUpdateRole: (
     userId: string,
-    newRole: "admin" | "employee"
+    newRole: TUserRole
   ) => Promise<void>;
   onActivateUser: (userId: string) => Promise<void>;
   onDeactivateUser: (userId: string) => Promise<void>;
@@ -37,7 +37,7 @@ const UserSettingsModal = ({
   isLoading = false,
 }: UserSettingsModalProps) => {
   const [tempUser, setTempUser] = useState({
-    role: "employee" as "admin" | "employee",
+    role: "employee" as TUserRole,
     status: "active" as "active" | "deactive",
   });
 
@@ -46,7 +46,7 @@ const UserSettingsModal = ({
   useEffect(() => {
     if (user) {
       setTempUser({
-        role: user.role as "admin" | "employee",
+        role: user.role as TUserRole,
         status: user.active ? "active" : "deactive",
       });
     }
@@ -126,7 +126,7 @@ const UserSettingsModal = ({
                   onChange={(e) =>
                     setTempUser({
                       ...tempUser,
-                      role: e.target.value as "admin" | "employee",
+                      role: e.target.value as TUserRole,
                     })
                   }
                   sx={{ bgcolor: theme.currentPalette.background }}
@@ -134,6 +134,7 @@ const UserSettingsModal = ({
                 >
                   <MenuItem value={"employee"}>Employee</MenuItem>
                   <MenuItem value={"admin"}>Admin</MenuItem>
+                  <MenuItem value={"driver"}>Driver</MenuItem>
                 </Select>
               </FormControl>
             </div>
