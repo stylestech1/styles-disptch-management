@@ -186,6 +186,7 @@ const TrucksPage: React.FC = () => {
       year: truck.year,
       capacity: truck.capacity,
       fuelPerMile: truck.fuelPerMile,
+      totalMileage: truck.totalMileage,
       status: truck.status,
       assignedDriver: assignedDriverId,
       source: truck.source,
@@ -307,19 +308,22 @@ const TrucksPage: React.FC = () => {
           <Chip label={truck.type} variant="outlined" size="small" />
         </td>
 
+        {/* Truck Year */}
+        <td className="p-4 text-center font-semibold">{truck.year || "-"}</td>
+
         {/* Truck Source */}
         <td className="p-4 text-center text-slate-700">
           <Chip label={truck.source} variant="outlined" size="small" />
         </td>
-
-        {/* Truck Year */}
-        <td className="p-4 text-center font-semibold">{truck.year || "-"}</td>
 
         {/* Truck Capacity */}
         <td className="p-4 text-center">{truck.capacity}</td>
 
         {/* Fuel Per Mile */}
         <td className="p-4 text-center">{truck.fuelPerMile ?? "N/A"}</td>
+
+         {/* Total Mileage */}
+        <td className="p-4 text-center">{truck.totalMileage ?? "N/A"}</td>
 
         {/* Assign To Driver */}
         <td className="p-4 text-center">

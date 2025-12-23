@@ -8,6 +8,7 @@ export const truckColumns: Column[] = [
   { key: "source", header: "Source", align: "center" },
   { key: "truckCapacity", header: "Capacity (kg)", align: "center" },
   { key: "fuelPerMile", header: "Fuel/Mile", align: "center" },
+  { key: "totalMileage", header: "Total Mileage", align: "center" },
   { key: "assignToDriver", header: "Driver", align: "center" },
   { key: "status", header: "Status", align: "center" },
   { key: "actions", header: "Actions", align: "center" },

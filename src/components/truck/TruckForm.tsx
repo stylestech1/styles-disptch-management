@@ -42,6 +42,7 @@ interface TruckFormData {
   year: string;
   capacity: string;
   fuelPerMile: string;
+  totalMileage: number;
   assignedDriver: string;
   status: string;
   source: string;
@@ -125,6 +126,7 @@ export const TruckForm = React.memo(function TruckFormComp(
       source: "",
       capacity: "",
       fuelPerMile: "",
+      totalMileage: 0,
       assignedDriver: "",
       status: "",
     },
@@ -142,6 +144,7 @@ export const TruckForm = React.memo(function TruckFormComp(
         "source",
         "capacity",
         "fuelPerMile",
+        "totalMileage",
         "assignedDriver",
         "status",
       ];
@@ -197,6 +200,7 @@ export const TruckForm = React.memo(function TruckFormComp(
         source: "",
         capacity: "",
         fuelPerMile: "",
+        totalMileage: 0,
         assignedDriver: "",
         status: "",
       });
@@ -218,7 +222,7 @@ export const TruckForm = React.memo(function TruckFormComp(
     field: keyof TruckFormData,
     value: string
   ) => {
-    const numValue = value === "" ? 0 : value;
+    const numValue = value === "" ? 0 : Number(value);
     setValue(field, numValue as never);
     await trigger(field);
     onChange(field as keyof TTruck, numValue as TTruck[keyof TTruck]);
@@ -238,6 +242,8 @@ export const TruckForm = React.memo(function TruckFormComp(
   };
 
   if (!open) return null;
+
+  console.log("formData", formData);
 
   return (
     <div
@@ -502,14 +508,6 @@ export const TruckForm = React.memo(function TruckFormComp(
                   control={control}
                   rules={{
                     required: "Capacity is required",
-                    min: {
-                      value: 1,
-                      message: "Capacity must be at least 1 kg",
-                    },
-                    max: {
-                      value: 100000,
-                      message: "Capacity seems too high",
-                    },
                   }}
                   render={({ field }) => (
                     <TextField
@@ -570,6 +568,36 @@ export const TruckForm = React.memo(function TruckFormComp(
                         handleNumberChange("fuelPerMile", e.target.value)
                       }
                       sx={{}}
+                    />
+                  )}
+                />
+
+                {/* Total Milage */}
+                <Controller
+                  name="totalMileage"
+                  control={control}
+                  rules={{
+                    required: "Total Mileage is required",
+                    validate: (value) => {
+                      const num = Number(value);
+                      return !isNaN(num) || "Please enter a valid number";
+                    },
+                  }}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      fullWidth
+                      label="totalMileage *"
+                      type="text"
+                      error={!!errors.totalMileage}
+                      helperText={errors.totalMileage?.message}
+                      size="medium"
+                      placeholder="e.g., 150000"
+                      inputProps={{ min: 0, step: 100 }}
+                      onChange={(e) =>
+                        handleNumberChange("totalMileage", e.target.value)
+                      }
+                      sx={{ mt: 2 }}
                     />
                   )}
                 />

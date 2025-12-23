@@ -119,6 +119,7 @@ export type TTruck = {
   type: TTruckType;
   source: TTruckSource;
   fuelPerMile: string;
+  totalMileage: number;
   insuranceCost: number;
   repairCost: number;
   summary?: TTruckSummary;
