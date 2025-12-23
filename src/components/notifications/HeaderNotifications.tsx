@@ -39,6 +39,7 @@ import { ArrowForward, Close, MarkEmailRead } from "@mui/icons-material";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { IoNotificationsOutline } from "react-icons/io5";
+import TextsmsIcon from "@mui/icons-material/Textsms";
 
 export default function HeaderNotifications() {
   const dispatch = useAppDispatch();
@@ -126,6 +127,7 @@ export default function HeaderNotifications() {
     drivers: <PersonPinRounded sx={{ fontSize: 24 }} />,
     identity: <BadgeRounded sx={{ fontSize: 24 }} />,
     maintenance: <HandymanIcon sx={{ fontSize: 24 }} />,
+    chat: <TextsmsIcon sx={{ fontSize: 24 }} />,
   };
 
   return (
