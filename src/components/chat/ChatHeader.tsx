@@ -37,11 +37,6 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
               <h2 className="font-semibold text-gray-900">
                 {otherMember?.name || "unkown user"}
               </h2>
-              {/* {otherMember && (
-                <Badge variant="secondary">
-                  {getUserRole(otherMember.id)}
-                </Badge>
-              )} */}
             </div>
 
             <div className="flex items-center gap-2">
@@ -58,25 +53,6 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center gap-2">
-          <button className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-              />
-            </svg>
-          </button>
         </div>
       </div>
     </div>

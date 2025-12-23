@@ -1,31 +1,50 @@
 "use client";
-import { useAppSelector } from "@/redux/store";
+import { RootState, useAppSelector } from "@/redux/store";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { useChatSocket } from "@/hook/chatSys/useChatSocket";
 import { useEffect } from "react";
 
-export const ChatWindow = ({ conversationId }: { conversationId: string }) => {
+export const ChatWindow = () => {
   const selectedConversationId = useAppSelector(
-    (state) => state.chat.selectedConversationId
+    (state: RootState) => state.chat.selectedConversationId
   );
+
   const conversation = useAppSelector((state) =>
     selectedConversationId
       ? state.chat.conversations[selectedConversationId]
       : null
   );
+
+  const isOnline = useAppSelector((state) => state.chat.onlineUsers);
+
   const { markSeen } = useChatSocket();
 
+  /* ----------------------- mark seen ----------------------- */
   useEffect(() => {
-    if (conversationId) {
+    if (!selectedConversationId) return;
+
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && isOnline) {
+        markSeen(selectedConversationId);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibility);
+
+    if (document.visibilityState === "visible" && isOnline) {
       const timer = setTimeout(() => {
-        markSeen(conversationId);
+        markSeen(selectedConversationId);
       }, 500);
 
       return () => clearTimeout(timer);
     }
-  }, [conversationId, markSeen]);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, [selectedConversationId, markSeen, isOnline]);
 
   if (!selectedConversationId || !conversation) {
     return (
