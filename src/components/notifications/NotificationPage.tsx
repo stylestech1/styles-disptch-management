@@ -39,12 +39,14 @@ import {
   PersonPinRounded,
   BadgeRounded,
 } from "@mui/icons-material";
-import HandymanIcon from '@mui/icons-material/Handyman';
+import HandymanIcon from "@mui/icons-material/Handyman";
 import {
   TNotification,
   TNotificationsResponse,
 } from "../../types/notificationType";
 import Pagination from "../ui/Pagination";
+import TextsmsIcon from '@mui/icons-material/Textsms';
+
 
 const NotificationPage = () => {
   const { error, setError } = useError();
@@ -156,7 +158,8 @@ const NotificationPage = () => {
     trucks: <AirportShuttleRounded sx={{ fontSize: 24 }} />,
     drivers: <PersonPinRounded sx={{ fontSize: 24 }} />,
     identity: <BadgeRounded sx={{ fontSize: 24 }} />,
-    maintenance: <HandymanIcon sx={{fontSize: 24}} />
+    maintenance: <HandymanIcon sx={{ fontSize: 24 }} />,
+    chat: <TextsmsIcon sx={{ fontSize: 24 }} />,
   };
 
   return (
