@@ -106,6 +106,10 @@ class SocketService {
     this.emit(SOCKET_EVENTS.MARK_SEEN, { conversationId });
   }
 
+  acknowledgeSeen(conversationId: string) {
+    this.emit(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, { conversationId });
+  }
+
   startTyping(conversationId: string) {
     this.emit(SOCKET_EVENTS.TYPING, { conversationId });
   }

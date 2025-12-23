@@ -240,18 +240,29 @@ export default function AdminLayout({
           <Box>
             {isGoogleMapsLoaded ? (
               <>
-                <Navbar
-                  title={title}
-                  subtitle={subtitle}
-                  onMenuClick={() => setIsSidebarOpen(true)}
-                />
-
+                {pathname !== `${base}/chat` && (
+                  <>
+                    <Navbar
+                      title={title}
+                      subtitle={subtitle}
+                      onMenuClick={() => setIsSidebarOpen(true)}
+                    />
+                    <Box
+                      sx={{
+                        flex: 1,
+                        overflowY: "auto",
+                        pt: "96px",
+                        px: { xs: 3, md: 4 },
+                      }}
+                    >
+                      {children}
+                    </Box>
+                  </>
+                )}
                 <Box
                   sx={{
                     flex: 1,
                     overflowY: "auto",
-                    pt: "96px",
-                    px: { xs: 3, md: 4 },
                   }}
                 >
                   {children}

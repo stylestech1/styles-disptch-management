@@ -442,16 +442,7 @@ const LoadsPageDetails = () => {
                 </div>
               </div>
             ) : (
-              <div
-                className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center opacity-50 cursor-pointer hover:opacity-70 transition-opacity"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  router.push(
-                    `/admin/loadDetails/${loadItem.loadId}?tab=comments`
-                  );
-                }}
-                title="No comments - Click to add"
-              >
+              <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center opacity-50 cursor-pointer transition-opacity">
                 <IoChatbubbleEllipses size={16} className="text-slate-500" />
               </div>
             )}
@@ -576,7 +567,7 @@ const LoadsPageDetails = () => {
               width: { xs: "100%", md: "100%" },
               borderRadius: 2,
               px: 3,
-              py: 2
+              py: 2,
             }}
           >
             New Load

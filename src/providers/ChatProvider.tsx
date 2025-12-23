@@ -9,11 +9,9 @@ import {
   setUserOnline,
   setUserOffline,
   setUserPresence,
+  upsertConversation,
 } from "@/redux/slices/chatSlice";
-import {
-  useGetUserConversationsQuery,
-  useGetConversationMessagesQuery,
-} from "@/redux/slices/apiSlice";
+import { useGetUserConversationsQuery } from "@/redux/slices/apiSlice";
 import { Message, Presence, PresenceItem } from "@/types/chatType";
 
 interface ChatProviderProps {
@@ -22,9 +20,19 @@ interface ChatProviderProps {
 
 export const ChatProvider = ({ children }: ChatProviderProps) => {
   const dispatch = useAppDispatch();
-  const { data: conversations } = useGetUserConversationsQuery();
-
+  const { data: conversations = [] } = useGetUserConversationsQuery();
   const auth = useAppSelector((state) => state.auth);
+
+  // --------------------------------------------------------------------------
+  // Get ConverstationLists
+  // --------------------------------------------------------------------------
+  useEffect(() => {
+    if (conversations.length > 0) {
+      conversations.forEach((conv) => {
+        dispatch(upsertConversation(conv));
+      });
+    }
+  }, [conversations, dispatch]);
 
   // --------------------------------------------------------------------------
   // Connect socket when auth is ready

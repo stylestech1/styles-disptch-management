@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast";
 import { Roboto } from "next/font/google";
 import MuiThemeProvider from "@/providers/MuiThemeProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ChatProvider } from "@/providers/ChatProvider";
 
 const roboto = Roboto({
   subsets: ["latin"],
@@ -29,9 +30,11 @@ export default function RootLayout({
       <body className={`${roboto.className} antialiased`}>
         <Providers>
           <MuiThemeProvider>
+            <ChatProvider>
             <SpeedInsights />
             {children}
             <Toaster position="top-center" reverseOrder={false} />
+            </ChatProvider>
           </MuiThemeProvider>
         </Providers>
       </body>

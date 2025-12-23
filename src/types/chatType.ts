@@ -50,3 +50,5 @@ export type PresenceItem = {
   isOnline: boolean;
   lastSeen?: string;
 };
+
+export type Tab = "conversations" | "users"

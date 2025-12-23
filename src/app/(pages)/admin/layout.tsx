@@ -235,7 +235,7 @@ export default function AdminLayout({
 
   return (
     <FilterProvider>
-      <Box sx={{ display: "flex", height: "100vh"}}>
+      <Box sx={{ display: "flex", height: "100vh" }}>
         {/* Sidebar Drawer */}
         <Drawer
           variant={isDesktop ? "permanent" : "temporary"}
@@ -276,18 +276,29 @@ export default function AdminLayout({
             {isGoogleMapsLoaded ? (
               <>
                 {/* Navbar */}
-                <Navbar
-                  title={title}
-                  subtitle={subtitle}
-                  onMenuClick={() => setIsSidebarOpen(true)}
-                />
-
+                {pathname !== `${base}/chat` && (
+                  <>
+                    <Navbar
+                      title={title}
+                      subtitle={subtitle}
+                      onMenuClick={() => setIsSidebarOpen(true)}
+                    />
+                    <Box
+                      sx={{
+                        flex: 1,
+                        overflowY: "auto",
+                        pt: "96px",
+                        px: { xs: 3, md: 4 },
+                      }}
+                    >
+                      {children}
+                    </Box>
+                  </>
+                )}
                 <Box
                   sx={{
                     flex: 1,
                     overflowY: "auto",
-                    pt: "96px",
-                    px: { xs: 3, md: 4 },
                   }}
                 >
                   {children}

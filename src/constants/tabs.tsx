@@ -5,6 +5,7 @@ import {
   ChartNoAxesCombined,
   CircleDivide,
   Handshake,
+  MessageCircleMore,
   ShieldUser,
   Truck,
   Users,
@@ -87,12 +88,17 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       label: "Driver Summary",
       subtitle: "Detailed overview of driver information and performance.",
     },
+    {
+      label: "Chat",
+      subtitle: "Message me with lovely words.",
+      icon: <MessageCircleMore />
+    },
   ],
   employee: [
     {
       label: "Loads",
       subtitle: "Manage your dispatch team members and their access",
-      icon: <FaCirclePlus />,
+      icon: <Boxes />,
     },
     {
       label: "Rate Calculator",
@@ -114,6 +120,11 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       label: "Notifications",
       subtitle:
         "Manage your notifications and stay updated.",
+    },
+    {
+      label: "Chat",
+      subtitle: "Message me with lovely words.",
+      icon: <MessageCircleMore />
     },
   ],
   driver: [

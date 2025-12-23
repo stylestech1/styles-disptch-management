@@ -17,22 +17,27 @@ import { useGetUserConversationsQuery } from "@/redux/slices/apiSlice";
 
 export const useChatSocket = () => {
   const dispatch = useAppDispatch();
-  const auth = useAppSelector((state: RootState) => state.auth);
+  const auth = useAppSelector((state) => state.auth);
   const selectedConversationId = useAppSelector(
-    (state) => state.chat.selectedConversationId
+    (state: RootState) => state.chat.selectedConversationId
   );
-  const selectedConversationIdRef = useRef<string | null>(selectedConversationId);
-  const typingTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+
+  const selectedConversationIdRef = useRef<string | null>(null);
   const listenersAttached = useRef(false);
+  const typingTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
 
   const { data: conversations } = useGetUserConversationsQuery();
 
-  // keep selectedConversationId updated
+  /* -------------------------------------------------------------------------- */
+  /*                         keep selectedConversationId                        */
+  /* -------------------------------------------------------------------------- */
   useEffect(() => {
     selectedConversationIdRef.current = selectedConversationId;
   }, [selectedConversationId]);
 
-  // setup socket & listeners
+  /* -------------------------------------------------------------------------- */
+  /*                       connect socket + listeners                            */
+  /* -------------------------------------------------------------------------- */
   useEffect(() => {
     if (!auth?.token || !auth?.user?.id) return;
 
@@ -42,96 +47,149 @@ export const useChatSocket = () => {
     if (listenersAttached.current) return;
     listenersAttached.current = true;
 
-    // join all conversation rooms
-    conversations?.forEach((conv) => socketService.joinConversation(conv.id));
-
-    // -------------------- Messages --------------------
+    /* --------------------------- NEW MESSAGE -------------------------------- */
     const handleNewMessage = (msg: Message) => {
       dispatch(addLiveMessage(msg));
       dispatch(
-        upsertConversation({ id: msg.conversationId, lastMessage: msg })
+        upsertConversation({
+          id: msg.conversationId,
+          lastMessage: msg,
+        })
       );
     };
-    socketService.on<Message>(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
 
-    // -------------------- Seen Status --------------------
-    const handleSeenUpdate = ({ conversationId, currentUserId }: { conversationId: string; currentUserId?: string }) => {
+    socketService.on(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
+
+    /* ----------------------------- SEEN ------------------------------------- */
+    const handleSeen = ({
+      conversationId,
+      currentUserId,
+    }: {
+      conversationId: string;
+      currentUserId?: string;
+    }) => {
       dispatch(markMessageSeen({ conversationId, currentUserId }));
+      socketService.acknowledgeSeen(conversationId);
     };
-    socketService.on(SOCKET_EVENTS.SEEN_UPDATE, handleSeenUpdate);
 
-    const handleSeenAck = ({ conversationId, currentUserId }: { conversationId: string; currentUserId?: string }) => {
-      dispatch(markMessageSeen({ conversationId, currentUserId }));
-    };
-    socketService.on(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeenAck);
+    socketService.on(SOCKET_EVENTS.SEEN_UPDATE, handleSeen);
+    socketService.on(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeen);
 
-    // -------------------- Typing --------------------
-    const handleTyping = ({ userId, conversationId }: { userId: string; conversationId: string }) => {
+    /* ---------------------------- TYPING ------------------------------------ */
+    const handleTyping = ({ userId }: { userId: string }) => {
+      if (userId === auth?.user?.id) return;
+
+      const conversationId = selectedConversationIdRef.current;
+      if (!conversationId) return;
+
       dispatch(setTyping({ conversationId, isTyping: true }));
 
-      if (typingTimeoutsRef.current[userId]) clearTimeout(typingTimeoutsRef.current[userId]);
+      clearTimeout(typingTimeoutsRef.current[userId]);
 
       typingTimeoutsRef.current[userId] = setTimeout(() => {
         dispatch(setTyping({ conversationId, isTyping: false }));
-        delete typingTimeoutsRef.current[userId];
       }, 3000);
     };
-    socketService.on(SOCKET_EVENTS.TYPING, handleTyping);
 
-    const handleStopTyping = ({ userId, conversationId }: { userId: string; conversationId: string }) => {
+    const handleStopTyping = ({ userId }: { userId: string }) => {
+      if (userId === auth?.user?.id) return;
+
+      const conversationId = selectedConversationIdRef.current;
+      if (!conversationId) return;
+
       if (typingTimeoutsRef.current[userId]) {
         clearTimeout(typingTimeoutsRef.current[userId]);
         delete typingTimeoutsRef.current[userId];
       }
+
       dispatch(setTyping({ conversationId, isTyping: false }));
     };
+
+    socketService.on(SOCKET_EVENTS.TYPING, handleTyping);
     socketService.on(SOCKET_EVENTS.STOP_TYPING, handleStopTyping);
 
-    // -------------------- Presence --------------------
-    const handleUserOnline = ({ userId }: { userId: string }) => dispatch(setUserOnline({ userId }));
-    socketService.on(SOCKET_EVENTS.USER_ONLINE, handleUserOnline);
+    /* --------------------------- PRESENCE ----------------------------------- */
+    socketService.on(SOCKET_EVENTS.USER_ONLINE, ({ userId } : { userId: string }) =>
+      dispatch(setUserOnline({ userId }))
+    );
 
-    const handleUserOffline = ({ userId, lastSeen }: { userId: string; lastSeen?: string }) =>
-      dispatch(setUserOffline({ userId, lastSeen }));
-    socketService.on(SOCKET_EVENTS.USER_OFFLINE, handleUserOffline);
+    socketService.on(
+      SOCKET_EVENTS.USER_OFFLINE,
+      ({ userId, lastSeen } : { userId: string, lastSeen?: string }) =>
+        dispatch(setUserOffline({ userId, lastSeen }))
+    );
 
-    const handlePresenceList = (list: { userId: string; isOnline: boolean; lastSeen?: string }[]) => {
-      const presenceMap = list.reduce((acc, u) => {
-        acc[u.userId] = { isOnline: u.isOnline, lastSeen: u.lastSeen };
-        return acc;
-      }, {} as Record<string, { isOnline: boolean; lastSeen?: string }>);
-      dispatch(setUserPresence(presenceMap));
-    };
-    socketService.on(SOCKET_EVENTS.PRESENCE_LIST, handlePresenceList);
+    socketService.on(
+      SOCKET_EVENTS.PRESENCE_LIST,
+      (
+        list: {
+          userId: string;
+          isOnline: boolean;
+          lastSeen?: string;
+        }[]
+      ) => {
+        const map = list.reduce((acc, u) => {
+          acc[u.userId] = {
+            isOnline: u.isOnline,
+            lastSeen: u.lastSeen,
+          };
+          return acc;
+        }, {} as Record<string, { isOnline: boolean; lastSeen?: string }>);
 
-    // -------------------- Cleanup --------------------
+        dispatch(setUserPresence(map));
+      }
+    );
+
+    /* ---------------------------- CLEANUP ----------------------------------- */
     return () => {
-      console.log("🧹 Cleaning up chat socket listeners...");
       listenersAttached.current = false;
 
       socketService.off(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
-      socketService.off(SOCKET_EVENTS.SEEN_UPDATE, handleSeenUpdate);
-      socketService.off(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeenAck);
+      socketService.off(SOCKET_EVENTS.SEEN_UPDATE, handleSeen);
+      socketService.off(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeen);
       socketService.off(SOCKET_EVENTS.TYPING, handleTyping);
       socketService.off(SOCKET_EVENTS.STOP_TYPING, handleStopTyping);
-      socketService.off(SOCKET_EVENTS.USER_ONLINE, handleUserOnline);
-      socketService.off(SOCKET_EVENTS.USER_OFFLINE, handleUserOffline);
-      socketService.off(SOCKET_EVENTS.PRESENCE_LIST, handlePresenceList);
 
       Object.values(typingTimeoutsRef.current).forEach(clearTimeout);
       typingTimeoutsRef.current = {};
     };
-  }, [auth, conversations, dispatch]);
+  }, [auth, dispatch]);
 
-  // -------------------- Emit Helpers --------------------
+  /* -------------------------------------------------------------------------- */
+  /*                      join / leave conversation rooms                       */
+  /* -------------------------------------------------------------------------- */
+
+  useEffect(() => {
+    if (!conversations?.length) return;
+
+    conversations.forEach((conv) => {
+      socketService.joinConversation(conv.id);
+    });
+  }, [conversations]);
+
+  /* -------------------------------------------------------------------------- */
+  /*                               EMIT HELPERS                                */
+  /* -------------------------------------------------------------------------- */
+
   return {
-    joinConversation: (conversationId: string) => socketService.joinConversation(conversationId),
-    leaveConversation: (conversationId: string) => socketService.leaveConversation(conversationId),
-    sendMessage: (conversationId: string, text: string) => socketService.sendMessage(conversationId, text),
-    markSeen: (conversationId: string) => socketService.markSeen(conversationId),
-    startTyping: (conversationId: string) => socketService.startTyping(conversationId),
-    stopTyping: (conversationId: string) => socketService.stopTyping(conversationId),
+    sendMessage: (conversationId: string, text: string) =>
+      socketService.sendMessage(conversationId, text),
+
+    startTyping: (conversationId: string) =>
+      socketService.startTyping(conversationId),
+
+    stopTyping: (conversationId: string) =>
+      socketService.stopTyping(conversationId),
+
+    markSeen: (conversationId: string) =>
+      socketService.markSeen(conversationId),
+
+    joinConversation: (conversationId: string) =>
+      socketService.joinConversation(conversationId),
+
+    leaveConversation: (conversationId: string) =>
+      socketService.leaveConversation(conversationId),
+
     getPresenceList: () => socketService.getPresenceList(),
-    ping: () => socketService.emit(SOCKET_EVENTS.PING, {}),
   };
 };

@@ -1,6 +1,13 @@
 "use client";
 import { RootState, useAppSelector } from "@/redux/store";
-import { alpha, AppBar, Box, Toolbar, Typography, IconButton } from "@mui/material";
+import {
+  alpha,
+  AppBar,
+  Box,
+  Toolbar,
+  Typography,
+  IconButton,
+} from "@mui/material";
 import NotificationProvider from "@/providers/NotificationProvider";
 import HeaderSourceTruckDashboard from "../truck/HeaderSourceTruckDashboard";
 import { usePathname } from "next/navigation";
@@ -20,20 +27,20 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
   const shouldShowFilter = [
     "/admin/loads",
     "/admin/truckdashboard",
-    "/admin/driverSummary", 
+    "/admin/driverSummary",
     "/admin/truckSummary",
     "/admin/trucksmaintenance",
     "admin/drivers",
     "/dispatchers/loads",
-  ].some(path => pathname.includes(path));
+  ].some((path) => pathname.includes(path));
 
   const getFilterType = () => {
-    if (pathname.includes('loads')) return 'loads';
-    if (pathname.includes('driverSummary')) return 'drivers';
-    if (pathname.includes('drivers')) return 'drivers';
-    if (pathname.includes('truckSummary')) return 'trucks';
-    if (pathname.includes('trucksmaintenance')) return 'trucks';
-    return 'default';
+    if (pathname.includes("loads")) return "loads";
+    if (pathname.includes("driverSummary")) return "drivers";
+    if (pathname.includes("drivers")) return "drivers";
+    if (pathname.includes("truckSummary")) return "trucks";
+    if (pathname.includes("trucksmaintenance")) return "trucks";
+    return "default";
   };
 
   return (
@@ -46,8 +53,15 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
         color: theme.currentPalette.text,
         boxShadow: "none",
         top: 0,
-        width: 'calc(100% - 300px)',
-        zIndex: 10
+        zIndex: 10,
+        width: {
+          xs: "100%",
+          md: "calc(100% - 300px)",
+        },
+        ml: {
+          xs: 0,
+          md: "300px",
+        },
       }}
     >
       <Toolbar
@@ -55,9 +69,9 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          py: { xs: 2, sm: 3 },
-          gap: { xs: 2, sm: 0 },
-          px: {xs: 2, sm: 7}
+          py: { xs: 1.5, sm: 2 },
+          px: { xs: 2, sm: 4, md: 7 },
+          gap: 2,
         }}
       >
         {/* Left Side */}
@@ -65,8 +79,8 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 2,
-            mb: { xs: 1, sm: 0 },
+            gap: { xs: 1.5, sm: 2 },
+            minWidth: 0,
           }}
         >
           {/* Menu Button */}
@@ -74,9 +88,9 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
             edge="start"
             onClick={onMenuClick}
             aria-label="open menu"
-            sx={{ 
+            sx={{
               color: theme.currentPalette.text,
-              display: { md: 'none' }
+              display: { md: "none" },
             }}
           >
             <IoMenu size={22} />
@@ -89,19 +103,24 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
               sx={{
                 fontWeight: "bold",
                 color: theme.currentPalette.primary,
-                fontSize: "24px",
+                fontSize: { xs: "18px", sm: "22px", md: "24px" },
+                whiteSpace: "nowrap",
               }}
             >
               {title}
             </Typography>
+
             {subtitle && (
               <Typography
                 variant="body2"
                 sx={{
                   color: theme.currentPalette.text,
                   fontSize: "14px",
-                  width: 500,
-                  display: { xs: 'none', md: 'block' } 
+                  maxWidth: 450,
+                  display: { xs: "none", md: "block" },
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
                 }}
               >
                 {subtitle}
@@ -115,14 +134,19 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
           sx={{
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: { xs: 0.5, sm: 1 },
           }}
         >
-          {(pathname === "/admin/truckdashboard" || pathname === "/admin/trucksmaintenance") && (
-            <div className="hidden sm:flex"><HeaderSourceTruckDashboard /></div>
+          {(pathname === "/admin/truckdashboard" ||
+            pathname === "/admin/trucksmaintenance") && (
+            <div className="hidden sm:flex">
+              <HeaderSourceTruckDashboard />
+            </div>
           )}
           {shouldShowFilter && (
-            <GlobalFilter filterType={getFilterType()} />
+            <Box sx={{ display: { xs: "none", sm: "block" } }}>
+              <GlobalFilter filterType={getFilterType()} />
+            </Box>
           )}
           <NotificationProvider />
         </Box>
