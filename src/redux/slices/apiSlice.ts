@@ -768,6 +768,14 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // ! ========== Chat Methods ==========
+    // Get All Users with Pagination
+    getActiveUsers: builder.query({
+      query: ({ page = 1, limit = 10 }) =>
+        `/api/v1/adminDashboard?active=true&page=${page}&limit=${limit}`,
+      providesTags: ["Dispatchers"],
+      keepUnusedDataFor: 60 * 60 * 24,
+    }),
+
     // Get User Conversations
     getUserConversations: builder.query<Conversation[], void>({
       query: () => `/api/v1/chat/conversations`,
@@ -936,6 +944,7 @@ export const {
   useMarkAllAsReadMutation,
   useMarkSpecificAsReadMutation,
   // TODO: ----- Chat -----
+  useGetActiveUsersQuery,
   useGetUserConversationsQuery,
   useCreateOrGetConversationMutation,
   useAddMessageMutation,

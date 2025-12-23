@@ -8,7 +8,8 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { setSelectedConversation } from "@/redux/slices/chatSlice";
 
 export const UsersList = () => {
-  const { users, loadMore, isFetching, hasMore } = useUsersInfinite(10);
+  const { users, loadMore, isFetching, hasMore } = useUsersInfinite(100);
+  
 
   const [createOrGetConversation, { isLoading }] =
     useCreateOrGetConversationMutation();

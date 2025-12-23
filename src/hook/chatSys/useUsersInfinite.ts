@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useGetAllDispatchersQuery } from "@/redux/slices/apiSlice";
+import { useGetActiveUsersQuery } from "@/redux/slices/apiSlice";
 import { TUser } from "@/types/globalTypes";
 
 export const useUsersInfinite = (limit = 10) => {
@@ -7,9 +7,9 @@ export const useUsersInfinite = (limit = 10) => {
   const [users, setUsers] = useState<TUser[]>([]);
   const [hasMore, setHasMore] = useState(true);
 
-  const { data, isFetching, isLoading } = useGetAllDispatchersQuery({
+  const { data, isFetching, isLoading } = useGetActiveUsersQuery({
     page,
-    limit,
+    limit: 100,
   });
 
   useEffect(() => {
