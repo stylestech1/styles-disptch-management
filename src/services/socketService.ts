@@ -6,6 +6,7 @@ class SocketService {
   private socket: Socket | null = null;
   private auth: TAuthState | null = null;
   private isConnected = false;
+  private joinedRooms = new Set<string>();
 
   setAuth(auth: TAuthState) {
     this.auth = auth;
@@ -89,12 +90,15 @@ class SocketService {
   /* -------------------------------------------------------------------------- */
   /*                             CHAT HELPERS                                   */
   /* -------------------------------------------------------------------------- */
-
   joinConversation(conversationId: string) {
+    if (this.joinedRooms.has(conversationId)) return;
+    this.joinedRooms.add(conversationId);
     this.emit(SOCKET_EVENTS.JOIN_CONVERSATION, { conversationId });
   }
 
   leaveConversation(conversationId: string) {
+    if (!this.joinedRooms.has(conversationId)) return;
+    this.joinedRooms.delete(conversationId);
     this.emit(SOCKET_EVENTS.LEAVE_CONVERSATION, { conversationId });
   }
 

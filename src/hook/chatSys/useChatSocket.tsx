@@ -41,8 +41,10 @@ export const useChatSocket = () => {
   useEffect(() => {
     if (!auth?.token || !auth?.user?.id) return;
 
-    socketService.setAuth(auth);
-    socketService.connect();
+    // Get PresenceList when login (socket connected)
+    socketService.onConnect(() => {
+      socketService.getPresenceList();
+    });
 
     if (listenersAttached.current) return;
     listenersAttached.current = true;
@@ -109,13 +111,14 @@ export const useChatSocket = () => {
     socketService.on(SOCKET_EVENTS.STOP_TYPING, handleStopTyping);
 
     /* --------------------------- PRESENCE ----------------------------------- */
-    socketService.on(SOCKET_EVENTS.USER_ONLINE, ({ userId } : { userId: string }) =>
-      dispatch(setUserOnline({ userId }))
+    socketService.on(
+      SOCKET_EVENTS.USER_ONLINE,
+      ({ userId }: { userId: string }) => dispatch(setUserOnline({ userId }))
     );
 
     socketService.on(
       SOCKET_EVENTS.USER_OFFLINE,
-      ({ userId, lastSeen } : { userId: string, lastSeen?: string }) =>
+      ({ userId, lastSeen }: { userId: string; lastSeen?: string }) =>
         dispatch(setUserOffline({ userId, lastSeen }))
     );
 
@@ -165,6 +168,12 @@ export const useChatSocket = () => {
     conversations.forEach((conv) => {
       socketService.joinConversation(conv.id);
     });
+
+    return () => {
+      conversations.forEach((conv) => {
+        socketService.leaveConversation(conv.id);
+      });
+    };
   }, [conversations]);
 
   /* -------------------------------------------------------------------------- */

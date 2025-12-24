@@ -43,11 +43,6 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     socketService.setAuth(auth);
     socketService.connect();
 
-    // join each conversation room
-    conversations?.forEach((conv) => {
-      socketService.joinConversation(conv.id);
-    });
-
     // ------------------------------------------------------------------------
     // Socket listeners
     // ------------------------------------------------------------------------
@@ -76,6 +71,8 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
     socketService.on(SOCKET_EVENTS.PRESENCE_LIST, handlePresenceList);
 
     return () => {
+      // 🔴 Socket Disconnect
+      socketService.disconnect();
       socketService.off(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
       socketService.off(SOCKET_EVENTS.TYPING, handleTyping);
       socketService.off(SOCKET_EVENTS.STOP_TYPING, handleTyping);

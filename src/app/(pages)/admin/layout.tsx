@@ -27,6 +27,7 @@ import { useGoogleMaps } from "@/hook/useGoogleMaps";
 import { PiPaintBrushBroad } from "react-icons/pi";
 import Navbar from "@/components/layout/Header";
 import { FilterProvider } from "@/providers/FilterProvider";
+import { socketService } from "@/services/socketService";
 
 const DRAWER_WIDTH = 300;
 
@@ -59,7 +60,13 @@ export default function AdminLayout({
   const base = user.role === "admin" ? "/admin" : "/dispatchers";
 
   const handleLogout = () => {
+    // 🔴 Disconnect Socket
+    socketService.disconnect();
+
+    // 🔴 Clear auth token
     dispatch(logout());
+
+    // 🔴 return to login
     router.replace("/");
   };
 

@@ -26,6 +26,7 @@ import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
 import Navbar from "@/components/layout/Header";
 import { FilterProvider } from "@/providers/FilterProvider";
+import { socketService } from "@/services/socketService";
 
 const DRAWER_WIDTH = 300;
 
@@ -58,7 +59,13 @@ export default function AdminLayout({
   const base = "/dispatchers";
 
   const handleLogout = () => {
+    // 🔴 Disconnect Socket
+    socketService.disconnect();
+
+    // 🔴 Clear auth token
     dispatch(logout());
+
+    // 🔴 return to login
     router.replace("/");
   };
 

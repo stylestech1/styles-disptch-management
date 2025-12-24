@@ -17,7 +17,12 @@ const authSlice = createSlice({
       action: PayloadAction<{ user: TUser; token: string }>
     ) => {
       const { user, token } = action.payload;
-      Cookies.set("token", token, { expires: 7 });
+      Cookies.set("token", token, {
+        expires: 7,
+        path: "/",
+        sameSite: "lax",
+        secure: true,
+      });
       state.user = user;
       state.token = token;
     },

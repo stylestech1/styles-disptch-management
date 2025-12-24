@@ -37,6 +37,8 @@ export const ConversationItem = ({
   const isUserOnline = userPresence?.isOnline ?? false;
   const lastSeen = userPresence?.lastSeen;
 
+  console.log(presenceList)
+
   const handleClick = () => {
     dispatch(setSelectedConversation(conversation.id));
   };
