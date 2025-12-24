@@ -17,10 +17,14 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
   const otherMember = conversation.members.find(
     (member) => member.id !== currentUserId
   );
-
-  const isOnline = useAppSelector((state) =>
-    otherMember ? state.chat.presence[otherMember.id]?.isOnline : false
+  const presenceList = useAppSelector(
+    (state: RootState) => state.chat.presence
   );
+
+  const userPresence = otherMember ? presenceList[otherMember.id] : undefined;
+
+  const isUserOnline = userPresence?.isOnline ?? false;
+  const lastSeen = userPresence?.lastSeen;
 
   // Other Users
   const { users } = useUsersInfinite(100);
@@ -30,6 +34,16 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
   const isTyping = useAppSelector(
     (state) => state.chat.typing[conversation.id]
   );
+
+  const formatLastSeen = (dateString?: string) => {
+    if (!dateString) return "Offline";
+    const date = new Date(dateString);
+    return `Last seen ${date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })}`;
+  };
 
   return (
     <Box
@@ -44,46 +58,23 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
           <Avatar
             name={otherMember?.name || "user"}
             size="lg"
-            status={isOnline ? "online" : "offline"}
+            status={isUserOnline ? "online" : "offline"}
             style={{
               bgcolor: theme.currentPalette.background,
               color: theme.currentPalette.secondary,
             }}
           />
 
-          <Box className="flex items-start gap-3">
-            <Box>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight="600"
-                  color={theme.currentPalette.background}
-                >
-                  {otherMember?.name || "unknown user"}
-                </Typography>
-              </Stack>
+          <Box>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography
+                variant="subtitle1"
+                fontWeight="600"
+                color={theme.currentPalette.background}
+              >
+                {otherMember?.name || "unknown user"}
+              </Typography>
 
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography
-                  variant="body2"
-                  color={theme.currentPalette.background}
-                >
-                  {isOnline ? "online" : "offline"}
-                </Typography>
-
-                {isTyping && (
-                  <Typography
-                    variant="body2"
-                    color="primary.main"
-                    sx={{ animation: "pulse 1s infinite" }}
-                  >
-                    ...
-                  </Typography>
-                )}
-              </Stack>
-            </Box>
-
-            <Stack direction="row" alignItems="center" sx={{mt: 0.5}}>
               {otherUser?.role && (
                 <Chip
                   label={otherUser.role}
@@ -99,6 +90,25 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
                     },
                   }}
                 />
+              )}
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography
+                variant="body2"
+                color={theme.currentPalette.background}
+              >
+                {isUserOnline ? "online" : formatLastSeen(lastSeen)}
+              </Typography>
+
+              {isTyping && (
+                <Typography
+                  variant="body2"
+                  color="primary.main"
+                  sx={{ animation: "pulse 1s infinite" }}
+                >
+                  ...
+                </Typography>
               )}
             </Stack>
           </Box>
