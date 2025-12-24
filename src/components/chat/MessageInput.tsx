@@ -1,4 +1,3 @@
-"use client";
 import { useState, useEffect, useRef } from "react";
 import { useAddMessageMutation } from "@/redux/slices/apiSlice";
 import { socketService } from "@/services/socketService";
@@ -17,6 +16,8 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiButtonRef = useRef<HTMLButtonElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const socket = socketService.getSocket();
   const theme = useAppSelector((state: RootState) => state.palette);
   const [isFocused, setIsFocused] = useState(false);
@@ -32,6 +33,27 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
       )}px`;
     }
   }, [message]);
+
+  // Handle outside click to close emoji picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (
+        showEmojiPicker &&
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(target) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(target)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   const handleSend = async () => {
     if (!message.trim() || isLoading) return;
@@ -58,11 +80,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   };
 
   const startTyping = () => {
-    if (!socketService.getConnectionStatus()) {
-      console.error("❌ Socket not connected, cannot emit typing");
-      return;
-    }
-
+    if (!socketService.getConnectionStatus()) return;
     if (!conversationId || !socket?.connected) return;
 
     socketService.emit(SOCKET_EVENTS.TYPING, { conversationId });
@@ -76,7 +94,6 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     }, 2000);
   };
 
-  // Stop typing
   const stopTyping = () => {
     if (!conversationId || !socket?.connected) return;
 
@@ -93,13 +110,11 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
 
     if (e.shiftKey) {
       e.preventDefault();
-
       const target = e.currentTarget;
       const start = target.selectionStart;
       const end = target.selectionEnd;
 
       const newValue = message.slice(0, start) + "\n" + message.slice(end);
-
       setMessage(newValue);
 
       requestAnimationFrame(() => {
@@ -127,19 +142,14 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
       }
     });
 
-    if (newValue.trim()) {
-      startTyping();
-    } else {
-      stopTyping();
-    }
+    if (newValue.trim()) startTyping();
+    else stopTyping();
   };
 
   useEffect(() => {
     return () => {
       stopTyping();
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
   }, []);
 
@@ -155,10 +165,11 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
       <div className="flex-1 relative">
         {/* Emoji Toggle Button */}
         <button
+          ref={emojiButtonRef}
           type="button"
           onClick={() => setShowEmojiPicker((prev) => !prev)}
           className="absolute left-2 top-6 -translate-y-1/2 rounded-full p-2 cursor-pointer"
-          style={{background: alpha(theme.currentPalette.primary, 0.1)}}
+          style={{ background: alpha(theme.currentPalette.primary, 0.1) }}
         >
           😊
         </button>
@@ -183,7 +194,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
 
         {/* Emoji Picker */}
         {showEmojiPicker && (
-          <div className="absolute bottom-12 left-0 z-50">
+          <div ref={emojiPickerRef} className="absolute bottom-12 left-0 z-50">
             <EmojiPicker onEmojiClick={onEmojiClick} />
           </div>
         )}
