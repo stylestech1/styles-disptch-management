@@ -5,8 +5,12 @@ import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
 import { useChatSocket } from "@/hook/chatSys/useChatSocket";
 import { useEffect } from "react";
+import { Box } from "@mui/material";
+import { MessageCircleMore } from "lucide-react";
 
 export const ChatWindow = () => {
+  const theme = useAppSelector((state: RootState) => state.palette);
+
   const selectedConversationId = useAppSelector(
     (state: RootState) => state.chat.selectedConversationId
   );
@@ -48,23 +52,12 @@ export const ChatWindow = () => {
 
   if (!selectedConversationId || !conversation) {
     return (
-      <div className="flex-1 flex items-center justify-center bg-gray-50">
+      <Box
+        className="flex-1 flex items-center justify-center"
+        sx={{ bgcolor: theme.currentPalette.background }}
+      >
         <div className="text-center">
-          <div className="text-gray-400 mb-4">
-            <svg
-              className="w-16 h-16 mx-auto"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-              />
-            </svg>
-          </div>
+          <MessageCircleMore size={60} className="mx-auto mb-3" color={theme.currentPalette.primary} />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             Select Conversation
           </h3>
@@ -72,7 +65,7 @@ export const ChatWindow = () => {
             Select a conversation from list to start chatting
           </p>
         </div>
-      </div>
+      </Box>
     );
   }
 

@@ -4,6 +4,8 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { MessageItem } from "./MessageItem";
 import { useGetConversationMessagesQuery } from "@/redux/slices/apiSlice";
 import { upsertConversation } from "@/redux/slices/chatSlice";
+import { alpha } from "@mui/material";
+import { Box } from "@mui/system";
 
 interface MessageListProps {
   conversationId: string;
@@ -11,6 +13,7 @@ interface MessageListProps {
 
 export const MessageList = ({ conversationId }: MessageListProps) => {
   const dispatch = useAppDispatch();
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   const { data: messages = [], isSuccess } =
     useGetConversationMessagesQuery(conversationId);
@@ -68,25 +71,45 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
   }, [liveMessages]);
 
   return (
-    <div className="h-full p-4 space-y-4 overflow-y-auto">
-      {liveMessages.map((message) => (
-        <MessageItem key={message.id} message={message} />
-      ))}
+    <div className="relative h-full">
+      <Box
+        className="absolute inset-0 z-0"
+        style={{
+          backgroundImage: "url(/images/chatScreen.png)",
+          backgroundRepeat: "repeat",
+          backgroundSize: "auto",
+          backgroundPosition: "0 0",
+          backgroundAttachment: "fixed",
+        }}
+      >
+        <Box
+          sx={{
+            width: "100%",
+            height: "100%",
+            bgcolor: alpha(theme.currentPalette.secondary, 0.1),
+          }}
+        />
+      </Box>
 
-      {/* Typing Indicator */}
-      {isTyping && (
-        <div className="flex items-center gap-2 p-3">
-          <div className="bg-gray-100 rounded-2xl rounded-tl-none p-4">
-            <div className="flex gap-1">
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
-              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300"></div>
+      <div className="relative z-10 h-full p-4 space-y-4 overflow-y-auto">
+        {liveMessages.map((message) => (
+          <MessageItem key={message.id} message={message} />
+        ))}
+
+        {isTyping && (
+          <div className="flex items-center gap-2 p-3">
+            <div className="bg-gray-100 rounded-2xl rounded-tl-none p-4">
+              <div className="flex gap-1">
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
+                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300"></div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      <div ref={endRef} />
+        <div ref={endRef} />
+      </div>
     </div>
   );
 };

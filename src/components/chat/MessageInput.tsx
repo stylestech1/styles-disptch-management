@@ -3,7 +3,9 @@ import { useState, useEffect, useRef } from "react";
 import { useAddMessageMutation } from "@/redux/slices/apiSlice";
 import { socketService } from "@/services/socketService";
 import { SOCKET_EVENTS } from "@/constants/ChatSocketEvent";
-import { Send } from "lucide-react";
+import { SendHorizontal } from "lucide-react";
+import { RootState, useAppSelector } from "@/redux/store";
+import { alpha, Button } from "@mui/material";
 
 interface MessageInputProps {
   conversationId: string;
@@ -14,6 +16,8 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const socket = socketService.getSocket();
+  const theme = useAppSelector((state: RootState) => state.palette);
+  const [isFocused, setIsFocused] = useState(false);
 
   const [addMessage, { isLoading }] = useAddMessageMutation();
 
@@ -59,8 +63,6 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
 
     if (!conversationId || !socket?.connected) return;
 
-    console.log("🚀 Emitting TYPING event for conversation:", conversationId);
-
     socketService.emit(SOCKET_EVENTS.TYPING, { conversationId });
 
     if (typingTimeoutRef.current) {
@@ -68,7 +70,6 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     }
 
     typingTimeoutRef.current = setTimeout(() => {
-      console.log("⏰ 2 seconds passed, emitting STOP_TYPING");
       stopTyping();
     }, 2000);
   };
@@ -76,11 +77,6 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   // Stop typing
   const stopTyping = () => {
     if (!conversationId || !socket?.connected) return;
-
-    console.log(
-      "🛑 Emitting STOP_TYPING event for conversation:",
-      conversationId
-    );
 
     socketService.emit(SOCKET_EVENTS.STOP_TYPING, { conversationId });
 
@@ -130,10 +126,8 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     });
 
     if (newValue.trim()) {
-      console.log("📝 User is typing, calling startTyping()");
       startTyping();
     } else {
-      console.log("📭 Input is empty, calling stopTyping()");
       stopTyping();
     }
   };
@@ -147,6 +141,8 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     };
   }, []);
 
+  const isDisabled = !message.trim() || isLoading;
+
   return (
     <div className="flex items-start gap-2">
       {/* Text Area */}
@@ -157,25 +153,43 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Message me..."
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           rows={1}
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none resize-none max-h-32"
+          className="w-full px-4 py-3 rounded-lg outline-none resize-none max-h-32 overflow-hidden"
+          style={{
+            backgroundColor: alpha(theme.currentPalette.secondary, 0.1),
+            border: isFocused
+              ? `1px solid ${theme.currentPalette.secondary}`
+              : "none",
+            transition: "border 0.2s ease",
+          }}
           disabled={isLoading}
         />
       </div>
 
       {/* Send Button */}
       <div className="flex items-center">
-        <button
+        <Button
           onClick={handleSend}
-          disabled={!message.trim() || isLoading}
-          className={`
-            px-4 py-3 rounded-lg font-medium transition-colors
-            ${
-              message.trim() && !isLoading
-                ? "bg-blue-500 text-white hover:bg-blue-600"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
-            }
-          `}
+          disabled={isDisabled}
+          sx={{
+            px: 2,
+            py: 1.5,
+            borderRadius: 2,
+            fontWeight: 500,
+            transition: "background-color 0.3s",
+            bgcolor: isDisabled
+              ? alpha(theme.currentPalette.text, 0.2)
+              : theme.currentPalette.primary,
+            color: isDisabled ? alpha(theme.currentPalette.text, 0.7) : "#fff",
+            cursor: isDisabled ? "not-allowed" : "pointer",
+            "&:hover": {
+              bgcolor: isDisabled
+                ? alpha(theme.currentPalette.text, 0.2)
+                : theme.currentPalette.primary,
+            },
+          }}
         >
           {isLoading ? (
             <div className="flex items-center gap-2">
@@ -183,9 +197,9 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
               <span>Sending...</span>
             </div>
           ) : (
-            <Send className="w-6 h-6" />
+            <SendHorizontal className="w-6 h-6" />
           )}
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -1,10 +1,13 @@
+import { Box, SxProps, Theme } from "@mui/material";
+
 interface AvatarProps {
   name: string;
   size?: 'sm' | 'md' | 'lg';
   status?: 'online' | 'offline' | 'away';
+  style?: SxProps<Theme>;
 }
 
-export const Avatar = ({ name, size = 'md', status }: AvatarProps) => {
+export const Avatar = ({ name, size = 'md', status, style }: AvatarProps) => {
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-10 h-10',
@@ -26,15 +29,16 @@ export const Avatar = ({ name, size = 'md', status }: AvatarProps) => {
   
   return (
     <div className="relative inline-block">
-      <div
+      <Box
         className={`
           ${sizeClasses[size]}
-          rounded-full bg-gradient-to-r from-blue-500 to-blue-600
-          flex items-center justify-center text-white font-semibold
+          rounded-full
+          flex items-center justify-center font-semibold
         `}
+        sx={style}
       >
         {initials}
-      </div>
+      </Box>
       
       {status && (
         <span

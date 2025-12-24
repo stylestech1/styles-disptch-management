@@ -2,14 +2,19 @@
 import { useState } from "react";
 import { SearchBar } from "./SearchBar";
 import { ConversationList } from "./ConversationList";
-import { UserStatus } from "./UserStatus";
 import { useConversations } from "@/hook/chatSys/useConversations";
-import { Tab } from "@/types/chatType";
+import { TTabs } from "@/types/chatType";
 import { UsersList } from "./UsersList";
+import { alpha, Box, Tab, Tabs, Typography } from "@mui/material";
+import { RootState, useAppSelector } from "@/redux/store";
+import { MessageCircle, Users } from "lucide-react";
 
 export const ChatSidebar = () => {
+  const theme = useAppSelector((state: RootState) => state.palette);
+  const user = useAppSelector((state) => state.auth.user);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<Tab>("conversations");
+  const [activeTab, setActiveTab] = useState<TTabs>("conversations");
 
   const { conversations, isLoading, isError } = useConversations();
 
@@ -77,52 +82,98 @@ export const ChatSidebar = () => {
   }
 
   return (
-    <div className="h-full flex flex-col">
-      {/* User Status */}
-      <div className="p-4 border-b border-gray-200">
-        <UserStatus />
-      </div>
+    <Box className="h-full flex flex-col">
+      <Box
+        sx={{
+          bgcolor: theme.currentPalette.primary,
+          py: 2,
+          px: 2,
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.5,
+        }}
+      >
+        <Typography
+          variant="subtitle1"
+          fontWeight="600"
+          color={theme.currentPalette.background}
+        >
+          {user?.name || "unknown user"} Messages
+        </Typography>
+
+        {/* Search Bar */}
+        <Box>
+          <SearchBar value={searchQuery} onChange={setSearchQuery} />
+        </Box>
+      </Box>
 
       {/* Tabs */}
-      <div className="flex border-b border-gray-200">
-        <button
-          onClick={() => setActiveTab("conversations")}
-          className={`flex-1 py-3 text-sm font-medium ${
-            activeTab === "conversations"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500"
-          }`}
+      <Box
+        sx={{
+          borderBottom: `1px solid ${
+            theme.currentPalette.secondary || "#e0e0e0"
+          }`,
+          bgcolor: theme.currentPalette.background,
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onChange={(_, value) => setActiveTab(value)}
+          variant="fullWidth"
+          TabIndicatorProps={{
+            sx: {
+              backgroundColor: theme.currentPalette.secondary,
+              height: 3,
+            },
+          }}
+          sx={{
+            minHeight: 48,
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontWeight: 500,
+              fontSize: "0.9rem",
+              minHeight: 48,
+              color: theme.currentPalette.secondary || "#9e9e9e",
+            },
+            "& .Mui-selected": {
+              color: theme.currentPalette.secondary,
+              fontWeight: 600,
+            },
+          }}
         >
-          Chats
-        </button>
-
-        <button
-          onClick={() => setActiveTab("users")}
-          className={`flex-1 py-3 text-sm font-medium ${
-            activeTab === "users"
-              ? "border-b-2 border-blue-500 text-blue-600"
-              : "text-gray-500"
-          }`}
-        >
-          Users
-        </button>
-      </div>
-
-      {/* Search Bar */}
-      {activeTab === "conversations" && (
-        <div className="p-4 border-b border-gray-200">
-          <SearchBar value={searchQuery} onChange={setSearchQuery} />
-        </div>
-      )}
+          <Tab value="conversations" label="Chats" />
+          <Tab value="users" label="Users" />
+        </Tabs>
+      </Box>
 
       {/* Content */}
       <div className="flex-1 overflow-hidden">
         {activeTab === "conversations" ? (
-          <ConversationList conversations={filteredConversations} />
+          <>
+            <div className="flex items-center gap-2 p-4">
+              <span>
+                <MessageCircle size={18} style={{color: theme.currentPalette.primary}} />
+              </span>
+              <Typography color={alpha(theme.currentPalette.text, 0.7)} fontSize='15px'>
+                All Messages
+              </Typography>
+            </div>
+            <ConversationList conversations={filteredConversations} />
+          </>
         ) : (
-          <UsersList />
+          <>
+            <div className="flex items-center gap-2 p-4">
+              <span>
+                <Users size={18} style={{color: theme.currentPalette.primary}} />
+              </span>
+              <Typography color={alpha(theme.currentPalette.text, 0.7)} fontSize='15px'>
+                All Users
+              </Typography>
+            </div>
+            <UsersList searchQuery={searchQuery} />
+          </>
         )}
       </div>
-    </div>
+    </Box>
   );
 };

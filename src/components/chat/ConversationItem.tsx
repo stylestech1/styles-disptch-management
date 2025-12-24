@@ -4,6 +4,7 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { setSelectedConversation } from "@/redux/slices/chatSlice";
 import { Avatar } from "./ui/Avatar";
 import { Badge } from "./ui/Badge";
+import { alpha, Box } from "@mui/material";
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -15,6 +16,8 @@ export const ConversationItem = ({
   isSelected,
 }: ConversationItemProps) => {
   const dispatch = useAppDispatch();
+
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   const unreadCount = useAppSelector(
     (state: RootState) => state.chat.unreadCounts[conversation.id] || 0
@@ -37,8 +40,6 @@ export const ConversationItem = ({
   const isUserOnline = userPresence?.isOnline ?? false;
   const lastSeen = userPresence?.lastSeen;
 
-  console.log(presenceList)
-
   const handleClick = () => {
     dispatch(setSelectedConversation(conversation.id));
   };
@@ -54,21 +55,35 @@ export const ConversationItem = ({
   };
 
   const getLastMessageText = () => {
-    if (!conversation.lastMessage) return (<span className="text-xs text-gray-300">Chat me...</span>);
+    if (!conversation.lastMessage)
+      return <span className="text-xs text-gray-300">Chat me...</span>;
     return conversation.lastMessage.text;
   };
 
   return (
-    <div
+    <Box
       onClick={handleClick}
-      className={`
-        flex items-center p-4 cursor-pointer transition-colors
-        ${
-          isSelected
-            ? "bg-blue-50 border-r-4 border-blue-500"
-            : "hover:bg-gray-50"
-        }
-      `}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        p: 2,
+        cursor: "pointer",
+        transition: "background-color 0.2s ease",
+
+        backgroundColor: isSelected
+          ? alpha(theme.currentPalette.primary, 0.08)
+          : "transparent",
+
+        borderRight: isSelected
+          ? `4px solid ${theme.currentPalette.primary}`
+          : "4px solid transparent",
+
+        "&:hover": {
+          backgroundColor: isSelected
+            ? alpha(theme.currentPalette.primary, 0.12)
+            : alpha(theme.currentPalette.secondary, 0.06),
+        },
+      }}
     >
       {/* Avatar */}
       <div className="relative">
@@ -76,6 +91,10 @@ export const ConversationItem = ({
           name={otherMember?.name || "User"}
           size="md"
           status={isUserOnline ? "online" : "offline"}
+          style={{
+            bgcolor: theme.currentPalette.secondary,
+            color: theme.currentPalette.background,
+          }}
         />
       </div>
 
@@ -111,7 +130,7 @@ export const ConversationItem = ({
           <TypingIndicator conversationId={conversation.id} />
         </div>
       </div>
-    </div>
+    </Box>
   );
 };
 

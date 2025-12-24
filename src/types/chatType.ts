@@ -51,4 +51,4 @@ export type PresenceItem = {
   lastSeen?: string;
 };
 
-export type Tab = "conversations" | "users"
+export type TTabs = "conversations" | "users"

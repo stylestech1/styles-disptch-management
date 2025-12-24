@@ -243,8 +243,6 @@ export const TruckForm = React.memo(function TruckFormComp(
 
   if (!open) return null;
 
-  console.log("formData", formData);
-
   return (
     <div
       onClick={(e) => {

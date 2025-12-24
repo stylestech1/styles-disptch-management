@@ -1,9 +1,12 @@
-'use client'
-import { useAppSelector } from "@/redux/store";
+"use client";
+import { RootState, useAppSelector } from "@/redux/store";
 import { socketService } from "@/services/socketService";
+import { Avatar } from "./ui/Avatar";
+import { Stack, Typography } from "@mui/material";
 
 export const UserStatus = () => {
   const user = useAppSelector((state) => state.auth.user);
+  const theme = useAppSelector((state: RootState) => state.palette);
   const isConnected = useAppSelector((state) =>
     socketService.getConnectionStatus()
   );
@@ -11,22 +14,28 @@ export const UserStatus = () => {
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-green-500 to-green-600 flex items-center justify-center text-white font-semibold">
-            {user?.name?.[0] || "U"}
-          </div>
-          <div
-            className={`
-            absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white
-            ${isConnected ? "bg-green-500" : "bg-gray-400"}
-          `}
-          />
-        </div>
+        <Avatar
+          name={user?.name?.[0] || "U"}
+          size="lg"
+          status={isConnected ? "online" : "offline"}
+          style={{
+            bgcolor: theme.currentPalette.background,
+            color: theme.currentPalette.secondary,
+          }}
+        />
         <div>
-          <div className="font-medium text-gray-900">{user?.name}</div>
-          <div className="text-xs text-gray-500">
-            {isConnected ? "online" : "offline"}
-          </div>
+          <Stack direction="column" alignItems="start" spacing={0}>
+            <Typography
+              variant="subtitle1"
+              fontWeight="600"
+              color={theme.currentPalette.background}
+            >
+              {user?.name || "unknown user"}
+            </Typography>
+            <Typography variant="body2" color={theme.currentPalette.background}>
+              {isConnected ? "online" : "offline"}
+            </Typography>
+          </Stack>
         </div>
       </div>
     </div>

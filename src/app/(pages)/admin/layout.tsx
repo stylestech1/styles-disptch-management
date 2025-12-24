@@ -20,7 +20,7 @@ import {
 import NextLink from "next/link";
 import { IoLogOutOutline } from "react-icons/io5";
 import { useState, useEffect } from "react";
-import { useAppDispatch, useAppSelector, RootState } from "@/redux/store";
+import { useAppDispatch, useAppSelector, RootState, persistor } from "@/redux/store";
 import { logout } from "@/redux/slices/authSlice";
 import { TABS_CONFIG } from "@/constants/tabs";
 import { useGoogleMaps } from "@/hook/useGoogleMaps";
