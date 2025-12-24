@@ -150,7 +150,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   const isDisabled = !message.trim() || isLoading;
 
   return (
-    <div className="flex items-center gap-2 w-full relative">
+    <div className="flex items-start gap-2 w-full relative">
       {/* Text Area + Emoji */}
       <div className="flex-1 relative">
         {/* Emoji Toggle Button */}
