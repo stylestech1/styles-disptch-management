@@ -6,6 +6,7 @@ import { SOCKET_EVENTS } from "@/constants/ChatSocketEvent";
 import { SendHorizontal } from "lucide-react";
 import { RootState, useAppSelector } from "@/redux/store";
 import { alpha, Button } from "@mui/material";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 
 interface MessageInputProps {
   conversationId: string;
@@ -13,6 +14,7 @@ interface MessageInputProps {
 
 export const MessageInput = ({ conversationId }: MessageInputProps) => {
   const [message, setMessage] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const socket = socketService.getSocket();
@@ -141,22 +143,34 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     };
   }, []);
 
+  const onEmojiClick = (emojiObject: EmojiClickData) => {
+    setMessage((prev) => prev + emojiObject.emoji);
+  };
+
   const isDisabled = !message.trim() || isLoading;
 
   return (
-    <div className="flex items-start gap-2">
-      {/* Text Area */}
-      <div className="flex-1">
+    <div className="flex items-center gap-2 w-full relative">
+      {/* Text Area + Emoji */}
+      <div className="flex-1 relative">
+        {/* Emoji Toggle Button */}
+        <button
+          type="button"
+          onClick={() => setShowEmojiPicker((prev) => !prev)}
+          className="absolute left-2 top-6 -translate-y-1/2 rounded-full p-2 cursor-pointer"
+          style={{background: alpha(theme.currentPalette.primary, 0.1)}}
+        >
+          😊
+        </button>
+
         <textarea
           ref={textareaRef}
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Message me..."
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           rows={1}
-          className="w-full px-4 py-3 rounded-lg outline-none resize-none max-h-32 overflow-hidden"
+          className="w-full pl-15 pr-4 py-3 rounded-lg outline-none resize-none max-h-32 overflow-hidden"
           style={{
             backgroundColor: alpha(theme.currentPalette.secondary, 0.1),
             border: isFocused
@@ -166,6 +180,13 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
           }}
           disabled={isLoading}
         />
+
+        {/* Emoji Picker */}
+        {showEmojiPicker && (
+          <div className="absolute bottom-12 left-0 z-50">
+            <EmojiPicker onEmojiClick={onEmojiClick} />
+          </div>
+        )}
       </div>
 
       {/* Send Button */}
@@ -191,14 +212,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
             },
           }}
         >
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-              <span>Sending...</span>
-            </div>
-          ) : (
-            <SendHorizontal className="w-6 h-6" />
-          )}
+          <SendHorizontal className="w-6 h-6" />
         </Button>
       </div>
     </div>
