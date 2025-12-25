@@ -1,5 +1,5 @@
 "use client";
-import { InputAdornment, TextField } from "@mui/material";
+import { alpha, InputAdornment, TextField } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import { RootState, useAppSelector } from "@/redux/store";
 
@@ -26,12 +26,10 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
         ),
       }}
       sx={{
-        borderRadius: 3,
-        bgcolor: theme.currentPalette.background,
-        color: theme.currentPalette.primary,
+        borderRadius: 1,
         "& .MuiOutlinedInput-root": {
-          borderRadius: 3,
-          bgcolor: theme.currentPalette.background,
+          borderRadius: 1,
+          bgcolor: alpha(theme.currentPalette.primary, 0.1),
           "& fieldset": {
             border: "none",
           },

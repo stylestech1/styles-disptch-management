@@ -2,7 +2,7 @@
 import { Conversation } from "@/types/chatType";
 import { RootState, useAppSelector } from "@/redux/store";
 import { Avatar } from "./ui/Avatar";
-import { Box, Chip, Stack, Typography } from "@mui/material";
+import { alpha, Box, Chip, Stack, Typography } from "@mui/material";
 import { useUsersInfinite } from "@/hook/chatSys/useUsersInfinite";
 
 interface ChatHeaderProps {
@@ -48,7 +48,8 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
   return (
     <Box
       sx={{
-        bgcolor: theme.currentPalette.primary,
+        bgcolor: theme.currentPalette.background,
+        borderBottom: `1px solid ${theme.currentPalette.primary}`,
         px: 2,
         py: 3.5,
       }}
@@ -60,8 +61,8 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
             size="lg"
             status={isUserOnline ? "online" : "offline"}
             style={{
-              bgcolor: theme.currentPalette.background,
-              color: theme.currentPalette.secondary,
+              bgcolor: theme.currentPalette.primary,
+              color: theme.currentPalette.background,
             }}
           />
 
@@ -70,7 +71,7 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
               <Typography
                 variant="subtitle1"
                 fontWeight="600"
-                color={theme.currentPalette.background}
+                color={theme.currentPalette.primary}
               >
                 {otherMember?.name || "unknown user"}
               </Typography>
@@ -83,8 +84,9 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
                     fontWeight: 600,
                     fontSize: "0.7rem",
                     height: 20,
-                    color: theme.currentPalette.primary,
-                    bgcolor: theme.currentPalette.background,
+                    color: theme.currentPalette.background,
+                    bgcolor: theme.currentPalette.primary,
+                    borderRadius: 1,
                     "& .MuiChip-label": {
                       px: 1,
                     },
@@ -96,7 +98,7 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
             <Stack direction="row" alignItems="center" spacing={1}>
               <Typography
                 variant="body2"
-                color={theme.currentPalette.background}
+                color={alpha(theme.currentPalette.primary, 0.7)}
               >
                 {isUserOnline ? "online" : formatLastSeen(lastSeen)}
               </Typography>

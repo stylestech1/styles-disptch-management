@@ -85,7 +85,8 @@ export const ChatSidebar = () => {
     <Box className="h-full flex flex-col">
       <Box
         sx={{
-          bgcolor: theme.currentPalette.primary,
+          bgcolor: theme.currentPalette.background,
+          borderBottom: `1px solid ${theme.currentPalette.primary}`,
           py: 2,
           px: 2,
           display: "flex",
@@ -96,7 +97,7 @@ export const ChatSidebar = () => {
         <Typography
           variant="subtitle1"
           fontWeight="600"
-          color={theme.currentPalette.background}
+          color={theme.currentPalette.primary}
         >
           {user?.name || "unknown user"} Messages
         </Typography>
@@ -152,9 +153,15 @@ export const ChatSidebar = () => {
           <>
             <div className="flex items-center gap-2 p-4">
               <span>
-                <MessageCircle size={18} style={{color: theme.currentPalette.primary}} />
+                <MessageCircle
+                  size={18}
+                  style={{ color: theme.currentPalette.primary }}
+                />
               </span>
-              <Typography color={alpha(theme.currentPalette.text, 0.7)} fontSize='15px'>
+              <Typography
+                color={alpha(theme.currentPalette.text, 0.7)}
+                fontSize="15px"
+              >
                 All Messages
               </Typography>
             </div>
@@ -164,9 +171,15 @@ export const ChatSidebar = () => {
           <>
             <div className="flex items-center gap-2 p-4">
               <span>
-                <Users size={18} style={{color: theme.currentPalette.primary}} />
+                <Users
+                  size={18}
+                  style={{ color: theme.currentPalette.primary }}
+                />
               </span>
-              <Typography color={alpha(theme.currentPalette.text, 0.7)} fontSize='15px'>
+              <Typography
+                color={alpha(theme.currentPalette.text, 0.7)}
+                fontSize="15px"
+              >
                 All Users
               </Typography>
             </div>
