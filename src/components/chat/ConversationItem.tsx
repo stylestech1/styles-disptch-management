@@ -72,6 +72,8 @@ export const ConversationItem = ({
 
         backgroundColor: isSelected
           ? alpha(theme.currentPalette.primary, 0.08)
+          : unreadCount > 0
+          ? alpha(theme.currentPalette.primary, 0.1)
           : "transparent",
 
         borderRight: isSelected
@@ -81,6 +83,8 @@ export const ConversationItem = ({
         "&:hover": {
           backgroundColor: isSelected
             ? alpha(theme.currentPalette.primary, 0.12)
+            : unreadCount > 0
+            ? alpha(theme.currentPalette.primary, 0.14)
             : alpha(theme.currentPalette.secondary, 0.06),
         },
       }}
@@ -119,7 +123,7 @@ export const ConversationItem = ({
           </p>
 
           {unreadCount > 0 && (
-            <Badge variant="primary" size="sm">
+            <Badge variant="danger" size="sm">
               {unreadCount}
             </Badge>
           )}
