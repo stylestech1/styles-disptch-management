@@ -1,5 +1,5 @@
 "use client";
-import { RootState, useAppSelector } from "@/redux/store";
+import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
@@ -7,9 +7,11 @@ import { useChatSocket } from "@/hook/chatSys/useChatSocket";
 import { useEffect } from "react";
 import { Box } from "@mui/material";
 import { MessageCircleMore } from "lucide-react";
+import { setSelectedConversation } from "@/redux/slices/chatSlice";
 
 export const ChatWindow = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
+  const dispatch = useAppDispatch();
 
   const selectedConversationId = useAppSelector(
     (state: RootState) => state.chat.selectedConversationId
@@ -24,6 +26,21 @@ export const ChatWindow = () => {
   const isOnline = useAppSelector((state) => state.chat.onlineUsers);
 
   const { markSeen } = useChatSocket();
+
+  // Close Chat When pressing ESC
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && selectedConversationId) {
+        dispatch(setSelectedConversation(null));
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [dispatch, selectedConversationId]);
 
   /* ----------------------- mark seen ----------------------- */
   useEffect(() => {
@@ -57,7 +74,11 @@ export const ChatWindow = () => {
         sx={{ bgcolor: theme.currentPalette.background }}
       >
         <div className="text-center">
-          <MessageCircleMore size={60} className="mx-auto mb-3" color={theme.currentPalette.primary} />
+          <MessageCircleMore
+            size={60}
+            className="mx-auto mb-3"
+            color={theme.currentPalette.primary}
+          />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
             Select Conversation
           </h3>
