@@ -14,7 +14,7 @@ export const SearchBar = ({ value, onChange }: SearchBarProps) => {
   return (
     <TextField
       fullWidth
-      placeholder="Search on conversation..."
+      placeholder="Search on someone..."
       value={value}
       onChange={(e) => onChange(e.target.value)}
       size="small"
