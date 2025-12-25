@@ -148,7 +148,7 @@ export const ChatSidebar = () => {
       </Box>
 
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <Box className="flex-1 overflow-hidden" sx={{bgcolor: theme.currentPalette.background}}>
         {activeTab === "conversations" ? (
           <>
             <div className="flex items-center gap-2 p-4">
@@ -186,7 +186,7 @@ export const ChatSidebar = () => {
             <UsersList searchQuery={searchQuery} />
           </>
         )}
-      </div>
+      </Box>
     </Box>
   );
 };
