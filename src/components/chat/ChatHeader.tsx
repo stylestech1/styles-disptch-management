@@ -4,6 +4,7 @@ import { RootState, useAppSelector } from "@/redux/store";
 import { Avatar } from "./ui/Avatar";
 import { alpha, Box, Chip, Stack, Typography } from "@mui/material";
 import { useUsersInfinite } from "@/hook/chatSys/useUsersInfinite";
+import { formatLastSeen } from "@/utils/formatLastSeen";
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -34,16 +35,6 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
   const isTyping = useAppSelector(
     (state) => state.chat.typing[conversation.id]
   );
-
-  const formatLastSeen = (dateString?: string) => {
-    if (!dateString) return "Offline";
-    const date = new Date(dateString);
-    return `Last seen ${date.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    })}`;
-  };
 
   return (
     <Box
