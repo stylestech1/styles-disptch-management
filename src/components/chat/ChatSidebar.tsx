@@ -112,7 +112,7 @@ export const ChatSidebar = () => {
       <Box
         sx={{
           borderBottom: `1px solid ${
-            theme.currentPalette.secondary || "#e0e0e0"
+            alpha(theme.currentPalette.text, 0.1) || "#e0e0e0"
           }`,
           bgcolor: theme.currentPalette.background,
         }}
