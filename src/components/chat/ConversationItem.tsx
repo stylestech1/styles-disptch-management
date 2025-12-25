@@ -4,7 +4,8 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { setSelectedConversation } from "@/redux/slices/chatSlice";
 import { Avatar } from "./ui/Avatar";
 import { Badge } from "./ui/Badge";
-import { alpha, Box } from "@mui/material";
+import { alpha, Box, Chip, Typography } from "@mui/material";
+import { useUsersInfinite } from "@/hook/chatSys/useUsersInfinite";
 
 interface ConversationItemProps {
   conversation: Conversation;
@@ -34,6 +35,9 @@ export const ConversationItem = ({
   const otherMember = conversation.members.find(
     (member) => member.id !== currentUserId
   );
+
+  const { users } = useUsersInfinite(100);
+  const filteredUsers = users.filter((user) => user.id === otherMember?.id);
 
   const userPresence = otherMember ? presenceList[otherMember.id] : undefined;
 
@@ -67,14 +71,20 @@ export const ConversationItem = ({
         display: "flex",
         alignItems: "center",
         p: 2,
+        m: 1,
+        borderRadius: 2,
         cursor: "pointer",
         transition: "background-color 0.2s ease",
 
         backgroundColor: isSelected
-          ? alpha(theme.currentPalette.primary, 0.08)
+          ? theme.currentPalette.primary
           : unreadCount > 0
           ? alpha(theme.currentPalette.primary, 0.1)
           : "transparent",
+
+        color: isSelected
+          ? theme.currentPalette.background
+          : theme.currentPalette.primary,
 
         borderRight: isSelected
           ? `4px solid ${theme.currentPalette.primary}`
@@ -82,7 +92,7 @@ export const ConversationItem = ({
 
         "&:hover": {
           backgroundColor: isSelected
-            ? alpha(theme.currentPalette.primary, 0.12)
+            ? ""
             : unreadCount > 0
             ? alpha(theme.currentPalette.primary, 0.14)
             : alpha(theme.currentPalette.secondary, 0.06),
@@ -96,8 +106,12 @@ export const ConversationItem = ({
           size="md"
           status={isUserOnline ? "online" : "offline"}
           style={{
-            bgcolor: theme.currentPalette.secondary,
-            color: theme.currentPalette.background,
+            bgcolor: isSelected
+              ? theme.currentPalette.background
+              : theme.currentPalette.primary,
+            color: isSelected
+              ? theme.currentPalette.primary
+              : theme.currentPalette.background,
           }}
         />
       </div>
@@ -106,21 +120,55 @@ export const ConversationItem = ({
       <div className="flex-1 ml-3 min-w-0">
         <div className="flex justify-between items-center">
           <div className="flex justify-between items-center w-full">
-            <h3 className="font-semibold text-gray-900 truncate">
-              {otherMember?.name || "Unknown user"}
-            </h3>
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold max-w-23 truncate">
+                {otherMember?.name || "Unknown user"}
+              </h3>
+              {filteredUsers.map((user) => (
+                <Chip
+                  key={user.jobId}
+                  label={user?.role}
+                  size="small"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "0.7rem",
+                    height: 20,
+                    color: theme.currentPalette.primary,
+                    bgcolor: isSelected ? theme.currentPalette.background : alpha(theme.currentPalette.primary, 0.2),
+                    borderRadius: 1,
+                    "& .MuiChip-label": {
+                      px: 1,
+                    },
+                  }}
+                />
+              ))}
+            </div>
 
             {/* Online / Last seen */}
-            <span className="text-xs text-gray-500">
+            <Typography
+              fontSize={"11px"}
+              color={
+                isSelected
+                  ? theme.currentPalette.background
+                  : alpha(theme.currentPalette.text, 0.7)
+              }
+            >
               {isUserOnline ? "Online" : formatLastSeen(lastSeen)}
-            </span>
+            </Typography>
           </div>
         </div>
 
         <div className="flex justify-between items-center mt-1">
-          <p className="text-sm text-gray-600 truncate">
+          <Typography
+            fontSize={"13px"}
+            color={
+              isSelected
+                ? theme.currentPalette.background
+                : alpha(theme.currentPalette.text, 0.7)
+            }
+          >
             {getLastMessageText()}
-          </p>
+          </Typography>
 
           {unreadCount > 0 && (
             <Badge variant="danger" size="sm">

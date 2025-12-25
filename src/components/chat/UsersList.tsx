@@ -6,6 +6,7 @@ import { useUsersInfinite } from "@/hook/chatSys/useUsersInfinite";
 import { useCreateOrGetConversationMutation } from "@/redux/slices/apiSlice";
 import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { setSelectedConversation } from "@/redux/slices/chatSlice";
+import { alpha, Chip } from "@mui/material";
 
 interface UsersListProps {
   searchQuery: string;
@@ -75,8 +76,25 @@ export const UsersList = ({ searchQuery }: UsersListProps) => {
               color: theme.currentPalette.background,
             }}
           />
-          <div className="flex flex-col">
-            <span className="text-sm font-medium">{user.name}</span>
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-medium">{user.name}</span>
+              <Chip
+                label={user.role}
+                size="small"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.7rem",
+                  height: 20,
+                  color: theme.currentPalette.primary,
+                  bgcolor: alpha(theme.currentPalette.primary, 0.2),
+                  borderRadius: 1,
+                  "& .MuiChip-label": {
+                    px: 1,
+                  },
+                }}
+              />
+            </div>
             <span className="text-xs text-gray-500">{user.email}</span>
           </div>
         </div>
