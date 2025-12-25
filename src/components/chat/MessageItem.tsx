@@ -4,6 +4,7 @@ import { RootState, useAppSelector } from "@/redux/store";
 import { useEffect, useRef } from "react";
 import { alpha, Box, Typography } from "@mui/material";
 import { useConversations } from "@/hook/chatSys/useConversations";
+import { Check, CheckCheck } from "lucide-react";
 
 interface MessageItemProps {
   message: Message;
@@ -50,6 +51,7 @@ export const MessageItem = ({ message }: MessageItemProps) => {
           sx={{
             px: 2,
             py: 1.5,
+            minWidth: "11rem",
             maxWidth: { xs: "18rem", lg: "28rem" },
             borderRadius: "8px",
             borderTopRightRadius: isOwnMessage ? 0 : "8px",
@@ -79,10 +81,7 @@ export const MessageItem = ({ message }: MessageItemProps) => {
           />
           <Typography dir="auto">{message.text}</Typography>
 
-          <Box
-            className="flex items-center gap-2 mt-3"
-            sx={{ justifyContent: isOwnMessage ? "end" : "start" }}
-          >
+          <Box className="flex items-center justify-end gap-2 mt-3">
             <Typography
               sx={{
                 color: isOwnMessage
@@ -103,14 +102,15 @@ export const MessageItem = ({ message }: MessageItemProps) => {
                         color: isOwnMessage
                           ? theme.currentPalette.background
                           : theme.currentPalette.primary,
-                        fontSize: "10px",
                       }}
                     >
-                      ✓✓
+                      <CheckCheck size={15} />
                     </span>
                   </>
                 ) : (
-                  <span className="text-xs text-gray-400">✓</span>
+                  <span className="text-gray-400">
+                    <Check size={15} />
+                  </span>
                 )}
               </div>
             )}

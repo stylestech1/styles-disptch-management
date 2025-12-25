@@ -42,7 +42,6 @@ export const ConversationItem = ({
   const userPresence = otherMember ? presenceList[otherMember.id] : undefined;
 
   const isUserOnline = userPresence?.isOnline ?? false;
-  const lastSeen = userPresence?.lastSeen;
 
   const handleClick = () => {
     dispatch(setSelectedConversation(conversation.id));
@@ -51,7 +50,7 @@ export const ConversationItem = ({
   const formatLastSeen = (dateString?: string) => {
     if (!dateString) return "Offline";
     const date = new Date(dateString);
-    return `Last seen ${date.toLocaleTimeString("en-US", {
+    return `${date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -78,8 +77,6 @@ export const ConversationItem = ({
 
         backgroundColor: isSelected
           ? theme.currentPalette.primary
-          : unreadCount > 0
-          ? alpha(theme.currentPalette.primary, 0.1)
           : "transparent",
 
         color: isSelected
@@ -134,7 +131,9 @@ export const ConversationItem = ({
                     fontSize: "0.7rem",
                     height: 20,
                     color: theme.currentPalette.primary,
-                    bgcolor: isSelected ? theme.currentPalette.background : alpha(theme.currentPalette.primary, 0.2),
+                    bgcolor: isSelected
+                      ? theme.currentPalette.background
+                      : alpha(theme.currentPalette.primary, 0.2),
                     borderRadius: 1,
                     "& .MuiChip-label": {
                       px: 1,
@@ -153,7 +152,7 @@ export const ConversationItem = ({
                   : alpha(theme.currentPalette.text, 0.7)
               }
             >
-              {isUserOnline ? "Online" : formatLastSeen(lastSeen)}
+              {isUserOnline ? "Online" : formatLastSeen(conversation.createdAt)}
             </Typography>
           </div>
         </div>
