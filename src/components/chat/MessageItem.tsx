@@ -2,7 +2,8 @@
 import { Message } from "@/types/chatType";
 import { RootState, useAppSelector } from "@/redux/store";
 import { useEffect, useRef } from "react";
-import { Box, Typography } from "@mui/material";
+import { alpha, Box, Typography } from "@mui/material";
+import { useConversations } from "@/hook/chatSys/useConversations";
 
 interface MessageItemProps {
   message: Message;
@@ -12,6 +13,7 @@ interface MessageItemProps {
 export const MessageItem = ({ message }: MessageItemProps) => {
   const currentUserId = useAppSelector((state) => state.auth.user?.id);
   const theme = useAppSelector((state: RootState) => state.palette);
+  const { conversations } = useConversations();
   const isOwnMessage = message.sender.id === currentUserId;
   const isSeen = message.seen;
   const hasBeenSeenRef = useRef(false);
@@ -44,43 +46,76 @@ export const MessageItem = ({ message }: MessageItemProps) => {
           isOwnMessage ? "items-end" : "items-start"
         }`}
       >
-        <div className="flex items-center gap-2 mb-1">
-          <span className="text-xs text-gray-500">
-            {formatTime(message.createdAt)}
-          </span>
-        </div>
-
         <Box
           sx={{
             px: 2,
             py: 1.5,
             maxWidth: { xs: "18rem", lg: "28rem" },
-            borderRadius: "16px",
-            borderBottomRightRadius: isOwnMessage ? 0 : "16px",
-            borderTopLeftRadius: !isOwnMessage ? 0 : "16px",
+            borderRadius: "8px",
+            borderTopRightRadius: isOwnMessage ? 0 : "8px",
+            borderTopLeftRadius: !isOwnMessage ? 0 : "8px",
             bgcolor: bgColor,
             color: textColor,
             opacity: message.isTemp ? 0.5 : 1,
             wordBreak: "break-word",
             whiteSpace: "pre-wrap",
             lineHeight: 1.5,
+            position: "relative",
           }}
         >
+          <Box
+            sx={{
+              position: "absolute",
+              top: 0,
+              left: isOwnMessage ? "100%" : "-13px",
+              width: 0,
+              height: 0,
+              borderTop: `13px solid ${bgColor}`,
+              borderTopRightRadius: isOwnMessage ? 6 : "none",
+              borderTopLeftRadius: !isOwnMessage ? 6 : "none",
+              borderRight: isOwnMessage ? "13px solid transparent" : "none",
+              borderLeft: !isOwnMessage ? "13px solid transparent" : "none",
+            }}
+          />
           <Typography dir="auto">{message.text}</Typography>
-        </Box>
 
-        {/* Seen Status */}
-        {isOwnMessage && (
-          <div className="mt-1 flex items-center gap-1">
-            {message.seen ? (
-              <>
-                <span className="text-x" style={{color: theme.currentPalette.primary}}>✓✓</span>
-              </>
-            ) : (
-              <span className="text-xs text-gray-400">✓</span>
+          <Box
+            className="flex items-center gap-2 mt-3"
+            sx={{ justifyContent: isOwnMessage ? "end" : "start" }}
+          >
+            <Typography
+              sx={{
+                color: isOwnMessage
+                  ? theme.currentPalette.background
+                  : alpha(theme.currentPalette.text, 0.5),
+                fontSize: "10px",
+              }}
+            >
+              {formatTime(message.createdAt)}
+            </Typography>
+
+            {isOwnMessage && (
+              <div className="mt-1 flex items-center gap-1">
+                {message.seen ? (
+                  <>
+                    <span
+                      style={{
+                        color: isOwnMessage
+                          ? theme.currentPalette.background
+                          : theme.currentPalette.primary,
+                        fontSize: "10px",
+                      }}
+                    >
+                      ✓✓
+                    </span>
+                  </>
+                ) : (
+                  <span className="text-xs text-gray-400">✓</span>
+                )}
+              </div>
             )}
-          </div>
-        )}
+          </Box>
+        </Box>
       </div>
     </div>
   );
