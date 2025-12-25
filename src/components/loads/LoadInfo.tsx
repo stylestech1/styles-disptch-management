@@ -222,7 +222,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh" }}>
+    <Box>
       {/* Header */}
       <Paper
         elevation={0}

@@ -1029,7 +1029,6 @@ const DriversPage = () => {
 
   // Container styles
   const containerSx: SxProps = {
-    minHeight: "100vh",
     p: 3,
   };
   const searchFilterContainerSx: SxProps = {

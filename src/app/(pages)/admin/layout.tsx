@@ -255,7 +255,7 @@ export default function AdminLayout({
             "& .MuiDrawer-paper": {
               width: DRAWER_WIDTH,
               boxSizing: "border-box",
-              bgcolor: themePalette.currentPalette.background,
+              // bgcolor: themePalette.currentPalette.background,
               borderRight: `1px solid ${theme.palette.divider}`,
               boxShadow: isDesktop ? "none" : undefined,
               overflowX: "hidden",
@@ -274,7 +274,7 @@ export default function AdminLayout({
             width: isDesktop ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
             display: "flex",
             flexDirection: "column",
-            minHeight: "100vh",
+            minHeight: 'inherit',
             bgcolor: alpha(themePalette.currentPalette.primary, 0.02),
           }}
         >
