@@ -81,17 +81,11 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     },
     {
       label: "Notifications",
-      subtitle:
-        "Manage your notifications and stay updated.",
+      subtitle: "Manage your notifications and stay updated.",
     },
     {
       label: "Driver Summary",
       subtitle: "Detailed overview of driver information and performance.",
-    },
-    {
-      label: "Chat",
-      subtitle: "Message me with lovely words.",
-      icon: <MessageCircleMore />
     },
   ],
   employee: [
@@ -118,13 +112,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
     },
     {
       label: "Notifications",
-      subtitle:
-        "Manage your notifications and stay updated.",
-    },
-    {
-      label: "Chat",
-      subtitle: "Message me with lovely words.",
-      icon: <MessageCircleMore />
+      subtitle: "Manage your notifications and stay updated.",
     },
   ],
   driver: [
