@@ -81,7 +81,7 @@ export const UsersList = ({ searchQuery }: UsersListProps) => {
               size="sm"
               status={isUserOnline ? "online" : "offline"}
               style={{
-                bgcolor: theme.currentPalette.secondary,
+                bgcolor: theme.currentPalette.primary,
                 color: theme.currentPalette.background,
               }}
             />
