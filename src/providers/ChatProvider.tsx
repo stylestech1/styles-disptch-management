@@ -11,8 +11,6 @@ interface ChatProviderProps {
 }
 
 export const ChatProvider = ({ children }: ChatProviderProps) => {
-  useChatSocket();
-
   const dispatch = useAppDispatch();
   const { data: conversations = [] } = useGetUserConversationsQuery();
   const auth = useAppSelector((state) => state.auth);
@@ -39,11 +37,9 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     socketService.setAuth(auth);
     socketService.connect();
-
-    return () => {
-      socketService.disconnect();
-    };
   }, [auth?.user?.id, auth?.token]);
+
+  useChatSocket();
 
   return <>{children}</>;
 };

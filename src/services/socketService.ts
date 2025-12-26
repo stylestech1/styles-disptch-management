@@ -22,8 +22,14 @@ class SocketService {
       return;
     }
 
-    if (this.isConnected) {
+    if (this.socket && this.socket.connected) {
       console.log("Socket already connected");
+      return;
+    }
+
+    if (this.socket && !this.socket.connected) {
+      console.log("Reconnecting existing socket...");
+      this.socket.connect();
       return;
     }
 
