@@ -169,6 +169,7 @@ export const useChatSocket = () => {
   /* -------------------------------------------------------------------------- */
   useEffect(() => {
     if (!conversations?.length) return;
+    if (!socketService.getConnectionStatus()) return;
 
     conversations.forEach((conv) => {
       socketService.joinConversation(conv.id);

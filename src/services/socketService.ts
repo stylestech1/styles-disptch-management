@@ -42,9 +42,16 @@ class SocketService {
 
       this.socket.on("connect", () => {
         this.isConnected = true;
+        this.getPresenceList();
+
         if (this.auth?.user?.id) {
           this.joinUserRoom(this.auth.user.id);
         }
+
+        // 🔥 Re-join conversations after reconnect
+        this.joinedRooms.forEach((conversationId) => {
+          this.emit(SOCKET_EVENTS.JOIN_CONVERSATION, { conversationId });
+        });
       });
 
       this.socket.on("disconnect", (reason) => {
@@ -173,6 +180,7 @@ class SocketService {
       this.socket.disconnect();
       this.socket = null;
       this.isConnected = false;
+      this.joinedRooms.clear();
     }
   }
 

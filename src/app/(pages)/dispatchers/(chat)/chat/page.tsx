@@ -1,9 +1,8 @@
 'use client';
 import ChatLayout from './layout';
-import { useChatSocket } from '@/hook/chatSys/useChatSocket';
 
 export default function ChatPage() {
-  useChatSocket();
+  
   
   return (
     <ChatLayout>
