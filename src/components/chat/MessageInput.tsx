@@ -14,11 +14,13 @@ interface MessageInputProps {
 export const MessageInput = ({ conversationId }: MessageInputProps) => {
   const [message, setMessage] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
+
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const emojiButtonRef = useRef<HTMLButtonElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
-  const socket = socketService.getSocket();
+
   const theme = useAppSelector((state: RootState) => state.palette);
   const [isFocused, setIsFocused] = useState(false);
 
@@ -59,7 +61,10 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     if (!message.trim() || isLoading) return;
 
     try {
-      if (socket?.connected) {
+      // Stop typing before sending
+      stopTyping();
+
+      if (socketService.getConnectionStatus()) {
         socketService.emit(SOCKET_EVENTS.SEND_MESSAGE, {
           conversationId,
           text: message.trim(),
@@ -72,7 +77,6 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
       }
 
       setMessage("");
-      stopTyping();
       if (textareaRef.current) textareaRef.current.style.height = "auto";
     } catch (error) {
       console.error("❌ Failed to send message:", error);
@@ -80,24 +84,46 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   };
 
   const startTyping = () => {
-    if (!socketService.getConnectionStatus()) return;
-    if (!conversationId || !socket?.connected) return;
+    if (!socketService.getConnectionStatus()) {
+      console.warn("⚠️ Socket not connected, cannot send typing event");
+      return;
+    }
 
-    socketService.emit(SOCKET_EVENTS.TYPING, { conversationId });
+    if (!conversationId) {
+      console.warn("⚠️ No conversation selected");
+      return;
+    }
 
+    // Only emit if not already typing
+    if (!isTyping) {
+      console.log("⌨️ Emitting TYPING event for:", conversationId);
+      socketService.emit(SOCKET_EVENTS.TYPING, { conversationId });
+      setIsTyping(true);
+    }
+
+    // Reset the timeout
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
     }
 
+    // Auto-stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
       stopTyping();
     }, 2000);
   };
 
   const stopTyping = () => {
-    if (!conversationId || !socket?.connected) return;
+    if (!conversationId) return;
 
-    socketService.emit(SOCKET_EVENTS.STOP_TYPING, { conversationId });
+    if (isTyping) {
+      console.log("🛑 Emitting STOP_TYPING event for:", conversationId);
+
+      if (socketService.getConnectionStatus()) {
+        socketService.emit(SOCKET_EVENTS.STOP_TYPING, { conversationId });
+      }
+
+      setIsTyping(false);
+    }
 
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
@@ -142,19 +168,27 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
       }
     });
 
-    if (newValue.trim()) startTyping();
-    else stopTyping();
+    // Start typing if there's text, stop if empty
+    if (newValue.trim()) {
+      startTyping();
+    } else {
+      stopTyping();
+    }
   };
 
+  // Cleanup on unmount or conversation change
   useEffect(() => {
     return () => {
       stopTyping();
-      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
     };
-  }, []);
+  }, [conversationId]);
 
   const onEmojiClick = (emojiObject: EmojiClickData) => {
     setMessage((prev) => prev + emojiObject.emoji);
+    startTyping(); // Trigger typing when emoji is added
   };
 
   const isDisabled = !message.trim() || isLoading;
@@ -179,6 +213,8 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
           value={message}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           placeholder="Message me..."
           rows={1}
           className="w-full pl-15 pr-4 py-3 rounded-lg outline-none resize-none max-h-32 overflow-hidden"
