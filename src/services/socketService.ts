@@ -42,7 +42,6 @@ class SocketService {
 
       this.socket.on("connect", () => {
         this.isConnected = true;
-        this.getPresenceList();
 
         if (this.auth?.user?.id) {
           this.joinUserRoom(this.auth.user.id);

@@ -36,6 +36,7 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
 
     socketService.setAuth(auth);
     socketService.connect();
+
   }, [auth]);
 
   return <>{children}</>;

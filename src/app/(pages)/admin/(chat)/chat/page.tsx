@@ -2,7 +2,6 @@
 import ChatLayout from "./layout";
 
 export default function ChatPage() {
-
   return (
     <ChatLayout>
       <div className="h-full flex flex-col">
