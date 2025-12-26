@@ -26,6 +26,10 @@ export const UsersList = ({ searchQuery }: UsersListProps) => {
     (state: RootState) => state.auth.user?.id
   );
 
+  const presenceList = useAppSelector(
+    (state: RootState) => state.chat.presence
+  );
+
   const containerRef = useRef<HTMLDivElement>(null);
 
   const handleScroll = () => {
@@ -62,43 +66,49 @@ export const UsersList = ({ searchQuery }: UsersListProps) => {
       onScroll={handleScroll}
       className="h-full overflow-y-auto"
     >
-      {filteredUsers.map((user) => (
-        <div
-          key={user.id}
-          onClick={() => handleUserClick(user.id)}
-          className="flex items-center gap-3 p-3 cursor-pointer border-b border-gray-100 hover:bg-blue-100 transition-colors duration-200"
-        >
-          <Avatar
-            name={user.name}
-            size="sm"
-            style={{
-              bgcolor: theme.currentPalette.secondary,
-              color: theme.currentPalette.background,
-            }}
-          />
-          <div className="flex flex-col gap-1">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium">{user.name}</span>
-              <Chip
-                label={user.role}
-                size="small"
-                sx={{
-                  fontWeight: 600,
-                  fontSize: "0.7rem",
-                  height: 20,
-                  color: theme.currentPalette.primary,
-                  bgcolor: alpha(theme.currentPalette.primary, 0.2),
-                  borderRadius: 1,
-                  "& .MuiChip-label": {
-                    px: 1,
-                  },
-                }}
-              />
+      {filteredUsers.map((user) => {
+        const userPresence = presenceList[user.id];
+        const isUserOnline = userPresence?.isOnline ?? false;
+
+        return (
+          <div
+            key={user.id}
+            onClick={() => handleUserClick(user.id)}
+            className="flex items-center gap-3 p-3 cursor-pointer border-b border-gray-100 hover:bg-blue-100 transition-colors duration-200"
+          >
+            <Avatar
+              name={user.name}
+              size="sm"
+              status={isUserOnline ? "online" : "offline"}
+              style={{
+                bgcolor: theme.currentPalette.secondary,
+                color: theme.currentPalette.background,
+              }}
+            />
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium">{user.name}</span>
+                <Chip
+                  label={user.role}
+                  size="small"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: "0.7rem",
+                    height: 20,
+                    color: theme.currentPalette.primary,
+                    bgcolor: alpha(theme.currentPalette.primary, 0.2),
+                    borderRadius: 1,
+                    "& .MuiChip-label": {
+                      px: 1,
+                    },
+                  }}
+                />
+              </div>
+              <span className="text-xs text-gray-500">{user.email}</span>
             </div>
-            <span className="text-xs text-gray-500">{user.email}</span>
           </div>
-        </div>
-      ))}
+        );
+      })}
 
       {(isFetching || isLoading) && (
         <div className="p-4 text-center text-sm text-gray-500">Loading...</div>

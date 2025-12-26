@@ -19,17 +19,7 @@ export const ChatSidebar = () => {
   const { conversations, isLoading, isError } = useConversations();
 
   const filteredConversations = conversations.filter((conv) => {
-    // ✅ Add null/undefined checks for members
-    if (!conv.members || !Array.isArray(conv.members)) {
-      console.warn("Conversation without members:", conv.id);
-      return false;
-    }
-    
-    const memberNames = conv.members
-      .map((m) => m?.name || "")
-      .filter(Boolean)
-      .join(" ");
-    
+    const memberNames = conv.members.map((m) => m.name || "").join(" ");
     return memberNames.toLowerCase().includes(searchQuery.toLowerCase());
   });
 

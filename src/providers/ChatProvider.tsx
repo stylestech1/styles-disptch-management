@@ -32,12 +32,18 @@ export const ChatProvider = ({ children }: ChatProviderProps) => {
   // Connect socket when auth is ready
   // --------------------------------------------------------------------------
   useEffect(() => {
-    if (!auth?.token || !auth?.user?.id) return;
+    if (!auth?.token || !auth?.user?.id) {
+      socketService.disconnect();
+      return;
+    }
 
     socketService.setAuth(auth);
     socketService.connect();
 
-  }, [auth]);
+    return () => {
+      socketService.disconnect();
+    };
+  }, [auth?.user?.id, auth?.token]);
 
   return <>{children}</>;
 };
