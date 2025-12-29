@@ -1,11 +1,12 @@
+"use client";
 import { useState, useEffect, useRef } from "react";
 import { useAddMessageMutation } from "@/redux/slices/apiSlice";
-import { socketService } from "@/services/socketService";
-import { SOCKET_EVENTS } from "@/constants/ChatSocketEvent";
 import { SendHorizontal } from "lucide-react";
 import { RootState, useAppSelector } from "@/redux/store";
 import { alpha, Button } from "@mui/material";
 import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
+import { useChatSocket } from "@/hook/chatSys/useChatSocket";
+import { socketService } from "@/services/socketService";
 
 interface MessageInputProps {
   conversationId: string;
@@ -22,9 +23,12 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const theme = useAppSelector((state: RootState) => state.palette);
+  const currentUser = useAppSelector((state: RootState) => state.auth.user?.id);
   const [isFocused, setIsFocused] = useState(false);
 
   const [addMessage, { isLoading }] = useAddMessageMutation();
+
+  const { startTyping, stopTyping, isSocketReady } = useChatSocket();
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -62,13 +66,11 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
 
     try {
       // Stop typing before sending
-      stopTyping();
+      stopTypingHandler();
 
-      if (socketService.getConnectionStatus()) {
-        socketService.emit(SOCKET_EVENTS.SEND_MESSAGE, {
-          conversationId,
-          text: message.trim(),
-        });
+      // Use socket through useChatSocket
+      if (isSocketReady) {
+        socketService.sendMessage(conversationId, message.trim());
       } else {
         await addMessage({
           conversationId,
@@ -83,9 +85,9 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     }
   };
 
-  const startTyping = () => {
-    if (!socketService.getConnectionStatus()) {
-      console.warn("⚠️ Socket not connected, cannot send typing event");
+  const startTypingHandler = () => {
+    if (!isSocketReady) {
+      console.warn("⚠️ Socket not ready, cannot send typing event");
       return;
     }
 
@@ -97,7 +99,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     // Only emit if not already typing
     if (!isTyping) {
       console.log("⌨️ Emitting TYPING event for:", conversationId);
-      socketService.emit(SOCKET_EVENTS.TYPING, { conversationId });
+      startTyping(conversationId);
       setIsTyping(true);
     }
 
@@ -106,20 +108,19 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
       clearTimeout(typingTimeoutRef.current);
     }
 
-    // Auto-stop typing after 2 seconds of inactivity
     typingTimeoutRef.current = setTimeout(() => {
-      stopTyping();
+      stopTypingHandler();
     }, 2000);
   };
 
-  const stopTyping = () => {
+  const stopTypingHandler = () => {
     if (!conversationId) return;
 
     if (isTyping) {
       console.log("🛑 Emitting STOP_TYPING event for:", conversationId);
 
-      if (socketService.getConnectionStatus()) {
-        socketService.emit(SOCKET_EVENTS.STOP_TYPING, { conversationId });
+      if (isSocketReady) {
+        stopTyping(conversationId);
       }
 
       setIsTyping(false);
@@ -170,16 +171,16 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
 
     // Start typing if there's text, stop if empty
     if (newValue.trim()) {
-      startTyping();
+      startTypingHandler();
     } else {
-      stopTyping();
+      stopTypingHandler();
     }
   };
 
   // Cleanup on unmount or conversation change
   useEffect(() => {
     return () => {
-      stopTyping();
+      stopTypingHandler();
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
@@ -188,7 +189,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
 
   const onEmojiClick = (emojiObject: EmojiClickData) => {
     setMessage((prev) => prev + emojiObject.emoji);
-    startTyping(); // Trigger typing when emoji is added
+    startTypingHandler();
   };
 
   const isDisabled = !message.trim() || isLoading;

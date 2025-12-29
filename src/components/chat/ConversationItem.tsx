@@ -37,6 +37,11 @@ export const ConversationItem = ({
     (member) => member.id !== currentUserId
   );
 
+  // Typing indicator
+  const isTyping = useAppSelector(
+    (state) => state.chat.typing[conversation.id]
+  );
+
   const { users } = useUsersInfinite(100);
   const filteredUsers = users.filter((user) => user.id === otherMember?.id);
 
@@ -149,28 +154,27 @@ export const ConversationItem = ({
         </div>
 
         <div className="flex justify-between items-center mt-1">
-          <Typography
-            className="truncate w-60"
-            fontSize={"13px"}
-            color={
-              isSelected
-                ? theme.currentPalette.background
-                : alpha(theme.currentPalette.text, 0.7)
-            }
-          >
-            {getLastMessageText()}
-          </Typography>
+          {isTyping ? (
+            <TypingIndicator conversationId={conversation.id} />
+          ) : (
+            <Typography
+              className="truncate w-60"
+              fontSize={"13px"}
+              color={
+                isSelected
+                  ? theme.currentPalette.background
+                  : alpha(theme.currentPalette.text, 0.7)
+              }
+            >
+              {getLastMessageText()}
+            </Typography>
+          )}
 
           {unreadCount > 0 && (
             <Badge variant="danger" size="sm">
               {unreadCount}
             </Badge>
           )}
-        </div>
-
-        {/* Typing Indicator */}
-        <div className="mt-1">
-          <TypingIndicator conversationId={conversation.id} />
         </div>
       </div>
     </Box>
@@ -180,16 +184,18 @@ export const ConversationItem = ({
 // Typing Indicator Component
 const TypingIndicator = ({ conversationId }: { conversationId: string }) => {
   const isTyping = useAppSelector((state) => state.chat.typing[conversationId]);
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   if (!isTyping) return null;
 
   return (
-    <div className="flex items-center gap-1">
-      <div className="flex gap-1">
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse delay-150"></div>
-        <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse delay-300"></div>
-      </div>
-    </div>
+    <Typography
+      component="span"
+      variant="body2"
+      color={theme.currentPalette.background}
+      sx={{ fontSize: "12px" }}
+    >
+      typing...
+    </Typography>
   );
 };

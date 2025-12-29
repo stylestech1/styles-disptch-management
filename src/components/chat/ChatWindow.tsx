@@ -3,15 +3,18 @@ import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { ChatHeader } from "./ChatHeader";
 import { MessageList } from "./MessageList";
 import { MessageInput } from "./MessageInput";
-import { useChatSocket } from "@/hook/chatSys/useChatSocket";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Box } from "@mui/material";
 import { MessageCircleMore } from "lucide-react";
 import { setSelectedConversation } from "@/redux/slices/chatSlice";
+import { useMarkMessagesSeen } from "@/hook/chatSys/useMarkSeen";
+import { socketService } from "@/services/socketService";
 
 export const ChatWindow = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
   const dispatch = useAppDispatch();
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const selectedConversationId = useAppSelector(
     (state: RootState) => state.chat.selectedConversationId
@@ -23,9 +26,18 @@ export const ChatWindow = () => {
       : null
   );
 
-  const isOnline = useAppSelector((state) => state.chat.onlineUsers);
+  const { markAsSeen } = useMarkMessagesSeen(selectedConversationId);
 
-  const { markSeen } = useChatSocket();
+  /* ----------------------- Joining Room ----------------------- */
+  useEffect(() => {
+    if (!selectedConversationId) return;
+
+    socketService.joinConversation(selectedConversationId);
+
+    return () => {
+      socketService.leaveConversation(selectedConversationId);
+    };
+  }, [selectedConversationId]);
 
   // Close Chat When pressing ESC
   useEffect(() => {
@@ -44,28 +56,24 @@ export const ChatWindow = () => {
 
   /* ----------------------- mark seen ----------------------- */
   useEffect(() => {
-    if (!selectedConversationId) return;
+    const handleScrollToBottom = () => {
+      if (containerRef.current) {
+        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
 
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible" && isOnline) {
-        markSeen(selectedConversationId);
+        if (isAtBottom) {
+          markAsSeen();
+        }
       }
     };
 
-    document.addEventListener("visibilitychange", handleVisibility);
-
-    if (document.visibilityState === "visible" && isOnline) {
-      const timer = setTimeout(() => {
-        markSeen(selectedConversationId);
-      }, 500);
-
-      return () => clearTimeout(timer);
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScrollToBottom);
+      return () =>
+        container.removeEventListener("scroll", handleScrollToBottom);
     }
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibility);
-    };
-  }, [selectedConversationId, markSeen, isOnline]);
+  }, [markAsSeen]);
 
   if (!selectedConversationId || !conversation) {
     return (

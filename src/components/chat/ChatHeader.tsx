@@ -7,6 +7,7 @@ import { useUsersInfinite } from "@/hook/chatSys/useUsersInfinite";
 import { formatLastSeen } from "@/utils/formatLastSeen";
 import { ArrowLeft, ChevronLeft } from "lucide-react";
 import { setSelectedConversation } from "@/redux/slices/chatSlice";
+import Dots from "./ui/dots";
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -102,18 +103,23 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
                 variant="body2"
                 color={alpha(theme.currentPalette.primary, 0.7)}
               >
-                {isUserOnline ? "online" : formatLastSeen(lastSeen)}
+                {isUserOnline ? (
+                  isTyping ? (
+                    <Typography
+                      component="span"
+                      variant="body2"
+                      color="primary.main"
+                      sx={{ fontSize: '12px' }}
+                    >
+                      typing...
+                    </Typography>
+                  ) : (
+                    "online"
+                  )
+                ) : (
+                  formatLastSeen(lastSeen)
+                )}
               </Typography>
-
-              {isTyping && (
-                <Typography
-                  variant="body2"
-                  color="primary.main"
-                  sx={{ animation: "pulse 1s infinite" }}
-                >
-                  ...
-                </Typography>
-              )}
             </Stack>
           </Box>
         </Stack>

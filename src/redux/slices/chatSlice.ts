@@ -9,7 +9,7 @@ interface ChatState {
   liveMessages: Record<string, Message[]>;
   conversations: Record<string, Conversation>;
   selectedConversationId: string | null;
-  typing: Record<string, boolean>;
+  typing: Record<string, string[]>;
   onlineUsers: string[];
   presence: Presence;
   unreadCounts: Record<string, number>;
@@ -72,12 +72,14 @@ const chatSlice = createSlice({
     },
 
     /* ------------------------- UPSERT (Update & Insert) CONVERSATION -------------------------- */
-    upsertConversation(state, action: PayloadAction<Partial<Conversation> & { id: string }>) {
+    upsertConversation(
+      state,
+      action: PayloadAction<Partial<Conversation> & { id: string }>
+    ) {
       const conv = action.payload;
       const existing = state.conversations[conv.id] || {};
 
       state.conversations[conv.id] = {
-        // ...state.conversations[conv.id],
         ...existing,
         ...conv,
         lastMessage:
@@ -126,11 +128,36 @@ const chatSlice = createSlice({
     },
 
     /* ------------------------------ TYPING -------------------------------- */
-    setTyping(
+    addTypingUser(
       state,
-      action: PayloadAction<{ conversationId: string; isTyping: boolean }>
+      action: PayloadAction<{ conversationId: string; userId: string }>
     ) {
-      state.typing[action.payload.conversationId] = action.payload.isTyping;
+      const { conversationId, userId } = action.payload;
+
+      if (!state.typing[conversationId]) {
+        state.typing[conversationId] = [];
+      }
+
+      if (!state.typing[conversationId].includes(userId)) {
+        state.typing[conversationId].push(userId);
+      }
+    },
+
+    removeTypingUser(
+      state,
+      action: PayloadAction<{ conversationId: string; userId: string }>
+    ) {
+      const { conversationId, userId } = action.payload;
+
+      if (!state.typing[conversationId]) return;
+
+      state.typing[conversationId] = state.typing[conversationId].filter(
+        (id) => id !== userId
+      );
+
+      if (state.typing[conversationId].length === 0) {
+        delete state.typing[conversationId];
+      }
     },
 
     /* ----------------------------- PRESENCE -------------------------------- */
@@ -200,7 +227,8 @@ export const {
   upsertConversation,
   markMessageSeen,
   addConversationLocal,
-  setTyping,
+  addTypingUser,
+  removeTypingUser,
   setUserOnline,
   setUserOffline,
   setOnlineUsers,

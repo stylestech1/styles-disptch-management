@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from "react";
 import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import {
   addLiveMessage,
-  setTyping,
+  addTypingUser,
   setUserOnline,
   setUserOffline,
   setUserPresence,
   markMessageSeen,
   upsertConversation,
+  removeTypingUser,
 } from "@/redux/slices/chatSlice";
 import { socketService } from "@/services/socketService";
 import { SOCKET_EVENTS } from "@/constants/ChatSocketEvent";
@@ -21,37 +22,34 @@ export const useChatSocket = () => {
     (state: RootState) => state.chat.selectedConversationId
   );
 
-  const [isSocketReady, setIsSocketReady] = useState(false);
-  const listenersAttached = useRef(false);
-  const typingTimeoutsRef = useRef<Record<string, NodeJS.Timeout>>({});
+  /* -------------------------------------------------------------------------- */
+  /*                                   REFS                                     */
+  /* -------------------------------------------------------------------------- */
   const selectedConversationIdRef = useRef<string | null>(null);
+  const listenersAttached = useRef(false);
 
-  // Update selectedConversationId every change
+  const [isSocketReady, setIsSocketReady] = useState(false);
+
   useEffect(() => {
     selectedConversationIdRef.current = selectedConversationId;
   }, [selectedConversationId]);
 
   /* -------------------------------------------------------------------------- */
-  /*                    WAIT FOR SOCKET TO BE READY                             */
+  /*                         WAIT FOR SOCKET READY                               */
   /* -------------------------------------------------------------------------- */
   useEffect(() => {
     if (!auth?.token || !auth?.user?.id) return;
 
-    // Check if socket is ready
-    const checkSocket = () => {
-      const isReady = socketService.getConnectionStatus();
-      if (isReady && !isSocketReady) {
-        console.log("✅ Socket is ready for listeners");
+    const checkReady = () => {
+      if (socketService.getConnectionStatus()) {
         setIsSocketReady(true);
       }
     };
 
-    // Check immediately
-    checkSocket();
+    checkReady();
 
-    // Also listen for connect event
     socketService.onConnect(() => {
-      console.log("🔌 Socket connected event fired");
+      console.log("🔌 Socket connected");
       setIsSocketReady(true);
     });
 
@@ -60,39 +58,20 @@ export const useChatSocket = () => {
       setIsSocketReady(false);
       listenersAttached.current = false;
     });
-
-    // Poll every 100ms until socket is ready (max 10 seconds)
-    const interval = setInterval(checkSocket, 100);
-    const timeout = setTimeout(() => {
-      clearInterval(interval);
-      if (!isSocketReady) {
-        console.error("❌ Socket failed to initialize after 10 seconds");
-      }
-    }, 10000);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(timeout);
-    };
-  }, [auth, isSocketReady]);
+  }, [auth]);
 
   /* -------------------------------------------------------------------------- */
-  /*                       ATTACH LISTENERS WHEN READY                          */
+  /*                           SOCKET LISTENERS                                  */
   /* -------------------------------------------------------------------------- */
   useEffect(() => {
-    if (!isSocketReady || !auth?.token || !auth?.user?.id) return;
+    if (!isSocketReady || !auth?.user?.id) return;
+    if (listenersAttached.current) return;
 
-    if (listenersAttached.current) {
-      console.log("⚠️ Listeners already attached, skipping...");
-      return;
-    }
-
-    console.log("🎧 Attaching socket listeners NOW...");
     listenersAttached.current = true;
+    console.log("🎧 Attaching chat socket listeners");
 
-    /* --------------------------- NEW MESSAGE ------------------------------ */
+    /* ----------------------------- NEW MESSAGE ----------------------------- */
     const handleNewMessage = (msg: Message) => {
-      console.log("📨 New message received:", msg);
       dispatch(addLiveMessage(msg));
       dispatch(
         upsertConversation({
@@ -102,53 +81,77 @@ export const useChatSocket = () => {
       );
     };
 
-    /* ----------------------------- SEEN ---------------------------------- */
+    /* ------------------------------- SEEN ---------------------------------- */
     const handleSeen = ({
       conversationId,
       currentUserId,
     }: {
       conversationId: string;
-      currentUserId?: string;
+      currentUserId: string;
     }) => {
-      console.log("👁️ Message seen:", conversationId);
-      dispatch(markMessageSeen({ conversationId, currentUserId }));
-      socketService.acknowledgeSeen(conversationId);
-    };
-
-    /* ---------------------------- TYPING ------------------------------------ */
-    const handleTyping = ({ userId }: { userId: string }) => {
-      if (userId === auth.user?.id) return;
-
-      const convId = selectedConversationIdRef.current;
-      if (!convId) return;
-
-      console.log("⌨️ User typing:", userId);
+      console.log("👁️ Messages seen in conversation:", conversationId);
       dispatch(
-        setTyping({
-          conversationId: convId,
-          isTyping: true,
+        markMessageSeen({
+          conversationId,
+          currentUserId,
         })
       );
     };
 
-    const handleStopTyping = ({ userId }: { userId: string }) => {
-      if (userId === auth.user?.id) return;
+    const handleSeenAck = ({
+      conversationId,
+      currentUserId,
+    }: {
+      conversationId: string;
+      currentUserId: string;
+    }) => {
 
-      const convId = selectedConversationIdRef.current;
-      if (!convId) return;
-
-      console.log("🛑 User stopped typing:", userId);
+      console.log("✅ Seen acknowledged by user:", currentUserId);
       dispatch(
-        setTyping({
-          conversationId: convId,
-          isTyping: false,
+        markMessageSeen({
+          conversationId,
+          currentUserId,
         })
       );
     };
 
-    /* --------------------------- PRESENCE -------------------------------- */
+    /* ------------------------------ TYPING --------------------------------- */
+    const handleTyping = ({
+      conversationId,
+      userId,
+    }: {
+      conversationId: string;
+      userId: string;
+    }) => {
+      if (userId === auth.user?.id) return;
+
+      dispatch(
+        addTypingUser({
+          conversationId,
+          userId,
+        })
+      );
+    };
+
+    const handleStopTyping = ({
+      conversationId,
+      userId,
+    }: {
+      conversationId: string;
+      userId: string;
+    }) => {
+      if (userId === auth.user?.id) return;
+
+      dispatch(
+        removeTypingUser({
+          conversationId,
+          userId,
+        })
+      );
+    };
+
+    /* ----------------------------- PRESENCE -------------------------------- */
     const handleUserOnline = ({ userId }: { userId: string }) => {
-      console.log("🟢 User online:", userId);
       dispatch(setUserOnline({ userId }));
     };
 
@@ -159,7 +162,6 @@ export const useChatSocket = () => {
       userId: string;
       lastSeen?: string;
     }) => {
-      console.log("🔴 User offline:", userId);
       dispatch(setUserOffline({ userId, lastSeen }));
     };
 
@@ -170,7 +172,6 @@ export const useChatSocket = () => {
         lastSeen?: string;
       }[]
     ) => {
-      console.log("👥 Presence list received:", list.length, "users");
       const map = list.reduce((acc, u) => {
         acc[u.userId] = {
           isOnline: u.isOnline,
@@ -182,62 +183,51 @@ export const useChatSocket = () => {
       dispatch(setUserPresence(map));
     };
 
-    /* --------------------------- REGISTER -------------------------------- */
+    /* ----------------------------- REGISTER -------------------------------- */
     socketService.on(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
     socketService.on(SOCKET_EVENTS.SEEN_UPDATE, handleSeen);
-    socketService.on(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeen);
+    socketService.on(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeenAck);
     socketService.on(SOCKET_EVENTS.TYPING, handleTyping);
     socketService.on(SOCKET_EVENTS.STOP_TYPING, handleStopTyping);
     socketService.on(SOCKET_EVENTS.USER_ONLINE, handleUserOnline);
     socketService.on(SOCKET_EVENTS.USER_OFFLINE, handleUserOffline);
     socketService.on(SOCKET_EVENTS.PRESENCE_LIST, handlePresenceList);
 
-    console.log("✅ All socket listeners attached successfully");
-
-    // Request presence list
-    console.log("🔄 Requesting presence list...");
     socketService.getPresenceList();
 
-    /* --------------------------- CLEANUP --------------------------------- */
+    /* ------------------------------ CLEANUP -------------------------------- */
     return () => {
-      console.log("🧹 Cleaning up socket listeners...");
       listenersAttached.current = false;
 
       socketService.off(SOCKET_EVENTS.NEW_MESSAGE, handleNewMessage);
       socketService.off(SOCKET_EVENTS.SEEN_UPDATE, handleSeen);
-      socketService.off(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeen);
+      socketService.off(SOCKET_EVENTS.SEEN_ACKNOWLEDGED, handleSeenAck);
       socketService.off(SOCKET_EVENTS.TYPING, handleTyping);
       socketService.off(SOCKET_EVENTS.STOP_TYPING, handleStopTyping);
       socketService.off(SOCKET_EVENTS.USER_ONLINE, handleUserOnline);
       socketService.off(SOCKET_EVENTS.USER_OFFLINE, handleUserOffline);
       socketService.off(SOCKET_EVENTS.PRESENCE_LIST, handlePresenceList);
-
-      Object.values(typingTimeoutsRef.current).forEach(clearTimeout);
-      typingTimeoutsRef.current = {};
     };
-  }, [isSocketReady, auth, dispatch]);
+  }, [isSocketReady, auth?.user?.id, dispatch]);
 
   /* -------------------------------------------------------------------------- */
-  /*                               EMIT HELPERS                                */
+  /*                               EMIT HELPERS                                 */
   /* -------------------------------------------------------------------------- */
   return {
     sendMessage: (conversationId: string, text: string) =>
       socketService.sendMessage(conversationId, text),
 
-    startTyping: (conversationId: string) => {
-      socketService.startTyping(conversationId);
-    },
+    startTyping: (conversationId: string) =>{
+      console.log("🎯 [useChatSocket] startTyping called for:", conversationId);
+      socketService.startTyping(conversationId)},
 
-    stopTyping: (conversationId: string) => {
-      socketService.stopTyping(conversationId);
-    },
+    stopTyping: (conversationId: string) =>{
+      console.log("🎯 [useChatSocket] stopTyping called for:", conversationId);
+      socketService.stopTyping(conversationId)},
 
     markSeen: (conversationId: string) =>
       socketService.markSeen(conversationId),
 
-    // Helper Debugging
-    getCurrentConversationId: () => selectedConversationIdRef.current,
-    getTypingState: () => typingTimeoutsRef.current,
-    isSocketReady: () => isSocketReady,
+    isSocketReady,
   };
 };

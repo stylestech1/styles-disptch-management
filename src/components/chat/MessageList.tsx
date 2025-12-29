@@ -6,6 +6,7 @@ import { useGetConversationMessagesQuery } from "@/redux/slices/apiSlice";
 import { upsertConversation } from "@/redux/slices/chatSlice";
 import { alpha } from "@mui/material";
 import { Box } from "@mui/system";
+import Dots from "./ui/dots";
 
 interface MessageListProps {
   conversationId: string;
@@ -27,10 +28,8 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
   const endRef = useRef<HTMLDivElement>(null);
 
   /* ---------------------- hydrate old messages once ---------------------- */
-  const isTyping = useMemo(() => {
-    if (!conversationId) return false;
-    return typingState[conversationId] || false;
-  }, [typingState, conversationId]);
+  const typingUsers = typingState[conversationId] || [];
+  const isTyping = typingUsers.length > 0;
 
   useEffect(() => {
     dispatch(
@@ -55,7 +54,7 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
   /* ----------------------- auto scroll on new messages ----------------------- */
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [liveMessages.length]);
+  }, [liveMessages.length, isTyping]);
 
   /* ----------------------- play sound on new message ----------------------- */
   const prevMessagesCountRef = useRef(liveMessages.length);
@@ -97,15 +96,7 @@ export const MessageList = ({ conversationId }: MessageListProps) => {
         ))}
 
         {isTyping && (
-          <div className="flex items-center gap-2 p-3">
-            <div className="bg-gray-100 rounded-2xl rounded-tl-none p-4">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-150"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-300"></div>
-              </div>
-            </div>
-          </div>
+          <Dots/>
         )}
 
         <div ref={endRef} />
