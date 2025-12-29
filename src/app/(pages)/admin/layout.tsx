@@ -255,7 +255,6 @@ export default function AdminLayout({
             "& .MuiDrawer-paper": {
               width: DRAWER_WIDTH,
               boxSizing: "border-box",
-              // bgcolor: themePalette.currentPalette.background,
               borderRight: `1px solid ${theme.palette.divider}`,
               boxShadow: isDesktop ? "none" : undefined,
               overflowX: "hidden",
@@ -274,7 +273,7 @@ export default function AdminLayout({
             width: isDesktop ? `calc(100% - ${DRAWER_WIDTH}px)` : "100%",
             display: "flex",
             flexDirection: "column",
-            minHeight: 'inherit',
+            minHeight: "inherit",
             bgcolor: alpha(themePalette.currentPalette.primary, 0.02),
           }}
         >
@@ -303,14 +302,23 @@ export default function AdminLayout({
                   </>
                 )}
                 {pathname === `${base}/chat` && (
-                  <Box
-                    sx={{
-                      flex: 1,
-                      overflowY: "auto",
-                    }}
-                  >
-                    {children}
-                  </Box>
+                  <>
+                    <div className="flex lg:hidden mb-15">
+                      <Navbar
+                        title={title}
+                        subtitle={subtitle}
+                        onMenuClick={() => setIsSidebarOpen(true)}
+                      />
+                    </div>
+                    <Box
+                      sx={{
+                        flex: 1,
+                        overflowY: "auto",
+                      }}
+                    >
+                      {children}
+                    </Box>
+                  </>
                 )}
               </>
             ) : (

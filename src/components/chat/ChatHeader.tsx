@@ -1,10 +1,12 @@
 "use client";
 import { Conversation } from "@/types/chatType";
-import { RootState, useAppSelector } from "@/redux/store";
+import { RootState, useAppDispatch, useAppSelector } from "@/redux/store";
 import { Avatar } from "./ui/Avatar";
-import { alpha, Box, Chip, Stack, Typography } from "@mui/material";
+import { alpha, Box, Button, Chip, Stack, Typography } from "@mui/material";
 import { useUsersInfinite } from "@/hook/chatSys/useUsersInfinite";
 import { formatLastSeen } from "@/utils/formatLastSeen";
+import { ArrowLeft, ChevronLeft } from "lucide-react";
+import { setSelectedConversation } from "@/redux/slices/chatSlice";
 
 interface ChatHeaderProps {
   conversation: Conversation;
@@ -21,6 +23,7 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
   const presenceList = useAppSelector(
     (state: RootState) => state.chat.presence
   );
+  const dispatch = useAppDispatch();
 
   const userPresence = otherMember ? presenceList[otherMember.id] : undefined;
 
@@ -45,7 +48,15 @@ export const ChatHeader = ({ conversation }: ChatHeaderProps) => {
         py: 3.5,
       }}
     >
-      <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <Stack direction="row" alignItems="center" justifyContent="flex-start">
+        {/* Back Button - Mobile Only */}
+        <Button
+          className="lg:hidden"
+          onClick={() => dispatch(setSelectedConversation(null))}
+        >
+          <ChevronLeft size={22} />
+        </Button>
+
         <Stack direction="row" alignItems="center" spacing={2}>
           <Avatar
             name={otherMember?.name || "user"}

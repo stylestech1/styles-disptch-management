@@ -52,10 +52,7 @@ const Login = () => {
       const result = await res.json();
 
       if (!res.ok) {
-        toast.error(result.message || "Create user failed", {
-          style: { background: "#dc2626", color: "#fff" },
-        });
-        return;
+        throw new Error(result.message || "Email or Password is invalid");
       }
 
       dispatch(
@@ -71,7 +68,12 @@ const Login = () => {
         router.push(`/dispatchers/loads`);
       }
     } catch (error) {
-      if (error instanceof Error) setErr(error.message || "Loading Failed");
+      if (error instanceof Error) {
+        setErr(error.message || "Loading Failed");
+        toast.error(error.message || "Email or Password is invaild", {
+          style: { background: "#dc2626", color: "#fff" },
+        });
+      }
     } finally {
       setLoading(false);
     }

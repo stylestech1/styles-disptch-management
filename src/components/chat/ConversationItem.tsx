@@ -150,6 +150,7 @@ export const ConversationItem = ({
 
         <div className="flex justify-between items-center mt-1">
           <Typography
+            className="truncate w-60"
             fontSize={"13px"}
             color={
               isSelected
