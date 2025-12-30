@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { MessageCircleMore } from "lucide-react";
 import { RootState, useAppSelector } from "@/redux/store";
 import { usePathname } from "next/navigation";
@@ -20,6 +20,21 @@ const ChatBubble = () => {
     (sum, count) => sum + count,
     0
   );
+
+  // -------------- Run Sound when notify --------------
+  const prevUnreadRef = useRef(totalUnreadCount);
+
+  useEffect(() => {
+    if (
+      totalUnreadCount > prevUnreadRef.current &&
+      !pathname.includes("/chat")
+    ) {
+      const audio = new Audio("/audio/message.mp3");
+      audio.play().catch(console.log);
+    }
+
+    prevUnreadRef.current = totalUnreadCount;
+  }, [totalUnreadCount, pathname]);
 
   if (
     pathname.includes("/chat") ||

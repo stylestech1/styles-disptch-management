@@ -23,13 +23,13 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
   const theme = useAppSelector((state: RootState) => state.palette);
-  const currentUser = useAppSelector((state: RootState) => state.auth.user?.id);
   const [isFocused, setIsFocused] = useState(false);
 
   const [addMessage, { isLoading }] = useAddMessageMutation();
 
   const { startTyping, stopTyping, isSocketReady } = useChatSocket();
 
+  // -------------------- Scrolling ----------------------
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
@@ -40,7 +40,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     }
   }, [message]);
 
-  // Handle outside click to close emoji picker
+  // -------------------- Handle outside click to close emoji picker --------------------
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Node;
@@ -61,6 +61,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     };
   }, [showEmojiPicker]);
 
+  // -------------------- Handle send Messages --------------------
   const handleSend = async () => {
     if (!message.trim() || isLoading) return;
 
@@ -85,6 +86,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     }
   };
 
+  // -------------------- Showing Typying Indicator --------------------
   const startTypingHandler = () => {
     if (!isSocketReady) {
       console.warn("⚠️ Socket not ready, cannot send typing event");
@@ -113,6 +115,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     }, 2000);
   };
 
+  // -------------------- Disable Typying Indicator --------------------
   const stopTypingHandler = () => {
     if (!conversationId) return;
 
@@ -132,6 +135,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     }
   };
 
+  // -------------------- Handle Typying --------------------
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key !== "Enter") return;
 
@@ -155,6 +159,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     handleSend();
   };
 
+  // -------------------- Handle scrolling when new message --------------------
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const newValue = e.target.value;
     setMessage(newValue);
@@ -187,6 +192,7 @@ export const MessageInput = ({ conversationId }: MessageInputProps) => {
     };
   }, [conversationId]);
 
+  // -------------------- Handle Emoji --------------------
   const onEmojiClick = (emojiObject: EmojiClickData) => {
     setMessage((prev) => prev + emojiObject.emoji);
     startTypingHandler();
