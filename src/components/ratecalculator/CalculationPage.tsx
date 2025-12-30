@@ -1,5 +1,4 @@
 "use client";
-import Titles from "@/components/ui/Titles";
 import {
   useState,
   useEffect,
@@ -31,7 +30,6 @@ import {
   alpha,
 } from "@mui/material";
 import {
-  Calculate,
   AttachMoney,
   DirectionsCar,
   Speed,
@@ -322,8 +320,6 @@ const CalculationPage = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
   const [resetKey, setResetKey] = useState(0);
 
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
   const {
     dhoToOriginDistance,
     dhoToOriginTime,
@@ -428,7 +424,7 @@ const CalculationPage = () => {
       >
         <Button
           sx={{
-            width: "10%",
+            width: {xs: '100%', lg:"10%"},
             mt: 2,
             py: 1.5,
             borderRadius: 2,
