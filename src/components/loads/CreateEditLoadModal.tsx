@@ -118,7 +118,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   } = useSelector((state: RootState) => state.loadsForm);
 
   const theme = useAppSelector((state: RootState) => state.palette);
-  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
   // For Documents
   const [selectedDocuments, setSelectedDocuments] = useState<File[]>([]);

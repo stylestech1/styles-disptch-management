@@ -54,7 +54,6 @@ import {
   Box,
   Button,
   Chip,
-  darken,
   SxProps,
   TableRow,
   Typography,
@@ -79,7 +78,7 @@ const LoadsPageDetails = () => {
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
 
   // Loading & Error states
-  const { loading, setLoading } = useLoading();
+  const { setLoading } = useLoading();
   const { error, setError } = useError();
 
   const [
@@ -107,7 +106,7 @@ const LoadsPageDetails = () => {
     },
   });
 
-  const { searchTerm, isSearching } = searchHook;
+  const { isSearching } = searchHook;
 
   const {
     data: loadsData,

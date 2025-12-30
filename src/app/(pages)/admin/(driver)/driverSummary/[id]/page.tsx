@@ -1,15 +1,10 @@
 "use client";
 import Loading from "@/components/ui/Loading";
-import { TLoads, TStatusLoad } from "@/types/globalTypes";
+import { TLoads } from "@/types/globalTypes";
 import { useState, useEffect, useMemo } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
-import {
-  IoCheckmarkCircleOutline,
-  IoNavigate,
-  IoTimeOutline,
-} from "react-icons/io5";
 import useError from "@/hook/useError";
 import DataTable from "@/components/ui/DataTable";
 import { driverSummaryColumns } from "@/data/driverSummaryTable";
@@ -54,8 +49,6 @@ const DriverSummary = () => {
   // ✅ Lazy Query for filtered data
   const {
     data: driverSummaryData,
-    isLoading: summaryLoading,
-    isFetching: summaryFetching,
     error: summaryError,
   } = useGetDriverSummaryWithFilterQuery({
     id: id as string,
@@ -350,7 +343,7 @@ const DriverSummary = () => {
             <Typography
               sx={{ fontSize: "30px", color: theme.currentPalette.text }}
             >
-              ${summaryData?.totalLoads || 0}
+              {summaryData?.totalLoads || 0}
             </Typography>
           </Box>
 
@@ -376,7 +369,7 @@ const DriverSummary = () => {
             <Typography
               sx={{ fontSize: "30px", color: theme.currentPalette.text }}
             >
-              {summaryData?.totalLoads || 0}
+              ${summaryData?.totalLoads || 0}
             </Typography>
           </Box>
 
