@@ -1,8 +1,5 @@
 import { useState, useEffect, useCallback, lazy, Suspense } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 import dayjs from "dayjs";
 import LocationAutocomplete, {
   TPlace,
@@ -12,15 +9,12 @@ import {
   IoLocationOutline,
   IoDocumentText,
   IoCar,
-  IoArrowBack,
-  IoArrowForward,
   IoClose,
   IoAdd,
-  IoCheckmark,
-  IoCash,
-  IoKey,
+  IoEllipseOutline,
+  IoCheckmarkCircleOutline,
+  IoCheckmarkCircle,
 } from "react-icons/io5";
-import { RxUpdate } from "react-icons/rx";
 import {
   calculateDhoToOriginDistance,
   calculateFullRouteDistance,
@@ -53,36 +47,28 @@ import {
 } from "@/redux/slices/loadsFormSlice";
 import {
   useCreateLoadsMutation,
-  useGetDriversQuery,
-  useGetTrucksQuery,
   useUpdateLoadsMutation,
 } from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
 import {
-  AssignmentTabProps,
   CreateEditLoadModalProps,
-  LoadDetailsTabProps,
-  TDriver,
   TLoads,
-  TTruck,
   TTruckType,
 } from "@/types/globalTypes";
 import toast from "react-hot-toast";
-import { MdError, MdPictureAsPdf } from "react-icons/md";
 import {
   Alert,
   alpha,
   Box,
   Button,
-  FormControl,
-  InputAdornment,
-  MenuItem,
-  Select,
   Tab,
   Tabs,
   TextField,
   Typography,
 } from "@mui/material";
+import LoadDetailsTab from "./tabsModal/LoadDetailsTab";
+import AssignmentTab from "./tabsModal/AssignmentTab";
+import FinancialTab from "./tabsModal/FinancialTab";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
@@ -148,19 +134,21 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   const [pricePerMile, setPricePerMile] = useState<number | null>(null);
   const [showMaps, setShowMaps] = useState(false);
 
-  // Drag and Drop Handlers
+  // Drag Handlers
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(true);
   }, []);
 
+  // Drag Leave Handlers
   const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
   }, []);
 
+  // Drag Over Handlers
   const handleDragOver = useCallback(
     (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -172,6 +160,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     [isDragging]
   );
 
+  // Drop Handlers
   const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
@@ -361,51 +350,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
     if (loadItem.distanceMiles) {
       setAllDistance(loadItem.distanceMiles.toString());
-    }
-  };
-
-  const updateGeocodedData = async (loadItem: TLoads) => {
-    try {
-      // DHO
-      if (loadItem.DHO) {
-        const dhoCoords = await geocodeAddress(loadItem.DHO);
-        if (dhoCoords) {
-          dispatch(setDho(dhoCoords));
-        }
-      }
-
-      // Origin
-      if (loadItem.origin) {
-        const originCoords = await geocodeAddress(loadItem.origin);
-        if (originCoords) {
-          dispatch(setOrigin(originCoords));
-        }
-      }
-
-      // Destinations
-      if (loadItem.destination) {
-        const destArray = Array.isArray(loadItem.destination)
-          ? loadItem.destination
-          : [loadItem.destination];
-
-        const destinationPlaces = await Promise.all(
-          destArray.map(async (dest) => {
-            const coords = await geocodeAddress(dest);
-            return (
-              coords || {
-                display_name: dest,
-                lat: "0",
-                lon: "0",
-                place_id: `geocoded_${Date.now()}_${dest.substring(0, 10)}`,
-              }
-            );
-          })
-        );
-
-        dispatch(setDestinations(destinationPlaces));
-      }
-    } catch (error) {
-      console.error("Error updating geocoded data:", error);
     }
   };
 
@@ -606,6 +550,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     }
   };
 
+  // Handling Errors
   const getErrorMessage = (error: unknown): string => {
     if (typeof error === "string") {
       return error;
@@ -629,6 +574,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     return "An unknown error occurred";
   };
 
+  // Handling Close
   const handleClose = () => {
     dispatch(resetForm());
     setSelectedDocuments([]);
@@ -638,6 +584,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     onClose();
   };
 
+  // Handle Price Change
   const handlePriceChange = (value: string) => {
     dispatch(setPrice(value));
 
@@ -649,6 +596,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     }
   };
 
+  // Handle Foramting Time
   const formatTime = (hours: number): string => {
     const totalMinutes = hours * 60;
     const hoursPart = Math.floor(totalMinutes / 60);
@@ -663,6 +611,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     }
   };
 
+  // Tab 1
   const isTab1Valid = (): boolean => {
     const hasValidDho = dho !== null && dho !== undefined;
     const hasValidOrigin = origin !== null && origin !== undefined;
@@ -673,18 +622,24 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     return hasValidDho && hasValidOrigin && hasValidDestinations;
   };
 
+  // Tab 2
   const isTab2Valid = (): boolean => {
-    const hasValidPrice = price.trim() !== "";
-    const hasValidLoadID = loadIDInp.trim() !== "";
     const hasValidPickupAt = pickupAt !== null;
     const hasValidCompletedAt = completedAt !== null;
 
-    return (
-      hasValidPrice && hasValidLoadID && hasValidPickupAt && hasValidCompletedAt
-    );
+    return hasValidPickupAt && hasValidCompletedAt;
   };
 
+  // Tab 3
   const isTab3Valid = (): boolean => {
+    const hasValidPrice = price.trim() !== "";
+    const hasValidLoadID = loadIDInp.trim() !== "";
+
+    return hasValidPrice && hasValidLoadID;
+  };
+
+  // Tab 4
+  const isTab4Valid = (): boolean => {
     if (isEditing) {
       return !!(
         editingLoad?.driverId &&
@@ -700,14 +655,13 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     }
   };
 
+  // handling Destinations Action
   const handleAddDestination = () => {
     dispatch(addDestination());
   };
-
   const handleUpdateDestination = (index: number, place: TPlace | null) => {
     dispatch(updateDestination({ index, place }));
   };
-
   const handleRemoveDestination = (index: number) => {
     dispatch(removeDestination(index));
   };
@@ -731,1466 +685,663 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
           ? `Edit Load - ${editingLoad.loadId}`
           : "Create New Load"
       }
-      size="xl"
+      size="xxl"
       closeOnOutsideClick={false}
     >
       <div className="flex flex-col h-full">
-        {/* MUI Tabs Navigation */}
-        <Tabs
-          value={activeTab}
-          onChange={(event, newValue) => dispatch(setActiveTab(newValue))}
-          sx={{
-            borderBottom: 1,
-            borderColor: "divider",
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontSize: "0.875rem",
-              fontWeight: 500,
-              minHeight: "64px",
-            },
-          }}
-        >
-          <Tab
-            value={1}
-            label={
-              <span className="flex items-center">
-                <IoLocationOutline className="mr-2" />
-                Locations
-              </span>
-            }
-            sx={{
-              color:
-                activeTab === 1
-                  ? theme.currentPalette.primary
-                  : theme.currentPalette.text,
-              "&.Mui-selected": {
-                color: theme.currentPalette.primary,
-              },
-            }}
-          />
-          <Tab
-            value={2}
-            label={
-              <span className="flex items-center">
-                <IoDocumentText className="mr-2" />
-                Load Details
-              </span>
-            }
-            sx={{
-              color:
-                activeTab === 2
-                  ? theme.currentPalette.primary
-                  : theme.currentPalette.text,
-              "&.Mui-selected": {
-                color: theme.currentPalette.primary,
-              },
-            }}
-          />
-          <Tab
-            value={3}
-            label={
-              <span className="flex items-center">
-                <IoCar className="mr-2" />
-                Ride
-              </span>
-            }
-            sx={{
-              color:
-                activeTab === 3
-                  ? theme.currentPalette.primary
-                  : theme.currentPalette.text,
-              "&.Mui-selected": {
-                color: theme.currentPalette.primary,
-              },
-            }}
-          />
-        </Tabs>
+        <div className="flex">
+          {/* Sidebar Navigation */}
+          <Box
+            className="w-64 p-5 border-r border-gray-200"
+            sx={{ bgcolor: alpha(theme.currentPalette.text, 0.05) }}
+          >
+            {/* Step 1: Locations */}
+            <div className="relative">
+              <div
+                className="absolute left-1/9 top-8.5 -translate-x-1/2 h-full w-px"
+                style={{ backgroundColor: theme.currentPalette.primary }}
+              />
 
-        <form onSubmit={handleCreateLoad} className="flex-1 overflow-auto p-4">
-          {/* Tab 1: Locations */}
-          {activeTab === 1 && (
-            <div>
-              {/* Information Message */}
-              {allDistance && (
-                <Alert
-                  severity="success"
-                  className="mb-5 p-3 border border-green-600"
-                >
-                  <div>
-                    <h4 className="text-md font-medium text-green-800">
-                      Route Distance Information
-                    </h4>
-                    <p className="text-sm text-green-700 mt-1">
-                      Total distance calculated from {dho ? "DHO" : "Origin"}{" "}
-                      through all destinations:{" "}
-                      <strong>{allDistance} miles</strong>
-                    </p>
-                    {dho && origin && (
-                      <p className="text-sm text-green-600 mt-1">
-                        • DH to Origin: {dhoToOriginDistance?.toFixed(2) || "0"}{" "}
-                        miles
-                      </p>
-                    )}
-                    {destinations.filter((d) => d !== null).length > 0 && (
-                      <p className="text-sm text-green-600">
-                        • Including{" "}
-                        {destinations.filter((d) => d !== null).length}{" "}
-                        destination(s)
-                      </p>
-                    )}
-                  </div>
-                </Alert>
-              )}
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                {/* Direction */}
-                <div className="space-y-6">
-                  <LocationAutocomplete
-                    label="DHO (Driver Home Origin)"
-                    value={dho}
-                    setValue={(place) => dispatch(setDho(place))}
-                    placeholder="Enter driver's starting location"
-                    // googleMapsApiKey={googleMapsApiKey!}
-                    showZipCode={true}
-                  />
-
-                  <LocationAutocomplete
-                    label="Pick Up (Origin)"
-                    value={origin}
-                    setValue={(place) => dispatch(setOrigin(place))}
-                    placeholder="Enter origin address"
-                    // googleMapsApiKey={googleMapsApiKey!}
-                    showZipCode={true}
-                  />
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <Typography
-                        sx={{
-                          color: theme.currentPalette.primary,
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          display: "block",
-                          mb: 1,
-                        }}
-                      >
-                        DHO to Origin Distance
-                      </Typography>
-                      <div className="relative">
-                        <TextField
-                          type="text"
-                          value={
-                            dhoToOriginDistance
-                              ? `${dhoToOriginDistance.toFixed(2)} miles`
-                              : ""
-                          }
-                          sx={{
-                            bgcolor: theme.currentPalette.background,
-                            color: theme.currentPalette.primary,
-                          }}
-                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg font-medium"
-                          aria-readonly
-                          placeholder="Distance will auto-calculate"
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <Typography
-                        sx={{
-                          color: theme.currentPalette.primary,
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          display: "block",
-                          mb: 1,
-                        }}
-                      >
-                        Average Time To Pickup
-                      </Typography>
-                      <div className="relative">
-                        <TextField
-                          type="text"
-                          value={
-                            averageTime ? `${formatTime(averageTime)}` : ""
-                          }
-                          sx={{
-                            bgcolor: theme.currentPalette.background,
-                            color: theme.currentPalette.primary,
-                          }}
-                          className="block w-full px-3 py-3 border border-slate-300 rounded-lg font-medium"
-                          aria-readonly
-                          placeholder="Time will auto-calculate"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Destinations Section */}
-                  <div className="space-y-4">
-                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
-                      <Typography
-                        sx={{
-                          color: theme.currentPalette.primary,
-                          fontSize: "14px",
-                          fontWeight: "bold",
-                          display: "block",
-                          mb: 1,
-                        }}
-                      >
-                        Destinations
-                      </Typography>
-                      <Button
-                        variant="contained"
-                        type="button"
-                        onClick={handleAddDestination}
-                        className="flex items-center w-full md:w-fit gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
-                      >
-                        <IoAdd size={16} />
-                        Add Destination
-                      </Button>
-                    </div>
-
-                    {destinations.map((destination, index) => (
-                      <div key={index} className="flex items-center gap-3">
-                        <div className="flex-1">
-                          <LocationAutocomplete
-                            label={`Destination ${index + 1}`}
-                            value={destination}
-                            setValue={(place) =>
-                              handleUpdateDestination(index, place)
-                            }
-                            placeholder={`Enter destination ${
-                              index + 1
-                            } address`}
-                            // googleMapsApiKey={googleMapsApiKey!}
-                            showZipCode={true}
-                          />
-                        </div>
-
-                        {destinations.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveDestination(index)}
-                            className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <IoClose size={20} />
-                          </button>
-                        )}
-                      </div>
-                    ))}
-
-                    {destinations.length === 0 && (
+              <div
+                className={`mb-4 p-3 rounded-lg cursor-pointer transition-colors`}
+                onClick={() => dispatch(setActiveTab(1))}
+              >
+                <div className="flex items-start">
+                  <div className="mr-3">
+                    {activeTab === 1 ? (
                       <Box
+                        className={`h-6 w-6 rounded-full border-2 flex items-center justify-center`}
                         sx={{
-                          bgcolor: theme.currentPalette.background,
-                          color: theme.currentPalette.primary,
+                          color: theme.currentPalette.background,
+                          bgcolor: theme.currentPalette.primary,
+                          borderColor: theme.currentPalette.primary,
                         }}
-                        className="text-center py-6 border-2 border-dashed rounded-lg"
                       >
-                        <p className="font-medium">No destinations added yet</p>
-                        <p className="text-sm px-3 mt-1">
-                          You must add at least one destination to continue
-                        </p>
+                        <Typography variant="subtitle2" fontSize={12}>
+                          1
+                        </Typography>
                       </Box>
+                    ) : (
+                      <IoCheckmarkCircle
+                        style={{ color: theme.currentPalette.primary }}
+                        size={24}
+                      />
                     )}
                   </div>
+                  <div>
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        color:
+                          activeTab === 1
+                            ? theme.currentPalette.primary
+                            : "inherit",
+                      }}
+                    >
+                      Locations
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "text.secondary" }}
+                    >
+                      Define pricing & delivery addresses
+                    </Typography>
+                  </div>
                 </div>
-
-                {/* Maps - Load only when needed */}
-                <div className="grid grid-cols-1 gap-6">
-                  {showMaps ? (
-                    <Suspense fallback={<MapFallback />}>
-                      <LazyGoogleMapsLoader
-                        onLoad={() => console.log("Maps loaded successfully")}
-                        onError={(error) =>
-                          console.error("Failed to load maps:", error)
-                        }
-                      >
-                        <LazyMapWithRoute
-                          dho={dho}
-                          origin={origin}
-                          destinations={destinations}
-                          height="350px"
-                        />
-                      </LazyGoogleMapsLoader>
-                    </Suspense>
-                  ) : (
-                    <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg border border-gray-200">
-                      <div className="text-center text-gray-500">
-                        <p>Map will load when needed</p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex justify-end pt-4">
-                <Button
-                  sx={{
-                    bgcolor: theme.currentPalette.primary,
-                    color: theme.currentPalette.background,
-                  }}
-                  type="button"
-                  onClick={() => dispatch(setActiveTab(2))}
-                  disabled={!isTab1Valid()}
-                >
-                  Next
-                </Button>
               </div>
             </div>
-          )}
 
-          {/* Tab 2: Load Details */}
-          {activeTab === 2 && (
-            <LoadDetailsTab
-              allDistance={allDistance}
-              price={price}
-              fees={fees}
-              loadIDInp={loadIDInp}
-              pickupAt={pickupAtDayjs}
-              completedAt={completedAtDayjs}
-              arrivalAtShipper={arrivalAtShipperDayjs}
-              arrivalAtReceiver={arrivalAtReceiverDayjs}
-              leftShipper={leftShipperDayjs}
-              leftReceiver={leftReceiverDayjs}
-              pricePerMile={pricePerMile}
-              isEditing={isEditing}
-              destinations={destinations}
-              selectedDocuments={selectedDocuments}
-              uploadError={uploadError}
-              isDragging={isDragging}
-              onPriceChange={handlePriceChange}
-              onFeesChange={(value) => dispatch(setFees(value))}
-              onLoadIDChange={(value) => dispatch(setLoadIDInp(value))}
-              onPickupAtChange={(value) =>
-                dispatch(setPickupAt(value ? value.toISOString() : null))
-              }
-              onCompletedAtChange={(value) =>
-                dispatch(setCompletedAt(value ? value.toISOString() : null))
-              }
-              onArrivalAtShipperChange={(value) =>
-                dispatch(
-                  setArrivalAtShipper(value ? value.toISOString() : null)
-                )
-              }
-              onArrivalAtReceiverChange={(value) =>
-                dispatch(
-                  setArrivalAtReceiver(value ? value.toISOString() : null)
-                )
-              }
-              onLeftShipperChange={(value) =>
-                dispatch(setLeftShipper(value ? value.toISOString() : null))
-              }
-              onLeftReceiverChange={(value) =>
-                dispatch(setLeftReceiver(value ? value.toISOString() : null))
-              }
-              onFileSelect={handleFileSelect}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
-              onRemoveFile={handleRemoveFile}
-              isTabValid={isTab2Valid()}
-              onPrevTab={() => dispatch(setActiveTab(1))}
-              onNextTab={() => dispatch(setActiveTab(3))}
-            />
-          )}
+            {/* Step 2: Load Details */}
+            <div className="relative">
+              <div
+                className="absolute left-1/9 top-8.5 -translate-x-1/2 h-full w-px"
+                style={{ backgroundColor: theme.currentPalette.primary }}
+              />
 
-          {/* Tab 3: Assignment */}
-          {activeTab === 3 && (
-            <AssignmentTab
-              isEditing={isEditing}
-              editingLoad={editingLoad}
-              driverId={driverId}
-              truckId={truckId}
-              truckType={truckType}
-              truckTemp={truckTemp}
-              onDriverIdChange={(value) => dispatch(setDriverId(value))}
-              onTruckIdChange={(value) => dispatch(setTruckId(value))}
-              onTruckTypeChange={(value) =>
-                dispatch(setTruckType(value as TTruckType))
+              <div
+                className={`mb-4 p-3 rounded-lg cursor-pointer transition-colors`}
+                onClick={() => isTab1Valid() && dispatch(setActiveTab(2))}
+              >
+                <div className="flex items-start">
+                  <div className="mr-3">
+                    {activeTab === 2 ? (
+                      <Box
+                        className={`h-6 w-6 rounded-full border-2 flex items-center justify-center`}
+                        sx={{
+                          color: theme.currentPalette.background,
+                          bgcolor: theme.currentPalette.primary,
+                          borderColor: theme.currentPalette.primary,
+                        }}
+                      >
+                        <Typography variant="subtitle2" fontSize={12}>
+                          2
+                        </Typography>
+                      </Box>
+                    ) : isTab1Valid() ? (
+                      <IoCheckmarkCircle
+                        style={{ color: theme.currentPalette.primary }}
+                        size={24}
+                      />
+                    ) : (
+                      <IoEllipseOutline style={{ backgroundColor: alpha(theme.currentPalette.text, 0.01)  }} size={24} />
+                    )}
+                  </div>
+                  <div>
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        color:
+                          activeTab === 2
+                            ? theme.currentPalette.primary
+                            : isTab1Valid()
+                            ? "inherit"
+                            : "text.disabled",
+                      }}
+                    >
+                      Timeline & Milestones
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: isTab1Valid()
+                          ? "text.secondary"
+                          : "text.disabled",
+                      }}
+                    >
+                      Set planned schedules
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 3: Financials */}
+            <div className="relative">
+              <div
+                className="absolute left-1/9 top-8.5 -translate-x-1/2 h-full w-px"
+                style={{ backgroundColor: theme.currentPalette.primary }}
+              />
+
+              <div
+                className={`mb-4 p-3 rounded-lg cursor-pointer transition-colors`}
+                onClick={() =>
+                  isTab1Valid() && isTab2Valid() && dispatch(setActiveTab(3))
+                }
+              >
+                <div className="flex items-start">
+                  <div className="mr-3">
+                    {activeTab === 3 ? (
+                      <Box
+                        className={`h-6 w-6 rounded-full border-2 flex items-center justify-center`}
+                        sx={{
+                          color: theme.currentPalette.background,
+                          bgcolor: theme.currentPalette.primary,
+                          borderColor: theme.currentPalette.primary,
+                        }}
+                      >
+                        <Typography variant="subtitle2" fontSize={12}>
+                          3
+                        </Typography>
+                      </Box>
+                    ) : isTab1Valid() && isTab2Valid() ? (
+                      <IoCheckmarkCircle
+                        style={{ color: theme.currentPalette.primary }}
+                        size={24}
+                      />
+                    ) : (
+                      <IoEllipseOutline style={{ backgroundColor: alpha(theme.currentPalette.text, 0.01)  }} size={24} />
+                    )}
+                  </div>
+                  <div>
+                    <Typography
+                      sx={{
+                        fontWeight: 600,
+                        color:
+                          activeTab === 3
+                            ? theme.currentPalette.primary
+                            : isTab1Valid() && isTab2Valid()
+                            ? "inherit"
+                            : "text.disabled",
+                      }}
+                    >
+                      Financials
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color:
+                          isTab1Valid() && isTab2Valid()
+                            ? "text.secondary"
+                            : "text.disabled",
+                      }}
+                    >
+                      Configure pricing & documents
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Step 4: Assignment */}
+            <div
+              className={`mb-4 p-3 rounded-lg cursor-pointer transition-colors`}
+              onClick={() =>
+                isTab1Valid() &&
+                isTab2Valid() &&
+                isTab3Valid() &&
+                dispatch(setActiveTab(4))
               }
-              onTruckTempChange={(value) => dispatch(setTruckTemp(value))}
-              isTabValid={isTab3Valid()}
-              onPrevTab={() => dispatch(setActiveTab(2))}
+            >
+              <div className="flex items-start">
+                <div className="mr-3">
+                  {activeTab === 4 ? (
+                    <Box
+                      className={`h-6 w-6 rounded-full border-2 flex items-center justify-center`}
+                      sx={{
+                        color: theme.currentPalette.background,
+                        bgcolor: theme.currentPalette.primary,
+                        borderColor: theme.currentPalette.primary,
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontSize={12}>
+                        4
+                      </Typography>
+                    </Box>
+                  ) : isTab1Valid() && isTab2Valid() && isTab3Valid() ? (
+                    <IoCheckmarkCircle
+                      style={{ color: theme.currentPalette.primary }}
+                      size={24}
+                    />
+                  ) : (
+                    <IoEllipseOutline style={{ backgroundColor: alpha(theme.currentPalette.text, 0.01) }} size={24} />
+                  )}
+                </div>
+                <div>
+                  <Typography
+                    sx={{
+                      fontWeight: 600,
+                      color:
+                        activeTab === 4
+                          ? theme.currentPalette.primary
+                          : isTab1Valid() && isTab2Valid() && isTab3Valid()
+                          ? "inherit"
+                          : "text.disabled",
+                    }}
+                  >
+                    Assignment
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color:
+                        isTab1Valid() && isTab2Valid() && isTab3Valid()
+                          ? "text.secondary"
+                          : "text.disabled",
+                    }}
+                  >
+                    Configure pricing & documents
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          </Box>
+
+          {/* Main Content Area */}
+          <div className="flex-1 p-5">
+            <form
               onSubmit={handleCreateLoad}
-              isLoading={creatingLoad || updatingLoad}
-            />
-          )}
-        </form>
+              className="flex-1 overflow-auto p-4"
+            >
+              {/* Tab 1: Locations */}
+              {activeTab === 1 && (
+                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="flex flex-col">
+                      {/* Information Message */}
+                      {allDistance && (
+                        <Box
+                          sx={{
+                            border: `2px solid ${theme.currentPalette.primary}`,
+                            borderRadius: 2,
+                            p: 2,
+                            mb: 2,
+                          }}
+                        >
+                          <Box>
+                            <Typography
+                              variant="h4"
+                              sx={{ fontSize: "18px", fontWeight: "bold" }}
+                            >
+                              Route Distance Information
+                            </Typography>
+
+                            <div className="flex items-center justify-between">
+                              <p
+                                style={{
+                                  color: alpha(theme.currentPalette.text, 0.7),
+                                }}
+                              >
+                                Total distance:
+                              </p>
+                              {destinations.filter((d) => d !== null).length >
+                              0 ? (
+                                <p style={{ color: theme.currentPalette.text }}>
+                                  {
+                                    destinations.filter((d) => d !== null)
+                                      .length
+                                  }{" "}
+                                  destination(s)
+                                </p>
+                              ) : (
+                                <p style={{ color: theme.currentPalette.text }}>
+                                  Not calculated yet
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <p
+                                style={{
+                                  color: alpha(theme.currentPalette.text, 0.7),
+                                }}
+                              >
+                                DHO to Origin:
+                              </p>
+                              {dho && origin ? (
+                                <p style={{ color: theme.currentPalette.text }}>
+                                  {dhoToOriginDistance?.toFixed(2) || "0"} miles
+                                </p>
+                              ) : (
+                                <p style={{ color: theme.currentPalette.text }}>
+                                  Not calculated yet
+                                </p>
+                              )}
+                            </div>
+
+                            <div className="flex items-center justify-between">
+                              <p
+                                style={{
+                                  color: alpha(theme.currentPalette.text, 0.7),
+                                }}
+                              >
+                                Including:
+                              </p>
+                              {allDistance ? (
+                                <p style={{ color: theme.currentPalette.text }}>
+                                  {allDistance} miles
+                                </p>
+                              ) : (
+                                <p style={{ color: theme.currentPalette.text }}>
+                                  0 destination(s)
+                                </p>
+                              )}
+                            </div>
+                          </Box>
+                        </Box>
+                      )}
+
+                      {/* Direction */}
+                      <div className="space-y-6">
+                        <LocationAutocomplete
+                          label="DHO (Driver Home Origin)"
+                          value={dho}
+                          setValue={(place) => dispatch(setDho(place))}
+                          placeholder="Enter driver's starting location"
+                          // googleMapsApiKey={googleMapsApiKey!}
+                          showZipCode={true}
+                        />
+
+                        <LocationAutocomplete
+                          label="Pick Up (Origin)"
+                          value={origin}
+                          setValue={(place) => dispatch(setOrigin(place))}
+                          placeholder="Enter origin address"
+                          // googleMapsApiKey={googleMapsApiKey!}
+                          showZipCode={true}
+                        />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <Typography
+                              sx={{
+                                color: theme.currentPalette.primary,
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                display: "block",
+                                mb: 1,
+                              }}
+                            >
+                              DHO to Origin Distance
+                            </Typography>
+                            <div className="relative">
+                              <TextField
+                                type="text"
+                                value={
+                                  dhoToOriginDistance
+                                    ? `${dhoToOriginDistance.toFixed(2)} miles`
+                                    : ""
+                                }
+                                sx={{
+                                  bgcolor: theme.currentPalette.background,
+                                  color: theme.currentPalette.primary,
+                                }}
+                                className="block w-full px-3 py-3 border border-slate-300 rounded-lg font-medium"
+                                aria-readonly
+                                placeholder="Distance will auto-calculate"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <Typography
+                              sx={{
+                                color: theme.currentPalette.primary,
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                display: "block",
+                                mb: 1,
+                              }}
+                            >
+                              Average Time To Pickup
+                            </Typography>
+                            <div className="relative">
+                              <TextField
+                                type="text"
+                                value={
+                                  averageTime
+                                    ? `${formatTime(averageTime)}`
+                                    : ""
+                                }
+                                sx={{
+                                  bgcolor: theme.currentPalette.background,
+                                  color: theme.currentPalette.primary,
+                                }}
+                                className="block w-full px-3 py-3 border border-slate-300 rounded-lg font-medium"
+                                aria-readonly
+                                placeholder="Time will auto-calculate"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Destinations Section */}
+                        <div className="space-y-4">
+                          <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
+                            <Typography
+                              sx={{
+                                color: theme.currentPalette.primary,
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                display: "block",
+                                mb: 1,
+                              }}
+                            >
+                              Destinations
+                            </Typography>
+                            <Button
+                              variant="contained"
+                              type="button"
+                              onClick={handleAddDestination}
+                              className="flex items-center w-full md:w-fit gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors"
+                            >
+                              <IoAdd size={16} />
+                              Add Destination
+                            </Button>
+                          </div>
+
+                          {destinations.map((destination, index) => (
+                            <div
+                              key={index}
+                              className="flex items-center gap-3"
+                            >
+                              <div className="flex-1">
+                                <LocationAutocomplete
+                                  label={`Destination ${index + 1}`}
+                                  value={destination}
+                                  setValue={(place) =>
+                                    handleUpdateDestination(index, place)
+                                  }
+                                  placeholder={`Enter destination ${
+                                    index + 1
+                                  } address`}
+                                  // googleMapsApiKey={googleMapsApiKey!}
+                                  showZipCode={true}
+                                />
+                              </div>
+
+                              {destinations.length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveDestination(index)}
+                                  className="mt-6 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                >
+                                  <IoClose size={20} />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+
+                          {destinations.length === 0 && (
+                            <Box
+                              sx={{
+                                bgcolor: theme.currentPalette.background,
+                                color: theme.currentPalette.primary,
+                              }}
+                              className="text-center py-6 border-2 border-dashed rounded-lg"
+                            >
+                              <p className="font-medium">
+                                No destinations added yet
+                              </p>
+                              <p className="text-sm px-3 mt-1">
+                                You must add at least one destination to
+                                continue
+                              </p>
+                            </Box>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Maps - Load only when needed */}
+                    <div className="grid grid-cols-1 gap-6">
+                      {showMaps ? (
+                        <Suspense fallback={<MapFallback />}>
+                          <LazyGoogleMapsLoader
+                            onLoad={() =>
+                              console.log("Maps loaded successfully")
+                            }
+                            onError={(error) =>
+                              console.error("Failed to load maps:", error)
+                            }
+                          >
+                            <LazyMapWithRoute
+                              dho={dho}
+                              origin={origin}
+                              destinations={destinations}
+                              height="100%"
+                            />
+                          </LazyGoogleMapsLoader>
+                        </Suspense>
+                      ) : (
+                        <div className="flex items-center justify-center h-64 bg-gray-100 rounded-lg border border-gray-200">
+                          <div className="text-center text-gray-500">
+                            <p>Map will load when needed</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-4">
+                    <Button
+                      sx={{
+                        bgcolor: theme.currentPalette.primary,
+                        color: theme.currentPalette.background,
+                      }}
+                      type="button"
+                      onClick={() => dispatch(setActiveTab(2))}
+                      disabled={!isTab1Valid()}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Load Details */}
+              {activeTab === 2 && (
+                <LoadDetailsTab
+                  pickupAt={pickupAtDayjs}
+                  completedAt={completedAtDayjs}
+                  arrivalAtShipper={arrivalAtShipperDayjs}
+                  arrivalAtReceiver={arrivalAtReceiverDayjs}
+                  leftShipper={leftShipperDayjs}
+                  leftReceiver={leftReceiverDayjs}
+                  onPickupAtChange={(value) =>
+                    dispatch(setPickupAt(value ? value.toISOString() : null))
+                  }
+                  onCompletedAtChange={(value) =>
+                    dispatch(setCompletedAt(value ? value.toISOString() : null))
+                  }
+                  onArrivalAtShipperChange={(value) =>
+                    dispatch(
+                      setArrivalAtShipper(value ? value.toISOString() : null)
+                    )
+                  }
+                  onArrivalAtReceiverChange={(value) =>
+                    dispatch(
+                      setArrivalAtReceiver(value ? value.toISOString() : null)
+                    )
+                  }
+                  onLeftShipperChange={(value) =>
+                    dispatch(setLeftShipper(value ? value.toISOString() : null))
+                  }
+                  onLeftReceiverChange={(value) =>
+                    dispatch(
+                      setLeftReceiver(value ? value.toISOString() : null)
+                    )
+                  }
+                  isEditing={isEditing}
+                  isTabValid={isTab2Valid()}
+                  onPrevTab={() => dispatch(setActiveTab(1))}
+                  onNextTab={() => dispatch(setActiveTab(3))}
+                />
+              )}
+
+              {/* Tab 3: Financial */}
+              {activeTab === 3 && (
+                <FinancialTab
+                  allDistance={allDistance}
+                  price={price}
+                  fees={fees}
+                  loadIDInp={loadIDInp}
+                  pricePerMile={pricePerMile}
+                  destinations={destinations}
+                  onPriceChange={handlePriceChange}
+                  onFeesChange={(value) => dispatch(setFees(value))}
+                  onLoadIDChange={(value) => dispatch(setLoadIDInp(value))}
+                  onFileSelect={handleFileSelect}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onRemoveFile={handleRemoveFile}
+                  uploadError={uploadError}
+                  isDragging={isDragging}
+                  selectedDocuments={selectedDocuments}
+                  isEditing={isEditing}
+                  isTabValid={isTab3Valid()}
+                  onPrevTab={() => dispatch(setActiveTab(2))}
+                  onNextTab={() => dispatch(setActiveTab(4))}
+                />
+              )}
+
+              {/* Tab 4: Assignment */}
+              {activeTab === 4 && (
+                <AssignmentTab
+                  isEditing={isEditing}
+                  editingLoad={editingLoad}
+                  driverId={driverId}
+                  truckId={truckId}
+                  truckType={truckType}
+                  truckTemp={truckTemp}
+                  onDriverIdChange={(value) => dispatch(setDriverId(value))}
+                  onTruckIdChange={(value) => dispatch(setTruckId(value))}
+                  onTruckTypeChange={(value) =>
+                    dispatch(setTruckType(value as TTruckType))
+                  }
+                  onTruckTempChange={(value) => dispatch(setTruckTemp(value))}
+                  isTabValid={isTab4Valid()}
+                  onPrevTab={() => dispatch(setActiveTab(3))}
+                  onSubmit={handleCreateLoad}
+                  isLoading={creatingLoad || updatingLoad}
+                />
+              )}
+            </form>
+          </div>
+        </div>
       </div>
     </Modal>
   );
 };
 export default CreateEditLoadModal;
-
-// Load Details Tab Component
-const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
-  allDistance,
-  price,
-  fees,
-  loadIDInp,
-  pickupAt,
-  completedAt,
-  arrivalAtShipper,
-  arrivalAtReceiver,
-  leftShipper,
-  leftReceiver,
-  pricePerMile,
-  isEditing,
-  destinations,
-  selectedDocuments,
-  uploadError,
-  isDragging,
-  onFileSelect,
-  onDragEnter,
-  onDragLeave,
-  onDragOver,
-  onDrop,
-  onRemoveFile,
-  onPriceChange,
-  onFeesChange,
-  onLoadIDChange,
-  onPickupAtChange,
-  onCompletedAtChange,
-  onArrivalAtShipperChange,
-  onArrivalAtReceiverChange,
-  onLeftShipperChange,
-  onLeftReceiverChange,
-  isTabValid,
-  onPrevTab,
-  onNextTab,
-}) => {
-  const canAddMoreFiles = selectedDocuments.length < 2;
-  const theme = useAppSelector((state: RootState) => state.palette);
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Calculated All Distance - Read Only */}
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Calculated All Distance
-          </Typography>
-          <div className="relative">
-            <TextField
-              aria-readonly
-              type="text"
-              value={allDistance ? `${allDistance} miles` : "Calculating..."}
-              sx={{
-                bgcolor: theme.currentPalette.background,
-                width: "100%",
-              }}
-              placeholder="Auto-calculating total distance..."
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IoCheckmark className="h-5 w-5 text-green-600" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </div>
-          {allDistance && (
-            <p className="text-xs text-slate-500 mt-1">
-              Total route: → {destinations.filter((d) => d !== null).length}{" "}
-              destination(s)
-            </p>
-          )}
-        </div>
-
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Total Price
-          </Typography>
-          <div>
-            <TextField
-              type="text"
-              value={price}
-              onChange={(e) => onPriceChange(e.target.value)}
-              sx={{
-                bgcolor: theme.currentPalette.background,
-                width: "100%",
-              }}
-              placeholder="0.00"
-              required
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IoCash className="h-5 w-5 text-slate-400" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Price Per Mile
-          </Typography>
-          <div className="relative">
-            <TextField
-              aria-readonly
-              type="text"
-              value={
-                pricePerMile !== null &&
-                !isNaN(pricePerMile) &&
-                isFinite(pricePerMile)
-                  ? `$${pricePerMile.toFixed(3)}`
-                  : "$0.000"
-              }
-              sx={{
-                bgcolor: theme.currentPalette.background,
-                width: "100%",
-              }}
-              placeholder="Auto-calculating total distance..."
-              slotProps={{
-                input: {
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IoCash className="h-5 w-5 text-slate-400" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </div>
-          {pricePerMile !== null &&
-            !isNaN(pricePerMile) &&
-            isFinite(pricePerMile) && (
-              <p className="text-xs text-slate-500 mt-1">
-                Calculated automatically: ${price} ÷ {allDistance} miles
-              </p>
-            )}
-        </div>
-
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Fees Number
-          </Typography>
-          <div className="relative">
-            <TextField
-              type="text"
-              value={fees}
-              onChange={(e) => onFeesChange(e.target.value)}
-              sx={{
-                bgcolor: theme.currentPalette.background,
-                width: "100%",
-              }}
-              placeholder="0.00"
-              required
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IoCash className="h-5 w-5 text-slate-400" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </div>
-        </div>
-
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Load Id
-          </Typography>
-          <div className="relative">
-            <TextField
-              type="text"
-              value={loadIDInp}
-              onChange={(e) => onLoadIDChange(e.target.value)}
-              sx={{
-                bgcolor: theme.currentPalette.background,
-                width: "100%",
-              }}
-              placeholder="0.00"
-              required
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <IoKey className="h-5 w-5 text-slate-400" />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-          </div>
-        </div>
-
-        <div className="md:col-span-2">
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Pickup DateTime */}
-              <div>
-                <Typography
-                  sx={{
-                    color: theme.currentPalette.primary,
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                    display: "block",
-                    mb: 1,
-                  }}
-                >
-                  Pickup
-                </Typography>
-                <DateTimePicker
-                  value={pickupAt}
-                  onChange={onPickupAtChange}
-                  views={["year", "month", "day", "hours", "minutes"]}
-                  slotProps={{
-                    textField: {
-                      required: true,
-                      fullWidth: true,
-                      sx: {
-                        bgcolor: theme.currentPalette.background,
-                        "& .MuiInputBase-root": {
-                          bgcolor: theme.currentPalette.background,
-                        },
-                      },
-                    },
-                    popper: {
-                      sx: {
-                        "& .MuiPaper-root": {
-                          bgcolor: theme.currentPalette.background,
-                        },
-                      },
-                    },
-                  }}
-                />
-              </div>
-
-              {/* Completed DateTime */}
-              <div>
-                <Typography
-                  sx={{
-                    color: theme.currentPalette.primary,
-                    fontSize: "14px",
-                    fontWeight: "bold",
-                    display: "block",
-                    mb: 1,
-                  }}
-                >
-                  Delivery
-                </Typography>
-                <DateTimePicker
-                  value={completedAt}
-                  onChange={onCompletedAtChange}
-                  views={["year", "month", "day", "hours", "minutes"]}
-                  slotProps={{
-                    textField: {
-                      required: true,
-                      fullWidth: true,
-                      sx: {
-                        bgcolor: theme.currentPalette.background,
-                        "& .MuiInputBase-root": {
-                          bgcolor: theme.currentPalette.background,
-                        },
-                      },
-                    },
-                    popper: {
-                      sx: {
-                        "& .MuiPaper-root": {
-                          bgcolor: theme.currentPalette.background,
-                        },
-                      },
-                    },
-                  }}
-                />
-              </div>
-
-              {isEditing && (
-                <>
-                  {/* ArrivalAtShipper */}
-                  <div>
-                    <Typography
-                      sx={{
-                        color: theme.currentPalette.primary,
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        display: "block",
-                        mb: 1,
-                      }}
-                    >
-                      Arrival At Shipper
-                    </Typography>
-                    <DateTimePicker
-                      value={arrivalAtShipper}
-                      onChange={onArrivalAtShipperChange}
-                      views={["year", "month", "day", "hours", "minutes"]}
-                      slotProps={{
-                        textField: {
-                          required: true,
-                          fullWidth: true,
-                          sx: {
-                            bgcolor: theme.currentPalette.background,
-                            "& .MuiInputBase-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                        popper: {
-                          sx: {
-                            "& .MuiPaper-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-
-                  {/* arrivalAtReceiver */}
-                  <div>
-                    <Typography
-                      sx={{
-                        color: theme.currentPalette.primary,
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        display: "block",
-                        mb: 1,
-                      }}
-                    >
-                      Arrival At Receiver
-                    </Typography>
-                    <DateTimePicker
-                      value={arrivalAtReceiver}
-                      onChange={onArrivalAtReceiverChange}
-                      views={["year", "month", "day", "hours", "minutes"]}
-                      slotProps={{
-                        textField: {
-                          required: true,
-                          fullWidth: true,
-                          sx: {
-                            bgcolor: theme.currentPalette.background,
-                            "& .MuiInputBase-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                        popper: {
-                          sx: {
-                            "& .MuiPaper-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-
-                  {/* leftShipper */}
-                  <div>
-                    <Typography
-                      sx={{
-                        color: theme.currentPalette.primary,
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        display: "block",
-                        mb: 1,
-                      }}
-                    >
-                      Left Shipper
-                    </Typography>
-                    <DateTimePicker
-                      value={leftShipper}
-                      onChange={onLeftShipperChange}
-                      views={["year", "month", "day", "hours", "minutes"]}
-                      slotProps={{
-                        textField: {
-                          required: true,
-                          fullWidth: true,
-                          sx: {
-                            bgcolor: theme.currentPalette.background,
-                            "& .MuiInputBase-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                        popper: {
-                          sx: {
-                            "& .MuiPaper-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-
-                  {/* leftReceiver */}
-                  <div>
-                    <Typography
-                      sx={{
-                        color: theme.currentPalette.primary,
-                        fontSize: "14px",
-                        fontWeight: "bold",
-                        display: "block",
-                        mb: 1,
-                      }}
-                    >
-                      Left Receiver
-                    </Typography>
-                    <DateTimePicker
-                      value={leftReceiver}
-                      onChange={onLeftReceiverChange}
-                      views={["year", "month", "day", "hours", "minutes"]}
-                      slotProps={{
-                        textField: {
-                          required: true,
-                          fullWidth: true,
-                          sx: {
-                            bgcolor: theme.currentPalette.background,
-                            "& .MuiInputBase-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                        popper: {
-                          sx: {
-                            "& .MuiPaper-root": {
-                              bgcolor: theme.currentPalette.background,
-                            },
-                          },
-                        },
-                      }}
-                    />
-                  </div>
-                </>
-              )}
-            </div>
-          </LocalizationProvider>
-        </div>
-
-        {/* Documents - Drag & Drop Area */}
-        <div className="md:col-span-2">
-          <div
-            className={`
-    border-2 border-dashed rounded-lg p-6 transition-all duration-200
-    ${isDragging ? "ring-2 ring-offset-1" : ""}
-  `}
-            style={{
-              borderColor: isDragging
-                ? theme.currentPalette.primary
-                : theme.currentPalette.text,
-              backgroundColor: isDragging
-                ? `${theme.currentPalette.primary}20`
-                : theme.currentPalette.background,
-            }}
-            onDragEnter={onDragEnter}
-            onDragLeave={onDragLeave}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
-          >
-            <div className="text-center">
-              <div className="flex justify-center mb-3">
-                <MdPictureAsPdf
-                  className={`transition-colors ${
-                    isDragging ? "text-blue-500" : "text-red-500"
-                  }`}
-                  size={32}
-                />
-              </div>
-              <h5 className="text-sm font-semibold text-slate-700 mb-1">
-                Add PDF Documents (Optional)
-              </h5>
-              <p className="text-xs text-slate-500 mb-4">
-                Maximum 2 PDF files allowed - You can add documents later
-              </p>
-
-              <input
-                type="file"
-                id="pdf-upload-create"
-                accept=".pdf,application/pdf"
-                multiple
-                onChange={onFileSelect}
-                disabled={!canAddMoreFiles}
-                className="hidden"
-              />
-              <label
-                htmlFor="pdf-upload-create"
-                className={`
-                  inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium 
-                  transition-all duration-200 cursor-pointer
-                  ${canAddMoreFiles ? "" : "cursor-not-allowed opacity-60"}
-                `}
-                style={{
-                  backgroundColor: canAddMoreFiles
-                    ? theme.currentPalette.primary
-                    : theme.currentPalette.background,
-                  color: canAddMoreFiles
-                    ? theme.currentPalette.background
-                    : theme.currentPalette.text,
-                  border: `1px solid ${
-                    canAddMoreFiles
-                      ? theme.currentPalette.primary
-                      : theme.currentPalette.text
-                  }`,
-                }}
-              >
-                <IoAdd size={16} />
-                Select PDF Files
-              </label>
-
-              <p className="text-xs text-slate-500 mt-3">
-                or <strong>drag and drop</strong> PDF files here
-              </p>
-
-              {uploadError && (
-                <div className="mt-3 flex items-center justify-center gap-2 text-red-600 text-sm">
-                  <MdError size={16} />
-                  {uploadError}
-                </div>
-              )}
-
-              {/* Selected Files Preview */}
-              {selectedDocuments.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm font-medium text-slate-700">
-                    Selected Files ({selectedDocuments.length}/2):
-                  </p>
-                  {selectedDocuments.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200"
-                    >
-                      <div className="flex items-center gap-2">
-                        <MdPictureAsPdf className="text-red-500" size={18} />
-                        <div className="text-left">
-                          <p className="text-sm font-medium text-slate-800">
-                            {file.name}
-                          </p>
-                          <p className="text-xs text-slate-500">
-                            {(file.size / 1024).toFixed(2)} KB
-                          </p>
-                        </div>
-                      </div>
-                      <Button
-                        variant="contained"
-                        type="button"
-                        onClick={() => onRemoveFile(index)}
-                        className="p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
-                      >
-                        <IoClose size={16} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex justify-between pt-4">
-        <Button
-          sx={{
-            bgcolor: theme.currentPalette.primary,
-            color: theme.currentPalette.background,
-          }}
-          type="button"
-          onClick={onPrevTab}
-        >
-          Back
-        </Button>
-        <Button
-          sx={{
-            bgcolor: theme.currentPalette.primary,
-            color: theme.currentPalette.background,
-          }}
-          type="button"
-          onClick={onNextTab}
-          disabled={!isTabValid}
-        >
-          Next
-        </Button>
-      </div>
-    </div>
-  );
-};
-
-// Assignment Tab Component
-const AssignmentTab: React.FC<AssignmentTabProps> = ({
-  isEditing,
-  editingLoad,
-  driverId,
-  truckId,
-  truckType,
-  truckTemp,
-  onDriverIdChange,
-  onTruckIdChange,
-  onTruckTypeChange,
-  onTruckTempChange,
-  isTabValid,
-  onPrevTab,
-  isLoading,
-}) => {
-  const token = useAppSelector((state: RootState) => state.auth.token);
-
-  const { data: driversData, refetch: driverRefetch } = useGetDriversQuery({
-    skip: !token,
-  });
-  const { data: trucksData, refetch: truckRefetch } = useGetTrucksQuery({
-    skip: !token,
-  });
-
-  const drivers = driversData?.data || [];
-  const trucks = trucksData?.data || [];
-  const theme = useAppSelector((state: RootState) => state.palette);
-
-  if (isEditing) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Driver - Display Only */}
-          <div>
-            <Typography
-              sx={{
-                color: theme.currentPalette.primary,
-                fontSize: "14px",
-                fontWeight: "bold",
-                display: "block",
-                mb: 1,
-              }}
-            >
-              Driver{" "}
-              <Typography sx={{ color: theme.currentPalette.text }}>
-                ✓ Assigned
-              </Typography>
-            </Typography>
-            <div className="relative">
-              <TextField
-                aria-readonly
-                type="text"
-                value={editingLoad?.driverId?.name || "No driver assigned"}
-                sx={{
-                  bgcolor: theme.currentPalette.background,
-                  width: "100%",
-                }}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IoCheckmark className="h-5 w-5 text-green-600" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </div>
-            {editingLoad?.driverId?.phone && (
-              <p className="text-xs text-slate-500 mt-1">
-                Phone: {editingLoad.driverId.phone}
-              </p>
-            )}
-          </div>
-
-          {/* Truck Type - Display Only */}
-          <div>
-            <Typography
-              sx={{
-                color: theme.currentPalette.primary,
-                fontSize: "14px",
-                fontWeight: "bold",
-                display: "block",
-                mb: 1,
-              }}
-            >
-              Truck Type{" "}
-              <Typography sx={{ color: theme.currentPalette.text }}>
-                ✓ Assigned
-              </Typography>
-            </Typography>
-            <div className="relative">
-              <TextField
-                aria-readonly
-                type="text"
-                value={
-                  editingLoad?.truckType
-                    ? `${
-                        editingLoad.truckType.charAt(0).toUpperCase() +
-                        editingLoad.truckType.slice(1)
-                      }`
-                    : "No type assigned"
-                }
-                sx={{
-                  bgcolor: theme.currentPalette.background,
-                  width: "100%",
-                }}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IoCheckmark className="h-5 w-5 text-green-600" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </div>
-          </div>
-
-          {/* Truck - Display Only */}
-          <div>
-            <Typography
-              sx={{
-                color: theme.currentPalette.primary,
-                fontSize: "14px",
-                fontWeight: "bold",
-                display: "block",
-                mb: 1,
-              }}
-            >
-              Truck{" "}
-              <Typography sx={{ color: theme.currentPalette.text }}>
-                ✓ Assigned
-              </Typography>
-            </Typography>
-            <div className="relative">
-              <TextField
-                aria-readonly
-                type="text"
-                value={
-                  editingLoad?.truckId
-                    ? `${editingLoad.truckId.model} (${editingLoad.truckId.plateNumber})`
-                    : "No truck assigned"
-                }
-                sx={{
-                  bgcolor: theme.currentPalette.background,
-                  width: "100%",
-                }}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IoCheckmark className="h-5 w-5 text-green-600" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </div>
-            {editingLoad?.truckId && (
-              <p className="text-xs text-slate-500 mt-1">
-                Truck ID: {editingLoad.truckId.truckId}
-              </p>
-            )}
-          </div>
-
-          {/* Temperature - Display Only */}
-          <div>
-            <Typography
-              sx={{
-                color: theme.currentPalette.primary,
-                fontSize: "14px",
-                fontWeight: "bold",
-                display: "block",
-                mb: 1,
-              }}
-            >
-              Temperature{" "}
-              <Typography sx={{ color: theme.currentPalette.text }}>
-                ✓ Set
-              </Typography>
-            </Typography>
-            <div className="relative">
-              <TextField
-                aria-readonly
-                type="text"
-                value={
-                  editingLoad?.truckTemp
-                    ? `${editingLoad.truckTemp}°C`
-                    : "Not set"
-                }
-                sx={{
-                  bgcolor: theme.currentPalette.background,
-                  width: "100%",
-                }}
-                slotProps={{
-                  input: {
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IoCheckmark className="h-5 w-5 text-green-600" />
-                      </InputAdornment>
-                    ),
-                  },
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Information Message */}
-        <Alert
-          severity="info"
-          className="p-4 bg-blue-50 border border-blue-200 rounded-lg"
-        >
-          <div className="flex flex-col items-start gap-1">
-            <h4 className="text-md font-medium">Driver & Truck Information</h4>
-            <p className="text-sm">
-              Driver and truck assignments cannot be modified for existing
-              loads. This ensures consistency in load tracking and driver
-              assignments.
-            </p>
-          </div>
-        </Alert>
-
-        <div className="flex justify-between pt-4">
-          <Button
-            sx={{
-              bgcolor: theme.currentPalette.primary,
-              color: theme.currentPalette.background,
-            }}
-            type="button"
-            onClick={onPrevTab}
-          >
-            Back
-          </Button>
-          <Button
-            sx={{
-              bgcolor: theme.currentPalette.primary,
-              color: theme.currentPalette.background,
-            }}
-            type="submit"
-            disabled={!isTabValid || isLoading}
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                {isEditing ? "Updating..." : "Creating..."}
-              </>
-            ) : (
-              <>
-                <RxUpdate size={18} />
-                Update Load
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Driver
-          </Typography>
-          <FormControl fullWidth>
-            <Select
-              labelId="demo-simple-select-label"
-              value={driverId}
-              displayEmpty
-              required
-              onOpen={() => {
-                driverRefetch();
-                truckRefetch();
-              }}
-              onChange={(e) => onDriverIdChange(e.target.value)}
-            >
-              <MenuItem value="" disabled>
-                Select Driver
-              </MenuItem>
-              {drivers.map((d: TDriver, i: number) => (
-                <MenuItem key={i} value={d.id}>
-                  {d.name} ({d.driverId})
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </div>
-
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Truck Type
-          </Typography>
-          <FormControl fullWidth>
-            <Select
-              labelId="demo-simple-select-label"
-              displayEmpty
-              required
-              value={truckType}
-              onChange={(e) => onTruckTypeChange(e.target.value as TTruckType)}
-            >
-              <MenuItem value="" disabled>
-                Select Type
-              </MenuItem>
-              <MenuItem value={"reefer"}>Reefer</MenuItem>
-              <MenuItem value={"van"}>Van</MenuItem>
-            </Select>
-          </FormControl>
-        </div>
-
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Truck
-          </Typography>
-          <FormControl fullWidth>
-            <Select
-              labelId="demo-simple-select-label"
-              displayEmpty
-              required
-              value={truckId}
-              onChange={(e) => onTruckIdChange(e.target.value)}
-              disabled={!truckType}
-            >
-              <MenuItem value="" disabled>
-                Select Truck
-              </MenuItem>
-              {Array.isArray(trucks) ? (
-                trucks
-                  .filter((t: TTruck) => !truckType || t.type === truckType)
-                  .map((t: TTruck, i: number) => (
-                    <MenuItem key={i} value={t.id}>
-                      {t.model} ({t.plateNumber}) - {t.type}
-                    </MenuItem>
-                  ))
-              ) : (
-                <MenuItem disabled>No trucks available</MenuItem>
-              )}
-            </Select>
-          </FormControl>
-        </div>
-
-        <div>
-          <Typography
-            sx={{
-              color: theme.currentPalette.primary,
-              fontSize: "14px",
-              fontWeight: "bold",
-              display: "block",
-              mb: 1,
-            }}
-          >
-            Temperature
-          </Typography>
-          <TextField
-            fullWidth
-            type="number"
-            value={truckTemp}
-            onChange={(e) => onTruckTempChange(e.target.value)}
-            placeholder="-10"
-            disabled={
-              !truckId ||
-              (Array.isArray(trucks.data) &&
-                trucks.data
-                  .find((t: TTruck) => t.id === String(truckId))
-                  ?.type?.toLowerCase() !== "reefer")
-            }
-            sx={{
-              bgcolor: theme.currentPalette.background,
-              width: "100%",
-              "& .MuiInputBase-root.Mui-disabled": {
-                cursor: "not-allowed",
-                backgroundColor: alpha(theme.currentPalette.primary, 0.1),
-              },
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="flex justify-between pt-4">
-        <Button
-          sx={{
-            bgcolor: theme.currentPalette.primary,
-            color: theme.currentPalette.background,
-          }}
-          type="button"
-          onClick={onPrevTab}
-        >
-          Back
-        </Button>
-        <Button
-          sx={{
-            bgcolor: theme.currentPalette.primary,
-            color: theme.currentPalette.background,
-          }}
-          type="submit"
-          disabled={!isTabValid || isLoading}
-        >
-          {isLoading ? (
-            <>
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              Creating...
-            </>
-          ) : (
-            <>Create Load</>
-          )}
-        </Button>
-      </div>
-    </div>
-  );
-};

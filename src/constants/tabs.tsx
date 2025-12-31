@@ -5,7 +5,6 @@ import {
   ChartNoAxesCombined,
   CircleDivide,
   Handshake,
-  MessageCircleMore,
   ShieldUser,
   Truck,
   Users,

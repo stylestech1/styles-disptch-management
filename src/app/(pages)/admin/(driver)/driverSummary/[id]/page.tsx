@@ -47,14 +47,12 @@ const DriverSummary = () => {
     useGetDriverByIdQuery(id as string, { skip: !id });
 
   // ✅ Lazy Query for filtered data
-  const {
-    data: driverSummaryData,
-    error: summaryError,
-  } = useGetDriverSummaryWithFilterQuery({
-    id: id as string,
-    from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
-    to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
-  });
+  const { data: driverSummaryData, error: summaryError } =
+    useGetDriverSummaryWithFilterQuery({
+      id: id as string,
+      from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
+      to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
+    });
 
   //
   const {
@@ -96,7 +94,6 @@ const DriverSummary = () => {
       color: theme.currentPalette.primary,
       "&:hover": {
         bgcolor: alpha(theme.currentPalette.primary, 0.1),
-        cursor: "pointer",
       },
       transition: "all 0.2s ease-in-out",
     };
@@ -109,7 +106,12 @@ const DriverSummary = () => {
         </td>
 
         {/* Plate Number */}
-        <td className="p-4 text-center">{load.truckId.plateNumber}</td>
+        <td className="p-4 text-left">{load.truckId.plateNumber}</td>
+
+        {/* Delivered */}
+        <td className="p-4 text-left">
+          {load.deliveredAt ? load.deliveredAt.split("T")[0] : "-"}
+        </td>
 
         {/* Origin */}
         <td className="p-4 text-left max-w-10">
@@ -135,20 +137,15 @@ const DriverSummary = () => {
         </td>
 
         {/* Miles */}
-        <td className="p-4 text-right">
+        <td className="p-4 text-center">
           {load.distanceMiles?.toLocaleString()}
         </td>
 
         {/* Price/Mile */}
-        <td className="p-4 text-right">${load.pricePerMile?.toFixed(2)}</td>
+        <td className="p-4 text-center">$ {load.pricePerMile?.toFixed(2)}</td>
 
         {/* Total */}
-        <td className="p-4 text-right">${load.totalPrice?.toLocaleString()}</td>
-
-        {/* Delivered */}
-        <td className="p-4 text-center">
-          {load.deliveredAt ? load.deliveredAt.split("T")[0] : "-"}
-        </td>
+        <td className="p-4 text-center">${load.totalPrice?.toLocaleString()}</td>
       </TableRow>
     );
   };
@@ -182,7 +179,7 @@ const DriverSummary = () => {
       id: 4,
       icon: <Calendar size={25} />,
       name: "Hire Date",
-      value: profile?.hireDate.split('T')[0],
+      value: profile?.hireDate.split("T")[0],
     },
   ];
 

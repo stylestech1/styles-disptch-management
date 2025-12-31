@@ -87,7 +87,7 @@ const AddNoteModal: React.FC<AddNoteModalProps> = ({
       size="md"
       closeOnOutsideClick={false}
     >
-      <form onSubmit={handleNotes} className="space-y-4">
+      <form onSubmit={handleNotes} className="space-y-4 p-5">
         {/* Load ID */}
         <div>
           <Typography

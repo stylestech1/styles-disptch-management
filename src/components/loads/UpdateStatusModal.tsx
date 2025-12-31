@@ -103,7 +103,7 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
       size="md"
       closeOnOutsideClick={false}
     >
-      <form onSubmit={handleUpdateLoadStatus} className="space-y-4">
+      <form onSubmit={handleUpdateLoadStatus} className="space-y-4 p-5">
         <div>
           <Typography
             sx={{

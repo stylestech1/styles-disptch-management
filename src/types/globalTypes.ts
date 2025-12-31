@@ -67,6 +67,10 @@ export type TLoads = {
   distanceMiles: number;
   pricePerMile: number;
   totalPrice: number;
+  bonus: number;
+  detention: number;
+  deduction: number;
+  reason: string;
   status: TStatusLoad;
   driverId: TDriver;
   truckId: TTruckId;
@@ -183,12 +187,20 @@ export type TLoadSummary = {
   id: string;
   totalLoads: number;
   totalMiles: number;
-  totalEarnings: number;
+  earnings: TEarnings;
   pricePerMile: number;
   currency: string;
   period: TPeriod;
   loads: TLoads[];
 };
+export type TEarnings = {
+  baseEarnings: number;
+  totalBonus: number;
+  totalDetention: number;
+  totalDeduction: number;
+  totalEarnings: number;
+};
+
 export type TTruckSummary = {
   _id: string;
   truckId: number;
@@ -397,19 +409,31 @@ export interface CreateEditLoadModalProps {
   editingLoad?: TLoads | null;
 }
 export interface LoadDetailsTabProps {
-  allDistance: string;
-  price: string;
-  fees: string;
-  loadIDInp: string;
   pickupAt: Dayjs | null;
   completedAt: Dayjs | null;
   arrivalAtShipper: Dayjs | null;
   arrivalAtReceiver: Dayjs | null;
   leftShipper: Dayjs | null;
   leftReceiver: Dayjs | null;
-  pricePerMile: number | null;
   isEditing: boolean;
+  onPickupAtChange: (value: Dayjs | null) => void;
+  onCompletedAtChange: (value: Dayjs | null) => void;
+  onArrivalAtShipperChange: (value: Dayjs | null) => void;
+  onArrivalAtReceiverChange: (value: Dayjs | null) => void;
+  onLeftShipperChange: (value: Dayjs | null) => void;
+  onLeftReceiverChange: (value: Dayjs | null) => void;
+  isTabValid: boolean;
+  onPrevTab: () => void;
+  onNextTab: () => void;
+}
+export interface FinancialTabProps {
+  allDistance: string;
+  price: string;
+  fees: string;
+  loadIDInp: string;
+  pricePerMile: number | null;
   destinations: (TPlace | null)[];
+  isEditing: boolean;
   selectedDocuments: File[];
   uploadError: string;
   isDragging: boolean;
@@ -422,12 +446,6 @@ export interface LoadDetailsTabProps {
   onPriceChange: (value: string) => void;
   onFeesChange: (value: string) => void;
   onLoadIDChange: (value: string) => void;
-  onPickupAtChange: (value: Dayjs | null) => void;
-  onCompletedAtChange: (value: Dayjs | null) => void;
-  onArrivalAtShipperChange: (value: Dayjs | null) => void;
-  onArrivalAtReceiverChange: (value: Dayjs | null) => void;
-  onLeftShipperChange: (value: Dayjs | null) => void;
-  onLeftReceiverChange: (value: Dayjs | null) => void;
   isTabValid: boolean;
   onPrevTab: () => void;
   onNextTab: () => void;

@@ -53,3 +53,10 @@ export interface GetSinglePaletteResponse {
   message: string;
   data: TPaletteConfig;
 }
+
+export interface PaletteState {
+  currentPalette: Palette;
+  customPalettes: Palette[];
+  isLoading: boolean;
+  error: string | null;
+}

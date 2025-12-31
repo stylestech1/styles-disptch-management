@@ -1,6 +1,6 @@
 "use client";
 import { RootState, useAppSelector } from "@/redux/store";
-import { Box, Button, Typography } from "@mui/material";
+import { alpha, Box, Button, Typography } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { IoClose } from "react-icons/io5";
 
@@ -9,7 +9,7 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl";
+  size?: "sm" | "md" | "lg" | "xl" | 'xxl';
   showCloseButton?: boolean;
   closeOnOutsideClick?: boolean;
 }
@@ -70,11 +70,12 @@ const Modal = ({
     md: "max-w-md",
     lg: "max-w-lg",
     xl: "max-w-4xl",
+    xxl: "max-w-6xl"
   };
 
   return (
     <div
-      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={(e) => {
         if (
           closeOnOutsideClick &&
@@ -89,9 +90,9 @@ const Modal = ({
       <Box
       sx={{bgcolor: theme.currentPalette.background}}
         ref={modalRef}
-        className={`relative rounded-2xl shadow-2xl border p-6 w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto animate-in fade-in-90 zoom-in-90 duration-200`}
+        className={`relative rounded-2xl shadow-2xl border w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto animate-in fade-in-90 zoom-in-90 duration-200`}
       >
-        <div className="flex items-center justify-between mb-6 sticky top-0 pb-4 border-b">
+        <div className="flex items-center justify-between sticky top-0 p-4 border-b" style={{borderColor: alpha(theme.currentPalette.text, 0.1)}}>
           <Typography sx={{color: theme.currentPalette.primary, fontSize: '22px', fontWeight: 'bold'}}>{title}</Typography>
           {showCloseButton && (
             <Button

@@ -1,4 +1,4 @@
-import { Palette, TPaletteConfig } from "@/types/themeType";
+import { Palette, PaletteState, TPaletteConfig } from "@/types/themeType";
 import { TPaletteConfigToPalette } from "@/utils/helperPalette";
 import { PaletteMode } from "@mui/material";
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
@@ -13,12 +13,7 @@ const defaultPalette: Palette = {
   title: "#1E56A0",
 };
 
-interface PaletteState {
-  currentPalette: Palette;
-  customPalettes: Palette[];
-  isLoading: boolean;
-  error: string | null;
-}
+
 
 const initialState: PaletteState = {
   currentPalette: defaultPalette,

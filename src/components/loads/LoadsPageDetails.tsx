@@ -9,7 +9,6 @@ import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Pagination from "@/components/ui/Pagination";
 import StatsCard from "@/components/ui/StatsCard";
-import StatusBadge from "@/components/ui/StatusBadge";
 import SearchInput from "@/components/ui/SearchInput";
 import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 
