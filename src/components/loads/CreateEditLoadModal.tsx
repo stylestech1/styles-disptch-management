@@ -69,10 +69,16 @@ import {
 import LoadDetailsTab from "./tabsModal/LoadDetailsTab";
 import AssignmentTab from "./tabsModal/AssignmentTab";
 import FinancialTab from "./tabsModal/FinancialTab";
+type AdjustmentType = "Bonus" | "Detention" | "Deduction";
+
+interface Adjustment {
+  type: AdjustmentType;
+  amount: number;
+}
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
-  () => import("@/components/ui/GoogleMapsLoader")
+  () => import("@/components/ui/GoogleMapsLoader"),
 );
 const LazyMapWithRoute = lazy(() => import("@/components/ui/MapWithRoute"));
 
@@ -109,6 +115,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   const [selectedDocuments, setSelectedDocuments] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState<string>("");
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
 
   // Days.js
   const pickupAtDayjs = pickupAt ? dayjs(pickupAt) : null;
@@ -126,13 +133,16 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   const [updateLoad, { isLoading: updatingLoad }] = useUpdateLoadsMutation();
 
   const [dhoToOriginDistance, setDhoToOriginDistance] = useState<number | null>(
-    null
+    null,
   );
   const [averageTime, setAverageTime] = useState<number | null>(null);
   const [distance, setDistance] = useState<number | null>(null);
   const [allDistance, setAllDistance] = useState<string>("");
   const [pricePerMile, setPricePerMile] = useState<number | null>(null);
   const [showMaps, setShowMaps] = useState(false);
+  const [selectedAdjustmentType, setSelectedAdjustmentType] = useState<
+    AdjustmentType | ""
+  >("");
 
   // Drag Handlers
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -157,7 +167,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
         setIsDragging(true);
       }
     },
-    [isDragging]
+    [isDragging],
   );
 
   // Drop Handlers
@@ -276,8 +286,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                 lat: "0",
                 lon: "0",
                 place_id: `temp_${Date.now()}_dho`,
-              } as TPlace)
-          )
+              } as TPlace),
+          ),
         );
       } else {
         dispatch(setDho(null));
@@ -294,8 +304,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                 lat: "0",
                 lon: "0",
                 place_id: `temp_${Date.now()}_origin`,
-              } as TPlace)
-          )
+              } as TPlace),
+          ),
         );
       } else {
         dispatch(setOrigin(null));
@@ -319,7 +329,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                 place_id: `temp_${Date.now()}_dest_${dest}`,
               } as TPlace)
             );
-          })
+          }),
         );
 
         dispatch(setDestinations(destinationPlaces));
@@ -365,7 +375,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       try {
         const result = await calculateDhoToOriginDistance(
           { lat: parseFloat(dho.lat), lng: parseFloat(dho.lon) },
-          { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }
+          { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) },
         );
         setDhoToOriginDistance(result.distance);
         setAverageTime(result.duration);
@@ -402,7 +412,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
             origin
               ? { lat: parseFloat(origin.lat), lng: parseFloat(origin.lon) }
               : null,
-            destinationsCoords
+            destinationsCoords,
           );
 
           setDistance(result.distance);
@@ -524,13 +534,37 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
     try {
       let createdLoadId: string | undefined;
-
       if (isEditing && editingLoad) {
+        if (!selectedAdjustmentType) {
+          toast.error("Please select an adjustment type ❌");
+          return;
+        }
+
+        const adjustment = adjustments.find(
+          (adj) => adj.type === selectedAdjustmentType,
+        );
+
+        if (!adjustment) {
+          toast.error("Selected adjustment not found ❌");
+          return;
+        }
+
+        const amount = Number(adjustment.amount) || 0;
+
+        formData.set(selectedAdjustmentType, amount.toString());
+
+        console.log("📦 FormData preview before update:");
+        for (const [key, value] of formData.entries()) {
+          console.log(key, value);
+        }
+
+        // Send update
         console.log("🔄 Sending UPDATE request...");
         await updateLoad({
           id: editingLoad.id,
           formData,
         }).unwrap();
+
         toast.success("Load updated ✅");
         createdLoadId = editingLoad.id;
       } else {
@@ -545,7 +579,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
       const errorMessage = getErrorMessage(err);
       console.error("❌ Request failed:", err);
       toast.error(
-        errorMessage || `Load ${isEditing ? "update" : "creation"} failed ❌`
+        errorMessage || `Load ${isEditing ? "update" : "creation"} failed ❌`,
       );
     }
   };
@@ -680,11 +714,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={
-        isEditing && editingLoad
-          ? `Edit Load - ${editingLoad.loadId}`
-          : "Create New Load"
-      }
+      title={isEditing && editingLoad ? `Edit Load` : "Create New Load"}
+      desc="Complete all steps"
       size="xxl"
       closeOnOutsideClick={false}
     >
@@ -783,7 +814,15 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         size={24}
                       />
                     ) : (
-                      <IoEllipseOutline style={{ backgroundColor: alpha(theme.currentPalette.text, 0.01)  }} size={24} />
+                      <IoEllipseOutline
+                        style={{
+                          backgroundColor: alpha(
+                            theme.currentPalette.text,
+                            0.01,
+                          ),
+                        }}
+                        size={24}
+                      />
                     )}
                   </div>
                   <div>
@@ -794,8 +833,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                           activeTab === 2
                             ? theme.currentPalette.primary
                             : isTab1Valid()
-                            ? "inherit"
-                            : "text.disabled",
+                              ? "inherit"
+                              : "text.disabled",
                       }}
                     >
                       Timeline & Milestones
@@ -849,7 +888,15 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         size={24}
                       />
                     ) : (
-                      <IoEllipseOutline style={{ backgroundColor: alpha(theme.currentPalette.text, 0.01)  }} size={24} />
+                      <IoEllipseOutline
+                        style={{
+                          backgroundColor: alpha(
+                            theme.currentPalette.text,
+                            0.01,
+                          ),
+                        }}
+                        size={24}
+                      />
                     )}
                   </div>
                   <div>
@@ -860,8 +907,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                           activeTab === 3
                             ? theme.currentPalette.primary
                             : isTab1Valid() && isTab2Valid()
-                            ? "inherit"
-                            : "text.disabled",
+                              ? "inherit"
+                              : "text.disabled",
                       }}
                     >
                       Financials
@@ -913,7 +960,12 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                       size={24}
                     />
                   ) : (
-                    <IoEllipseOutline style={{ backgroundColor: alpha(theme.currentPalette.text, 0.01) }} size={24} />
+                    <IoEllipseOutline
+                      style={{
+                        backgroundColor: alpha(theme.currentPalette.text, 0.01),
+                      }}
+                      size={24}
+                    />
                   )}
                 </div>
                 <div>
@@ -924,8 +976,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         activeTab === 4
                           ? theme.currentPalette.primary
                           : isTab1Valid() && isTab2Valid() && isTab3Valid()
-                          ? "inherit"
-                          : "text.disabled",
+                            ? "inherit"
+                            : "text.disabled",
                     }}
                   >
                     Assignment
@@ -1265,12 +1317,12 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                   }
                   onArrivalAtShipperChange={(value) =>
                     dispatch(
-                      setArrivalAtShipper(value ? value.toISOString() : null)
+                      setArrivalAtShipper(value ? value.toISOString() : null),
                     )
                   }
                   onArrivalAtReceiverChange={(value) =>
                     dispatch(
-                      setArrivalAtReceiver(value ? value.toISOString() : null)
+                      setArrivalAtReceiver(value ? value.toISOString() : null),
                     )
                   }
                   onLeftShipperChange={(value) =>
@@ -1278,7 +1330,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                   }
                   onLeftReceiverChange={(value) =>
                     dispatch(
-                      setLeftReceiver(value ? value.toISOString() : null)
+                      setLeftReceiver(value ? value.toISOString() : null),
                     )
                   }
                   isEditing={isEditing}
@@ -1307,6 +1359,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                   onDrop={handleDrop}
                   onRemoveFile={handleRemoveFile}
                   uploadError={uploadError}
+                  adjustments={adjustments}
+                  setAdjustments={setAdjustments}
                   isDragging={isDragging}
                   selectedDocuments={selectedDocuments}
                   isEditing={isEditing}

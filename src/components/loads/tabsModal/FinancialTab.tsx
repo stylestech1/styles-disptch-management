@@ -5,14 +5,28 @@ import {
   alpha,
   Box,
   Button,
+  IconButton,
   InputAdornment,
   Stack,
   TextField,
   Typography,
 } from "@mui/material";
-import { CircleDollarSign, Coins, DollarSign, KeyRound } from "lucide-react";
+import {
+  CircleDollarSign,
+  Coins,
+  DollarSign,
+  KeyRound,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { IoAdd, IoCash, IoCheckmark, IoClose, IoKey } from "react-icons/io5";
 import { MdError, MdPictureAsPdf } from "react-icons/md";
+import { useState } from "react";
+type Adjustment = {
+  id: number; // unique ID
+  type: "Bonus" | "Detention" | "Deduction";
+  amount: number;
+};
 
 // Load Details Tab Component
 const FinancialTab: React.FC<FinancialTabProps> = ({
@@ -41,6 +55,33 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
 }) => {
   const canAddMoreFiles = selectedDocuments.length < 2;
   const theme = useAppSelector((state: RootState) => state.palette);
+  const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
+
+  const handleAddAdjustment = () => {
+    setAdjustments((prev) => [
+      ...prev,
+      { id: Date.now(), type: "Bonus", amount: 0 },
+    ]);
+  };
+
+  const handleRemoveAdjustment = (id: number) => {
+    setAdjustments((prev) => prev.filter((adj) => adj.id !== id));
+  };
+
+  const handleTypeChange = (
+    id: number,
+    type: "Bonus" | "Detention" | "Deduction",
+  ) => {
+    setAdjustments((prev) =>
+      prev.map((adj) => (adj.id === id ? { ...adj, type } : adj)),
+    );
+  };
+
+  const handleAmountChange = (id: number, amount: number) => {
+    setAdjustments((prev) =>
+      prev.map((adj) => (adj.id === id ? { ...adj, amount } : adj)),
+    );
+  };
 
   return (
     <div className="space-y-6 flex-1 overflow-y-auto">
@@ -63,7 +104,7 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
             sx={{
               borderRight: `1px solid ${alpha(
                 theme.currentPalette.primary,
-                0.3
+                0.3,
               )}`,
             }}
           >
@@ -123,7 +164,7 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
             sx={{
               borderRight: `1px solid ${alpha(
                 theme.currentPalette.primary,
-                0.3
+                0.3,
               )}`,
             }}
           >
@@ -296,7 +337,7 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
                   bgcolor: theme.currentPalette.background,
                   border: `2px solid ${alpha(
                     theme.currentPalette.primary,
-                    0.3
+                    0.3,
                   )}`,
                   width: "100%",
                   borderRadius: 2,
@@ -320,6 +361,98 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
             </div>
           </Stack>
         </Box>
+
+        {/* Financial Adjustments*/}
+        <div className="flex justify-between items-center mb-2">
+          <Typography sx={{ color: theme.currentPalette.text }}>
+            Financial Adjustments
+          </Typography>
+
+          <Button
+            type="button"
+            onClick={handleAddAdjustment}
+            startIcon={<Plus size={14} />}
+            sx={{
+              color: theme.currentPalette.primary,
+              border: `1px solid ${alpha(theme.currentPalette.primary, 0.4)}`,
+              borderRadius: "6px",
+              textTransform: "none",
+              padding: "4px 12px",
+              fontSize: "13px",
+            }}
+          >
+            Add Adjustment
+          </Button>
+        </div>
+        {adjustments.map((adj) => (
+          <Box
+            key={adj.id}
+            sx={{
+              border: "1px solid #E5E7EB",
+              borderRadius: "8px",
+              padding: "8px",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              marginBottom: "8px",
+            }}
+          >
+            {/* Type */}
+            <TextField
+              select
+              value={adj.type}
+              onChange={(e) =>
+                handleTypeChange(
+                  adj.id,
+                  e.target.value as "Bonus" | "Detention" | "Deduction",
+                )
+              }
+              SelectProps={{ native: true }}
+              sx={{
+                minWidth: 120,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "6px",
+                  height: 40,
+                  border: "1px solid #E5E7EB",
+                },
+              }}
+            >
+              <option value="Bonus">Bonus</option>
+              <option value="Detention">Detention</option>
+              <option value="Deduction">Deduction</option>
+            </TextField>
+
+            {/* Amount */}
+            <TextField
+              fullWidth
+              value={adj.amount}
+              placeholder="0"
+              sx={{
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: "6px",
+                  height: 40,
+                  border: "1px solid #E5E7EB",
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <DollarSign size={16} color="#317435" />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            {/* Delete */}
+            <IconButton
+              sx={{
+                color: "#A3231B",
+              }}
+              onClick={() => handleRemoveAdjustment(adj.id)}
+            >
+              <Trash2 size={16} />
+            </IconButton>
+          </Box>
+        ))}
 
         {/* Documents - Drag & Drop Area */}
         <div className="md:col-span-2">

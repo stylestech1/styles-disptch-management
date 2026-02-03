@@ -9,9 +9,10 @@ interface ModalProps {
   onClose: () => void;
   title: string;
   children: React.ReactNode;
-  size?: "sm" | "md" | "lg" | "xl" | 'xxl';
+  size?: "sm" | "md" | "lg" | "xl" | "xxl";
   showCloseButton?: boolean;
   closeOnOutsideClick?: boolean;
+  desc?: string;
 }
 
 const Modal = ({
@@ -22,10 +23,11 @@ const Modal = ({
   size = "md",
   showCloseButton = true,
   closeOnOutsideClick = true,
+  desc,
 }: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
-  const theme = useAppSelector((state: RootState) => state.palette)
+  const theme = useAppSelector((state: RootState) => state.palette);
 
   // closing popup
   useEffect(() => {
@@ -49,7 +51,7 @@ const Modal = ({
   useEffect(() => {
     const checkSelectState = () => {
       const selectMenus = document.querySelectorAll(
-        ".MuiMenu-paper, .MuiPopover-root"
+        ".MuiMenu-paper, .MuiPopover-root",
       );
       const isOpen = Array.from(selectMenus).some((menu) => {
         const style = window.getComputedStyle(menu);
@@ -70,7 +72,7 @@ const Modal = ({
     md: "max-w-md",
     lg: "max-w-lg",
     xl: "max-w-4xl",
-    xxl: "max-w-6xl"
+    xxl: "max-w-6xl",
   };
 
   return (
@@ -88,12 +90,24 @@ const Modal = ({
       }}
     >
       <Box
-      sx={{bgcolor: theme.currentPalette.background}}
+        sx={{ bgcolor: theme.currentPalette.background }}
         ref={modalRef}
         className={`relative rounded-2xl shadow-2xl border w-full ${sizeClasses[size]} max-h-[90vh] overflow-y-auto animate-in fade-in-90 zoom-in-90 duration-200`}
       >
-        <div className="flex items-center justify-between sticky top-0 p-4 border-b" style={{borderColor: alpha(theme.currentPalette.text, 0.1)}}>
-          <Typography sx={{color: theme.currentPalette.primary, fontSize: '22px', fontWeight: 'bold'}}>{title}</Typography>
+        <div
+          className="flex items-center justify-between sticky top-0 p-4 border-b"
+          style={{ borderColor: alpha(theme.currentPalette.text, 0.1) }}
+        >
+          <Typography
+            sx={{
+              color: theme.currentPalette.primary,
+              fontSize: "22px",
+              fontWeight: "bold",
+            }}
+          >
+            {title}
+          </Typography>
+
           {showCloseButton && (
             <Button
               onClick={onClose}
