@@ -5,6 +5,7 @@ import LocationAutocomplete, {
   TPlace,
 } from "@/components/sections/LocationAutocomplete";
 import Modal from "@/components/ui/Modals";
+
 import {
   IoLocationOutline,
   IoDocumentText,
@@ -69,12 +70,7 @@ import {
 import LoadDetailsTab from "./tabsModal/LoadDetailsTab";
 import AssignmentTab from "./tabsModal/AssignmentTab";
 import FinancialTab from "./tabsModal/FinancialTab";
-type AdjustmentType = "Bonus" | "Detention" | "Deduction";
-
-interface Adjustment {
-  type: AdjustmentType;
-  amount: number;
-}
+import { Adjustment } from "@/types/globalTypes";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
@@ -140,9 +136,6 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
   const [allDistance, setAllDistance] = useState<string>("");
   const [pricePerMile, setPricePerMile] = useState<number | null>(null);
   const [showMaps, setShowMaps] = useState(false);
-  const [selectedAdjustmentType, setSelectedAdjustmentType] = useState<
-    AdjustmentType | ""
-  >("");
 
   // Drag Handlers
   const handleDragEnter = useCallback((e: React.DragEvent<HTMLDivElement>) => {
@@ -534,38 +527,30 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
 
     try {
       let createdLoadId: string | undefined;
+
+      // Ensure adjustments array is always defined
+      const loadAdjustments: Adjustment[] = adjustments || [];
+
       if (isEditing && editingLoad) {
-        if (!selectedAdjustmentType) {
-          toast.error("Please select an adjustment type ❌");
-          return;
-        }
+        console.log("Load adjustments:", loadAdjustments);
 
-        const adjustment = adjustments.find(
-          (adj) => adj.type === selectedAdjustmentType,
-        );
+        loadAdjustments.forEach((adj) => {
+          if (adj.type === "Bonus") {
+            formData.append("bonus", adj.amount.toString());
+          } else if (adj.type === "Detention") {
+            formData.append("detention", adj.amount.toString());
+          } else if (adj.type === "Deduction") {
+            formData.append("deduction", adj.amount.toString());
+          }
+        });
 
-        if (!adjustment) {
-          toast.error("Selected adjustment not found ❌");
-          return;
-        }
-
-        const amount = Number(adjustment.amount) || 0;
-
-        formData.set(selectedAdjustmentType, amount.toString());
-
-        console.log("📦 FormData preview before update:");
-        for (const [key, value] of formData.entries()) {
-          console.log(key, value);
-        }
-
-        // Send update
-        console.log("🔄 Sending UPDATE request...");
         await updateLoad({
           id: editingLoad.id,
           formData,
         }).unwrap();
 
         toast.success("Load updated ✅");
+
         createdLoadId = editingLoad.id;
       } else {
         console.log("🆕 Sending CREATE request...");
@@ -1360,7 +1345,7 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                   onRemoveFile={handleRemoveFile}
                   uploadError={uploadError}
                   adjustments={adjustments}
-                  setAdjustments={setAdjustments}
+                  onAdjustmentsChange={setAdjustments}
                   isDragging={isDragging}
                   selectedDocuments={selectedDocuments}
                   isEditing={isEditing}

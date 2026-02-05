@@ -1,7 +1,7 @@
 "use client";
 import Loading from "@/components/ui/Loading";
 import { TLoads } from "@/types/globalTypes";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import Erros from "@/components/ui/Erros";
 import toast, { Toaster } from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
@@ -16,7 +16,17 @@ import {
   useGetSpecificDriverSummaryQuery,
 } from "@/redux/slices/apiSlice";
 import { getErrorMessage } from "@/utils/getErrorMessage";
-import { alpha, Box, Chip, SxProps, TableRow, Typography } from "@mui/material";
+import {
+  alpha,
+  Box,
+  Chip,
+  Divider,
+  Popover,
+  Stack,
+  SxProps,
+  TableRow,
+  Typography,
+} from "@mui/material";
 import { RootState, useAppSelector } from "@/redux/store";
 import Breadcrumb from "@/components/ui/Breadcrumb";
 import {
@@ -46,6 +56,8 @@ const DriverSummary = () => {
   const { data: profileData, isLoading: profileLoading } =
     useGetDriverByIdQuery(id as string, { skip: !id });
 
+  const earningsRef = useRef(null);
+
   // ✅ Lazy Query for filtered data
   const { data: driverSummaryData, error: summaryError } =
     useGetDriverSummaryWithFilterQuery({
@@ -53,6 +65,20 @@ const DriverSummary = () => {
       from: fromDate ? fromDate.format("YYYY-MM-DD") : undefined,
       to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
     });
+
+  const [earningsAnchorEl, setEarningsAnchorEl] = useState<HTMLElement | null>(
+    null,
+  );
+
+  const handleEarningsEnter = (event: React.MouseEvent<HTMLElement>) => {
+    setEarningsAnchorEl(event.currentTarget);
+  };
+
+  const handleEarningsLeave = () => {
+    setEarningsAnchorEl(null);
+  };
+
+  const isEarningsOpen = Boolean(earningsAnchorEl);
 
   //
   const {
@@ -145,7 +171,9 @@ const DriverSummary = () => {
         <td className="p-4 text-center">$ {load.pricePerMile?.toFixed(2)}</td>
 
         {/* Total */}
-        <td className="p-4 text-center">${load.totalPrice?.toLocaleString()}</td>
+        <td className="p-4 text-center">
+          ${load.totalPrice?.toLocaleString()}
+        </td>
       </TableRow>
     );
   };
@@ -290,34 +318,140 @@ const DriverSummary = () => {
           </div>
         </Box>
 
-        {/* RIGHT SMALL STAT CARDS */}
         <div className="grid grid-cols-2 gap-5">
           {/* Total Earnings */}
-          <Box
-            sx={{
-              p: 3,
-              border: 1,
-              borderColor: alpha(theme.currentPalette.primary, 0.3),
-              borderRadius: 2,
-            }}
-            className="flex flex-col justify-center"
-          >
-            <Typography
-              sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+          <Box sx={{ position: "relative", overflow: "visible" }}>
+            <Box
+              onMouseEnter={handleEarningsEnter}
+              onMouseLeave={handleEarningsLeave}
+              sx={{
+                p: 3,
+                border: 1,
+                borderColor: alpha(theme.currentPalette.primary, 0.3),
+                borderRadius: 2,
+                cursor: "pointer",
+              }}
+              className="flex flex-col justify-center"
             >
-              <span style={{ color: theme.currentPalette.text }}>
-                Total Earnings
-              </span>
-              <Banknote color={theme.currentPalette.primary} />
-            </Typography>
+              <Typography
+                sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}
+              >
+                <span style={{ color: theme.currentPalette.text }}>
+                  Total Earnings
+                </span>
+                <Banknote color={theme.currentPalette.primary} />
+              </Typography>
 
-            <Typography
-              sx={{ fontSize: "30px", color: theme.currentPalette.text }}
+              <Typography
+                sx={{
+                  fontSize: "30px",
+                  color: theme.currentPalette.text,
+                  display: "inline-block",
+
+                  paddingBottom: "2px",
+                  cursor: "pointer",
+                }}
+                ref={earningsRef}
+                onMouseEnter={() => setEarningsAnchorEl(earningsRef.current)}
+                onMouseLeave={handleEarningsLeave}
+              >
+                $
+                <span style={{ borderBottom: "2px dotted #08172B" }}>
+                  {summaryData?.earnings.totalEarnings || 0}
+                </span>
+              </Typography>
+            </Box>
+            <Popover
+              open={Boolean(earningsAnchorEl)}
+              anchorEl={earningsAnchorEl}
+              onClose={handleEarningsLeave}
+              disableRestoreFocus
+              // anchorOrigin={{
+              //   vertical: "top",
+              //   horizontal: "center",
+              // }}
+              // transformOrigin={{
+              //   vertical: "bottom",
+              //   horizontal: "center",
+              // }}
+              PaperProps={{
+                onMouseEnter: () => setEarningsAnchorEl(earningsRef.current),
+                onMouseLeave: handleEarningsLeave,
+                sx: {
+                  p: 2,
+                  borderRadius: 2,
+                  boxShadow: 6,
+                  minWidth: 220,
+                  textAlign: "left",
+                },
+              }}
             >
-              ${summaryData?.totalEarnings || 0}
-            </Typography>
+              <Typography
+                sx={{
+                  fontWeight: 600,
+                  fontSize: "0.85rem",
+                  mb: 1,
+                  textAlign: "center",
+                  color: "#666666",
+                }}
+              >
+                <p> DRIVER EARNINGS </p>
+                <p>BREAKDOWN</p>
+              </Typography>
+
+              <Divider
+                sx={{
+                  mb: 1,
+                  borderColor: alpha(theme.currentPalette.text, 0.25),
+                }}
+              />
+              <Stack spacing={0.8}>
+                <Typography
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    color: theme.currentPalette.primary,
+                  }}
+                >
+                  <span>Base Pay</span>
+                  <span>${summaryData?.earnings?.baseEarnings || 0}</span>
+                </Typography>
+
+                <Typography
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    color: "#317435",
+                  }}
+                >
+                  <span>Bonus</span>
+                  <span>+${summaryData?.earnings?.totalBonus || 0}</span>
+                </Typography>
+
+                <Typography
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    color: "#317435",
+                  }}
+                >
+                  <span>Detention</span>
+                  <span>+${summaryData?.earnings?.totalDetention || 0}</span>
+                </Typography>
+
+                <Typography
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    color: "#B3261E",
+                  }}
+                >
+                  <span>Deduction</span>
+                  <span>-${summaryData?.earnings?.totalDeduction || 0}</span>
+                </Typography>
+              </Stack>
+            </Popover>
           </Box>
-
           {/* Total Loads */}
           <Box
             sx={{

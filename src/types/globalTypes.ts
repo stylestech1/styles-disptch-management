@@ -426,13 +426,12 @@ export interface LoadDetailsTabProps {
   onPrevTab: () => void;
   onNextTab: () => void;
 }
-type AdjustmentType = "Bonus" | "Detention" | "Deduction";
 
-interface Adjustment {
-  type: AdjustmentType;
+export type Adjustment = {
+  id: number;
+  type: "Bonus" | "Detention" | "Deduction";
   amount: number;
-}
-
+};
 export interface FinancialTabProps {
   allDistance: string;
   price: string;
@@ -444,8 +443,9 @@ export interface FinancialTabProps {
   selectedDocuments: File[];
   uploadError: string;
   isDragging: boolean;
-  adjustments: Adjustment[];
-  setAdjustments: React.Dispatch<React.SetStateAction<Adjustment[]>>;
+  adjustments?: Adjustment[];
+  onAdjustmentsChange?: (adjustments: Adjustment[]) => void;
+  setAdjustments?: React.Dispatch<React.SetStateAction<Adjustment[]>>;
   onFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onDragEnter: (e: React.DragEvent<HTMLDivElement>) => void;
   onDragLeave: (e: React.DragEvent<HTMLDivElement>) => void;
