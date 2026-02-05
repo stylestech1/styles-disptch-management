@@ -414,7 +414,11 @@ const DriverSummary = () => {
                   }}
                 >
                   <span>Base Pay</span>
-                  <span>${summaryData?.earnings?.baseEarnings || 0}</span>
+                  <span>
+                    $
+                    {Number(summaryData?.earnings?.baseEarnings).toFixed(2) ||
+                      0}
+                  </span>
                 </Typography>
 
                 <Typography
@@ -425,7 +429,10 @@ const DriverSummary = () => {
                   }}
                 >
                   <span>Bonus</span>
-                  <span>+${summaryData?.earnings?.totalBonus || 0}</span>
+                  <span>
+                    +$
+                    {Number(summaryData?.earnings?.totalBonus).toFixed(2) || 0}
+                  </span>
                 </Typography>
 
                 <Typography
@@ -436,7 +443,11 @@ const DriverSummary = () => {
                   }}
                 >
                   <span>Detention</span>
-                  <span>+${summaryData?.earnings?.totalDetention || 0}</span>
+                  <span>
+                    +$
+                    {Number(summaryData?.earnings?.totalDetention).toFixed(2) ||
+                      0}
+                  </span>
                 </Typography>
 
                 <Typography
@@ -447,7 +458,11 @@ const DriverSummary = () => {
                   }}
                 >
                   <span>Deduction</span>
-                  <span>-${summaryData?.earnings?.totalDeduction || 0}</span>
+                  <span>
+                    -$
+                    {Number(summaryData?.earnings?.totalDeduction).toFixed(2) ||
+                      0}
+                  </span>
                 </Typography>
               </Stack>
             </Popover>

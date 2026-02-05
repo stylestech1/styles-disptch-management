@@ -149,7 +149,7 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
               Price Per Mile:
             </Typography>
             <Typography sx={{ fontWeight: 500, color: "#666666" }}>
-              {pricePerMile ? `$${Number(pricePerMile).toFixed(3)}` : "$0.00"}
+              {pricePerMile ? `$${Number(pricePerMile).toFixed(2)}` : "$0.00"}
             </Typography>
           </Stack>
           <Divider
