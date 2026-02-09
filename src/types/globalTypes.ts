@@ -108,6 +108,7 @@ export type TDriver = {
   assignedTruck?: string;
   updatedBy?: string;
   user: TUser | string;
+  toggle: boolean;
 };
 export type TTruck = {
   id: string;
