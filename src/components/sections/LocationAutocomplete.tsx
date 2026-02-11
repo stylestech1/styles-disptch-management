@@ -1,6 +1,14 @@
 "use client";
 import { RootState, useAppSelector } from "@/redux/store";
-import { alpha, Box, Button, TextField, Typography } from "@mui/material";
+import {
+  alpha,
+  Box,
+  Button,
+  IconButton,
+  InputAdornment,
+  TextField,
+  Typography,
+} from "@mui/material";
 import { useState, useEffect, useRef } from "react";
 
 export type TPlace = {
@@ -18,11 +26,15 @@ export type TPlace = {
 };
 
 interface Props {
-  label: string;
+  label?: string;
   value: TPlace | null;
   setValue: (place: TPlace | null) => void;
   placeholder?: string;
   showZipCode?: boolean;
+  required?: boolean;
+  startAdornment?: React.ReactNode;
+  onFocus?: () => void; // Add this
+  onBlur?: () => void; // Add this
 }
 
 const LocationAutocomplete = ({
@@ -30,7 +42,11 @@ const LocationAutocomplete = ({
   value,
   setValue,
   placeholder,
+  required,
+  startAdornment,
   showZipCode = true,
+  onFocus,
+  onBlur,
 }: Props) => {
   const [input, setInput] = useState(value?.display_name || "");
   const [suggestions, setSuggestions] = useState<TPlace[]>([]);
@@ -42,7 +58,7 @@ const LocationAutocomplete = ({
   const [shouldSearch, setShouldSearch] = useState(true);
   const theme = useAppSelector((state: RootState) => state.palette);
   const autocompleteRef = useRef<google.maps.places.AutocompleteService | null>(
-    null
+    null,
   );
   const userTypedRef = useRef(false);
 
@@ -121,14 +137,14 @@ const LocationAutocomplete = ({
                     allPredictions = [...allPredictions, ...predictions];
                   }
                   resolve();
-                }
+                },
               );
             });
 
             await new Promise((resolve) => setTimeout(resolve, 100));
           } catch (error) {
             console.log(
-              `Request type ${requestConfig.types} failed, trying next...`
+              `Request type ${requestConfig.types} failed, trying next...`,
             );
           }
         }
@@ -137,7 +153,7 @@ const LocationAutocomplete = ({
           .filter(
             (prediction, index, self) =>
               index ===
-              self.findIndex((p) => p.place_id === prediction.place_id)
+              self.findIndex((p) => p.place_id === prediction.place_id),
           )
           .slice(0, 10);
 
@@ -173,7 +189,7 @@ const LocationAutocomplete = ({
   }, [input, isSelecting, shouldSearch]);
 
   const getGeocodedAddress = async (
-    placeId: string
+    placeId: string,
   ): Promise<TPlace | null> => {
     if (placeId.startsWith("temp_") || placeId.startsWith("geocoded_")) {
       return null;
@@ -276,7 +292,7 @@ const LocationAutocomplete = ({
       }
 
       const service = new google.maps.places.PlacesService(
-        document.createElement("div")
+        document.createElement("div"),
       );
 
       const request: google.maps.places.PlaceDetailsRequest = {
@@ -501,7 +517,7 @@ const LocationAutocomplete = ({
               setInput(displayName);
             }
             setLoading(false);
-          }
+          },
         );
       } catch (error) {
         console.error("Error in direct zip search:", error);
@@ -512,7 +528,7 @@ const LocationAutocomplete = ({
 
   return (
     <div ref={containerRef} className="relative w-full">
-      <Typography
+      {/* <Typography
         sx={{
           color: theme.currentPalette.primary,
           fontSize: "16px",
@@ -521,8 +537,8 @@ const LocationAutocomplete = ({
           mb: 1,
         }}
       >
-        {label} <span className="text-red-500">*</span>
-      </Typography>
+        {label} <span className="text-red-500">{required ? "*" : ""}</span>
+      </Typography> */}
       <div className="flex items-end gap-5">
         <div className="relative flex items-end gap-4 w-full">
           <TextField
@@ -530,37 +546,86 @@ const LocationAutocomplete = ({
             type="text"
             value={input}
             onChange={handleInputChange}
-            onFocus={handleInputFocus}
-            onBlur={handleInputBlur}
+            onFocus={onFocus}
+            onBlur={onBlur}
             onKeyDown={handleInputKeyDown}
-            placeholder={
-              placeholder ||
-              "Enter city, state and ZIP (e.g., ABINGDON VA 24210)"
+            label={
+              <span>
+                {label}{" "}
+                {required ? (
+                  <span style={{ color: "#ef4444", fontWeight: 700 }}>*</span>
+                ) : null}
+              </span>
             }
+            placeholder={placeholder || "e.g. FixIt Auto Center"}
             variant="outlined"
             fullWidth
-            size="small"
             sx={{
-              bgcolor: theme.currentPalette.background,
+              mt: 1.25,
+              "& .MuiInputLabel-root": {
+                color: "text.secondary",
+                fontWeight: 500,
+              },
+              "& .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.23)",
+                borderWidth: 1,
+              },
+
+              "&:hover .MuiOutlinedInput-notchedOutline": {
+                borderColor: "rgba(0,0,0,0.23)",
+              },
+
+              "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
+              {
+                borderColor: "rgba(0,0,0,0.23)",
+              },
+
+              "& .MuiInputBase-input": {
+                fontSize: 14,
+                color: "#0F172A",
+              },
             }}
-            slotProps={{
-              input: {
-                endAdornment: input && (
-                  <Button
+            InputLabelProps={{
+              shrink: true,
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start" sx={{ ml: 0.75, mr: 0.5 }}>
+                  <Box
+                    sx={{
+                      width: 20,
+                      height: 20,
+                      display: "grid",
+                      placeItems: "center",
+                      borderRadius: 2,
+                      color: theme.currentPalette.primary,
+                      "& svg": { width: 18, height: 18 },
+                    }}
+                  >
+                    {startAdornment}
+                  </Box>
+                </InputAdornment>
+              ),
+              endAdornment: input ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={clearValue}
-                    type="button"
-                    variant="text"
                     size="small"
                     sx={{
-                      minWidth: 0,
-                      padding: 0.5,
-                      color: "red",
+                      width: 20,
+                      height: 20,
+                      borderRadius: 2,
+                      color: alpha("#0F172A", 0.5),
+                      "&:hover": {
+                        bgcolor: alpha(theme.currentPalette.primary, 0.08),
+                      },
                     }}
                   >
                     ✕
-                  </Button>
-                ),
-              },
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
             }}
           />
         </div>
