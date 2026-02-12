@@ -17,6 +17,7 @@ import {
 import { get } from "http";
 import { TTimeOffs } from "@/types/driverType";
 import { ApiResponse, Conversation, MarkSeenResponse, Message } from "@/types/chatType";
+import { MaintenanceCenterForm } from "@/components/truck/centermaintenance/createEditModal";
 
 export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
@@ -147,6 +148,44 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Drivers"],
     }),
 
+    getServiceCenters: builder.query({
+      query: ({ page, limit }) => {
+        const params: string[] = [];
+
+        if (page) params.push(`page=${page}`);
+        if (limit) params.push(`limit=${limit}`);
+
+        const queryString = params.length ? `?${params.join("&")}` : "";
+        return `/api/v1/service-centers${queryString}`;
+      },
+      providesTags: ["centermaintenance"],
+    }),
+    createServiceCenter: builder.mutation({
+      query: (body: MaintenanceCenterForm) => ({
+        url: `/api/v1/service-centers`,
+        method: "POST",
+        body, // ✅ same keys as your form
+      }),
+      invalidatesTags: ["centermaintenance"],
+    }),
+
+    updateServiceCenter: builder.mutation({
+      query: ({ id, body }: { id: string; body: MaintenanceCenterForm }) => ({
+        url: `/api/v1/service-centers/${id}`,
+        method: "PATCH",
+        body, // ✅ same keys as your form
+      }),
+      invalidatesTags: ["centermaintenance"],
+    }),
+
+    deleteServiceCenter: builder.mutation({
+      query: (id: string) => ({
+        url: `/api/v1/service-centers/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["centermaintenance"],
+    }),
+
     // 🔹 Get Driver with Filter and Search
     getDriverWithFilter: builder.query({
       query: ({ from, to, page, limit }) => {
@@ -225,12 +264,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.map(({ id }: { id: string }) => ({
-                type: "TimeOffs" as const,
-                id,
-              })),
-              { type: "TimeOffs", id: "LIST" },
-            ]
+            ...result.data.map(({ id }: { id: string }) => ({
+              type: "TimeOffs" as const,
+              id,
+            })),
+            { type: "TimeOffs", id: "LIST" },
+          ]
           : [{ type: "TimeOffs", id: "LIST" }],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
@@ -249,12 +288,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.map(({ id }: { id: string }) => ({
-                type: "TimeOffs" as const,
-                id,
-              })),
-              { type: "TimeOffs", id: "LIST" },
-            ]
+            ...result.data.map(({ id }: { id: string }) => ({
+              type: "TimeOffs" as const,
+              id,
+            })),
+            { type: "TimeOffs", id: "LIST" },
+          ]
           : [{ type: "TimeOffs", id: "LIST" }],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
@@ -327,12 +366,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: (result) =>
         result
           ? [
-              ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
-                type: "Trucks" as const,
-                id: t.id,
-              })),
-              { type: "TruckSummary", id: "LIST" },
-            ]
+            ...result.data.trucksSummary.map((t: TTruckWithSummary) => ({
+              type: "Trucks" as const,
+              id: t.id,
+            })),
+            { type: "TruckSummary", id: "LIST" },
+          ]
           : [{ type: "TruckSummary", id: "LIST" }],
       keepUnusedDataFor: 60 * 60,
     }),
@@ -905,6 +944,7 @@ export const {
   useFilterMaintenancesWithTypeQuery,
   useLazyFilterMaintenancesWithTypeQuery,
   useGetMaintenanceWithFilterQuery,
+  useGetServiceCentersQuery,
   useCreateMaintenanceMutation,
   useUpdateMaintenanceMutation,
   useDeleteMaintenanceMutation,
