@@ -93,6 +93,12 @@ export type TLoads = {
   documents?: TDocument[];
   documentsForDriver?: TDocument[];
 };
+export type AttachmentItem = {
+  id: string;
+  name: string;
+  size?: number;
+  url?: string;
+};
 export type TDriver = {
   id: string;
   driverId: number;
@@ -109,6 +115,7 @@ export type TDriver = {
   updatedBy?: string;
   user: TUser | string;
   toggle: boolean;
+  documents?: AttachmentItem[];
 };
 export type TTruck = {
   id: string;
