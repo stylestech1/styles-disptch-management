@@ -13,10 +13,11 @@ import HeaderSourceTruckDashboard from "../truck/HeaderSourceTruckDashboard";
 import { usePathname } from "next/navigation";
 import { IoMenu } from "react-icons/io5";
 import GlobalFilter from "@/components/ui/GlobalFilter";
+import ChatBubble from "../chat/ChatBubble";
 
 interface NavbarProps {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   onMenuClick: () => void;
 }
 
@@ -30,6 +31,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     "/admin/driverSummary",
     "/admin/truckSummary",
     "/admin/trucksmaintenance",
+    "/admin/centermaintenance",
     "admin/drivers",
     "/dispatchers/loads",
   ].some((path) => pathname.includes(path));
@@ -40,6 +42,7 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     if (pathname.includes("drivers")) return "drivers";
     if (pathname.includes("truckSummary")) return "trucks";
     if (pathname.includes("trucksmaintenance")) return "trucks";
+    if (pathname.includes("centermaintenance")) return "trucks";
     return "default";
   };
 
@@ -137,18 +140,21 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
             gap: { xs: 0.5, sm: 1 },
           }}
         >
-          {(pathname === "/admin/truckdashboard" ||
-            pathname === "/admin/trucksmaintenance") && (
+          {(pathname === "/admin/truckdashboard" || pathname === "/admin/trucksmaintenance") && (
             <div className="hidden sm:flex">
               <HeaderSourceTruckDashboard />
             </div>
           )}
-          {shouldShowFilter && (
-            <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              <GlobalFilter filterType={getFilterType()} />
-            </Box>
-          )}
+
+          {shouldShowFilter &&
+            pathname != "/admin/centermaintenance" && (
+              <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                <GlobalFilter filterType={getFilterType()} />
+              </Box>
+            )}
+          <ChatBubble />
           <NotificationProvider />
+
         </Box>
       </Toolbar>
     </AppBar>
