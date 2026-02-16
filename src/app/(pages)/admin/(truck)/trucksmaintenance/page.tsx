@@ -402,10 +402,10 @@ const TruckMaintenance = () => {
         </td>
 
         <td style={{ color: theme.currentPalette.primary }} className="p-4 text-center">
-          {/* {centerIdToNameMap[String((item as any).serviceCenter ?? (item as any).maintenanceCenterId ?? "")] ||
+          {/* show center name even if backend returns id */}
+          {centerIdToNameMap[String((item as any).serviceCenter ?? (item as any).maintenanceCenterId ?? "")] ||
             (item as any).serviceCenter ||
-            "-"} */}
-            {(item as any).repeatBy || "-"}
+            "-"}
         </td>
 
         <td style={{ color: theme.currentPalette.primary }} className="p-4 text-right">
