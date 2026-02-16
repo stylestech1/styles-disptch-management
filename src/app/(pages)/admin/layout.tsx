@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -28,6 +29,8 @@ import { PiPaintBrushBroad } from "react-icons/pi";
 import Navbar from "@/components/layout/Header";
 import { FilterProvider } from "@/providers/FilterProvider";
 import { socketService } from "@/services/socketService";
+import { Collapse } from "@mui/material";
+import { ExpandLess, ExpandMore } from "@mui/icons-material";
 
 const DRAWER_WIDTH = 300;
 
@@ -43,6 +46,14 @@ export default function AdminLayout({
   const user = useAppSelector((state: RootState) => state.auth.user);
   const dispatch = useAppDispatch();
   const router = useRouter();
+  const [openTabs, setOpenTabs] = useState<Record<string, boolean>>({});
+
+  const toggleTab = (label: string) => {
+    setOpenTabs((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
 
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(isDesktop);
 
@@ -70,9 +81,27 @@ export default function AdminLayout({
     router.replace("/");
   };
 
+  const findTabByPath = (items: any[], cleanedPath: string) => {
+    for (const item of items) {
+      // root link style: label-based
+      const itemPath = item.label?.replace(/\s+/g, "").toLowerCase();
+      if (itemPath === cleanedPath) return item;
+
+      // children link style: path-based (segment)
+      if (item.children?.length) {
+        const foundChild = item.children.find(
+          (c: any) => c.path?.toLowerCase() === cleanedPath,
+        );
+        if (foundChild) return foundChild;
+      }
+    }
+    return null;
+  };
+
   const getActiveTabInfo = () => {
-    const cleanedPath = pathname.split("/").pop();
-    // 🟢 Detect dynamic truck summary route
+    const cleanedPath = pathname.split("/").filter(Boolean).pop()?.toLowerCase() || "";
+
+    // dynamic routes
     if (pathname.includes("/admin/truckSummary")) {
       return {
         label: "Truck Summary",
@@ -82,8 +111,7 @@ export default function AdminLayout({
     if (pathname.includes("/admin/loadDetails")) {
       return {
         label: "Load Details",
-        subtitle:
-          "Manage and track all your shipments and deliveries in one place.",
+        subtitle: "Manage and track all your shipments and deliveries in one place.",
       };
     }
     if (pathname.includes("/admin/driverSummary")) {
@@ -92,12 +120,23 @@ export default function AdminLayout({
         subtitle: "Detailed overview of driver information and performance.",
       };
     }
-    // 🟢 regular tabs
-    const activeTab = tabs.find(
-      (tab) => tab.label.replace(/\s+/g, "").toLowerCase() === cleanedPath
-    );
-    return activeTab || { label: "", subtitle: "" };
+
+    // ✅ search root + children
+    for (const tab of tabs) {
+      const tabKey = tab.label.replace(/\s+/g, "").toLowerCase();
+      if (tabKey === cleanedPath) return tab;
+
+      if (tab.children?.length) {
+        const child = tab.children.find(
+          (c) => c.path?.toLowerCase() === cleanedPath,
+        );
+        if (child) return child; // ✅ return child info to navbar
+      }
+    }
+
+    return { label: "", subtitle: "" };
   };
+
   const { label: title, subtitle } = getActiveTabInfo();
 
   const getInitials = (fullName: string) => {
@@ -156,51 +195,140 @@ export default function AdminLayout({
 
       {/* Navigation */}
       <List sx={{ flex: 1, overflowY: "auto", py: 1 }}>
-        {tabs.map(({ label, icon }, i) => {
+        {tabs.map((tab, i) => {
+          const hasChildren = !!tab.children?.length;
+
           if (
-            label !== "Truck Summary" &&
-            label !== "Load Details" &&
-            label !== "Driver Summary" &&
-            label !== "Notifications"
+            [
+              "Truck Summary",
+              "Load Details",
+              "Driver Summary",
+              "Notifications",
+            ].includes(tab.label)
           ) {
-            const link = `${base}/${label.replace(/\s+/g, "").toLowerCase()}`;
-            const active = pathname === link;
+            return null;
+          }
+
+          if (hasChildren) {
             return (
-              <ListItemButton
-                key={i}
-                component={NextLink}
-                href={link}
-                onClick={() => !isDesktop && setIsSidebarOpen(false)}
-                sx={{
-                  borderRadius: 2,
-                  mx: 1,
-                  my: 0.5,
-                  backgroundColor: active
-                    ? themePalette.currentPalette.primary
-                    : "transparent",
-                  color: active
-                    ? theme.palette.primary.contrastText || "#fff"
-                    : themePalette.currentPalette.primary,
-                  "&:hover": {
-                    backgroundColor: active
-                      ? alpha(themePalette.currentPalette.primary, 0.9)
-                      : alpha(themePalette.currentPalette.primary, 0.1),
-                    color: active
-                      ? themePalette.currentPalette.background
-                      : themePalette.currentPalette.primary,
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: "inherit" }}>{icon}</ListItemIcon>
-                <ListItemText
-                  primary={label}
-                  primaryTypographyProps={{
-                    fontWeight: 500,
+              <Box key={i}>
+                <ListItemButton
+                  onClick={() => toggleTab(tab.label)}
+                  sx={{
+                    mx: 1,
+                    my: 0.5,
+                    borderRadius: 2,
+                    color: themePalette.currentPalette.primary,
+
+                    pl: 4,
+                    pr: 2,
                   }}
-                />
-              </ListItemButton>
+                >
+                  <ListItemIcon
+                    sx={{
+                      color: "inherit",
+                      minWidth: 36,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                    }}
+                  >
+                    {tab.icon}
+                  </ListItemIcon>
+
+                  <ListItemText sx={{
+                    ml: 3,
+                  }}
+                    primary={tab.label} />
+
+                  {openTabs[tab.label] ? <ExpandLess /> : <ExpandMore />}
+                </ListItemButton>
+
+
+                <Collapse in={openTabs[tab.label]} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding>
+                    {tab.children!.map((child, idx) => {
+                      const childLink = `${base}/${child.path}`;
+                      const childActive = pathname === childLink;
+
+                      return (
+                        <ListItemButton
+                          key={idx}
+                          component={NextLink}
+                          href={childLink}
+                          sx={{
+                            ml: 4,
+                            borderRadius: 2,
+
+                            color: childActive
+                              ? theme.palette.primary.contrastText
+                              : themePalette.currentPalette.primary,
+                            bgcolor: childActive
+                              ? themePalette.currentPalette.primary
+                              : "transparent",
+
+                            "&:hover": {
+                              bgcolor: alpha(themePalette.currentPalette.primary, 0.08),
+                              color: themePalette.currentPalette.primary,
+                            },
+
+                            transition: "background-color 0.2s ease, color 0.2s ease",
+                          }}
+                        >
+                          <ListItemIcon
+                            sx={{
+                              color: "inherit",
+                              minWidth: 36,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            {/* {tab.icon} */}
+                          </ListItemIcon>
+
+                          <ListItemText primary={child.label} />
+                        </ListItemButton>
+                      );
+                    })}
+
+                  </List>
+                </Collapse>
+              </Box>
             );
           }
+
+          const link = `${base}/${tab.label.replace(/\s+/g, "").toLowerCase()}`;
+          const active = pathname === link;
+
+          return (
+            <ListItemButton
+              key={i}
+              component={NextLink}
+              href={link}
+              sx={{
+                ml: 4,
+                borderRadius: 2,
+
+                color: active
+                  ? theme.palette.primary.contrastText
+                  : themePalette.currentPalette.primary,
+                bgcolor: active
+                  ? themePalette.currentPalette.primary
+                  : "transparent",
+
+                "&:hover": {
+                  bgcolor: alpha(themePalette.currentPalette.primary, 0.08),
+                  color: themePalette.currentPalette.primary,
+                },
+
+                transition: "background-color 0.2s ease, color 0.2s ease",
+              }}
+            >
+              <ListItemIcon sx={{ color: "inherit" }}>{tab.icon}</ListItemIcon>
+              <ListItemText primary={tab.label} />
+            </ListItemButton>
+          );
         })}
       </List>
 

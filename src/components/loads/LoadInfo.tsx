@@ -100,7 +100,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
   // Refetching for coming from notify
   useEffect(() => {
     refetchLoads()
-  },[])
+  }, [])
 
   // Handling Change Tabs
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -444,9 +444,8 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                   <InfoItem
                     icon={<AttachMoney fontSize="small" />}
                     primary="Price Details"
-                    secondary={`${
-                      load.distanceMiles
-                    } miles • $${load.pricePerMile.toFixed(2)}/mile`}
+                    secondary={`${load.distanceMiles
+                      } miles • $${load.pricePerMile.toFixed(2)}/mile`}
                   />
                 </List>
               </InfoCard>
@@ -814,8 +813,8 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                                 >
                                   {comment.createdAt
                                     ? `Added on ${new Date(
-                                        comment.createdAt
-                                      ).toLocaleString()}`
+                                      comment.createdAt
+                                    ).toLocaleString()}`
                                     : "No date available"}
                                 </Typography>
                                 {comment.addedBy && (
@@ -1064,8 +1063,8 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                         load.deliveredAt
                           ? "success"
                           : load.completedAt
-                          ? "info"
-                          : "warning"
+                            ? "info"
+                            : "warning"
                       }
                       icon={<CalendarToday />}
                       sx={{
