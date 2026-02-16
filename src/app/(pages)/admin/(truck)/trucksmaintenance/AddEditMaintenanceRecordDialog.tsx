@@ -483,6 +483,7 @@ export default function AddEditMaintenanceRecordDialog({
                 <Box sx={{ px: 3, py: 2 }}>
                     {activeStep === 0 ? (
                         <>
+                            {/* Service Type (Select with TextField design) */}
                             <TextField
                                 fullWidth
                                 required
@@ -522,7 +523,7 @@ export default function AddEditMaintenanceRecordDialog({
                             <Box sx={{ height: 16 }} />
 
                             {/* Maintenance Center (Select with same design) */}
-                            {/* <TextField
+                            <TextField
                                 fullWidth
                                 select
                                 label="Maintenance Center"
@@ -555,7 +556,7 @@ export default function AddEditMaintenanceRecordDialog({
                                         {c.name}
                                     </MenuItem>
                                 ))}
-                            </TextField> */}
+                            </TextField>
 
 
                             <Box sx={{ height: 16 }} />

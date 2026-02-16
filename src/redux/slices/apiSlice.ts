@@ -944,7 +944,6 @@ export const {
   useFilterMaintenancesWithTypeQuery,
   useLazyFilterMaintenancesWithTypeQuery,
   useGetMaintenanceWithFilterQuery,
-  useGetServiceCentersQuery,
   useCreateMaintenanceMutation,
   useUpdateMaintenanceMutation,
   useDeleteMaintenanceMutation,
@@ -990,4 +989,8 @@ export const {
   useAddMessageMutation,
   useGetConversationMessagesQuery,
   useMarkMessagesSeenMutation,
+  useGetServiceCentersQuery,
+  useCreateServiceCenterMutation,
+  useUpdateServiceCenterMutation,
+  useDeleteServiceCenterMutation,
 } = apiSlice;
