@@ -402,7 +402,7 @@ export default function AdminLayout({
             display: "flex",
             flexDirection: "column",
             minHeight: "inherit",
-            bgcolor: themePalette.currentPalette.background
+            // bgcolor: themePalette.currentPalette.background
           }}
         >
           {/* Page content */}
