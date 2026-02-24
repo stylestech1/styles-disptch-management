@@ -148,4 +148,11 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <FaCirclePlus />,
     },
   ],
+  superAdmin: [
+    {
+      label: "Companies",
+      subtitle: "Manage your companies and their access",
+      icon: <Building />
+    }
+  ],
 };

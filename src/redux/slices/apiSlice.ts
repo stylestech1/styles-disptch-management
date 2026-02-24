@@ -1,4 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  CompanyDto,
+  CompanyUpsertBody,
+  PaginationResult,
   TCustomer,
   TDriver,
   TLoadSummary,
@@ -100,6 +104,91 @@ export const apiSlice = api.injectEndpoints({
         method: "POST",
         body: formData,
       }),
+    }),
+    getCompanies: builder.query<
+      {
+        data: CompanyDto[];
+        totalCompanies?: number;
+        totalUsers?: number;
+        paginationResult?: PaginationResult;
+      },
+      { page?: number; limit?: number }
+    >({
+      query: ({ page, limit }) => {
+        const params: string[] = [];
+        if (page) params.push(`page=${page}`);
+        if (limit) params.push(`limit=${limit}`);
+
+        const queryString = params.length ? `?${params.join("&")}` : "";
+        return `/api/v1/companies${queryString}`;
+      },
+      transformResponse: (response: any) => {
+        const raw = Array.isArray(response?.data) ? response.data : [];
+
+        const sorted = [...raw].sort((a: any, b: any) => {
+          const da = a?.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const db = b?.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return da - db;
+        });
+
+        return {
+          ...response,
+          data: sorted.map((company: any) => ({
+            id: String(company._id ?? company.id),
+            name: company.name ?? "",
+            email: company.email ?? "",
+            phone: company.phone ?? "",
+            usersCount: company.usersCount ?? 0,
+            active: Boolean(company.active),
+            createdAt: company.createdAt,
+          })),
+        };
+      },
+
+      providesTags: ["companies"],
+    }),
+
+    updateactivationcompany: builder.mutation<any, { id: string; active: boolean }>({
+      query: ({ id, active }) => ({
+        url: `/api/v1/companies/activate/${id}`,
+        method: "PATCH",
+        body: { active },
+      }),
+      invalidatesTags: [{ type: "companies", id: "LIST" }],
+    }),
+
+    updatedeactivationcompany: builder.mutation<any, { id: string; active: boolean }>({
+      query: ({ id, active }) => ({
+        url: `/api/v1/companies/deactivate/${id}`,
+        method: "PATCH",
+        body: { active },
+      }),
+      invalidatesTags: [{ type: "companies", id: "LIST" }],
+    }),
+    createCompany: builder.mutation<any, CompanyUpsertBody>({
+      query: (body) => ({
+        url: `/api/v1/companies`,
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["companies"],
+    }),
+
+    updateCompany: builder.mutation<any, { id: string; body: Partial<CompanyUpsertBody> }>({
+      query: ({ id, body }) => ({
+        url: `/api/v1/companies/${id}`,
+        method: "PATCH",
+        body,
+      }),
+
+      invalidatesTags: (r, e, arg) => [{ type: "companies", id: arg.id }],
+    }),
+    deleteCompany: builder.mutation<any, string | number>({
+      query: (id) => ({
+        url: `/api/v1/companies/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["companies"],
     }),
 
     // ! ========== Drivers Methods ==========
@@ -993,4 +1082,11 @@ export const {
   useCreateServiceCenterMutation,
   useUpdateServiceCenterMutation,
   useDeleteServiceCenterMutation,
+  // TODO: ----- Companies -----
+  useGetCompaniesQuery,
+  useCreateCompanyMutation,
+  useDeleteCompanyMutation,
+  useUpdateCompanyMutation,
+  useUpdateactivationcompanyMutation,
+  useUpdatedeactivationcompanyMutation,
 } = apiSlice;

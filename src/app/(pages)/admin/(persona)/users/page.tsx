@@ -200,7 +200,7 @@ const Users = () => {
   // FIXME: Update User Role
   const handleUpdateRole = async (
     userId: string,
-    newRole: "admin" | "employee" | "driver"
+    newRole: "admin" | "employee" | "driver" | "superAdmin"
   ) => {
     if (!token) {
       router.replace("/");
@@ -316,11 +316,10 @@ const Users = () => {
         {/* Role */}
         <td className="p-4">
           <span
-            className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-              dispatcher.role === "admin"
+            className={`px-2.5 py-1 rounded-full text-xs font-medium ${dispatcher.role === "admin"
                 ? "bg-purple-100 text-purple-800 border border-purple-200"
                 : "bg-slate-100 text-slate-800 border border-slate-200"
-            }`}
+              }`}
           >
             {dispatcher.role}
           </span>

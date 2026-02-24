@@ -7,6 +7,7 @@ import { useEffect, useMemo } from "react";
 import { useGetPaletteQuery } from "@/redux/slices/apiSlice";
 import { loadPalettesFromBackend, setPalette } from "@/redux/slices/paletteSlice";
 import { TPaletteConfigToPalette } from "@/utils/helperPalette";
+import { skipToken } from "@reduxjs/toolkit/query";
 
 export default function MuiThemeProvider({
   children,
@@ -16,7 +17,20 @@ export default function MuiThemeProvider({
   const { currentPalette } = useSelector((state: RootState) => state.palette);
   const dispatch = useAppDispatch();
 
-  const { data: backendPalettes = [] } = useGetPaletteQuery();
+  const token = useSelector((state: RootState) => state.auth?.token);
+
+  const role = useSelector((state: RootState) => state.auth?.user?.role);
+
+  const isSuperAdmin =
+    String(role || "").toLowerCase() === "superadmin" ||
+    String(role || "").toLowerCase() === "super-admin";
+
+  const shouldFetchPalette = Boolean(token) && !isSuperAdmin;
+
+  const { data: backendPalettes = [] } = useGetPaletteQuery(
+    shouldFetchPalette ? undefined : skipToken
+  );
+
 
   useEffect(() => {
     if (backendPalettes.length > 0) {

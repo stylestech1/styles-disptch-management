@@ -1,7 +1,7 @@
 import { TPlace } from "@/components/sections/LocationAutocomplete";
 import { Dayjs } from "dayjs";
 
-export type TUserRole = "admin" | "employee" | "driver";
+export type TUserRole = "admin" | "employee" | "driver" | "superAdmin"
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
 export type TTruckType = "reefer" | "van";
@@ -39,6 +39,46 @@ export type TStats = {
   cancelled: number;
   upcoming?: number;
   overdue?: number;
+};
+
+export type CompanyStatus = "Active" | "Inactive";
+
+export type CompanyUpsertBody = {
+  name: string;
+  email: string;
+  phone?: string;
+  usersCount?: number;
+  active: boolean;
+};
+export type CompanyDto = {
+  id: number;
+  name: string;
+  email: string;
+  status: CompanyStatus;
+  phone?: string;
+  usersCount?: number;
+  active: boolean;
+};
+
+export type CompanyForm = {
+  name: string;
+  email: string;
+  phone?: string;
+  usersCount?: number;
+  status: CompanyStatus;
+  active: boolean;
+};
+
+export type CompaniesResponse = {
+  data: CompanyDto[];
+  totalCompanies?: number;
+  totalUsers?: number;
+};
+export type PaginationResult = {
+  currentPage: number;
+  limit: number;
+  totalDocs: number;
+  totalPages: number;
 };
 export type TLoadsForm = {
   dho: string;
