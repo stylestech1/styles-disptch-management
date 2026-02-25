@@ -746,7 +746,7 @@ export default function CompaniesPage() {
     };
 
     const submitCompanyDialog = async () => {
-        if (!companyForm.name.trim() || !companyForm.email.trim() || !companyForm.status) return;
+        // if (!companyForm.name.trim() || !companyForm.email.trim() || !companyForm.status) return;
 
         const nextActive = companyForm.status === "Active";
 
