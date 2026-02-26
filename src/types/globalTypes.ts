@@ -1,7 +1,7 @@
 import { TPlace } from "@/components/sections/LocationAutocomplete";
 import { Dayjs } from "dayjs";
 
-export type TUserRole = "admin" | "employee" | "driver" | "superAdmin"
+export type TUserRole = "admin" | "employee" | "driver" | "superAdmin";
 export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
 export type TStatusDriver = "inactive" | "available" | "busy";
 export type TTruckType = "reefer" | "van";
@@ -11,6 +11,25 @@ export type TTruckId = {
   truckId: number;
   plateNumber: string;
 };
+export type PaginationResult = {
+  currentPage: number;
+  limit: number;
+  totalDocs: number;
+  totalPages: number;
+};
+export type SettingsItem = {
+  id: string;
+  key: "repairPerMile" | "insurancePerMile";
+  value: number;
+};
+
+export type RawGetSettingsResponse = {
+  message: string;
+  data: SettingsItem[];
+};
+
+export type SettingsDto = { id: string; repairPerMile: number; insurancePerMile: number } | null;
+
 export type TUser = {
   id: string;
   name: string;
@@ -21,24 +40,6 @@ export type TUser = {
   position: string;
   jobId: number;
   driver?: string;
-};
-export type TAuthState = {
-  user: TUser | null;
-  token: string | null;
-};
-export type TDocument = {
-  viewLink: string;
-  downloadLink: string;
-  name?: string;
-};
-export type TStats = {
-  total: number;
-  pending: number;
-  inTransit: number;
-  delivered: number;
-  cancelled: number;
-  upcoming?: number;
-  overdue?: number;
 };
 
 export type CompanyStatus = "Active" | "Inactive";
@@ -74,11 +75,38 @@ export type CompaniesResponse = {
   totalCompanies?: number;
   totalUsers?: number;
 };
-export type PaginationResult = {
-  currentPage: number;
-  limit: number;
-  totalDocs: number;
-  totalPages: number;
+
+export type ServiceCenter = {
+  id: string;
+  name: string;
+  active?: boolean;
+  address?: string;
+  city?: string;
+  state?: string;
+  phone?: string;
+  email?: string;
+  availability?: string;
+  services?: string[];
+  location?: { type: "Point"; coordinates: [number, number] };
+};
+
+export type TAuthState = {
+  user: TUser | null;
+  token: string | null;
+};
+export type TDocument = {
+  viewLink: string;
+  downloadLink: string;
+  name?: string;
+};
+export type TStats = {
+  total: number;
+  pending: number;
+  inTransit: number;
+  delivered: number;
+  cancelled: number;
+  upcoming?: number;
+  overdue?: number;
 };
 export type TLoadsForm = {
   dho: string;
@@ -154,7 +182,7 @@ export type TDriver = {
   assignedTruck?: string;
   updatedBy?: string;
   user: TUser | string;
-  toggle: boolean;
+  toggle: boolean
   documents?: AttachmentItem[];
 };
 export type TTruck = {

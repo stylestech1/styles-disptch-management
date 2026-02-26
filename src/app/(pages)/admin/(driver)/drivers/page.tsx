@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -323,11 +323,11 @@ const DriversPage = () => {
       const stats = isFiltered ? filteredData?.stats : driversData?.stats;
       return stats
         ? {
-            total: stats.total || 0,
-            available: stats.available || 0,
-            busy: stats.busy || 0,
-            inactive: stats.inactive || 0,
-          }
+          total: stats.total || 0,
+          available: stats.available || 0,
+          busy: stats.busy || 0,
+          inactive: stats.inactive || 0,
+        }
         : { total: 0, available: 0, busy: 0, inactive: 0 };
     } else {
       const stats = isFiltered
@@ -370,9 +370,12 @@ const DriversPage = () => {
 
     try {
       // Optimistic UI update - RTK Query will automatically refetch driver summary
+      const formData = new FormData();
+      formData.append("toggle", String(newToggleValue));
+
       await updateDriver({
         id: driver.id,
-        body: { toggle: newToggleValue },
+        body: formData,
       }).unwrap();
 
       // 🔄 Refetch driver list to show updated toggle state
@@ -497,9 +500,16 @@ const DriversPage = () => {
     }
 
     try {
+      const formDataBody = new FormData();
+      Object.entries(changedFields).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formDataBody.append(key, String(value));
+        }
+      });
+
       await updateDriver({
         id: formData.id,
-        body: changedFields,
+        body: formDataBody,
       }).unwrap();
       toast.success("✅ Driver updated successfully!");
       setOpen(false);
@@ -661,7 +671,7 @@ const DriversPage = () => {
             sx={{
               bgcolor: alpha(theme.currentPalette.primary, 0.1),
               color: theme.currentPalette.primary,
-              borderRadius: 1,
+              borderRadius: 2,
             }}
             size="small"
           />
@@ -676,7 +686,7 @@ const DriversPage = () => {
               sx={{
                 bgcolor: alpha(theme.currentPalette.primary, 0.2),
                 color: theme.currentPalette.primary,
-                borderRadius: 1,
+                borderRadius: 2,
                 pl: 0.5,
               }}
               size="small"
@@ -699,7 +709,7 @@ const DriversPage = () => {
               sx={{
                 bgcolor: theme.currentPalette.primary,
                 color: theme.currentPalette.background,
-                borderRadius: 1,
+                borderRadius: 2,
                 pl: 0.5,
               }}
               size="small"
@@ -722,7 +732,7 @@ const DriversPage = () => {
               sx={{
                 bgcolor: alpha(theme.currentPalette.primary, 0.1),
                 color: theme.currentPalette.primary,
-                borderRadius: 1,
+                borderRadius: 2,
                 pl: 0.5,
               }}
               size="small"
@@ -780,11 +790,14 @@ const DriversPage = () => {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={() => setAnchorEl(null)}
+            sx={{ zIndex: 999 }}
             PaperProps={{
               sx: {
                 borderRadius: 2,
                 boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
                 mt: 1,
+                bgcolor: "#fff",
+
               },
             }}
           >
@@ -1437,7 +1450,7 @@ const DriversPage = () => {
               color="inherit"
               onClick={cancelDelete}
               sx={{
-                borderRadius: 1,
+                borderRadius: 2,
                 minWidth: 80,
                 borderColor: "grey.400",
                 "&:hover": {
@@ -1453,7 +1466,7 @@ const DriversPage = () => {
               color="error"
               onClick={confirmDelete}
               sx={{
-                borderRadius: 1,
+                borderRadius: 2,
                 minWidth: 80,
                 backgroundColor: "error.main",
                 "&:hover": {
@@ -1476,6 +1489,7 @@ const DriversPage = () => {
             borderRadius: 2,
             overflow: "hidden",
             width: 400,
+            bgcolor: "#fff"
           },
         }}
       >
@@ -1488,6 +1502,7 @@ const DriversPage = () => {
                 p: 2,
                 borderBottom: 1,
                 borderColor: alpha(theme.currentPalette.text, 0.1),
+                bgcolor: "#fff"
               }}
             >
               <Typography
@@ -1567,21 +1582,21 @@ const DriversPage = () => {
                   )}
                   {(selectedTimeOff.status === "rejected" ||
                     selectedTimeOff.status === "cancelled") && (
-                    <Chip
-                      sx={{
-                        bgcolor: "#B52C17",
-                        color: theme.currentPalette.background,
-                        px: 0.5,
-                        py: 0.5,
-                      }}
-                      icon={
-                        <OctagonX
-                          style={{ color: theme.currentPalette.background }}
-                        />
-                      }
-                      label={selectedTimeOff.status}
-                    />
-                  )}
+                      <Chip
+                        sx={{
+                          bgcolor: "#B52C17",
+                          color: theme.currentPalette.background,
+                          px: 0.5,
+                          py: 0.5,
+                        }}
+                        icon={
+                          <OctagonX
+                            style={{ color: theme.currentPalette.background }}
+                          />
+                        }
+                        label={selectedTimeOff.status}
+                      />
+                    )}
                 </Box>
 
                 {/* Requested Dates */}
@@ -1623,7 +1638,7 @@ const DriversPage = () => {
                         color: theme.currentPalette.primary,
                         fontWeight: "bold",
                         bgcolor: alpha(theme.currentPalette.primary, 0.1),
-                        borderRadius: 1,
+                        borderRadius: 2,
                       }}
                     />
                     <span style={{ color: theme.currentPalette.primary }}>
@@ -1657,7 +1672,7 @@ const DriversPage = () => {
                       bgcolor: alpha(theme.currentPalette.primary, 0.1),
                       p: 2,
                       width: "100%",
-                      borderRadius: 1,
+                      borderRadius: 2,
                     }}
                   >
                     {selectedTimeOff.reason}
