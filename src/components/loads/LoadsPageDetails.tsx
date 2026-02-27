@@ -425,7 +425,14 @@ const LoadsPageDetails = () => {
         {/* route */}
         <td className="p-4">
           <div className="flex justify-center">
-            <div className="space-y-1">
+            <div
+              style={{
+                width: "100%",
+                maxWidth: 220, 
+                textAlign: "left", 
+              }}
+              className="space-y-2"
+            >
               <LocationLine
                 theme={theme}
                 icon={<MapPin size={14} color={theme.currentPalette.primary} />}
@@ -445,25 +452,8 @@ const LoadsPageDetails = () => {
           </div>
         </td>
         {/* distance */}
-        <td
-          className="p-4 text-center"
-          style={{
-            color: theme.currentPalette.primary,
-            width: 130,
-            minWidth: 130,
-            whiteSpace: "nowrap"
-          }}
-        >
-          <span
-            style={{
-              display: "inline-block",
-              width: 90,
-              textAlign: "center",
-              fontVariantNumeric: "tabular-nums",
-            }}
-          >
-            {loadItem.distanceMiles != null ? `${Number(loadItem.distanceMiles).toFixed(0)} mi` : "-"}
-          </span>
+        <td className="p-4 text-center" style={{ color: theme.currentPalette.primary }} >
+          {loadItem.distanceMiles ? `${loadItem.distanceMiles} mi` : "-"}
         </td>
         {/* price per mile  */}
         <td className="p-4 text-center" style={{ color: theme.currentPalette.primary }}>
