@@ -62,7 +62,7 @@ import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import { Boxes, Clock, Goal, LandPlot, MapPin, NotepadText } from "lucide-react";
 
-type LoadStatusFilter = "all" | "pending" | "in_transit" | "delivered" | "cancelled";
+type LoadStatusFilter = "all" | "pending" | "in_transit" | "delivered";
 const CONTROL_H = 42;
 
 // ---------- helpers ----------
@@ -131,11 +131,11 @@ const LocationLine = ({
         arrow: { sx: { color: "#0f172a" } },
       }}
     >
-      <div className="flex text-center items-center gap-2 cursor-default">
+      <div className="flex items-start gap-2">
         {icon}
         <span
-          className="text-sm max-w-[180px] truncate font-medium"
-          style={{ color: theme.currentPalette.primary }} //  text primary
+          className="text-sm font-medium max-w-[180px] whitespace-normal break-words"
+          style={{ color: theme.currentPalette.primary }}
         >
           {short}
         </span>
@@ -184,10 +184,10 @@ const StatusChip = ({ status, theme }: { status?: string; theme: any }) => {
         // icon={dot(white)}
         sx={{
           height: 26,
-          borderRadius: 999,
-          bgcolor: primary,
+          borderRadius: 2,
+          bgcolor: alpha(primary, 0.75),
           color: white,
-          border: `1px solid ${primary}`,
+          border: `1px solid ${alpha(primary, 0.75)}`,
           pl: 0.25,
           "& .MuiChip-label": { fontWeight: 800, fontSize: 12 },
         }}
@@ -202,7 +202,7 @@ const StatusChip = ({ status, theme }: { status?: string; theme: any }) => {
         // icon={dot(white)}
         sx={{
           height: 26,
-          borderRadius: 999,
+          borderRadius: 2,
           bgcolor: primary,
           color: white,
           border: `1px solid ${primary}`,
@@ -219,7 +219,7 @@ const StatusChip = ({ status, theme }: { status?: string; theme: any }) => {
       // icon={dot(alpha(primary, 0.6))}
       sx={{
         height: 26,
-        borderRadius: 999,
+        borderRadius: 2,
         bgcolor: alpha(primary, 0.08),
         color: primary,
         border: `1px solid ${alpha(primary, 0.18)}`,
@@ -423,9 +423,9 @@ const LoadsPageDetails = () => {
           </div>
         </td>
         {/* route */}
-        <td className="p-4">
+        <td className="p-4 align-middle">
           <div className="flex justify-center">
-            <div className="space-y-1">
+            <div className="flex flex-col items-start gap-2 w-fit max-w-[220px]">
               <LocationLine
                 theme={theme}
                 icon={<MapPin size={14} color={theme.currentPalette.primary} />}
