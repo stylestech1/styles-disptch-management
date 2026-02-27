@@ -425,14 +425,7 @@ const LoadsPageDetails = () => {
         {/* route */}
         <td className="p-4">
           <div className="flex justify-center">
-            <div
-              style={{
-                width: "100%",
-                maxWidth: 220, 
-                textAlign: "left", 
-              }}
-              className="space-y-2"
-            >
+            <div className="space-y-1">
               <LocationLine
                 theme={theme}
                 icon={<MapPin size={14} color={theme.currentPalette.primary} />}
