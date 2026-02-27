@@ -445,8 +445,25 @@ const LoadsPageDetails = () => {
           </div>
         </td>
         {/* distance */}
-        <td className="p-4 text-center" style={{ color: theme.currentPalette.primary }} >
-          {loadItem.distanceMiles ? `${loadItem.distanceMiles} mi` : "-"}
+        <td
+          className="p-4 text-center"
+          style={{
+            color: theme.currentPalette.primary,
+            width: 130,
+            minWidth: 130,
+            whiteSpace: "nowrap"
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              width: 90,
+              textAlign: "center",
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {loadItem.distanceMiles != null ? `${Number(loadItem.distanceMiles).toFixed(0)} mi` : "-"}
+          </span>
         </td>
         {/* price per mile  */}
         <td className="p-4 text-center" style={{ color: theme.currentPalette.primary }}>
