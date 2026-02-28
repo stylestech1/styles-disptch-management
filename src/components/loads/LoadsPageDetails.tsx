@@ -131,10 +131,16 @@ const LocationLine = ({
         arrow: { sx: { color: "#0f172a" } },
       }}
     >
-      <div className="flex items-start gap-2">
-        {icon}
+      {/* خلي العرض كله ثابت */}
+      <div className="flex items-start gap-2 max-w-[180px]">
+        {/* ✅ أيقونة ثابتة بدون mt */}
+        <span className="w-[18px] flex justify-center shrink-0 leading-[20px]">
+          {icon}
+        </span>
+
+        {/* ✅ أهم حاجة: min-w-0 عشان يلف */}
         <span
-          className="text-sm font-medium max-w-[180px] whitespace-normal break-words"
+          className="min-w-0 text-sm font-medium whitespace-normal break-words leading-[20px]"
           style={{ color: theme.currentPalette.primary }}
         >
           {short}
@@ -425,7 +431,7 @@ const LoadsPageDetails = () => {
         {/* route */}
         <td className="p-4 align-middle">
           <div className="flex justify-center">
-            <div className="flex flex-col items-start gap-2 w-fit max-w-[220px]">
+            <div className="flex flex-col items-start gap-2 w-[150px]">
               <LocationLine
                 theme={theme}
                 icon={<MapPin size={14} color={theme.currentPalette.primary} />}
