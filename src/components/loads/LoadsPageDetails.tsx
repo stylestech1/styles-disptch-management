@@ -131,13 +131,10 @@ const LocationLine = ({
         arrow: { sx: { color: "#0f172a" } },
       }}
     >
-      {/* inline-flex keeps icon close + block stays centered */}
-      <div className="inline-flex items-start gap-2 max-w-[220px]">
-        <span className="shrink-0 mt-[2px]">{icon}</span>
-
-        {/* min-w-0 مهم عشان اللف يشتغل مع flex */}
+      <div className="flex items-start gap-2">
+        {icon}
         <span
-          className="min-w-0 text-sm font-medium whitespace-normal break-words leading-tight"
+          className="text-sm font-medium max-w-[180px] whitespace-normal break-words"
           style={{ color: theme.currentPalette.primary }}
         >
           {short}
@@ -146,7 +143,6 @@ const LocationLine = ({
     </Tooltip>
   );
 };
-
 const StatusChip = ({ status, theme }: { status?: string; theme: any }) => {
   const s = (status || "").toLowerCase();
   const primary = theme.currentPalette.primary;
@@ -427,9 +423,9 @@ const LoadsPageDetails = () => {
           </div>
         </td>
         {/* route */}
-        <td className="p-4 align-middle text-center">
+        <td className="p-4 align-middle">
           <div className="flex justify-center">
-            <div className="flex flex-col items-start gap-2 w-fit">
+            <div className="flex flex-col items-start gap-2 w-fit max-w-[220px]">
               <LocationLine
                 theme={theme}
                 icon={<MapPin size={14} color={theme.currentPalette.primary} />}
