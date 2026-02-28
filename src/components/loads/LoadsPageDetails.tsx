@@ -523,7 +523,7 @@ const LoadsPageDetails = () => {
     my: 2,
     border: `1px solid ${alpha(theme.currentPalette.primary, 0.25)}`,
     borderRadius: 2,
-    backgroundColor: alpha(theme.currentPalette.primary, 0.02),
+    // backgroundColor: alpha(theme.currentPalette.primary, 0.02),
     width: "100%",
     overflow: "hidden",
   };
