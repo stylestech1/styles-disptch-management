@@ -101,9 +101,7 @@ const UserProfile = () => {
     const errorMessage = getErrorMessage(userError);
     dispatch(setError(errorMessage));
 
-    toast.error(errorMessage || "Loading failed ❌", {
-      style: { background: "#dc2626", color: "#fff" },
-    });
+    toast.error(errorMessage || "Loading failed");
   }, [userError, dispatch]);
 
   // Open Update popup and set form data
@@ -137,16 +135,14 @@ const UserProfile = () => {
         phone: formData.phone,
       }).unwrap();
 
-      toast.success("User Updated successfully!", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
+      toast.success("User Updated successfully!");
 
       setPopup(false);
       refetch?.();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       dispatch(setError(errorMessage));
-      toast.error(errorMessage || "Updating user failed ❌");
+      toast.error(errorMessage || "Updating user failed");
       throw err;
     }
   };
@@ -159,9 +155,7 @@ const UserProfile = () => {
     try {
       await updatePassword(passwordData).unwrap();
 
-      toast.success("Password Updated successfully!", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
+      toast.success("Password Updated successfully!");
 
       setChangePasswordPopup(false);
       setPasswordData({
@@ -172,7 +166,7 @@ const UserProfile = () => {
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
       dispatch(setError(errorMessage));
-      toast.error(errorMessage || "Updating password failed ❌");
+      toast.error(errorMessage || "Updating password failed");
       throw err;
     }
   };
