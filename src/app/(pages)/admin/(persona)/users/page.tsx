@@ -221,12 +221,6 @@ const Users = () => {
     setError(errorMessage);
 
     toast.error(errorMessage || "Failed to load data ", {
-      style: {
-        background: "#dc2626",
-        color: "#fff",
-        borderRadius: "8px",
-        fontSize: "14px",
-      },
       duration: 4000,
     });
   }, [dispatchersError, userByIdError, filteredError, setError]);
@@ -258,9 +252,7 @@ const Users = () => {
     if (!token) return router.replace("/");
     try {
       await createUser(userData).unwrap();
-      toast.success("User created successfully!", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
+      toast.success("User created successfully!");
       setPopup(false);
       await refetchLoads();
     } catch (err: unknown) {
@@ -277,9 +269,7 @@ const Users = () => {
     if (!token) return router.replace("/");
     try {
       await updateUserRole({ id: userId, role: newRole }).unwrap();
-      toast.success(`Role updated to ${newRole} successfully!`, {
-        style: { background: "#16a34a", color: "#fff" },
-      });
+      toast.success(`Role updated to ${newRole} successfully!`);
       await refetchLoads();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
@@ -292,9 +282,7 @@ const Users = () => {
     if (!token) return router.replace("/");
     try {
       await activateUser({ id: userId }).unwrap();
-      toast.success("User activated successfully!", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
+      toast.success("User activated successfully!");
       await refetchLoads();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
@@ -307,9 +295,7 @@ const Users = () => {
     if (!token) return router.replace("/");
     try {
       await deactivateUser({ id: userId }).unwrap();
-      toast.success("User deactivated successfully!", {
-        style: { background: "#16a34a", color: "#fff" },
-      });
+      toast.success("User deactivated successfully!");
       await refetchLoads();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
