@@ -170,21 +170,36 @@ const Users = () => {
     },
   ] = useLazyGetUserByIdQuery();
 
+  const isNumericId = (v: string) => /^\d+$/.test(v.trim());
+
   const searchHook = useSearchSubmit({
     onSearch: (term) => {
+      const t = term.trim();
       setPage(1);
-      if (term.trim()) {
-        triggerSearchQuery(encodeURIComponent(term));
+      if (!t) {
+        setRoleFilter("all");
+        resetSearchQuery();
+        setError("");
+        refetchLoads();
+        return;
       }
+      if (!isNumericId(t)) {
+        resetSearchQuery();
+        setError("Search users by ID");
+        return;
+      }
+      setError("");
+      triggerSearchQuery(encodeURIComponent(t));
     },
+
     onReset: () => {
       setPage(1);
       setRoleFilter("all");
       resetSearchQuery();
+      setError("");
       refetchLoads();
     },
   });
-
   const { isSearching } = searchHook;
 
 
@@ -212,18 +227,16 @@ const Users = () => {
     ? filteredData?.paginationResult || null
     : dispatchersData?.paginationResult || null;
 
-
   useEffect(() => {
     const currentError = dispatchersError || userByIdError || filteredError;
     if (!currentError) return;
 
     const errorMessage = getErrorMessage(currentError);
-    setError(errorMessage);
 
-    toast.error(errorMessage || "Failed to load data ", {
-      duration: 4000,
-    });
+    setError(errorMessage);
+    toast.error(errorMessage || "Failed to load data", { duration: 4000 });
   }, [dispatchersError, userByIdError, filteredError, setError]);
+
 
   const statsData = useMemo(() => {
     const statsUsersData: any = dispatchersData?.stats;
@@ -454,7 +467,7 @@ const Users = () => {
           {/* Search */}
           <SearchInput
             searchHook={searchHook}
-            placeholder="Search users by ID, Name .."
+            placeholder="Search users by ID"
             showClearButton
             sx={{ width: { xs: "100%", md: 360 } }}
             inputSx={searchInputSx}
