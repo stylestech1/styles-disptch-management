@@ -340,7 +340,7 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
                   },
                 }}
                 placeholder="0.00"
-                required
+                // required
                 slotProps={{
                   input: {
                     startAdornment: (
@@ -525,11 +525,10 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
                   color: canAddMoreFiles
                     ? theme.currentPalette.background
                     : theme.currentPalette.text,
-                  border: `1px solid ${
-                    canAddMoreFiles
+                  border: `1px solid ${canAddMoreFiles
                       ? theme.currentPalette.primary
                       : theme.currentPalette.text
-                  }`,
+                    }`,
                 }}
               >
                 Select PDF Files
@@ -584,7 +583,7 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-between pt-4">
+        {/* <div className="flex justify-between pt-4">
           <Button
             sx={{
               bgcolor: theme.currentPalette.primary,
@@ -606,7 +605,7 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
           >
             Next
           </Button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
