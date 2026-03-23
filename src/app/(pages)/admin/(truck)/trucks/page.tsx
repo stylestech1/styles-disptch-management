@@ -511,8 +511,10 @@ const TrucksPage: React.FC = () => {
         </td>
 
         <td className="p-4 text-center">{t.fuelPerMile ?? "N/A"}</td>
-        <td className="p-4 text-center">{t.totalMileage ?? "N/A"}</td>
-
+        <td className="p-4 text-center">
+          {t.totalMileage != null ? Math.trunc(Number(t.totalMileage)) : "N/A"}
+        </td>
+        
         <td className="p-4 text-center">
           <StatusChip status={t.status as any} />
         </td>
