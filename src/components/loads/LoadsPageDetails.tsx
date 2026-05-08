@@ -349,18 +349,34 @@ const LoadsPageDetails = () => {
   }, [loadsError, loadByIdError, setError]);
 
   // Stats cards
-  const statsData = useMemo(() => {
-    const statLoadData: any = loadsData?.stats || [];
-    if (!statLoadData || statLoadData.length === 0)
-      return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
-    return {
-      totalLoads: statLoadData.total,
-      pending: statLoadData.pending,
-      inTransit: statLoadData.inTransit,
-      delivered: statLoadData.delivered,
-    };
-  }, [loadsData?.stats]);
+  // const statsData = useMemo(() => {
+  //   const statLoadData: any = loadsData?.stats || [];
+  //   if (!statLoadData || statLoadData.length === 0)
+  //     return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
+  //   return {
+  //     totalLoads: statLoadData.total,
+  //     pending: statLoadData.pending,
+  //     inTransit: statLoadData.inTransit,
+  //     delivered: statLoadData.delivered,
+  //   };
+  // }, [loadsData?.stats]);
 
+  const statsData = useMemo(() => {
+    const statLoadData: any =
+      isFiltered && filteredData?.stats ? filteredData.stats : loadsData?.stats;
+
+    if (!statLoadData) {
+      return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
+    }
+
+    return {
+      totalLoads: statLoadData.total || 0,
+      pending: statLoadData.pending || 0,
+      inTransit: statLoadData.inTransit || 0,
+      delivered: statLoadData.delivered || 0,
+    };
+    
+  }, [isFiltered, filteredData?.stats, loadsData?.stats]);
   if (loadsLoading && !loadsData) return <Loading />;
 
   const renderLoadRow = (loadItem: TLoads) => {

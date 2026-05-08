@@ -224,7 +224,7 @@ const TruckDashboard = () => {
           router.push(`/admin/truckSummary/${truckItem._id}`);
         }}
       >
-        {/* Plate Number */}
+        {/* Truck Number */}
         <td className="p-4 text-center">
           <span className="text-sm px-2 py-1 rounded">
             {truckItem.plateNumber}
@@ -301,7 +301,7 @@ const TruckDashboard = () => {
           router.push(`/admin/truckSummary/${truckItem._id}`);
         }}
       >
-        {/* Plate Number */}
+        {/* Truck Number */}
         <td className="p-4 text-center">
           <span className="text-sm px-2 py-1 rounded">
             {truckItem.plateNumber}
@@ -369,7 +369,7 @@ const TruckDashboard = () => {
           router.push(`/admin/truckSummary/${truckItem._id}`);
         }}
       >
-        {/* Plate Number */}
+        {/* Truck Number */}
         <td className="p-4 text-center">
           <span className="text-sm px-2 py-1 rounded">
             {truckItem.plateNumber}
