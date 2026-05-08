@@ -337,8 +337,18 @@ const CustomerPage = () => {
               <div className="text-xs text-slate-500">
                 {customer.email || "-"}
               </div>
-              <div className="text-xs text-slate-500">
-                {customer.phone || "-"}
+              <div className="text-xs">
+                {customer.phone ? (
+                  <a
+                    href={`tel:${customer.phone}`}
+                    style={{ color: theme.currentPalette.primary }}
+                    className="hover:underline"
+                  >
+                    {customer.phone}
+                  </a>
+                ) : (
+                  <span className="text-slate-500">-</span>
+                )}
               </div>
             </div>
           </div>

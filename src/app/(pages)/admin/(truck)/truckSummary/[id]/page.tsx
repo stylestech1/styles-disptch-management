@@ -100,7 +100,7 @@ const TruckSummary = () => {
     {
       id: 1,
       icon: <IdCard size={25} />,
-      name: "Plate Number",
+      name: "Truck Number",
       value: profile?.plateNumber || "N/A",
     },
     {
