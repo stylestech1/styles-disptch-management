@@ -343,11 +343,19 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Drivers"],
     }),
 
-    getDriversWithPagination: builder.query({
-      query: ({ page = 1, limit = 10 }) =>
-        `/api/v1/drivers?page=${page}&limit=${limit}`,
+    getDriversWithPagination: builder.query<
+      any,
+      { page: number; limit: number; status?: string }
+    >({
+      query: ({ page, limit, status }) => ({
+        url: "/api/v1/drivers",
+        params: {
+          page,
+          limit,
+          ...(status ? { status } : {}),
+        },
+      }),
       providesTags: ["Drivers"],
-      keepUnusedDataFor: 60 * 60 * 24,
     }),
 
     getAllDrivers: builder.query<{ data: TDriver[] }, void>({
