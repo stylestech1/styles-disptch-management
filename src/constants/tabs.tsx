@@ -11,6 +11,7 @@ import {
   Users,
   UserStar,
   Wrench,
+  UserPlus
 } from "lucide-react";
 
 type TabItem = {
@@ -72,6 +73,11 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       label: "Drivers",
       subtitle: "Manage your driver team members and their access",
       icon: <ShieldUser />,
+    },
+    {
+      label: "Hiring Drivers",
+      subtitle: "Review, approve, and manage driver recruitment requests",
+      icon: <UserPlus />,
     },
     {
       label: "Users",

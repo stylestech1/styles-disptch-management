@@ -5,6 +5,7 @@ import {
   PaginationResult,
   TCustomer,
   TDriver,
+  tDriverHiring,
   TLoadSummary,
   TTrucksSummaryResponse,
   TTruckSummaryResponse,
@@ -268,9 +269,95 @@ export const apiSlice = api.injectEndpoints({
       invalidatesTags: ["companies"],
     }),
 
+    // ! ========== Driver Applicants ==========
+    getDriverApplicants: builder.query<
+      {
+        data: tDriverHiring[];
+        totalDrivers?: number;
+        paginationResult?: PaginationResult;
+        stats?: any;
+      },
+      { page?: number; limit?: number }
+    >({
+      query: ({ page, limit }) => {
+        const params: string[] = [];
+
+        if (page) params.push(`page=${page}`);
+        if (limit) params.push(`limit=${limit}`);
+
+        const queryString = params.length ? `?${params.join("&")}` : "";
+
+        return `/api/v1/driver-applicants${queryString}`;
+      },
+      providesTags: ["Hiring Drivers"],
+    }),
+    getDriverApplicantsWithFilter: builder.query<
+      {
+        data: tDriverHiring[];
+        paginationResult?: PaginationResult;
+        stats?: any;
+      },
+      {
+        from?: string;
+        to?: string;
+        page?: number;
+        limit?: number;
+      }
+    >({
+      query: ({ from, to, page, limit }) => {
+        const params: string[] = [];
+
+        if (from) params.push(`from=${from}`);
+        if (to) params.push(`to=${to}`);
+        if (page) params.push(`page=${page}`);
+        if (limit) params.push(`limit=${limit}`);
+
+        const queryString = params.length ? `?${params.join("&")}` : "";
+
+        return `/api/v1/driver-applicants/filter${queryString}`;
+      },
+
+      providesTags: ["Hiring Drivers"],
+    }),
+    getDriverApplicantById: builder.query<
+      {
+        data: tDriverHiring;
+      },
+      string
+    >({
+      query: (id) => `/api/v1/driver-applicants/${id}`,
+      providesTags: (_result, _error, id) => [
+        { type: "Hiring Drivers", id },
+      ],
+    }),
+    createDriverApplicant: builder.mutation<any, FormData>({
+      query: (body) => ({
+        url: "/api/v1/driver-applicants",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Hiring Drivers"],
+    }),
+
+    updateDriverApplicant: builder.mutation<any, { id: string; body: FormData }>({
+      query: ({ id, body }) => ({
+        url: `/api/v1/driver-applicants/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Hiring Drivers"],
+    }),
+
+    deleteDriverApplicant: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/api/v1/driver-applicants/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Hiring Drivers"],
+    }),
     // ! ========== Loads Using Id ==========
     getLoadById: builder.query({
-      query: (loadId) => `/api/v1/loads?loadId=${loadId}`,
+      query: (loadId) => `/api/v1/loads?keyword=${loadId}`,
       providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
     }),
 
@@ -328,9 +415,36 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Drivers ==========
     getDrivers: builder.query({
-      query: () => `/api/v1/drivers?status=available`,
+      query: (params?: { page?: number; limit?: number }) => {
+        let url = `/api/v1/drivers?status=available`;
+
+        if (params?.page) {
+          url += `&page=${params.page}`;
+        }
+        if (params?.limit) {
+          url += `&limit=${params.limit}`;
+        }
+
+        return url;
+      },
       providesTags: ["Drivers"],
       keepUnusedDataFor: 60 * 60 * 24,
+    }),
+
+    getDriversLazy: builder.mutation({
+      query: (params?: { page?: number; limit?: number }) => {
+        let url = `/api/v1/drivers?status=available`;
+
+        if (params?.page) {
+          url += `&page=${params.page}`;
+        }
+        if (params?.limit) {
+          url += `&limit=${params.limit}`;
+        }
+
+        return url;
+      },
+      invalidatesTags: ["Drivers"],
     }),
 
     getUserDriverRole: builder.query({
@@ -574,10 +688,10 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     getTruckByTruckId: builder.query({
-      query: (truckId) => `/api/v1/trucks?truckId=${truckId}`,
-      providesTags: (result, error, truckId) => [{ type: "Trucks", truckId }],
+      query: (keyword) =>
+        `/api/v1/trucks?keyword=${encodeURIComponent(keyword)}`,
+      providesTags: ["Trucks"],
     }),
-
     getTruckById: builder.query({
       query: (id) => `/api/v1/trucks/${id}`,
       providesTags: ["Trucks"],
@@ -1109,5 +1223,12 @@ export const {
   useResendResetCodeMutation,
   useVerifyResetCodeMutation,
   useResetPasswordMutation,
-
+  // driver applicants
+  useGetDriverApplicantsQuery,
+  useCreateDriverApplicantMutation,
+  useUpdateDriverApplicantMutation,
+  useDeleteDriverApplicantMutation,
+  useGetDriverApplicantsWithFilterQuery,
+  useLazyGetDriverApplicantByIdQuery,
+  useGetDriverApplicantByIdQuery,
 } = apiSlice;

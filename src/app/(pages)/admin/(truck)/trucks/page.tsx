@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -334,24 +335,47 @@ const TrucksPage: React.FC = () => {
   const [createTruck, { isLoading: isCreating }] = useCreateTruckMutation();
   const [updateTruck, { isLoading: isUpdating }] = useUpdateTruckMutation();
   const [deleteTruck] = useDeleteTruckMutation();
+  const [keyword, setKeyword] = useState("");
+  const [activeKeyword, setActiveKeyword] = useState("");
 
   const truck = useMemo(() => {
-    if (isSearching && truckByIdData?.data) {
-      return Array.isArray(truckByIdData.data) ? truckByIdData.data : [truckByIdData.data];
+    if (activeKeyword && truckByIdData?.data) {
+      return Array.isArray(truckByIdData.data)
+        ? truckByIdData.data
+        : [truckByIdData.data];
     }
-    if (isFiltered && filteredData?.data) return filteredData.data;
+
+    if (!activeKeyword && isFiltered && filteredData?.data) {
+      return filteredData.data;
+    }
+
     return trucksData?.data || [];
-  }, [isSearching, isFiltered, truckByIdData, filteredData, trucksData]);
+  }, [activeKeyword, truckByIdData, isFiltered, filteredData, trucksData]);
 
   const tableData = useMemo(() => {
-    if (statusFilter === "all") return truck;
-    const wanted = statusFilter.toLowerCase();
-    return (truck || []).filter((t: any) => String(t?.status || "").toLowerCase() === wanted);
+    let data = truck || [];
+
+    if (statusFilter !== "all") {
+      data = data.filter(
+        (t: any) => String(t?.status || "").toLowerCase() === statusFilter
+      );
+    }
+
+    return data;
   }, [truck, statusFilter]);
 
-  const pagination = isFiltered
-    ? filteredData?.paginationResult || null
-    : trucksData?.paginationResult || null;
+  const pagination = activeKeyword
+    ? truckByIdData?.paginationResult || null
+    : isFiltered
+      ? filteredData?.paginationResult || null
+      : trucksData?.paginationResult || null;
+
+
+  useEffect(() => {
+    if (activeKeyword) {
+      triggerSearchQuery(activeKeyword);
+    }
+  }, [activeKeyword, page]);
 
   useEffect(() => {
     setLoading(trucksLoading && !trucksData);
@@ -514,7 +538,6 @@ const TrucksPage: React.FC = () => {
         <td className="p-4 text-center">
           {t.totalMileage != null ? Math.trunc(Number(t.totalMileage)) : "N/A"}
         </td>
-        
         <td className="p-4 text-center">
           <StatusChip status={t.status as any} />
         </td>
@@ -628,12 +651,51 @@ const TrucksPage: React.FC = () => {
             width: { xs: "100%", md: "auto" },
           }}
         >
-          <SearchInput
+          {/* <SearchInput
             searchHook={searchHook}
             placeholder="Search trucks by ID.."
             showClearButton
             sx={{ width: { xs: "100%", sm: 260, md: 260, lg: 320 } }}
             inputSx={{
+              "& .MuiOutlinedInput-root": {
+                ...controlSx,
+                px: 0.5,
+              },
+              "& .MuiOutlinedInput-input": {
+                paddingTop: 0,
+                paddingBottom: 0,
+                height: CONTROL_H,
+                display: "flex",
+                alignItems: "center",
+              },
+            }}
+          /> */}
+          <TextField
+            size="small"
+            value={keyword}
+            placeholder="Search trucks by ID.."
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const value = keyword.trim();
+
+                setPage(1);
+
+                if (value) {
+                  setActiveKeyword(value);
+                  triggerSearchQuery(value);
+                } else {
+                  setActiveKeyword("");
+                  resetSearchQuery();
+                  refetchTrucks();
+                }
+              }
+            }}
+            onChange={(e) => {
+              setKeyword(e.target.value);
+              setPage(1);
+            }}
+            sx={{
+              width: { xs: "100%", sm: 260, md: 260, lg: 320 },
               "& .MuiOutlinedInput-root": {
                 ...controlSx,
                 px: 0.5,

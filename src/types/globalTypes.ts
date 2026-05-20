@@ -167,6 +167,12 @@ export type AttachmentItem = {
   size?: number;
   url?: string;
 };
+export type AttachmentHiringDriver = {
+  fileId: string;
+  viewLink: string;
+  downloadLink: string;
+  uploadedAt: string;
+}
 export type TDriver = {
   id: string;
   driverId: number;
@@ -184,6 +190,22 @@ export type TDriver = {
   user: TUser | string;
   toggle: boolean
   documents?: AttachmentItem[];
+};
+export type tDriverHiring = {
+  _id: string;
+  name: string;
+  phone: string;
+  state: string;
+  experienceYears: number;
+  readyDate: string;
+  driverId?: number;
+  notes: string;
+  violations: string;
+  status: string;
+  createdBy: string;
+  updatedBy?: string;
+  hireDate?: string;
+  document?: AttachmentHiringDriver;
 };
 export type TTruck = {
   id: string;
