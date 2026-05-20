@@ -53,7 +53,6 @@ import {
   SelectChangeEvent,
   SxProps,
   TableRow,
-  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -255,14 +254,13 @@ const LoadsPageDetails = () => {
   // Loading & Error states
   const { setLoading } = useLoading();
   const { error, setError } = useError();
-  const [keyword, setKeyword] = useState("");
-  const [activeKeyword, setActiveKeyword] = useState("");
+
   const [
     triggerSearchQuery,
     {
-      data: searchData,
-      isLoading: searchLoading,
-      error: searchError,
+      data: loadByIdData,
+      isLoading: loadByIdLoading,
+      error: loadByIdError,
       reset: resetSearchQuery,
     },
   ] = useLazyGetLoadByIdQuery();
@@ -314,46 +312,27 @@ const LoadsPageDetails = () => {
   useEffect(() => {
     if (isFiltered && fromDate && toDate) setPage(1);
   }, [isFiltered, fromDate, toDate]);
+
   // Base data (search/date-filter/default)
-
   const baseLoads = useMemo<TLoads[]>(() => {
-    if (activeKeyword && searchData?.data) {
-      return Array.isArray(searchData.data)
-        ? searchData.data.flat()
-        : [searchData.data];
-    }
-
-    if (!activeKeyword && isFiltered && filteredData?.data) {
-      return filteredData.data;
-    }
-
+    if (isSearching && Array.isArray(loadByIdData?.data)) return loadByIdData.data.flat();
+    if (isFiltered && filteredData?.data) return filteredData.data;
     return loadsData?.data || [];
-  }, [activeKeyword, searchData, isFiltered, filteredData, loadsData]);
+  }, [isSearching, isFiltered, loadByIdData, filteredData, loadsData]);
 
   const load = useMemo(() => {
-    let data = baseLoads;
-
-    if (statusFilter !== "all") {
-      data = data.filter(
-        (item) => (item.status || "").toLowerCase() === statusFilter
-      );
-    }
-
-    return data;
+    if (statusFilter === "all") return baseLoads;
+    return baseLoads.filter((l) => (l.status || "").toLowerCase() === statusFilter);
   }, [baseLoads, statusFilter]);
 
-  const pagination = activeKeyword
-    ? searchData?.paginationResult || null
-    : isFiltered
-      ? filteredData?.paginationResult || null
-      : loadsData?.paginationResult || null;
+  const pagination = isFiltered ? filteredData?.paginationResult || null : loadsData?.paginationResult || null;
 
   useEffect(() => {
     setLoading(loadsLoading && !loadsData);
   }, [loadsLoading, loadsData, setLoading]);
 
   useEffect(() => {
-    const currentError = loadsError;
+    const currentError = loadsError || loadByIdError;
     if (currentError) {
       const errorMessage = getErrorMessage(currentError);
       setError(errorMessage);
@@ -367,12 +346,24 @@ const LoadsPageDetails = () => {
         duration: 4000,
       });
     }
-  }, [loadsError, setError]);
+  }, [loadsError, loadByIdError, setError]);
 
   // Stats cards
+  // const statsData = useMemo(() => {
+  //   const statLoadData: any = loadsData?.stats || [];
+  //   if (!statLoadData || statLoadData.length === 0)
+  //     return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
+  //   return {
+  //     totalLoads: statLoadData.total,
+  //     pending: statLoadData.pending,
+  //     inTransit: statLoadData.inTransit,
+  //     delivered: statLoadData.delivered,
+  //   };
+  // }, [loadsData?.stats]);
+
   const statsData = useMemo(() => {
     const statLoadData: any =
-      activeKeyword ? searchData?.stats : loadsData?.stats;
+      isFiltered && filteredData?.stats ? filteredData.stats : loadsData?.stats;
 
     if (!statLoadData) {
       return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
@@ -384,9 +375,8 @@ const LoadsPageDetails = () => {
       inTransit: statLoadData.inTransit || 0,
       delivered: statLoadData.delivered || 0,
     };
-  }, [activeKeyword, searchData?.stats, loadsData?.stats]);
-
-
+    
+  }, [isFiltered, filteredData?.stats, loadsData?.stats]);
   if (loadsLoading && !loadsData) return <Loading />;
 
   const renderLoadRow = (loadItem: TLoads) => {
@@ -652,7 +642,7 @@ const LoadsPageDetails = () => {
         >
 
           <Box sx={{ flex: "1 1 220px", minWidth: 260, maxWidth: 340 }}>
-            {/* <SearchInput
+            <SearchInput
               searchHook={searchHook}
               placeholder="Search Loads by ID, Driver"
               showClearButton
@@ -665,46 +655,6 @@ const LoadsPageDetails = () => {
                   "& fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.28) },
                   "&:hover fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.55) },
                   "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
-                },
-              }}
-            /> */}
-
-            <TextField
-              size="small"
-              value={keyword}
-              placeholder="Search Loads by ID, Driver"
-              onChange={(e) => {
-                setKeyword(e.target.value);
-                setPage(1);
-              }}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  const value = keyword.trim();
-
-                  if (value) {
-                    setPage(1);
-                    triggerSearchQuery(encodeURIComponent(value));
-                  } else {
-                    resetSearchQuery();
-                    refetchLoads();
-                  }
-                }
-              }}
-              sx={{
-                width: "100%",
-                "& .MuiOutlinedInput-root": {
-                  height: CONTROL_H,
-                  borderRadius: 2,
-                  backgroundColor: "#fff",
-                  "& fieldset": {
-                    borderColor: alpha(theme.currentPalette.primary, 0.28),
-                  },
-                  "&:hover fieldset": {
-                    borderColor: alpha(theme.currentPalette.primary, 0.55),
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: theme.currentPalette.primary,
-                  },
                 },
               }}
             />
@@ -794,7 +744,7 @@ const LoadsPageDetails = () => {
         data={load}
         renderRow={renderLoadRow}
         loading={
-          (isSearching && loadsLoading) ||
+          (isSearching && loadByIdLoading) ||
           (isFiltered && filterLoading) ||
           (loadsLoading && !loadsData)
         }
