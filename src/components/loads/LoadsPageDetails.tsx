@@ -48,11 +48,14 @@ import {
   Button,
   Chip,
   FormControl,
+  IconButton,
+  InputAdornment,
   MenuItem,
   Select,
   SelectChangeEvent,
   SxProps,
   TableRow,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -60,7 +63,7 @@ import {
 // Styles
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
-import { Boxes, Clock, Goal, LandPlot, MapPin, NotepadText } from "lucide-react";
+import { Boxes, Clock, Goal, LandPlot, MapPin, NotepadText, X } from "lucide-react";
 
 type LoadStatusFilter = "all" | "pending" | "in_transit" | "delivered";
 const CONTROL_H = 42;
@@ -254,13 +257,14 @@ const LoadsPageDetails = () => {
   // Loading & Error states
   const { setLoading } = useLoading();
   const { error, setError } = useError();
-
+  const [keyword, setKeyword] = useState("");
+  const [activeKeyword, setActiveKeyword] = useState("");
   const [
     triggerSearchQuery,
     {
-      data: loadByIdData,
-      isLoading: loadByIdLoading,
-      error: loadByIdError,
+      data: searchData,
+      isLoading: searchLoading,
+      error: searchError,
       reset: resetSearchQuery,
     },
   ] = useLazyGetLoadByIdQuery();
@@ -312,27 +316,46 @@ const LoadsPageDetails = () => {
   useEffect(() => {
     if (isFiltered && fromDate && toDate) setPage(1);
   }, [isFiltered, fromDate, toDate]);
-
   // Base data (search/date-filter/default)
+
   const baseLoads = useMemo<TLoads[]>(() => {
-    if (isSearching && Array.isArray(loadByIdData?.data)) return loadByIdData.data.flat();
-    if (isFiltered && filteredData?.data) return filteredData.data;
+    if (activeKeyword && searchData?.data) {
+      return Array.isArray(searchData.data)
+        ? searchData.data.flat()
+        : [searchData.data];
+    }
+
+    if (!activeKeyword && isFiltered && filteredData?.data) {
+      return filteredData.data;
+    }
+
     return loadsData?.data || [];
-  }, [isSearching, isFiltered, loadByIdData, filteredData, loadsData]);
+  }, [activeKeyword, searchData, isFiltered, filteredData, loadsData]);
 
   const load = useMemo(() => {
-    if (statusFilter === "all") return baseLoads;
-    return baseLoads.filter((l) => (l.status || "").toLowerCase() === statusFilter);
+    let data = baseLoads;
+
+    if (statusFilter !== "all") {
+      data = data.filter(
+        (item) => (item.status || "").toLowerCase() === statusFilter
+      );
+    }
+
+    return data;
   }, [baseLoads, statusFilter]);
 
-  const pagination = isFiltered ? filteredData?.paginationResult || null : loadsData?.paginationResult || null;
+  const pagination = activeKeyword
+    ? searchData?.paginationResult || null
+    : isFiltered
+      ? filteredData?.paginationResult || null
+      : loadsData?.paginationResult || null;
 
   useEffect(() => {
     setLoading(loadsLoading && !loadsData);
   }, [loadsLoading, loadsData, setLoading]);
 
   useEffect(() => {
-    const currentError = loadsError || loadByIdError;
+    const currentError = loadsError;
     if (currentError) {
       const errorMessage = getErrorMessage(currentError);
       setError(errorMessage);
@@ -346,24 +369,12 @@ const LoadsPageDetails = () => {
         duration: 4000,
       });
     }
-  }, [loadsError, loadByIdError, setError]);
+  }, [loadsError, setError]);
 
   // Stats cards
-  // const statsData = useMemo(() => {
-  //   const statLoadData: any = loadsData?.stats || [];
-  //   if (!statLoadData || statLoadData.length === 0)
-  //     return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
-  //   return {
-  //     totalLoads: statLoadData.total,
-  //     pending: statLoadData.pending,
-  //     inTransit: statLoadData.inTransit,
-  //     delivered: statLoadData.delivered,
-  //   };
-  // }, [loadsData?.stats]);
-
   const statsData = useMemo(() => {
     const statLoadData: any =
-      isFiltered && filteredData?.stats ? filteredData.stats : loadsData?.stats;
+      activeKeyword ? searchData?.stats : loadsData?.stats;
 
     if (!statLoadData) {
       return { totalLoads: 0, pending: 0, inTransit: 0, delivered: 0 };
@@ -375,8 +386,9 @@ const LoadsPageDetails = () => {
       inTransit: statLoadData.inTransit || 0,
       delivered: statLoadData.delivered || 0,
     };
-    
-  }, [isFiltered, filteredData?.stats, loadsData?.stats]);
+  }, [activeKeyword, searchData?.stats, loadsData?.stats]);
+
+
   if (loadsLoading && !loadsData) return <Loading />;
 
   const renderLoadRow = (loadItem: TLoads) => {
@@ -642,7 +654,7 @@ const LoadsPageDetails = () => {
         >
 
           <Box sx={{ flex: "1 1 220px", minWidth: 260, maxWidth: 340 }}>
-            <SearchInput
+            {/* <SearchInput
               searchHook={searchHook}
               placeholder="Search Loads by ID, Driver"
               showClearButton
@@ -655,6 +667,66 @@ const LoadsPageDetails = () => {
                   "& fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.28) },
                   "&:hover fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.55) },
                   "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
+                },
+              }}
+            /> */}
+
+            <TextField
+              size="small"
+              value={keyword}
+              placeholder="Search Loads by ID, Driver"
+              onChange={(e) => {
+                setKeyword(e.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  const value = keyword.trim();
+
+                  setPage(1);
+
+                  if (value) {
+                    setActiveKeyword(value);
+                    triggerSearchQuery(value);
+                  } else {
+                    setActiveKeyword("");
+                    resetSearchQuery();
+                    refetchLoads();
+                  }
+                }
+              }}
+              InputProps={{
+                endAdornment: keyword ? (
+                  <InputAdornment position="end">
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setKeyword("");
+                        setActiveKeyword("");
+                        setPage(1);
+                        resetSearchQuery();
+                        refetchLoads();
+                      }}
+                    >
+                      <X size={16} color="red" />
+                    </IconButton>
+                  </InputAdornment>
+                ) : null,
+              }}
+              sx={{
+                width: "100%",
+                "& .MuiOutlinedInput-root": {
+                  height: CONTROL_H,
+                  borderRadius: 2,
+                  backgroundColor: "#fff",
+                  "& fieldset": {
+                    borderColor: alpha(theme.currentPalette.primary, 0.28),
+                  },
+                  "&:hover fieldset": {
+                    borderColor: alpha(theme.currentPalette.primary, 0.55),
+                  },
+                  "&.Mui-focused fieldset": {
+                    borderColor: theme.currentPalette.primary,
+                  },
                 },
               }}
             />
@@ -744,8 +816,8 @@ const LoadsPageDetails = () => {
         data={load}
         renderRow={renderLoadRow}
         loading={
-          (isSearching && loadByIdLoading) ||
-          (isFiltered && filterLoading) ||
+          searchLoading ||
+          (isFiltered && !activeKeyword && filterLoading) ||
           (loadsLoading && !loadsData)
         }
       />

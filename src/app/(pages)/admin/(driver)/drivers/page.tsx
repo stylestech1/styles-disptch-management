@@ -31,6 +31,8 @@ import {
   Select,
   Switch,
   Tooltip,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import { getErrorMessage } from "@/utils/getErrorMessage";
 import Pagination from "@/components/ui/Pagination";
@@ -93,6 +95,8 @@ const DriversPage = () => {
   const [togglePage, setTogglePage] = useState<"drivers" | "timeoff">(
     "drivers",
   );
+  const [keyword, setKeyword] = useState("");
+  const [activeKeyword, setActiveKeyword] = useState("");
   const controlSx: SxProps = {
     py: 0.5,
     width: 150,
@@ -234,35 +238,34 @@ const DriversPage = () => {
   // 🔹 Dynamic Data toggle
   const currentData = useMemo(() => {
     if (togglePage === "drivers") {
-      if (isFiltered && filteredData?.data) {
-        return filteredData.data;
-      }
-
-      if (searchHook.isSearching && driverByIdData?.data) {
+      if (activeKeyword && driverByIdData?.data) {
         return Array.isArray(driverByIdData.data)
           ? driverByIdData.data.flat()
-          : driverByIdData.data;
+          : [driverByIdData.data];
+      }
+
+      if (!activeKeyword && isFiltered && filteredData?.data) {
+        return filteredData.data;
       }
 
       return driversData?.data || [];
     }
 
     if (togglePage === "timeoff") {
-      let data;
+      let data: TTimeOffs[] = [];
 
-      if (isFiltered && timeOffsFilteredData?.data) {
-        data = timeOffsFilteredData.data;
-      } else if (searchHook.isSearching && timeOffSearchData?.data) {
+      if (activeKeyword && timeOffSearchData?.data) {
         data = Array.isArray(timeOffSearchData.data)
-          ? timeOffSearchData.data
+          ? timeOffSearchData.data.flat()
           : [timeOffSearchData.data];
+      } else if (!activeKeyword && isFiltered && timeOffsFilteredData?.data) {
+        data = timeOffsFilteredData.data;
       } else {
         data = timeOffsData?.data || [];
       }
 
-      // Apply status filter
       if (timeOffFilter !== "all") {
-        data = data.filter((item: TTimeOffs) => item.status === timeOffFilter);
+        data = data.filter((item) => item.status === timeOffFilter);
       }
 
       return data;
@@ -271,13 +274,13 @@ const DriversPage = () => {
     return [];
   }, [
     togglePage,
+    activeKeyword,
+    driverByIdData,
+    timeOffSearchData,
     isFiltered,
-    searchHook.isSearching,
     filteredData,
     timeOffsFilteredData,
-    driverByIdData,
     driversData,
-    timeOffSearchData,
     timeOffsData,
     timeOffFilter,
   ]);
@@ -285,22 +288,23 @@ const DriversPage = () => {
   // 🔹 Dynamic Pagination
   const currentPagination = useMemo(() => {
     if (togglePage === "drivers") {
-      if (isFiltered && filteredData?.paginationResult) {
-        return filteredData.paginationResult;
-      }
-      return driversData?.paginationResult;
+      if (activeKeyword) return (driverByIdData as any)?.paginationResult || null;
+      if (isFiltered) return filteredData?.paginationResult || null;
+      return driversData?.paginationResult || null;
     }
 
     if (togglePage === "timeoff") {
-      if (isFiltered && timeOffsFilteredData?.paginationResult) {
-        return timeOffsFilteredData.paginationResult;
-      }
-      return timeOffsData?.paginationResult;
+      if (activeKeyword) return (timeOffSearchData as any)?.paginationResult || null;
+      if (isFiltered) return timeOffsFilteredData?.paginationResult || null;
+      return timeOffsData?.paginationResult || null;
     }
 
     return null;
   }, [
     togglePage,
+    activeKeyword,
+    driverByIdData,
+    timeOffSearchData,
     isFiltered,
     filteredData,
     timeOffsFilteredData,
@@ -1266,7 +1270,7 @@ const DriversPage = () => {
           }}
         >
           {/* Search */}
-          <SearchInput
+          {/* <SearchInput
             searchHook={searchHook}
             placeholder={
               togglePage === "drivers"
@@ -1287,8 +1291,71 @@ const DriversPage = () => {
                 },
               },
             }}
-          />
+          /> */}
 
+          <TextField
+            size="small"
+            value={keyword}
+            placeholder={
+              togglePage === "drivers"
+                ? "Search by driver keyword..."
+                : "Search by timeoff keyword..."
+            }
+            onChange={(e) => {
+              setKeyword(e.target.value);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const value = keyword.trim();
+
+                setPage(1);
+
+                if (value) {
+                  setActiveKeyword(value);
+
+                  if (togglePage === "drivers") {
+                    triggerSearchQuery(value);
+                  } else {
+                    triggerTimeOffSearch(value);
+                  }
+                } else {
+                  setActiveKeyword("");
+                  resetSearchQuery();
+                  resetTimeOffSearch();
+
+                  if (togglePage === "drivers") refetchDrivers();
+                  if (togglePage === "timeoff") refetchTimeOffs();
+                }
+              }
+            }}
+            InputProps={{
+              endAdornment: keyword ? (
+                <InputAdornment position="end">
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      setKeyword("");
+                      setActiveKeyword("");
+                      setPage(1);
+                      resetSearchQuery();
+                      if (togglePage === "drivers") refetchDrivers();
+                      if (togglePage === "timeoff") refetchTimeOffs();
+                    }}
+                  >
+                    <X size={16} color="red" />
+                  </IconButton>
+                </InputAdornment>
+              ) : null,
+            }}
+            sx={{
+              width: { xs: "100%", md: 300, lg: 350 },
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+                backgroundColor: theme.currentPalette.background,
+                py: 0.5,
+              },
+            }}
+          />
           <FormControl size="small" sx={{ minWidth: 110, width: { xs: "100%", sm: "auto" } }}>
             <Select
               value={statusFilter}
