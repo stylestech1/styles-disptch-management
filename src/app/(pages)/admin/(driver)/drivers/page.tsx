@@ -1298,8 +1298,8 @@ const DriversPage = () => {
             value={keyword}
             placeholder={
               togglePage === "drivers"
-                ? "Search by driver keyword..."
-                : "Search by timeoff keyword..."
+                ? "Search by driver Id..."
+                : "Search by timeoff Id..."
             }
             onChange={(e) => {
               setKeyword(e.target.value);
