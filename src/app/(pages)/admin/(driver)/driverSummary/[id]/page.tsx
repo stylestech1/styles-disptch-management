@@ -624,7 +624,7 @@ const DriverSummary = () => {
               <CircleDollarSign color={theme.currentPalette.primary} />
             </Typography>
             <Typography sx={{ fontSize: "30px", color: theme.currentPalette.text }}>
-              ${summaryData?.pricePerMile?.toFixed(2) || "0.00"}
+              ${summaryData?.pricePerMile || "0.00"}
             </Typography>
           </Box>
 
