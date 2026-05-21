@@ -391,7 +391,7 @@ const DriverSummary = () => {
             {Array.isArray(l.destination) ? l.destination.join(", ") : l.destination}
           </div>
         </td>
-        <td className="p-4 text-center">{l.distanceMiles?.toLocaleString()}</td>
+        <td className="p-4 text-center">{l.distanceMiles?.toFixed(0) || "-"}</td>
         {/* <td className="p-4 text-center">$ {l.pricePerMile?.toFixed(2)}</td> */}
         <td className="p-4 text-center">${l.totalPrice?.toLocaleString()}</td>
       </TableRow>
@@ -624,7 +624,7 @@ const DriverSummary = () => {
               <CircleDollarSign color={theme.currentPalette.primary} />
             </Typography>
             <Typography sx={{ fontSize: "30px", color: theme.currentPalette.text }}>
-              ${summaryData?.pricePerMile || "0.00"}
+              ${summaryData?.pricePerMile?.toFixed(0) || "0.00"}
             </Typography>
           </Box>
 
