@@ -391,7 +391,11 @@ const DriverSummary = () => {
             {Array.isArray(l.destination) ? l.destination.join(", ") : l.destination}
           </div>
         </td>
-        <td className="p-4 text-center">{l.distanceMiles?.toFixed(0) || "-"}</td>
+        <td className="p-4 text-center">
+          {l.distanceMiles != null
+            ? Math.trunc(Number(l.distanceMiles))
+            : "-"}
+        </td>
         {/* <td className="p-4 text-center">$ {l.pricePerMile?.toFixed(2)}</td> */}
         <td className="p-4 text-center">${l.totalPrice?.toLocaleString()}</td>
       </TableRow>
@@ -624,7 +628,7 @@ const DriverSummary = () => {
               <CircleDollarSign color={theme.currentPalette.primary} />
             </Typography>
             <Typography sx={{ fontSize: "30px", color: theme.currentPalette.text }}>
-              ${summaryData?.pricePerMile?.toFixed(0) || "0.00"}
+              ${summaryData?.pricePerMile?.toFixed(0) || "0"}
             </Typography>
           </Box>
 
@@ -697,7 +701,7 @@ const DriverSummary = () => {
               sx={{
                 textTransform: "none",
                 fontWeight: 800,
-                borderRadius: 1.5,
+                borderRadius: 2.5,
                 px: 2.5,
                 backgroundColor: theme.currentPalette.primary,
                 color: theme.currentPalette.background,
@@ -711,7 +715,7 @@ const DriverSummary = () => {
               sx={{
                 // width: 34,
                 // height: 34,
-                // borderRadius: 1.5,
+                // borderRadius: 2.5,
                 display: "grid",
                 placeItems: "center",
                 // border: `1px solid ${alpha(theme.currentPalette.primary, 0.18)}`,
@@ -794,7 +798,7 @@ const DriverSummary = () => {
 
         {/* Upload Dialog */}
         <Dialog open={openUpload} onClose={closeUploadDialog} maxWidth="sm" fullWidth>
-          <DialogContent sx={{ p: 0 }}>
+          <DialogContent sx={{ p: 0, bgcolor: "#fff" }}>
             {/* Header */}
             <Box
               sx={{

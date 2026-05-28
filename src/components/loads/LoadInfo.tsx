@@ -464,7 +464,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                       ? Math.trunc(Number(load.distanceMiles))
                       : "-"
                       } miles • ${load.pricePerMile != null
-                        ? `$${Number(load.pricePerMile)}`
+                        ? `$${Number(load.pricePerMile).toFixed(0)}`
                         : "-"
                       }/mile`}
                   />
@@ -533,7 +533,7 @@ const LoadInfo = ({ loadId }: LoadInfoProps) => {
                     />
                     <InfoItem
                       icon={<LocalShipping fontSize="small" />}
-                      primary="Truck Number"
+                      primary="Plate Number"
                       secondary={load.truckId.plateNumber}
                     />
                     <Divider
