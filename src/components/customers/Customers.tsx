@@ -89,7 +89,12 @@ const CustomerPage = () => {
     onSearch: (term) => {
       setPage(1);
       if (term.trim()) {
-        triggerSearchQuery(encodeURIComponent(term));
+        // triggerSearchQuery(encodeURIComponent(term));
+        triggerSearchQuery({
+          keyword: term.trim(),
+          page,
+          limit: 10,
+        });
       }
     },
     onReset: () => {
@@ -337,18 +342,8 @@ const CustomerPage = () => {
               <div className="text-xs text-slate-500">
                 {customer.email || "-"}
               </div>
-              <div className="text-xs">
-                {customer.phone ? (
-                  <a
-                    href={`tel:${customer.phone}`}
-                    style={{ color: theme.currentPalette.primary }}
-                    className="hover:underline"
-                  >
-                    {customer.phone}
-                  </a>
-                ) : (
-                  <span className="text-slate-500">-</span>
-                )}
+              <div className="text-xs text-slate-500">
+                {customer.phone || "-"}
               </div>
             </div>
           </div>
@@ -633,7 +628,7 @@ const CustomerPage = () => {
               color="inherit"
               onClick={cancelDelete}
               sx={{
-                borderRadius: 1,
+                borderRadius: 2,
                 minWidth: 80,
                 borderColor: "grey.400",
                 "&:hover": {
@@ -649,7 +644,7 @@ const CustomerPage = () => {
               color="error"
               onClick={confirmDelete}
               sx={{
-                borderRadius: 1,
+                borderRadius: 2,
                 minWidth: 80,
                 backgroundColor: "error.main",
                 "&:hover": {
