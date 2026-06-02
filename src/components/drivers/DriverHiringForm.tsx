@@ -1,4 +1,5 @@
-// DriverHirringForm.tsx
+
+"use client";
 
 import { tDriverHiring } from "@/types/globalTypes";
 import { RootState, useAppSelector } from "@/redux/store";
@@ -20,7 +21,9 @@ import { Upload, ChevronDown, ChevronUp, FileText, X } from "lucide-react";
 import toast from "react-hot-toast";
 
 type DriverHiringFormData = {
-    name: string;
+    firstName: string;
+    lastName: string;
+    email: string;
     state: string;
     phone: string;
     experienceYears: string;
@@ -80,21 +83,25 @@ export const DriverHirringForm = ({
         watch,
     } = useForm<DriverHiringFormData>({
         defaultValues: {
-            name: "",
+            firstName: "",
+            lastName: "",
+            email: "",
             state: "",
             phone: "",
             experienceYears: "",
             readyDate: "",
             notes: "",
             violations: "",
-            status: "pending",
-        },
+            status: "Pending",
+        }
     });
 
     useEffect(() => {
         if (open) {
             reset({
-                name: formData.name || "",
+                firstName: formData.firstName || "",
+                lastName: formData.lastName || "",
+                email: formData.email || "",
                 state: formData.state || "",
                 phone: formData.phone || "",
                 experienceYears: String(formData.experienceYears || ""),
@@ -103,7 +110,7 @@ export const DriverHirringForm = ({
                     : "",
                 notes: formData.notes || "",
                 violations: formData.violations || "",
-                status: formData.status || "pending",
+                status: formData.status || "Pending",
             });
         }
     }, [open, formData, reset]);
@@ -182,18 +189,56 @@ export const DriverHirringForm = ({
                         mt: 2,
                     }}
                 >
-                    {/* Driver Name */}
+                    {/* First Name */}
                     <Controller
-                        name="name"
+                        name="firstName"
                         control={control}
-                        rules={{ required: "Driver name is required" }}
+                        rules={{ required: "First name is required" }}
                         render={({ field, fieldState }) => (
                             <TextField
                                 {...field}
                                 fullWidth
                                 required
-                                label="Driver Name"
-                                placeholder="Enter driver name"
+                                label="First Name"
+                                placeholder="Enter first name"
+                                error={!!fieldState.error}
+                                helperText={fieldState.error?.message}
+                                InputLabelProps={{ shrink: true }}
+                                sx={fieldSx}
+                            />
+                        )}
+                    />
+                    {/* Last Name */}
+                    <Controller
+                        name="lastName"
+                        control={control}
+                        rules={{ required: "Last name is required" }}
+                        render={({ field, fieldState }) => (
+                            <TextField
+                                {...field}
+                                fullWidth
+                                required
+                                label="Last Name"
+                                placeholder="Enter last name"
+                                error={!!fieldState.error}
+                                helperText={fieldState.error?.message}
+                                InputLabelProps={{ shrink: true }}
+                                sx={fieldSx}
+                            />
+                        )}
+                    />
+                    {/* email */}
+                    <Controller
+                        name="email"
+                        control={control}
+                        rules={{ required: "Email is required" }}
+                        render={({ field, fieldState }) => (
+                            <TextField
+                                {...field}
+                                fullWidth
+                                required
+                                label="Email"
+                                placeholder="Enter email"
                                 error={!!fieldState.error}
                                 helperText={fieldState.error?.message}
                                 InputLabelProps={{ shrink: true }}
@@ -289,10 +334,12 @@ export const DriverHirringForm = ({
                     <Controller
                         name="status"
                         control={control}
+                        defaultValue="Pending"
                         rules={{ required: "Status is required" }}
                         render={({ field, fieldState }) => (
                             <TextField
                                 {...field}
+                                value={field.value || "Pending"}
                                 select
                                 fullWidth
                                 required
@@ -300,11 +347,12 @@ export const DriverHirringForm = ({
                                 error={!!fieldState.error}
                                 helperText={fieldState.error?.message}
                                 InputLabelProps={{ shrink: true }}
-                                sx={{ ...fieldSx }}
+                                sx={fieldSx}
                             >
-                                <MenuItem value="pending">Pending</MenuItem>
-                                <MenuItem value="accepted">Accepted</MenuItem>
-                                <MenuItem value="rejected">Rejected</MenuItem>
+                                <MenuItem value="Pending">Pending</MenuItem>
+                                <MenuItem value="Qualified">Qualified</MenuItem>
+                                <MenuItem value="Disqualified">Disqualified</MenuItem>
+                                <MenuItem value="Rejected">Rejected</MenuItem>
                             </TextField>
                         )}
                     />
@@ -313,14 +361,18 @@ export const DriverHirringForm = ({
                 <Controller
                     name="violations"
                     control={control}
-                    render={({ field }) => (
+                    rules={{ required: "Violations is required" }}
+                    render={({ field, fieldState }) => (
                         <TextField
                             {...field}
+                            required
                             fullWidth
                             label="Violations"
                             placeholder="Enter violations"
                             multiline
                             rows={3}
+                            error={!!fieldState.error}
+                            helperText={fieldState.error?.message}
                             InputLabelProps={{ shrink: true }}
                             sx={{
                                 ...fieldSx,
@@ -336,7 +388,6 @@ export const DriverHirringForm = ({
                         />
                     )}
                 />
-
                 {/* Notes */}
                 <Controller
                     name="notes"
