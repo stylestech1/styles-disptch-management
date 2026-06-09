@@ -3,7 +3,7 @@
 "use client";
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
-import { useGetTrucksQuery } from "@/redux/slices/apiSlice";
+import { useGetAllTrucksQuery } from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
 import {
   AssignmentTabProps,
@@ -227,9 +227,13 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
   const theme = useAppSelector((state: RootState) => state.palette);
   const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-  const { data: trucksData, refetch: truckRefetch } = useGetTrucksQuery(
-    { skip: !token } as any
-  );
+  const {
+    data: trucksData,
+    isLoading: trucksLoading,
+    refetch: truckRefetch,
+  } = useGetAllTrucksQuery(undefined, {
+    skip: !token,
+  } as any);
 
   const trucks: TTruck[] = trucksData?.data || [];
 
@@ -251,7 +255,17 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
   const [isInitialLoading, setIsInitialLoading] = useState(false);
 
   const isFetchingRef = useRef(false);
+  const handleTruckChange = (selectedId: string) => {
+    onTruckIdChange(selectedId);
 
+    const truck = trucks.find(
+      (t: any) => String(t.id || t._id) === String(selectedId)
+    );
+
+    if (truck?.type) {
+      onTruckTypeChange(truck.type as TTruckType);
+    }
+  };
   // Function to fetch drivers with pagination using native fetch
   const fetchDriversPage = useCallback(async (pageNumber: number, isInitial = false) => {
     if (!token) return;
@@ -337,16 +351,19 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
     }
   }, [token, baseUrl, paginationInfo.currentPage, paginationInfo.totalPages]);
 
+  // Initial fetch when token is available or when dropdown opens
   const loadInitialDrivers = useCallback(() => {
     if (token && driversState.driverList.length === 0 && !isFetchingRef.current) {
       fetchDriversPage(1, true);
     }
   }, [token, fetchDriversPage, driversState.driverList.length]);
 
+  // Handle scroll in dropdown menu - load next page
   const handleMenuScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.currentTarget;
     const isBottom = target.scrollTop + target.clientHeight >= target.scrollHeight - 50;
 
+    // Check if we should load more
     const hasMorePages = paginationInfo.next !== null &&
       paginationInfo.currentPage < paginationInfo.totalPages;
 
@@ -367,6 +384,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
     }
   }, [paginationInfo, isLoadingDrivers, fetchDriversPage]);
 
+  // Auto-load initial drivers when component mounts or token changes
   useEffect(() => {
     if (token) {
       loadInitialDrivers();
@@ -374,7 +392,10 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
   }, [token, loadInitialDrivers]);
 
   const selectedTruck = useMemo(
-    () => trucks.find((t) => String(t.id) === String(truckId)),
+    () =>
+      trucks.find(
+        (t: any) => String(t.id || t._id) === String(truckId)
+      ),
     [trucks, truckId]
   );
 
@@ -457,7 +478,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
               fullWidth
               value={
                 editingLoad?.truckId
-                  ? `${editingLoad.truckId.model} (${editingLoad.truckId.plateNumber})`
+                  ? `${editingLoad.truckId.model} (${editingLoad.truckId.truckNumber})`
                   : "No truck assigned"
               }
               inputProps={{ readOnly: true }}
@@ -534,6 +555,7 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
         value={driverId}
         mb={2}
         onOpen={() => {
+          // Load drivers when dropdown opens if empty
           if (driversState.driverList.length === 0) {
             loadInitialDrivers();
           }
@@ -576,18 +598,24 @@ const AssignmentTab: React.FC<AssignmentTabProps> = ({
           label="Truck"
           required
           value={truckId}
-          disabled={!truckType}
-          onChange={onTruckIdChange}
-          placeholder="Select Truck"
+          disabled={trucksLoading}
+          onOpen={() => truckRefetch()}
+          onChange={handleTruckChange}
+          placeholder={trucksLoading ? "Loading trucks..." : "Select Truck"}
           startIcon={<TruckIcon size={16} />}
+          isLoading={trucksLoading}
         >
-          {trucks
-            .filter((t) => !truckType || t.type === truckType)
-            .map((t) => (
-              <MenuItem key={t.id} value={String(t.id)}>
-                {t.model} ({t.plateNumber})
+          {trucks.map((t: any) => {
+            const id = String(t.id || t._id);
+            const truckNumber = t.truckNumber || t.truckId || "No Number";
+            const status = t.status || "unknown";
+
+            return (
+              <MenuItem key={id} value={id}>
+                {truckNumber} - {t.model || "No Model"} ({status})
               </MenuItem>
-            ))}
+            );
+          })}
         </LabeledSelect>
 
         <Typography sx={helperSx(theme)}>

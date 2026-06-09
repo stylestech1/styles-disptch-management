@@ -46,7 +46,7 @@ import { CiCircleCheck } from "react-icons/ci";
 
 type RepeatBy = "mile" | "time";
 
-type TruckOption = { id: string; plateNumber: string };
+type TruckOption = { id: string; truckNumber: string };
 type CenterOption = { id: string; name: string };
 
 type TruckRow = {
@@ -784,7 +784,7 @@ export default function AddEditMaintenanceRecordDialog({
                                                         displayEmpty: true,
                                                         renderValue: (val: any) =>
                                                             val ? (
-                                                                trucks.find((t) => t.id === val)?.plateNumber ?? String(val)
+                                                                trucks.find((t) => t.id === val)?.truckNumber ?? String(val)
                                                             ) : (
                                                                 <span style={{ color: alpha(theme.currentPalette.text, 0.65) }}>
                                                                     Select Truck
@@ -794,7 +794,7 @@ export default function AddEditMaintenanceRecordDialog({
                                                 >
                                                     {availableTrucksForRow(row.rowId).map((t) => (
                                                         <MenuItem key={t.id} value={t.id}>
-                                                            {t.plateNumber}
+                                                            {t.truckNumber}
                                                         </MenuItem>
                                                     ))}
                                                 </TextField>

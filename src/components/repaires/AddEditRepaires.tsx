@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useGetTrucksQuery } from "@/redux/slices/apiSlice";
+import { useGetAllTrucksQuery } from "@/redux/slices/apiSlice";
 import { RootState, useAppSelector } from "@/redux/store";
 import {
     Box,
@@ -31,7 +31,7 @@ type TruckOption = {
     _id?: string;
     id?: string;
     truckId?: number;
-    plateNumber?: string;
+    truckNumber?: string;
     model?: string;
     type?: string;
 };
@@ -105,7 +105,7 @@ export const CreateEditRepaires = ({
     const [filesOpen, setFilesOpen] = useState(true);
     const [repairPlace, setRepairPlace] = useState<TPlace | null>(null);
 
-    const { data: trucksData } = useGetTrucksQuery({});
+    const { data: trucksData } = useGetAllTrucksQuery({});
     const trucks: TruckOption[] = trucksData?.data || [];
     const handleCloseModal = () => {
         reset({
@@ -161,19 +161,54 @@ export const CreateEditRepaires = ({
     const selectedTruckId = watch("truckId");
 
     const selectedTruck = useMemo(() => {
+        if (!editMode && !selectedTruckId) return null;
+
         return (
             trucks.find((truck) => {
                 const value = truck.id || truck._id || String(truck.truckId);
                 return String(value) === String(selectedTruckId);
             }) ||
-            formData?.truck ||
+            (editMode ? formData?.truck : null) ||
             null
         );
-    }, [trucks, selectedTruckId, formData?.truck]);
+    }, [trucks, selectedTruckId, formData?.truck, editMode]);
 
     useEffect(() => {
         if (!open) return;
 
+        // CREATE MODE => clear everything
+        if (!editMode) {
+            reset({
+                truckId: "",
+                truck: undefined,
+                title: "",
+                description: "",
+                status: "pending",
+                cost: "",
+                repairDate: "",
+                note: "",
+                repairLocation: {
+                    type: "repair_shop",
+                    location: "",
+                    phoneNumber: "",
+                    shopName: "",
+                },
+                uploadedReceipts: [],
+                additionalPhotos: [],
+                existingReceipts: [],
+                existingPhotos: [],
+            });
+
+            setReceipts([]);
+            setPhotos([]);
+            setExistingReceipts([]);
+            setExistingPhotos([]);
+            setRepairPlace(null);
+            setFilesOpen(true);
+            return;
+        }
+
+        // EDIT MODE => fill data
         const locationString = formData?.repairLocation?.location || "";
 
         reset({
@@ -186,9 +221,7 @@ export const CreateEditRepaires = ({
             description: formData?.description || "",
             status: formData?.status || "pending",
             cost: formData?.cost || "",
-            repairDate: formData?.repairDate
-                ? formData.repairDate.slice(0, 10)
-                : "",
+            repairDate: formData?.repairDate ? formData.repairDate.slice(0, 10) : "",
             note: formData?.note || "",
             repairLocation: {
                 type: formData?.repairLocation?.type || "repair_shop",
@@ -215,7 +248,7 @@ export const CreateEditRepaires = ({
         setPhotos([]);
         setExistingReceipts(formData?.existingReceipts || []);
         setExistingPhotos(formData?.existingPhotos || []);
-    }, [open, formData, reset]);
+    }, [open, editMode, formData, reset]);
 
     const fieldSx = {
         "& .MuiOutlinedInput-root": {
@@ -335,7 +368,7 @@ export const CreateEditRepaires = ({
                         control={control}
                         rules={{ required: "Truck is required" }}
                         render={({ field, fieldState }) => {
-                            const editTruck = formData?.truck;
+                            const editTruck = editMode ? formData?.truck : undefined;
 
                             const fieldValue =
                                 field.value ||
@@ -366,16 +399,14 @@ export const CreateEditRepaires = ({
                                         displayEmpty: true,
                                         renderValue: () => (
                                             <span className="font-semibold">
-                                                {selectedTruck?.plateNumber ||
-                                                    currentTruck?.plateNumber ||
-                                                    "Select Truck"}
+                                                {selectedTruck?.truckNumber || "Select Truck"}
                                             </span>
                                         ),
                                     }}
                                 >
                                     {editTruck?.id && (
                                         <MenuItem value={editTruck.id}>
-                                            {editTruck.plateNumber}
+                                            {editTruck.truckNumber}
                                         </MenuItem>
                                     )}
 
@@ -384,7 +415,7 @@ export const CreateEditRepaires = ({
 
                                         return (
                                             <MenuItem key={value} value={value}>
-                                                {truck.plateNumber}
+                                                {truck.truckNumber}
                                             </MenuItem>
                                         );
                                     })}

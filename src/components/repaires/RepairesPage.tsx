@@ -68,7 +68,7 @@ type RepairItem = {
     id?: string;
     _id?: string;
     truckId?: number;
-    plateNumber?: string;
+    truckNumber?: string;
     model?: string;
   };
   truckId?: string;
@@ -338,7 +338,7 @@ const RepairPage = () => {
       >
         <td className="p-4 text-center">
           <Typography sx={{ fontWeight: 700, color: theme.currentPalette.primary }}>
-            {repair?.truck?.plateNumber || "-"}
+            {repair?.truck?.truckNumber || "-"}
           </Typography>
         </td>
         <td className="p-4 text-center">
@@ -434,7 +434,7 @@ const RepairPage = () => {
             <Edit size={18} color={theme.currentPalette.primary} />
           </IconButton>
         </td>
-        
+
       </TableRow>
     );
   };
@@ -562,7 +562,11 @@ const RepairPage = () => {
             sx={{ height: CONTROL_H, width: { xs: "100%", sm: 130 } }}
             onClick={() => {
               setEditingRepairId(null);
-              setShowCreateEditModal(true);
+              setShowCreateEditModal(false);
+
+              setTimeout(() => {
+                setShowCreateEditModal(true);
+              }, 0);
             }}
           >
             Add Repair
@@ -596,13 +600,18 @@ const RepairPage = () => {
       )}
 
       <CreateEditRepaires
+        key={editingRepairId ? `edit-${editingRepairId}` : "create"}
         open={showCreateEditModal}
         onClose={() => {
           setShowCreateEditModal(false);
           setEditingRepairId(null);
         }}
         editMode={!!editingRepairId}
-        formData={editingRepair ? mapRepairToFormData(editingRepair) : undefined}
+        formData={
+          editingRepairId && editingRepair
+            ? mapRepairToFormData(editingRepair)
+            : undefined
+        }
         isLoading={isCreating || isUpdating || isFetchingRepairDetails}
         onSubmit={editingRepairId ? handleUpdateRepair : handleCreateRepair}
       />
