@@ -8,7 +8,6 @@ import {
 } from "@/redux/slices/apiSlice";
 import {
   setPalette,
-  addCustomePalette,
   setLoadingPalette,
   setErrorPalette,
   loadPalettesFromBackend,
@@ -41,8 +40,9 @@ export const usePaletteManagement = () => {
 
   const [createPalette, { isLoading: isCreating }] = useCreatePaletteMutation();
   const [updatePalette, { isLoading: isUpdating }] = useUpdatePaletteMutation();
-  const [deletePalette, { isLoading: isDeleting }] = useDeletePaletteMutation();
-
+  // const [deletePalette, { isLoading: isDeleting }] = useDeletePaletteMutation();
+  const [deletePalette] = useDeletePaletteMutation();
+  
   useEffect(() => {
     if (backendPalettes.length > 0) {
       dispatch(loadPalettesFromBackend(backendPalettes));
@@ -82,7 +82,7 @@ export const usePaletteManagement = () => {
           body: { ...paletteConfig, active: true } as TPaletteConfig,
         }).unwrap();
       } else {
-        result = await createPalette({...paletteConfig, active: true}).unwrap();
+        result = await createPalette({ ...paletteConfig, active: true }).unwrap();
         router.refresh()
       }
 

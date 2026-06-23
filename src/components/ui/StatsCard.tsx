@@ -34,7 +34,7 @@ const StatsCard = ({
       <Card
         variant="outlined"
         sx={{
-          borderRadius: 3,
+          borderRadius: 2,
           borderColor: "#e2e8f0",
           p: 2,
           boxShadow: 1,
@@ -64,7 +64,7 @@ const StatsCard = ({
     <Card
       variant="outlined"
       sx={{
-        borderRadius: 3,
+        borderRadius: 2,
         borderColor: alpha(theme.currentPalette.primary, 0.2),
         bgcolor: theme.currentPalette.background,
         transition: "all 0.3s ease",

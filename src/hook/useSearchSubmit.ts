@@ -11,7 +11,7 @@ export const useSearchSubmit = ({
   onSearch,
   onReset,
   initialValue = "",
-  disableInitialSearch = true,
+  // disableInitialSearch = true,
 }: UseSearchSubmitProps = {}) => {
   const [searchInput, setSearchInput] = useState(initialValue);
   const [searchTerm, setSearchTerm] = useState('');

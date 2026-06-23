@@ -49,7 +49,7 @@ const TrucksDialog: React.FC<TrucksDialogProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: 2,
           overflow: "hidden",
           maxHeight: "90vh",
         },
@@ -267,7 +267,7 @@ const TrucksDialog: React.FC<TrucksDialogProps> = ({
                               sx={{
                                 mt: 2,
                                 p: 1.5,
-                                borderRadius: 1.5,
+                                borderRadius: 2.5,
                                 bgcolor: alpha("#DC2626", 0.1),
                                 border: `1px solid ${alpha("#DC2626", 0.2)}`,
                                 display: "flex",

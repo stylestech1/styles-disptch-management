@@ -113,7 +113,7 @@ const EditDialog: React.FC<EditDialogProps> = ({
       fullWidth
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: 2,
           overflow: "hidden",
           maxHeight: "90vh",
         },

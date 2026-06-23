@@ -67,7 +67,8 @@ export default function AdminLayout({
 
   if (!user) return null;
 
-  const tabs = TABS_CONFIG[user.role];
+  const roleKey = (user?.role || "").toLowerCase() as keyof typeof TABS_CONFIG;
+  const tabs = Array.isArray(TABS_CONFIG[roleKey]) ? TABS_CONFIG[roleKey] : [];
   const base = user.role === "admin" ? "/admin" : "/dispatchers";
 
   const handleLogout = () => {
@@ -120,17 +121,15 @@ export default function AdminLayout({
         subtitle: "Detailed overview of driver information and performance.",
       };
     }
-
-    // ✅ search root + children
     for (const tab of tabs) {
-      const tabKey = tab.label.replace(/\s+/g, "").toLowerCase();
+      const tabKey = tab?.label?.replace(/\s+/g, "").toLowerCase();
       if (tabKey === cleanedPath) return tab;
 
       if (tab.children?.length) {
         const child = tab.children.find(
           (c) => c.path?.toLowerCase() === cleanedPath,
         );
-        if (child) return child; // ✅ return child info to navbar
+        if (child) return child;
       }
     }
 
@@ -141,7 +140,7 @@ export default function AdminLayout({
 
   const getInitials = (fullName: string) => {
     const names = fullName.split(" ");
-    const initials = names.map((n) => n[0].toUpperCase()).join("");
+    const initials = names.map((n) => n[0]?.toUpperCase()).join("");
     return initials;
   };
 
@@ -217,7 +216,7 @@ export default function AdminLayout({
                   sx={{
                     mx: 1,
                     my: 0.5,
-                    borderRadius: 2,
+                    borderRadius: 0.5,
                     color: themePalette.currentPalette.primary,
 
                     pl: 4,
@@ -258,7 +257,11 @@ export default function AdminLayout({
                           href={childLink}
                           sx={{
                             ml: 4,
-                            borderRadius: 2,
+                            borderTopLeftRadius: 6,
+                            borderBottomLeftRadius: 6,
+                            borderTopRightRadius: 0,
+                            borderBottomRightRadius: 0,
+
 
                             color: childActive
                               ? theme.palette.primary.contrastText
@@ -308,7 +311,10 @@ export default function AdminLayout({
               href={link}
               sx={{
                 ml: 4,
-                borderRadius: 2,
+                borderTopLeftRadius: 6,
+                borderBottomLeftRadius: 6,
+                borderTopRightRadius: 0,
+                borderBottomRightRadius: 0,
 
                 color: active
                   ? theme.palette.primary.contrastText
@@ -342,10 +348,13 @@ export default function AdminLayout({
             fullWidth
             startIcon={<PiPaintBrushBroad />}
             variant="outlined"
+            className="!rounded-[6px]"
             sx={{
               color: themePalette.currentPalette.primary,
               textTransform: "capitalize",
+              // borderRadius: 0.5,
             }}
+          // className="border rounded-lg"
           >
             Theme
           </Button>
@@ -355,12 +364,14 @@ export default function AdminLayout({
           startIcon={<IoLogOutOutline />}
           variant="contained"
           onClick={handleLogout}
+          className="!rounded-[6px]"
           sx={{
-            borderRadius: 2,
+            // borderRadius: 0.5,
             bgcolor: themePalette.currentPalette.primary,
             textTransform: "none",
             py: 1,
           }}
+
         >
           Logout
         </Button>
@@ -402,7 +413,7 @@ export default function AdminLayout({
             display: "flex",
             flexDirection: "column",
             minHeight: "inherit",
-            // bgcolor: themePalette.currentPalette.background
+            bgcolor: themePalette.currentPalette.background,
           }}
         >
           {/* Page content */}

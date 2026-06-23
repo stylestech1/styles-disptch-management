@@ -28,7 +28,7 @@ export const TPaletteConfigToPalette = (p: TPaletteConfig | Palette): Palette =>
   if ('primary' in p && typeof p.primary === 'string') {
     return p as Palette;
   }
-  
+
   const config = p as TPaletteConfig;
   return {
     mode: config.mode,
@@ -40,5 +40,7 @@ export const TPaletteConfigToPalette = (p: TPaletteConfig | Palette): Palette =>
     title: config.title,
     _id: config._id,
     active: config.active ?? false,
+    paper: "",
+
   };
 }

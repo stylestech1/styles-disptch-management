@@ -682,7 +682,12 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     getTruckSummary: builder.query<TTrucksSummaryResponse, void>({
-      query: () => `/api/v1/summary/truck`,
+      query: () => {
+        const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+
+        return `/api/v1/summary/truck?from=${today}&to=${today}`;
+      },
+
       providesTags: (result) =>
         result
           ? [
@@ -693,6 +698,7 @@ export const apiSlice = api.injectEndpoints({
             { type: "TruckSummary", id: "LIST" },
           ]
           : [{ type: "TruckSummary", id: "LIST" }],
+
       keepUnusedDataFor: 60 * 60,
     }),
 
@@ -871,6 +877,10 @@ export const apiSlice = api.injectEndpoints({
     getUserById: builder.query({
       query: (jobId) => `/api/v1/adminDashboard?jobId=${jobId}`,
       providesTags: (result, error, jobId) => [{ type: "Dispatchers", id: jobId }],
+    }),
+    getUserByRole: builder.query({
+      query: (role) => `/api/v1/adminDashboard?role=${role}`,
+      providesTags: (result, error, role) => [{ type: "Dispatchers", id: role }],
     }),
 
     getUserWithSearch: builder.query({
@@ -1263,6 +1273,7 @@ export const {
   useUpdateactivationcompanyMutation,
   useUpdatedeactivationcompanyMutation,
   // TODO: ----- settings  -----
+  useGetUserByRoleQuery,
   useGetSettingsQuery,
   useCreateSettingMutation,
   useUpdateSettingMutation,

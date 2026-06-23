@@ -175,7 +175,7 @@ export default function HeaderNotifications() {
             zIndex: 50,
             backgroundColor: theme.currentPalette.background,
             border: `1px solid ${alpha(theme.currentPalette.text, 0.2)}`,
-            borderRadius: 1,
+            borderRadius: 2,
           }}
         >
           {/* Header */}
@@ -310,7 +310,7 @@ export default function HeaderNotifications() {
                           sx={{
                             width: 40,
                             height: 40,
-                            borderRadius: 1,
+                            borderRadius: 2,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",

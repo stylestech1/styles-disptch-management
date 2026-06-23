@@ -487,7 +487,7 @@ const LoadsPageDetails = () => {
             ? `${Math.trunc(Number(loadItem.distanceMiles))} miles`
             : "-"}
         </td>
-
+        
         {/* price per mile  */}
         <td className="p-4 text-center" style={{ color: theme.currentPalette.primary }}>
           {loadItem.pricePerMile ? `$${loadItem.pricePerMile?.toFixed(2)}` : "-"}

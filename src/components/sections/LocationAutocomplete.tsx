@@ -576,9 +576,9 @@ const LocationAutocomplete = ({
               },
 
               "& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline":
-              {
-                borderColor: "rgba(0,0,0,0.23)",
-              },
+                {
+                  borderColor: "rgba(0,0,0,0.23)",
+                },
 
               "& .MuiInputBase-input": {
                 fontSize: 14,

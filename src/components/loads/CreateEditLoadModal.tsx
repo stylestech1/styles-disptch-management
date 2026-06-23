@@ -914,8 +914,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         display: "grid",
                         placeItems: "center",
                         border: `2px solid ${isActive
-                          ? theme.currentPalette.primary
-                          : alpha(theme.currentPalette.text, 0.25)
+                            ? theme.currentPalette.primary
+                            : alpha(theme.currentPalette.text, 0.25)
                           }`,
                         bgcolor: isActive
                           ? theme.currentPalette.primary
@@ -990,8 +990,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                       flexDirection: "column",
                       gap: 0.5,
                       border: `1px solid ${isActive
-                        ? alpha(theme.currentPalette.primary, 0.45)
-                        : alpha(theme.currentPalette.text, 0.1)
+                          ? alpha(theme.currentPalette.primary, 0.45)
+                          : alpha(theme.currentPalette.text, 0.1)
                         }`,
                       bgcolor: isActive
                         ? alpha(theme.currentPalette.primary, 0.12)
@@ -1006,8 +1006,8 @@ const CreateEditLoadModal: React.FC<CreateEditLoadModalProps> = ({
                         display: "grid",
                         placeItems: "center",
                         border: `2px solid ${isActive
-                          ? theme.currentPalette.primary
-                          : alpha(theme.currentPalette.text, 0.25)
+                            ? theme.currentPalette.primary
+                            : alpha(theme.currentPalette.text, 0.25)
                           }`,
                         bgcolor: isActive
                           ? theme.currentPalette.primary

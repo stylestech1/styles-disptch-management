@@ -354,7 +354,7 @@ const NotificationPage = () => {
                         sx={{
                           width: 40,
                           height: 40,
-                          borderRadius: 1,
+                          borderRadius: 2,
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",

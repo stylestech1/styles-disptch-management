@@ -164,9 +164,9 @@ export default function CreateUserModal({
       disableScrollLock
       sx={{
         "& .MuiDialog-container": { overflow: "visible" },
-        "& .MuiPaper-root": { overflow: "visible" },
+         "& .MuiPaper-root": { overflow: "visible" },
       }}
-      PaperProps={{
+       PaperProps={{
         sx: {
           width: "100%",
           maxWidth: 420,

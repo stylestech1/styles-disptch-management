@@ -504,8 +504,8 @@ export const TruckForm = React.memo(function TruckFormComp(props: TruckFormProps
                       name="truckNumber"
                       control={control}
                       rules={{
-                        required: "Truck number is required",
-                        minLength: { value: 3, message: "Truck number must be at least 3 characters" },
+                        required: "Truck Number is required",
+                        minLength: { value: 3, message: "Truck Number must be at least 3 characters" },
                       }}
                       render={({ field }) => (
                         <TextField

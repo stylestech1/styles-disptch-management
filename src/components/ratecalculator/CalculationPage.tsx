@@ -29,12 +29,11 @@ import {
   IconButton,
   Fade,
   alpha,
-  Dialog,
   useTheme,
   useMediaQuery,
   Popover,
 } from "@mui/material";
-import { DirectionsCar, Check, Route as RouteIcon } from "@mui/icons-material";
+import {  Check, Route as RouteIcon } from "@mui/icons-material";
 import LocationAutocomplete, {
   TPlace,
 } from "@/components/sections/LocationAutocomplete";
@@ -328,9 +327,10 @@ const MetricBox = ({
 const CalculationPage = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
 
-  const selectedConversationId = useAppSelector(
-    (state: RootState) => state.chat.selectedConversationId,
-  );
+  // const selectedConversationId = useAppSelector(
+  //   (state: RootState) => state.chat.selectedConversationId,
+  // );
+  
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
 

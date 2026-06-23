@@ -525,10 +525,11 @@ const FinancialTab: React.FC<FinancialTabProps> = ({
                   color: canAddMoreFiles
                     ? theme.currentPalette.background
                     : theme.currentPalette.text,
-                  border: `1px solid ${canAddMoreFiles
+                  border: `1px solid ${
+                    canAddMoreFiles
                       ? theme.currentPalette.primary
                       : theme.currentPalette.text
-                    }`,
+                  }`,
                 }}
               >
                 Select PDF Files

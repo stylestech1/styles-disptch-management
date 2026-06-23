@@ -67,7 +67,7 @@
 
 // import { IoMdEye } from "react-icons/io";
 // import { DriverHirringForm } from "@/components/drivers/DriverHiringForm";
-// import { driverHiringColumns } from "@/data/driverhiringtable";
+// import { driverHiringColumns } from "@/data/driverhirring";
 
 
 // type DriverHiringFormData = {

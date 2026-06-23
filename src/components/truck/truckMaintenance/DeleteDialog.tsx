@@ -36,7 +36,7 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({
       maxWidth="sm"
       PaperProps={{
         sx: {
-          borderRadius: 3,
+          borderRadius: 2,
           overflow: "hidden",
         },
       }}

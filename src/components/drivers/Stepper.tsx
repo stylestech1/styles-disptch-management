@@ -186,7 +186,7 @@ export default function LinkDriverPopup({ onClose }: { onClose: () => void }) {
           maxWidth: "95vw",
           py: 4,
           px: 5,
-          borderRadius: 3,
+          borderRadius: 2,
           bgcolor: theme.currentPalette.background,
         }}
       >
