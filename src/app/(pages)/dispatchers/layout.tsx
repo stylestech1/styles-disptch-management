@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -16,6 +17,7 @@ import {
   CircularProgress,
   Link,
   alpha,
+  Tooltip,
 } from "@mui/material";
 import NextLink from "next/link";
 import { IoLogOutOutline } from "react-icons/io5";
@@ -27,6 +29,8 @@ import { useGoogleMaps } from "@/hook/useGoogleMaps";
 import Navbar from "@/components/layout/Header";
 import { FilterProvider } from "@/providers/FilterProvider";
 import { socketService } from "@/services/socketService";
+import { InfoIcon } from "lucide-react";
+import { useGetUserInfoQuery } from "@/redux/slices/apiSlice";
 
 const DRAWER_WIDTH = 300;
 
@@ -44,6 +48,14 @@ export default function AdminLayout({
   const router = useRouter();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(isDesktop);
+  const token = useAppSelector((state: RootState) => state.auth.token);
+
+  const { data: userInfoData } = useGetUserInfoQuery(undefined as any, {
+    skip: !token,
+    refetchOnMountOrArgChange: true,
+  });
+
+  const currentUser = userInfoData?.data || user;
 
   // Google hook
   const isGoogleMapsLoaded = useGoogleMaps();
@@ -53,11 +65,12 @@ export default function AdminLayout({
     setIsSidebarOpen(isDesktop);
   }, [isDesktop]);
 
-  if (!user) return null;
+  if (!currentUser) return null;
 
-  const tabs = TABS_CONFIG[user.role];
-  const base = "/dispatchers";
+  const roleKey = (currentUser?.role || "").toLowerCase() as keyof typeof TABS_CONFIG;
+  const base = currentUser.role === "admin" ? "/admin" : "/dispatchers";
 
+  const tabs = Array.isArray(TABS_CONFIG[roleKey]) ? TABS_CONFIG[roleKey] : [];
   const handleLogout = () => {
     // 🔴 Disconnect Socket
     socketService.disconnect();
@@ -106,35 +119,54 @@ export default function AdminLayout({
       {/* User Header */}
       <Box sx={{ p: 2, borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Link
-          href={`${base}/${user.id}`}
+          href={`${base}/${currentUser.id}`}
           display="flex"
           alignItems="center"
           gap={2}
           underline="none"
         >
           <Avatar sx={{ bgcolor: themePalette.currentPalette.primary }}>
-            {getInitials(user.name)}
+            {getInitials(currentUser.name)}
           </Avatar>
-          <Box>
-            <Typography
-              variant="subtitle1"
-              fontWeight={600}
-              sx={{ color: themePalette.currentPalette.text }}
-              noWrap
+          <Box sx={{ flex: 1 }}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                gap: 1,
+              }}
             >
-              {user.name}
-            </Typography>
-            <div className="flex items-center gap-2">
               <Typography
-                variant="body2"
-                sx={{
-                  color: themePalette.currentPalette.text,
-                  textTransform: "capitalize",
-                }}
+                variant="subtitle1"
+                fontWeight={600}
+                sx={{ color: themePalette.currentPalette.text }}
+                noWrap
               >
-                {user.role}
+                {currentUser.name}
               </Typography>
-            </div>
+
+              {!currentUser?.emailVerifiedAt && (
+                <Tooltip title="Email not verified" arrow>
+                  <InfoIcon
+
+                    color="#f59e0b"
+                    fontSize="small"
+                  // sx={{ cursor: "pointer" }}
+                  />
+                </Tooltip>
+              )}
+            </Box>
+
+            <Typography
+              variant="body2"
+              sx={{
+                color: alpha(themePalette.currentPalette.text, 0.8),
+                textTransform: "capitalize",
+              }}
+            >
+              {currentUser.role}
+            </Typography>
           </Box>
         </Link>
       </Box>
