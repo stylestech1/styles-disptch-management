@@ -557,18 +557,18 @@ const CustomerPage = () => {
             display: "flex",
             flexWrap: "wrap",
             gap: 2,
-            minWidth: 300,
+            minWidth: 240,
           }}
         >
           {/* Search */}
           <SearchInput
             searchHook={searchHook}
-            placeholder="Search Customers"
+            placeholder="Search Customers by id..."
             showClearButton
             sx={{
               // width: { xs: "100%", sm: "100%", md: 280 },
               flex: 1,
-              minWidth: 260,
+              minWidth: 240,
             }}
             inputSx={{
               "& .MuiOutlinedInput-root": {
@@ -588,7 +588,7 @@ const CustomerPage = () => {
             sx={{
               // width: { xs: "100%", sm: "100%", md: 280 },
               flex: 1,
-              minWidth: 260,
+              minWidth: 240,
             }}
             inputSx={{
               "& .MuiOutlinedInput-root": {
