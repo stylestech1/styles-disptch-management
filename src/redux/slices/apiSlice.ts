@@ -1018,14 +1018,16 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Customers ==========
     getCustomerById: builder.query({
-      query: ({ keyword }) => ({
-        url: "/api/v1/customers",
+      query: ({ keyword, state, page, limit }) => ({
+        url: `/api/v1/customers`,
         params: {
-          keyword,
+          ...(keyword && { keyword }),
+          ...(state && { state }),
+          ...(page && { page }),
+          ...(limit && { limit }),
         },
       }),
     }),
-
     getCustomerWithFilter: builder.query({
       query: ({ from, to, page, limit }) => {
         const params = [`page=${page}`, `limit=${limit}`];
@@ -1043,7 +1045,17 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Customers"],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
-
+    getCustomersSearch: builder.query({
+      query: ({ keyword, state, page, limit }) => ({
+        url: `/api/v1/customers`,
+        params: {
+          page,
+          limit,
+          ...(keyword && { keyword }),
+          ...(state && { state }),
+        },
+      }),
+    }),
     createCustomer: builder.mutation<{ data: TCustomer }, Partial<TCustomer>>({
       query: (body) => ({
         url: `/api/v1/customers`,
@@ -1261,6 +1273,7 @@ export const {
   useCreateCustomerMutation,
   useUpdateCustomerMutation,
   useDeleteCustomerMutation,
+  useGetCustomersSearchQuery,
 
   // TODO: ----- Notification -----
   useGetAllNotificationsQuery,
