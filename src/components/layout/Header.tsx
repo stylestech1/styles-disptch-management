@@ -32,6 +32,9 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     String(role || "").toLowerCase() === "superadmin" ||
     String(role || "").toLowerCase() === "super-admin";
 
+  const isDriver =
+    String(role || "").toLowerCase() === "driver"
+
   const shouldShowFilter = [
     "/admin/loads",
     "/admin/truckdashboard",
@@ -53,6 +56,11 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
     return "default";
   };
 
+  const getFilterScope = () => {
+    if (pathname.includes("driverSummary")) return "driver-summary";
+    if (pathname.includes("drivers")) return "driver-page";
+    return "global";
+  };
   return (
     <AppBar
       position="fixed"
@@ -141,13 +149,11 @@ export default function Navbar({ title, subtitle, onMenuClick }: NavbarProps) {
 
           {shouldShowFilter && pathname !== "/admin/centermaintenance" && (
             <Box sx={{ display: { xs: "none", sm: "block" } }}>
-              <GlobalFilter filterType={getFilterType()} />
+              <GlobalFilter filterType={getFilterType()} filterScope={getFilterScope()} />
             </Box>
           )}
-
-          {!isSuperAdmin && <ChatBubble />}
-
-          <NotificationProvider />
+          {!isSuperAdmin && !isDriver && <ChatBubble />}
+          {!isSuperAdmin && !isDriver && <NotificationProvider />}
         </Box>
       </Toolbar>
     </AppBar>
