@@ -301,12 +301,12 @@ const Users = () => {
 
   const handleUpdateRole = async (
     userId: string,
-    newRole: TUserRole
+    updates: { name: string; email: string; phone: string; role: TUserRole }
   ) => {
     if (!token) return router.replace("/");
     try {
-      await updateUserRole({ id: userId, role: newRole }).unwrap();
-      toast.success(`Role updated to ${newRole} successfully!`);
+      await updateUserRole({ id: userId, ...updates }).unwrap();
+      toast.success("User updated successfully!");
       await refetchLoads();
     } catch (err: unknown) {
       const errorMessage = getErrorMessage(err);
