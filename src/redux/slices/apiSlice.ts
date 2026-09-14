@@ -33,8 +33,23 @@ export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
     // ! ========== Loads Methods ==========
     getLoads: builder.query({
-      query: ({ page = 1, limit = 10 }) =>
-        `/api/v1/loads?page=${page}&limit=${limit}`,
+      query: ({ page = 1, limit = 10, sort, createdBy }) => {
+        const params = new URLSearchParams({
+          page: String(page),
+          limit: String(limit),
+        });
+
+        if (sort) {
+          params.append("sort", sort);
+        }
+
+        if (createdBy) {
+          params.append("createdBy", createdBy);
+        }
+
+        return `/api/v1/loads?${params.toString()}`;
+      },
+
       providesTags: ["Loads", "Drivers", "Trucks"],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
@@ -418,10 +433,11 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     getLoadsWithFilter: builder.query({
-      query: ({ from, to, page, limit }) => {
+      query: ({ from, to, page, limit, createdBy }) => {
         const params = [`page=${page}`, `limit=${limit}`];
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
+        if (createdBy) params.push(`createdBy=${createdBy}`);
         const queryString = params.join("&");
         return `/api/v1/loads?${queryString}`;
       },
@@ -914,6 +930,13 @@ export const apiSlice = api.injectEndpoints({
       keepUnusedDataFor: 60 * 60 * 24,
     }),
 
+    getActiveDispatchers: builder.query({
+      query: ({ page = 1, limit = 100 }) =>
+        `/api/v1/adminDashboard?position=Dispatcher&active=true&limit=${limit}&page=${page}`,
+      providesTags: ["Dispatchers"],
+      keepUnusedDataFor: 60 * 60 * 24,
+    }),
+
     getUserById: builder.query({
       query: (jobId) => `/api/v1/adminDashboard?jobId=${jobId}`,
       providesTags: (result, error, jobId) => [{ type: "Dispatchers", id: jobId }],
@@ -1269,6 +1292,7 @@ export const {
 
   // TODO: ----- Users -----
   useGetAllDispatchersQuery,
+  useGetActiveDispatchersQuery,
   useGetUserByIdQuery,
   useLazyGetUserByIdQuery,
   useGetUserWithSearchQuery,

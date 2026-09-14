@@ -11,7 +11,7 @@ import Erros from "@/components/ui/Erros";
 import Loading from "@/components/ui/Loading";
 import Pagination from "@/components/ui/Pagination";
 import StatsCard from "@/components/ui/StatsCard";
-import SearchInput from "@/components/ui/SearchInput";
+// import SearchInput from "@/components/ui/SearchInput";
 import CreateEditLoadModal from "@/components/loads/CreateEditLoadModal";
 
 // Hooks
@@ -29,6 +29,7 @@ import {
   useGetLoadsQuery,
   useGetNotesQuery,
   useGetLoadsWithFilterQuery,
+  useGetActiveDispatchersQuery,
   useLazyGetLoadByIdQuery,
 } from "@/redux/slices/apiSlice";
 
@@ -39,7 +40,7 @@ import { getErrorMessage } from "@/utils/getErrorMessage";
 import { RootState, useAppSelector } from "@/redux/store";
 
 // Icons
-import { IoAdd, IoCheckmark, IoNavigate, IoLocationSharp } from "react-icons/io5";
+import { IoNavigate } from "react-icons/io5";
 
 // MUI
 import {
@@ -67,8 +68,18 @@ import { Boxes, Clock, Goal, LandPlot, MapPin, NotepadText, X } from "lucide-rea
 
 type LoadStatusFilter = "all" | "pending" | "in_transit" | "delivered";
 const CONTROL_H = 42;
+type Dispatcher = {
+  id: string | number;
+  name?: string;
+  email?: string;
+  jobId?: string;
+};
 
-// ---------- helpers ----------
+type DispatcherOption = {
+  id: string;
+  name: string;
+};
+
 const toTitle = (v: string) =>
   v
     .replaceAll("_", " ")
@@ -94,7 +105,6 @@ const formatLocationShort = (value?: string) => {
     if (city) return city;
   }
 
-  // If already "City, ST"
   if (parts.length === 2) {
     const city = parts[0];
     const state = parts[1].split(/\s+/)[0];
@@ -134,14 +144,11 @@ const LocationLine = ({
         arrow: { sx: { color: "#0f172a" } },
       }}
     >
-      {/* خلي العرض كله ثابت */}
       <div className="flex items-start gap-2 max-w-[180px]">
-        {/* ✅ أيقونة ثابتة بدون mt */}
         <span className="w-[18px] flex justify-center shrink-0 leading-[20px]">
           {icon}
         </span>
 
-        {/* ✅ أهم حاجة: min-w-0 عشان يلف */}
         <span
           className="min-w-0 text-sm font-medium whitespace-normal break-words leading-[20px]"
           style={{ color: theme.currentPalette.primary }}
@@ -248,12 +255,18 @@ const LoadsPageDetails = () => {
   const { fromDate, toDate, isFiltered } = useFilter();
 
   const [statusFilter, setStatusFilter] = useState<LoadStatusFilter>("all");
+  const [createdByFilter, setCreatedByFilter] = useState("");
 
   // Modal states
   const [showCreateEditModal, setShowCreateEditModal] = useState(false);
   const [selectedLoadForNotes, setSelectedLoadForNotes] = useState<TLoads | null>(null);
   const [editingLoad, setEditingLoad] = useState<TLoads | null>(null);
 
+
+  const onChangeCreatedBy = (event: SelectChangeEvent) => {
+    setPage(1);
+    setCreatedByFilter(event.target.value);
+  };
   // Loading & Error states
   const { setLoading } = useLoading();
   const { error, setError } = useError();
@@ -286,6 +299,12 @@ const LoadsPageDetails = () => {
   });
 
   const { isSearching } = searchHook;
+  const [dispatcherFilter, setDispatcherFilter] = useState("");
+
+  const onChangeDispatcher = (event: SelectChangeEvent) => {
+    setPage(1);
+    setDispatcherFilter(event.target.value);
+  };
 
   const {
     data: loadsData,
@@ -293,13 +312,32 @@ const LoadsPageDetails = () => {
     error: loadsError,
     refetch: refetchLoads,
   } = useGetLoadsQuery(
-    { page, limit: 10 },
+    {
+      page,
+      limit: 10,
+      sort: "status",
+      createdBy: dispatcherFilter || undefined,
+    },
     {
       refetchOnFocus: false,
       refetchOnReconnect: false,
       refetchOnMountOrArgChange: false,
     }
   );
+
+  const { data: activeDispatchersData } = useGetActiveDispatchersQuery({
+    page: 1,
+    limit: 100,
+  });
+  const dispatcherOptions: DispatcherOption[] =
+    (activeDispatchersData?.data || []).map((dispatcher: Dispatcher) => ({
+      id: String(dispatcher.id),
+      name:
+        dispatcher.name ||
+        dispatcher.email ||
+        dispatcher.jobId ||
+        "-",
+    }));
 
   useGetNotesQuery(selectedLoadForNotes?.id || "", { skip: !selectedLoadForNotes?.id });
 
@@ -309,6 +347,7 @@ const LoadsPageDetails = () => {
       to: toDate ? toDate.format("YYYY-MM-DD") : undefined,
       page,
       limit: 10,
+      createdBy: dispatcherFilter || undefined,
     },
     {
       skip: !isFiltered || !fromDate || !toDate,
@@ -346,6 +385,21 @@ const LoadsPageDetails = () => {
 
     return data;
   }, [baseLoads, statusFilter]);
+
+  const createdByOptions: string[] = [
+    ...new Set<string>(
+      (activeDispatchersData?.data || [])
+        .map((dispatcher: any) =>
+          String(
+            dispatcher.name ||
+            dispatcher.email ||
+            dispatcher.jobId ||
+            ""
+          )
+        )
+        .filter(Boolean)
+    ),
+  ];
 
   const pagination = activeKeyword
     ? searchData?.paginationResult || null
@@ -482,13 +536,21 @@ const LoadsPageDetails = () => {
           </div>
         </td>
         {/* distance */}
-        {/* <td className="p-4 text-center">
-          {loadItem.distanceMiles != null ? Math.floor(loadItem.distanceMiles) + " miles" : "-"}
-        </td> */}
         <td className="p-4 text-center" style={{ color: theme.currentPalette.primary }} >
           {loadItem.distanceMiles != null
             ? `${Math.trunc(Number(loadItem.distanceMiles))} miles`
             : "-"}
+        </td>
+        {/* Dispatcher */}
+        <td className="p-4 text-center">
+          <div>
+            <div className="font-medium text-[14px] text-sm mb-1">
+              created by: {loadItem.createdBy || "-"}
+            </div>
+            <div className="text-xs text-slate-500">
+              updated by: {loadItem.updatedBy || "-"}
+            </div>
+          </div>
         </td>
 
         {/* price per mile  */}
@@ -659,24 +721,47 @@ const LoadsPageDetails = () => {
             gap: 1.2,
           }}
         >
+          <FormControl size="small" sx={{ width: 160, flexShrink: 0 }}>
+            <Select
+              value={dispatcherFilter}
+              onChange={onChangeDispatcher}
+              displayEmpty
+              fullWidth
+            >
+              <MenuItem value="">
+                All Dispatchers
+              </MenuItem>
+
+              {dispatcherOptions.map((dispatcher: DispatcherOption) => (
+                <MenuItem
+                  key={dispatcher.id}
+                  value={dispatcher.id}
+                >
+                  {dispatcher.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <Box sx={{ flex: "1 1 220px", minWidth: 260, maxWidth: 340 }}>
+            
             {/* <SearchInput
-              searchHook={searchHook}
-              placeholder="Search Loads by ID, Driver"
-              showClearButton
-              inputSx={{
-                "& .MuiOutlinedInput-root": {
-                  width: "100%",
-                  height: CONTROL_H,
-                  borderRadius: 2,
-                  backgroundColor: "#fff",
-                  "& fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.28) },
-                  "&:hover fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.55) },
-                  "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
-                },
-              }}
-            /> */}
+                searchHook={searchHook}
+                placeholder="Search Loads by ID, Driver"
+                showClearButton
+                inputSx={{
+                  "& .MuiOutlinedInput-root": {
+                    width: "100%",
+                    height: CONTROL_H,
+                    borderRadius: 2,
+                    backgroundColor: "#fff",
+                    "& fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.28) },
+                    "&:hover fieldset": { borderColor: alpha(theme.currentPalette.primary, 0.55) },
+                    "&.Mui-focused fieldset": { borderColor: theme.currentPalette.primary },
+                  },
+                }}
+              /> */}
+
 
             <TextField
               size="small"
@@ -738,6 +823,7 @@ const LoadsPageDetails = () => {
               }}
             />
           </Box>
+
           <FormControl size="small" sx={{ width: 140, flexShrink: 0 }}>
             <Select
               value={statusFilter}
