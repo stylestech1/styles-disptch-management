@@ -2,7 +2,7 @@ import { TPlace } from "@/components/sections/LocationAutocomplete";
 import { Dayjs } from "dayjs";
 
 export type TUserRole = "admin" | "employee" | "driver" | "superAdmin" | "manager";
-export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled";
+export type TStatusLoad = "pending" | "in_transit" | "delivered" | "cancelled" | "truck_order_not_used";
 export type TStatusDriver = "inactive" | "available" | "busy";
 export type TTruckType = "reefer" | "van";
 export type TTruckSource = "company" | "other";
@@ -116,9 +116,9 @@ export type TLoadsForm = {
   price: string;
   fees: string;
   loadIDInp: string;
-  pickupAt: string;
+  pickupAtFrom: string;
   completedAt: string;
-  arrivalAtShipper: string;
+  pickupAtTo: string;
   arrivalAtReceiver: string;
   leftShipper: string;
   leftReceiver: string;
@@ -131,6 +131,7 @@ export type TLoads = {
   id?: string;
   loadId: string;
   origin: string;
+  reservedBy: string;
   DHO: string;
   destination: string;
   distanceMiles: number;
@@ -151,9 +152,9 @@ export type TLoads = {
   truckTemp: number;
   comments: TComments[];
   feesNumber: string;
-  pickupAt: string;
+  pickupAtFrom: string;
   completedAt: string;
-  arrivalAtShipper?: string;
+  pickupAtTo?: string;
   arrivalAtReceiver?: string;
   leftShipper?: string;
   leftReceiver?: string;
@@ -221,6 +222,31 @@ export type tDriverHiring = {
   updatedBy?: string;
   hireDate?: string;
   document?: AttachmentHiringDriver;
+};
+
+export type OwnerOperatorStatus = "New" | "Pending" | "Qualified" | "Disqualified" | "Rejected";
+
+export type TOwnerOperator = {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  phone: string;
+  email: string;
+  currentLocation: string;
+  cdlExperienceYears: number;
+  truckYear: number;
+  truckMake: string;
+  truckModel: string;
+  preferredOperatingArea: string;
+  status: OwnerOperatorStatus | string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lastUpdatedBy?: {
+    _id: string;
+    name: string;
+    jobId: number;
+  };
 };
 export type TTruck = {
   id: string;
@@ -456,9 +482,9 @@ export interface LoadsFormState {
   price: string;
   fees: string;
   loadIDInp: string;
-  pickupAt: string | null;
+  pickupAtFrom: string | null;
   completedAt: string | null;
-  arrivalAtShipper: string | null;
+  pickupAtTo: string | null;
   arrivalAtReceiver: string | null;
   leftShipper: string | null;
   leftReceiver: string | null;
@@ -522,16 +548,16 @@ export interface CreateEditLoadModalProps {
   editingLoad?: TLoads | null;
 }
 export interface LoadDetailsTabProps {
-  pickupAt: Dayjs | null;
+  pickupAtFrom: Dayjs | null;
   completedAt: Dayjs | null;
-  arrivalAtShipper: Dayjs | null;
+  pickupAtTo: Dayjs | null;
   arrivalAtReceiver: Dayjs | null;
   leftShipper: Dayjs | null;
   leftReceiver: Dayjs | null;
   isEditing: boolean;
-  onPickupAtChange: (value: Dayjs | null) => void;
+  onpickupAtFromChange: (value: Dayjs | null) => void;
   onCompletedAtChange: (value: Dayjs | null) => void;
-  onArrivalAtShipperChange: (value: Dayjs | null) => void;
+  onpickupAtToChange: (value: Dayjs | null) => void;
   onArrivalAtReceiverChange: (value: Dayjs | null) => void;
   onLeftShipperChange: (value: Dayjs | null) => void;
   onLeftReceiverChange: (value: Dayjs | null) => void;

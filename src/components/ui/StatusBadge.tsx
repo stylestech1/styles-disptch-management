@@ -1,9 +1,9 @@
 import { TStatusLoad } from "@/types/globalTypes";
-import { 
-  IoTime, 
-  IoNavigate, 
-  IoCheckmark, 
-  IoClose 
+import {
+  IoTime,
+  IoNavigate,
+  IoCheckmark,
+  IoClose
 } from "react-icons/io5";
 
 interface StatusBadgeProps {
@@ -33,11 +33,16 @@ const StatusBadge = ({ status, size = "md" }: StatusBadgeProps) => {
       icon: <IoClose className={size === "sm" ? "w-3 h-3" : "w-4 h-4"} />,
       text: "Cancelled"
     },
+    truck_order_not_used: {
+      color: "bg-gray-100 text-gray-800 border-gray-300",
+      icon: <IoClose className={size === "sm" ? "w-3 h-3" : "w-4 h-4"} />,
+      text: "TONU"
+    }
   };
 
   const sizeClasses = {
     sm: "px-2 py-1 text-xs",
-    md: "px-2.5 py-1 text-xs", 
+    md: "px-2.5 py-1 text-xs",
     lg: "px-3 py-1.5 text-sm"
   };
 

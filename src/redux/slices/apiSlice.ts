@@ -10,6 +10,7 @@ import {
   TTrucksSummaryResponse,
   TTruckSummaryResponse,
   TTruckWithSummary,
+  TOwnerOperator,
 } from "@/types/globalTypes";
 import { api } from "../api/baseApi";
 import {
@@ -33,7 +34,7 @@ export const apiSlice = api.injectEndpoints({
   endpoints: (builder) => ({
     // ! ========== Loads Methods ==========
     getLoads: builder.query({
-      query: ({ page = 1, limit = 10, sort, createdBy }) => {
+      query: ({ page = 1, limit = 10, sort, reservedBy }) => {
         const params = new URLSearchParams({
           page: String(page),
           limit: String(limit),
@@ -43,8 +44,8 @@ export const apiSlice = api.injectEndpoints({
           params.append("sort", sort);
         }
 
-        if (createdBy) {
-          params.append("createdBy", createdBy);
+        if (reservedBy) {
+          params.append("reservedBy", reservedBy);
         }
 
         return `/api/v1/loads?${params.toString()}`;
@@ -387,6 +388,52 @@ export const apiSlice = api.injectEndpoints({
       invalidatesTags: ["Hiring Drivers"],
     }),
 
+    // ! ========== Owner Operators =============
+    getOwnerOperators: builder.query<
+      { data: TOwnerOperator[]; paginationResult?: PaginationResult },
+      { page?: number; limit?: number }
+    >({
+      query: ({ page, limit }) => {
+        const params = new URLSearchParams();
+        if (page) params.set("page", String(page));
+        if (limit) params.set("limit", String(limit));
+        const queryString = params.toString();
+        return `/api/v1/owner-operators${queryString ? `?${queryString}` : ""}`;
+      },
+      providesTags: ["Owner Operators"],
+    }),
+    createOwnerOperator: builder.mutation<any, Partial<TOwnerOperator>>({
+      query: (body) => ({
+        url: "/api/v1/owner-operators",
+        method: "POST",
+        body,
+      }),
+      invalidatesTags: ["Owner Operators"],
+    }),
+    updateOwnerOperator: builder.mutation<any, { id: string; body: Partial<TOwnerOperator> }>({
+      query: ({ id, body }) => ({
+        url: `/api/v1/owner-operators/${id}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["Owner Operators"],
+    }),
+    updateOwnerOperatorStatus: builder.mutation<any, { id: string; status: string }>({
+      query: ({ id, status }) => ({
+        url: `/api/v1/owner-operators/status/${id}`,
+        method: "PATCH",
+        body: { status },
+      }),
+      invalidatesTags: ["Owner Operators"],
+    }),
+    deleteOwnerOperator: builder.mutation<any, string>({
+      query: (id) => ({
+        url: `/api/v1/owner-operators/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: ["Owner Operators"],
+    }),
+
     // ! ========== Repairs ==========
     getRepairs: builder.query<any, { page?: number; limit?: number }>({
       query: ({ page = 1, limit = 10 }: { page?: number; limit?: number } = {}) =>
@@ -421,26 +468,34 @@ export const apiSlice = api.injectEndpoints({
       ],
     }),
 
-    // ! ========== Loads Using Id ==========
     getLoadById: builder.query({
-      query: (loadId) => `/api/v1/loads?keyword=${encodeURIComponent(loadId)}`,
-      providesTags: (result, error, loadId) => [{ type: "Loads", id: loadId }],
+      query: (loadId) =>
+        `/api/v1/loads?keyword=${encodeURIComponent(loadId)}`,
+      providesTags: (result, error, loadId) => [
+        { type: "Loads", id: loadId },
+      ],
     }),
 
     getLoadByMongoId: builder.query({
       query: (_id) => `/api/v1/loads?_id=${_id}`,
-      providesTags: (result, error, _id) => [{ type: "Loads", id: _id }],
+      providesTags: (result, error, _id) => [
+        { type: "Loads", id: _id },
+      ],
     }),
 
     getLoadsWithFilter: builder.query({
-      query: ({ from, to, page, limit, createdBy }) => {
+      query: ({ from, to, page, limit, reservedBy }) => {
         const params = [`page=${page}`, `limit=${limit}`];
+
         if (from) params.push(`from=${from}`);
         if (to) params.push(`to=${to}`);
-        if (createdBy) params.push(`createdBy=${createdBy}`);
+        if (reservedBy) params.push(`reservedBy=${reservedBy}`);
+
         const queryString = params.join("&");
+
         return `/api/v1/loads?${queryString}`;
       },
+
       providesTags: ["Loads"],
     }),
 
@@ -450,6 +505,7 @@ export const apiSlice = api.injectEndpoints({
         method: "POST",
         body: formData,
       }),
+
       invalidatesTags: ["Loads"],
     }),
 
@@ -459,18 +515,42 @@ export const apiSlice = api.injectEndpoints({
         method: "PATCH",
         body: formData,
       }),
+
       invalidatesTags: ["Loads"],
     }),
-
     updateLoadsStatus: builder.mutation({
       query: ({ id, ...body }) => ({
         url: `/api/v1/loads/status/${id}`,
         method: "PATCH",
         body,
       }),
+
       invalidatesTags: ["Loads"],
     }),
 
+    updateDetentionLayoverStatus: builder.mutation<
+      any,
+      {
+        loadId: string;
+        recordId: string;
+        status: "requested" | "paid" | "refused";
+      }
+    >({
+      query: ({
+        loadId,
+        recordId,
+        status,
+      }) => ({
+        url: `/api/v1/loads/${loadId}/detention-layovers/${recordId}/status`,
+        method: "PATCH",
+
+        body: {
+          status,
+        },
+      }),
+
+      invalidatesTags: ["Loads"],
+    }),
     // ! ========== Documents ==========
     uploadDocuments: builder.mutation({
       query: ({ formData }) => ({
@@ -681,6 +761,28 @@ export const apiSlice = api.injectEndpoints({
     }),
 
     // ! ========== Trucks ==========
+
+    getTruckPreview: builder.query({
+      query: ({
+        truckId,
+        distanceMiles,
+        pricePerMile,
+        totalPrice,
+        from,
+        to,
+      }) => ({
+        url: `/api/v1/summary/truck/${truckId}/preview`,
+        method: "GET",
+        params: {
+          distanceMiles,
+          pricePerMile,
+          totalPrice,
+          from,
+          to,
+        },
+      }),
+    }),
+
     getTrucks: builder.query({
       query: () => `/api/v1/trucks?status=available`,
       providesTags: ["Trucks"],
@@ -1220,12 +1322,13 @@ export const {
   useGetLoadByIdQuery,
   useGetLoadByMongoIdQuery,
   useLazyGetLoadByIdQuery,
+
   useCreateLoadsMutation,
   useUpdateLoadsMutation,
   useUpdateLoadsStatusMutation,
-  useGetLoadsWithFilterQuery,
+  useUpdateDetentionLayoverStatusMutation,
 
-  // TODO: ----- Documents -----
+  useGetLoadsWithFilterQuery,
   useUploadDocumentsMutation,
 
   // TODO: ----- Drivers -----
@@ -1258,6 +1361,7 @@ export const {
   useGetTrucksWithPaginationQuery,
   useGetAllTrucksQuery,
   useGetTruckSummaryQuery,
+  useLazyGetTruckPreviewQuery,
   // useGetTruckGraphSummaryQuery,
   useGetTruckWithSearchQuery,
   useGetSpecificTruckSummaryQuery,
@@ -1369,6 +1473,12 @@ export const {
   useGetDriverApplicantsWithFilterQuery,
   useLazyGetDriverApplicantByIdQuery,
   useGetDriverApplicantByIdQuery,
+  // TODO: ----- Owner Operators -----
+  useGetOwnerOperatorsQuery,
+  useCreateOwnerOperatorMutation,
+  useUpdateOwnerOperatorMutation,
+  useUpdateOwnerOperatorStatusMutation,
+  useDeleteOwnerOperatorMutation,
   // repairs
   useGetRepairsQuery,
   useCreateRepairMutation,
