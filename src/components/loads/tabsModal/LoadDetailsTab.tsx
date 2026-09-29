@@ -21,7 +21,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DateTimePicker } from "@mui/x-date-pickers/DateTimePicker";
 
-type SectionKey = "pickup" | "delivery";
+type SectionKey = "pickup" |  "delivery";
 
 type FieldKey =
   | "pickupAtFrom"
@@ -331,9 +331,9 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
         leftValue: pickupAtFrom,
         onLeftChange: onpickupAtFromChange,
 
-        rightKey: "pickupAtFrom" as const,
+        rightKey: "pickupAtTo" as const,
         rightLabel: "Pickup To",
-        rightValue: pickupAtFrom,
+        rightValue: pickupAtTo,
         onRightChange: onpickupAtToChange,
       },
       // {
@@ -372,7 +372,7 @@ const LoadDetailsTab: React.FC<LoadDetailsTabProps> = ({
     [
       open.pickup,
       //open.transit,
-      open.delivery,
+      open.delivery, 
       pickupAtFrom,
       pickupAtTo,
       leftShipper,
