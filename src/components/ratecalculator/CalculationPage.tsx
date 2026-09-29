@@ -65,9 +65,9 @@ import {
   useGetTrucksQuery,
   useLazyGetTruckPreviewQuery,
 } from "@/redux/slices/apiSlice";
-import { UserChat } from "../chat/UserChats";
 import { socketService } from "@/services/socketService";
 import { useChatSocket } from "@/hook/chatSys/useChatSocket";
+import { UserChat } from "../chat/Userchats";
 
 // Lazy load the map components
 const LazyGoogleMapsLoader = lazy(
