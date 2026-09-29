@@ -546,7 +546,7 @@ const LoadsPageDetails = () => {
         <td className="p-4 text-center">
           <div>
             <div className="font-medium text-[14px] text-sm mb-1">
-              reserved By : {loadItem.reservedBy || "-"}
+              Updated By : {loadItem.updatedBy || "-"}
             </div>
           </div>
         </td>
