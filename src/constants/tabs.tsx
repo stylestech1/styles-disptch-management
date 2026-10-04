@@ -59,8 +59,8 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <Truck />,
     },
     {
-      label: "Assign Driver",
-      subtitle: "Assign dispatchers to trucks and manage their assignments",
+      label: "Assign Dispatchers",
+      subtitle: "Assign Dispatchers to trucks and manage their assignments",
       icon: <UserPlus />,
     },
     {
@@ -157,11 +157,6 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <UserStar />,
     },
     {
-      label: "Assign drivers",
-      subtitle: "Assign drivers to loads and manage their trucks",
-      icon: <UserStar />,
-    },
-    {
       label: "Load Details",
       subtitle:
         "Manage and track all your shipments and deliveries in one place.",
@@ -193,8 +188,8 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <Boxes />,
     },
     {
-      label: "Hiring Drivers",
-      subtitle: "Review, approve, and manage driver recruitment requests",
+      label: "Hiring Dispatchers",
+      subtitle: "Review, approve, and manage dispatcher recruitment requests",
       icon: <UserPlus />,
     },
     {
@@ -218,7 +213,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       children: [
         {
           label: "Truck Maintenance",
-          subtitle: "Monitor and manage maintenance schedules across your entire fleet",
+          subtitle: "Monitor and manage maintenance sc  hedules across your entire fleet",
           // icon: <HandymanIcon />,
           path: "trucksmaintenance",
         },

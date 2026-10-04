@@ -29,13 +29,18 @@ import {
   IconButton,
   Fade,
   alpha,
-  Dialog,
   useTheme,
   useMediaQuery,
   Popover,
   MenuItem,
+  Table as MuiTable,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TableBody,
 } from "@mui/material";
-import { DirectionsCar, Check, Route as RouteIcon } from "@mui/icons-material";
+import { Check, Route as RouteIcon } from "@mui/icons-material";
 import LocationAutocomplete, {
   TPlace,
 } from "@/components/sections/LocationAutocomplete";
@@ -43,7 +48,13 @@ import {
   calculateDhoToOriginDistance,
   calculateFullRouteDistance,
 } from "@/utils/googleDistanceCalculator";
-import { RootState, useAppSelector } from "@/redux/store";
+import {
+  RootState,
+  useAppDispatch,
+  useAppSelector,
+} from "@/redux/store";
+
+
 import {
   DollarSign,
   LandPlot,
@@ -58,6 +69,7 @@ import {
   Send,
   Trash2,
   Truck,
+  Navigation,
 } from "lucide-react";
 import {
   useAddMessageMutation,
@@ -67,6 +79,7 @@ import {
 } from "@/redux/slices/apiSlice";
 import { socketService } from "@/services/socketService";
 import { useChatSocket } from "@/hook/chatSys/useChatSocket";
+import { addRateCalculation, removeRateCalculation } from "@/redux/slices/rateCalculationSlice";
 import { UserChat } from "../chat/Userchats";
 
 // Lazy load the map components
@@ -237,6 +250,20 @@ const formatTime = (hours: number): string => {
   return `${hoursPart}h ${minutesPart}m`;
 };
 
+const formatRouteStop = (stop: string): string => {
+  const parts = stop.split(",").map((part) => part.trim());
+  if (parts.length < 3) return stop;
+
+  const hasCountry = /^(USA|United States(?: of America)?)$/i.test(
+    parts[parts.length - 1],
+  );
+  const cityIndex = hasCountry ? parts.length - 3 : parts.length - 2;
+  const regionIndex = cityIndex + 1;
+  const region = parts[regionIndex].replace(/\s+\d[\w-]*.*$/, "").trim();
+
+  return `${parts[cityIndex]}, ${region}`;
+};
+
 const MapFallback = () => (
   <Box
     sx={{
@@ -331,10 +358,6 @@ const MetricBox = ({
 
 const CalculationPage = () => {
   const theme = useAppSelector((state: RootState) => state.palette);
-
-  const selectedConversationId = useAppSelector(
-    (state: RootState) => state.chat.selectedConversationId,
-  );
   const muiTheme = useTheme();
   const isMobile = useMediaQuery(muiTheme.breakpoints.down("sm"));
 
@@ -351,6 +374,12 @@ const CalculationPage = () => {
 
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const { isSocketReady } = useChatSocket();
+  const dispatch = useAppDispatch();
+
+  const rateCalculationRows = useAppSelector(
+    (state: RootState) =>
+      state.rateCalculation.rows,
+  );
 
   const formatDate = (date: Date) => {
     const year = date.getFullYear();
@@ -465,49 +494,203 @@ const CalculationPage = () => {
   // const [toDate, setToDate] = useState("");
   const [truckPreview, setTruckPreview] = useState<any>(null);
 
-  const handleSaveTruckPreview = async () => {
-    if (!selectedTruckId) {
-      toast.error("Please select a truck");
+  const visibleRateCalculationRows = useMemo(
+    () =>
+      selectedTruckId
+        ? rateCalculationRows.filter(
+          (row) => String(row.truckId) === String(selectedTruckId),
+        )
+        : rateCalculationRows,
+    [rateCalculationRows, selectedTruckId],
+  );
+
+  const clearRateInputs = useCallback(() => {
+    setDho(null);
+    setOrigin(null);
+    setDestinations([null]);
+    setNotes("");
+    clearCalculation();
+    setResetKey((prev) => prev + 1);
+  }, [clearCalculation]);
+  useEffect(() => {
+    if (!selectedTruckId) return;
+
+    const hasRateData =
+      hasNum(dh) &&
+      hasNum(loadMiles) &&
+      hasNum(rate) &&
+      hasNum(calc);
+
+    if (!hasRateData) {
+      setTruckPreview(null);
       return;
     }
 
-    if (!hasNum(dh) || !hasNum(loadMiles) || !hasNum(rate)) {
-      toast.error(
-        "Please fill Dead Head Miles, Load Miles and Rate"
-      );
+    const timer = setTimeout(() => {
+      handleGetTruckPreview(selectedTruckId, {
+        dh,
+        loadMiles,
+        rate,
+        calc,
+        dho,
+        origin,
+        destinations,
+      });
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [selectedTruckId, dh, loadMiles, rate, calc]);
+
+  const handleGetTruckPreview = async (
+    truckId: string,
+    inputs = { dh, loadMiles, rate, calc, dho, origin, destinations },
+  ) => {
+    if (!truckId) {
+      setTruckPreview(null);
       return;
     }
 
-    if (calc === "") {
-      toast.error("Price Per Mile is required");
-      return;
-    }
+    // if (
+    //   !hasNum(dh) ||
+    //   !hasNum(loadMiles) ||
+    //   !hasNum(rate)
+    // ) {
+    //   toast.error(
+    //     "Please fill Dead Head Miles, Load Miles and Rate first",
+    //   );
+
+    //   setTruckPreview(null);
+    //   return;
+    // }
+
+    // if (calc === "") {
+    //   toast.error("Price Per Mile is required");
+
+    //   setTruckPreview(null);
+    //   return;
+    // }
 
     try {
-      const { from, to } = getFridayToThursdayPeriod();
+      const { from, to } =
+        getFridayToThursdayPeriod();
 
       const response = await getTruckPreview({
-        truckId: selectedTruckId,
+        truckId,
 
-        distanceMiles: Number(dh) + Number(loadMiles),
+        distanceMiles:
+          Number(inputs.dh) + Number(inputs.loadMiles),
 
-        pricePerMile: Number(calc),
+        pricePerMile: Number(inputs.calc),
 
-        totalPrice: Number(rate),
+        totalPrice: Number(inputs.rate),
 
         from,
         to,
       }).unwrap();
 
-      setTruckPreview(response?.data || response);
+      const preview =
+        response?.data || response;
 
-      toast.success("Truck preview loaded successfully");
+      setTruckPreview(preview);
+
+      const selectedTruck =
+        availableTrucks.find(
+          (truck: any) =>
+            (truck.id || truck._id) === truckId,
+        );
+
+
+      const validDestinations =
+        inputs.destinations.filter(
+          (destination): destination is TPlace =>
+            destination !== null,
+        );
+
+      const routeParts: string[] = [];
+
+      if (inputs.dho?.display_name) {
+        routeParts.push(inputs.dho.display_name);
+      }
+
+      if (inputs.origin?.display_name) {
+        routeParts.push(inputs.origin.display_name);
+      }
+
+      validDestinations.forEach(
+        (destination) => {
+          if (destination.display_name) {
+            routeParts.push(
+              destination.display_name,
+            );
+          }
+        },
+      );
+
+      const route =
+        routeParts.length > 0
+          ? routeParts.join(" → ")
+          : "—";
+
+
+      dispatch(
+        addRateCalculation({
+          id: `${truckId}-${Date.now()}`,
+
+          truckId,
+
+          truckNumber:
+            selectedTruck?.truckNumber ||
+            preview?.truck?.truckNumber ||
+            truckId,
+
+          // totalMiles: Number(dh) + Number(loadMiles),
+
+          // pricePerMile: Number(calc),
+
+          // totalPrice: Number(rate),
+
+          totalMiles: Number(inputs.dh) + Number(inputs.loadMiles),
+
+          pricePerMile: Number(inputs.calc),
+
+          totalPrice: Number(inputs.rate),
+
+          totalPricePerWeek: Number(
+            preview?.projected?.totalPricePerWeek ??
+            preview?.projected?.totalPrice ??
+            preview?.projected?.averagePerMile ??
+            0,
+          ),
+
+          pricePerMilePerWeek: Number(
+            preview?.projected?.averagePerMile ?? 0
+          ),
+
+          route,
+        }),
+      );
+
+      clearCalculation();
+
+      clearAllRoutes();
+
+      setResetKey((prev) => prev + 1);
+
+      toast.success("Rate calculation added to table");
+      toast.success(
+        "Rate calculation added to table",
+      );
     } catch (error) {
-      console.error("Truck preview error:", error);
+      // console.error(
+      //   "Truck preview error:",
+      //   error,
+      // );
 
       setTruckPreview(null);
 
-      toast.error("Failed to load truck preview");
+      // toast.error(
+      //   "Failed to load truck preview",
+      // );
     }
   };
 
@@ -683,14 +866,9 @@ const CalculationPage = () => {
   ]);
 
   const resetAllBtn = useCallback(() => {
-    setDho(null);
-    setOrigin(null);
-    setDestinations([null]);
-    setNotes("");
-    clearCalculation();
-    setResetKey((prev) => prev + 1);
+    clearRateInputs();
     toast.success("All inputs reset successfully");
-  }, [clearCalculation]);
+  }, [clearRateInputs]);
 
   const handleMapLocationChange = useCallback(
     (
@@ -770,7 +948,6 @@ const CalculationPage = () => {
         </Stack>
 
         <Grid container spacing={3}>
-          {/* LEFT */}
           <Grid size={{ xs: 12, lg: 6 }}>
             <Stack spacing={3}>
               <Paper
@@ -789,7 +966,230 @@ const CalculationPage = () => {
                   },
                 }}
               >
+                <Typography
+                  sx={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: theme.currentPalette.primary,
+                  }}
+                >
+                  Route Planning
+                </Typography>
 
+                {/* ROUTE METRICS */}
+                <Grid container spacing={1.5} sx={{ mt: 2 }}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <MetricBox
+                      title="DHO to Origin"
+                      icon={<RouteIcon fontSize="small" />}
+                      value={
+                        dhoToOriginDistance
+                          ? `${dhoToOriginDistance.toFixed(1)} miles`
+                          : "—"
+                      }
+                      sub={
+                        dhoToOriginTime
+                          ? formatTime(dhoToOriginTime)
+                          : ""
+                      }
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <MetricBox
+                      title="Total Route"
+                      icon={<Truck size={18} />}
+                      value={
+                        totalDistance
+                          ? `${totalDistance.toFixed(1)} miles`
+                          : "—"
+                      }
+                      sub={
+                        totalTime
+                          ? formatTime(totalTime)
+                          : validDestinationsCount
+                            ? `${validDestinationsCount} stops`
+                            : ""
+                      }
+                    />
+                  </Grid>
+                </Grid>
+
+                <Stack spacing={2} sx={{ mt: 2 }}>
+                  {/* DHO */}
+                  <LocationAutocomplete
+                    key={`dho-${resetKey}`}
+                    label="DHO(Driver Home Origin)"
+                    value={dho}
+                    required
+                    setValue={setDho}
+                    placeholder="e.g. FixIt Auto Center"
+                    showZipCode={true}
+                    startAdornment={
+                      <MapPinHouse
+                        size={18}
+                        color={theme.currentPalette.primary}
+                      />
+                    }
+                  />
+
+                  {/* ORIGIN */}
+                  <LocationAutocomplete
+                    key={`origin-${resetKey}`}
+                    label="Pick Up (Origin)"
+                    value={origin}
+                    setValue={setOrigin}
+                    required
+                    placeholder="e.g. FixIt Auto Center"
+                    showZipCode={true}
+                    startAdornment={
+                      <MapPinCheck
+                        size={18}
+                        color={theme.currentPalette.primary}
+                      />
+                    }
+                  />
+
+                  {/* DESTINATIONS HEADER */}
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: theme.currentPalette.primary,
+                      }}
+                    >
+                      Destinations
+                    </Typography>
+
+                    <div className="flex gap-2">
+                      <Tooltip title="Clear all routes">
+                        <span>
+                          <IconButton
+                            sx={iconBtnSx(theme)}
+                            onClick={clearAllRoutes}
+                            size="small"
+                          >
+                            <MapPinMinus />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+
+                      <Tooltip title="Add destination">
+                        <span>
+                          <IconButton
+                            sx={iconBtnSx(theme)}
+                            onClick={handleAddDestination}
+                            size="small"
+                          >
+                            <MapPinPlus />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    </div>
+                  </Stack>
+
+                  {/* DESTINATION INPUTS */}
+                  {destinations.map((destination, index) => (
+                    <Stack
+                      key={`dest-${index}-${resetKey}`}
+                      direction="row"
+                      spacing={1}
+                      alignItems="flex-end"
+                    >
+                      <Box sx={{ flex: 1 }}>
+                        <LocationAutocomplete
+                          label={`Destination ${index + 1}`}
+                          value={destination}
+                          required
+                          setValue={(place) =>
+                            handleUpdateDestination(index, place)
+                          }
+                          placeholder="e.g. FixIt Auto Center"
+                          showZipCode={true}
+                          startAdornment={
+                            <MapPinned
+                              size={18}
+                              color={theme.currentPalette.primary}
+                            />
+                          }
+                        />
+                      </Box>
+
+                      {destinations.length > 1 && (
+                        <Tooltip title="Remove destination">
+                          <IconButton
+                            onClick={() =>
+                              handleRemoveDestination(index)
+                            }
+                            size="small"
+                            sx={{ mb: 0.5 }}
+                          >
+                            <span
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                              }}
+                            >
+                              <Trash2 size={18} color="red" />
+                            </span>
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
+                  ))}
+
+                  {/* LOAD DETAILS */}
+                  <Box>
+                    <Typography
+                      sx={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: theme.currentPalette.primary,
+                      }}
+                    >
+                      Load Details
+                    </Typography>
+
+                    <TextField
+                      sx={{ mt: 1.25 }}
+                      label="Notes"
+                      placeholder="Add any additional information here..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      fullWidth
+                      multiline
+                      minRows={4}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Box>
+                </Stack>
+              </Paper>
+
+              {/* ================= RATE CALCULATION ================= */}
+              <Paper
+                elevation={0}
+                sx={{
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: borderBlue,
+                  bgcolor: "#fff",
+                  p: 2.25,
+
+                  "& .MuiInputLabel-root": {
+                    fontSize: 13,
+                  },
+
+                  "& .MuiOutlinedInput-root": {
+                    borderRadius: 2,
+                  },
+                }}
+              >
+                {/* ================= HEADER ================= */}
                 <Typography
                   sx={{
                     fontSize: 18,
@@ -810,53 +1210,9 @@ const CalculationPage = () => {
                   Price Per Mile = Rate / ( Dead Head Miles + Load Miles )
                 </Typography>
 
-                {/* PRICE PER MILE */}
-                <Stack sx={{ mt: 2 }}>
-                  <Box
-                    component="button"
-                    type="button"
-                    sx={{
-                      width: "100%",
-                      height: 56,
-                      px: 2,
-                      borderRadius: 2,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      bgcolor: alpha(theme.currentPalette.primary, 0.06),
-                      border: "1px solid",
-                      borderColor: alpha(theme.currentPalette.primary, 0.25),
-                      color: theme.currentPalette.primary,
-                      cursor: "default",
-                    }}
-                  >
-                    <Typography
-                      component="span"
-                      sx={{
-                        fontSize: 14,
-                        fontWeight: 700,
-                      }}
-                    >
-                      Price Per Mile
-                    </Typography>
-
-                    <Typography
-                      component="span"
-                      sx={{
-                        fontSize: 16,
-                        fontWeight: 800,
-                      }}
-                    >
-                      {calc !== ""
-                        ? `$${Number(calc).toFixed(2)}`
-                        : "$0.00"}
-                    </Typography>
-                  </Box>
-                </Stack>
-
-
+                {/* ================= RATE FIELDS ================= */}
                 <Grid container spacing={1.5} sx={{ mt: 2 }}>
-                  {/* DEAD HEAD */}
+                  {/* DEAD HEAD MILES */}
                   <Grid size={{ xs: 12, md: 4 }}>
                     <TextField
                       fullWidth
@@ -962,7 +1318,7 @@ const CalculationPage = () => {
                   </Grid>
                 </Grid>
 
-                {/* CALCULATION RESULT */}
+                {/* ================= CALCULATION RESULT ================= */}
                 {calc !== "" && (
                   <Fade in>
                     <Alert
@@ -1007,16 +1363,37 @@ const CalculationPage = () => {
                   </Typography>
 
                   <Stack spacing={2} sx={{ mt: 2 }}>
-                    {/* TRUCK DROPDOWN */}
+                    {/* TRUCK SELECT */}
                     <TextField
                       select
                       fullWidth
                       required
                       label="Available Truck"
                       value={selectedTruckId}
-                      disabled={isLoadingTrucks}
+                      disabled={isLoadingTrucks || isSavingPreview}
+                      // onChange={async (e) => {
+                      //   const truckId = e.target.value;
+                      //   const inputs = {
+                      //     dh,
+                      //     loadMiles,
+                      //     rate,
+                      //     calc,
+                      //     dho,
+                      //     origin,
+                      //     destinations,
+                      //   };
+
+                      //   setSelectedTruckId(truckId);
+                      //   setTruckPreview(null);
+                      //   // clearRateInputs();
+
+                      //   // await handleGetTruckPreview(truckId, inputs);
+                      // }}
+
                       onChange={(e) => {
-                        setSelectedTruckId(e.target.value);
+                        const truckId = e.target.value;
+
+                        setSelectedTruckId(truckId);
                         setTruckPreview(null);
                       }}
                       sx={{
@@ -1040,369 +1417,160 @@ const CalculationPage = () => {
                         </MenuItem>
                       )}
 
-                      {!isLoadingTrucks && availableTrucks.length === 0 && (
-                        <MenuItem disabled>
-                          No available trucks
-                        </MenuItem>
-                      )}
+                      {!isLoadingTrucks &&
+                        availableTrucks.length === 0 && (
+                          <MenuItem disabled>
+                            No available trucks
+                          </MenuItem>
+                        )}
 
                       {availableTrucks.map((truck: any) => {
                         const id = truck.id || truck._id;
 
                         return (
-                          <MenuItem key={id} value={id}>
+                          <MenuItem
+                            key={id}
+                            value={id}
+                          >
                             Truck ({truck.truckNumber})
                           </MenuItem>
                         );
                       })}
                     </TextField>
 
-                    {/* FROM + TO */}
-                    {/* <Grid container spacing={1.5}>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <TextField
-                            fullWidth
-                            required
-                            type="date"
-                            label="From"
-                            value={fromDate}
-                            onChange={(e) => {
-                              setFromDate(e.target.value);
-                              setTruckPreview(null);
-                            }}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            sx={{
-                              "& .MuiFormLabel-asterisk": {
-                                color: "red",
-                              },
-                            }}
-                          />
-                        </Grid>
-
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <TextField
-                            fullWidth
-                            required
-                            type="date"
-                            label="To"
-                            value={toDate}
-                            onChange={(e) => {
-                              setToDate(e.target.value);
-                              setTruckPreview(null);
-                            }}
-                            inputProps={{
-                              min: fromDate || undefined,
-                            }}
-                            InputLabelProps={{
-                              shrink: true,
-                            }}
-                            sx={{
-                              "& .MuiFormLabel-asterisk": {
-                                color: "red",
-                              },
-                            }}
-                          />
-                        </Grid>
-                      </Grid> */}
-
-                    {/* SAVE */}
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "flex-end",
-                      }}
-                    >
-                      <Button
-                        variant="contained"
-                        onClick={handleSaveTruckPreview}
-                        disabled={
-                          isSavingPreview ||
-                          !selectedTruckId ||
-                          !hasNum(dh) ||
-                          !hasNum(loadMiles) ||
-                          !hasNum(rate) ||
-                          calc === ""
-                          // !fromDate ||
-                          // !toDate
-                        }
+                    {isSavingPreview && (
+                      <Box
                         sx={{
-                          minWidth: 130,
-                          minHeight: 42,
-                          borderRadius: 2,
-                          textTransform: "none",
-                          fontWeight: 700,
-                          bgcolor: theme.currentPalette.primary,
-                          "&:hover": {
-                            bgcolor: alpha(
-                              theme.currentPalette.primary,
-                              0.9,
-                            ),
-                          },
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 1,
+                          py: 1,
                         }}
                       >
-                        {isSavingPreview ? (
-                          <>
-                            <CircularProgress
-                              size={18}
-                              color="inherit"
-                              sx={{ mr: 1 }}
-                            />
-                            Saving...
-                          </>
-                        ) : (
-                          "Save"
-                        )}
-                      </Button>
-                    </Box>
+                        <CircularProgress size={18} />
 
-                    {truckPreview?.projected?.averagePerMile != null && (
-                      <Stack sx={{ mt: 2 }}>
-                        <Box
-                          component="button"
-                          type="button"
+                        <Typography
                           sx={{
-                            width: "100%",
-                            height: 56,
-                            px: 2,
-                            borderRadius: 2,
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "space-between",
-                            bgcolor: alpha(theme.currentPalette.primary, 0.06),
-                            border: "1px solid",
-                            borderColor: alpha(theme.currentPalette.primary, 0.25),
-                            color: theme.currentPalette.primary,
-                            cursor: "default",
+                            fontSize: 13,
+                            color: "text.secondary",
                           }}
                         >
-                          <Typography
-                            component="span"
-                            sx={{ fontSize: 14, fontWeight: 700 }}
-                          >
-                            Price Per Mile Per Week
-                          </Typography>
-
-                          <Typography
-                            component="span"
-                            sx={{ fontSize: 16, fontWeight: 800 }}
-                          >
-                            ${Number(truckPreview.projected.averagePerMile).toFixed(2)}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                          Loading truck preview...
+                        </Typography>
+                      </Box>
                     )}
+                    <Box
+                      sx={{
+                        width: "100%",
+                        px: 2.5,
+                        py: 2,
+                        borderRadius: 2,
 
+                        bgcolor: alpha(
+                          theme.currentPalette.primary,
+                          0.06,
+                        ),
+
+                        border: "1px solid",
+
+                        borderColor: alpha(
+                          theme.currentPalette.primary,
+                          0.25,
+                        ),
+                      }}
+                    >
+                      <Grid
+                        container
+                        spacing={2}
+                        alignItems="flex-start"
+                      >
+                        <Grid size={{ xs: 6 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "flex-start",
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color:
+                                  theme.currentPalette.primary,
+                              }}
+                            >
+                              Price Per Mile Per Week
+                            </Typography>
+
+                            <Typography
+                              sx={{
+                                mt: 0.75,
+                                fontSize: 20,
+                                fontWeight: 800,
+                                lineHeight: 1.2,
+                                color: theme.currentPalette.primary,
+                              }}
+                            >
+                              {truckPreview?.projected?.averagePerMile != null
+                                ? `$${Number(truckPreview.projected.averagePerMile).toFixed(2)}`
+                                : "$0.00"}
+                            </Typography>
+                          </Box>
+                        </Grid>
+
+                        <Grid size={{ xs: 6 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              flexDirection: "column",
+                              alignItems: "flex-end",
+                              textAlign: "right",
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: 14,
+                                fontWeight: 700,
+                                color:
+                                  theme.currentPalette.primary,
+                              }}
+                            >
+                              Price Per Mile
+                            </Typography>
+
+                            <Typography
+                              sx={{
+                                mt: 0.75,
+                                fontSize: 20,
+                                fontWeight: 800,
+                                lineHeight: 1.2,
+                                color:
+                                  theme.currentPalette.primary,
+                              }}
+                            >
+                              {calc !== ""
+                                ? `$${Number(calc).toFixed(2)}`
+                                : "$0.00"}
+                            </Typography>
+                          </Box>
+                        </Grid>
+                      </Grid>
+                    </Box>
                   </Stack>
                 </Box>
               </Paper>
 
-              <Paper
-                elevation={0}
-                sx={{
-                  borderRadius: 2,
-                  border: "1px solid",
-                  borderColor: borderBlue,
-                  bgcolor: "#fff",
-                  p: 2.25,
-                  "& .MuiInputLabel-root": { fontSize: 13 },
-                  "& .MuiOutlinedInput-root": { borderRadius: 2 },
-                }}
-              >
-                <Typography
-                  sx={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: theme.currentPalette.primary,
-                  }}
-                >
-                  Route Planning
-                </Typography>
-
-                <Grid container spacing={1.5} sx={{ mt: 2 }}>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <MetricBox
-                      title="DHO to Origin"
-                      icon={<RouteIcon fontSize="small" />}
-                      value={
-                        dhoToOriginDistance
-                          ? `${dhoToOriginDistance.toFixed(1)} miles`
-                          : "—"
-                      }
-                      sub={dhoToOriginTime ? formatTime(dhoToOriginTime) : ""}
-                    />
-                  </Grid>
-
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <MetricBox
-                      title="Total Route"
-                      icon={<Truck fontSize="small" />}
-                      value={
-                        totalDistance
-                          ? `${totalDistance.toFixed(1)} miles`
-                          : "—"
-                      }
-                      sub={
-                        totalTime
-                          ? formatTime(totalTime)
-                          : validDestinationsCount
-                            ? `${validDestinationsCount} stops`
-                            : ""
-                      }
-                    />
-                  </Grid>
-                </Grid>
-
-                <Stack spacing={2} sx={{ mt: 2 }}>
-                  <LocationAutocomplete
-                    key={`dho-${resetKey}`}
-                    label="DHO(Driver Home Origin)"
-                    value={dho}
-                    required
-                    setValue={setDho}
-                    placeholder="e.g. FixIt Auto Center"
-                    showZipCode={true}
-                    startAdornment={
-                      <MapPinHouse
-                        size={18}
-                        color={theme.currentPalette.primary}
-                      />
-                    }
-                  />
-
-                  <LocationAutocomplete
-                    key={`origin-${resetKey}`}
-                    label="Pick Up (Origin)"
-                    value={origin}
-                    setValue={setOrigin}
-                    required
-                    placeholder="e.g. FixIt Auto Center"
-                    showZipCode={true}
-                    startAdornment={
-                      <MapPinCheck
-                        size={18}
-                        color={theme.currentPalette.primary}
-                      />
-                    }
-                  />
-
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: 18,
-                        fontWeight: 800,
-                        color: theme.currentPalette.primary,
-                      }}
-                    >
-                      Destinations
-                    </Typography>
-
-                    <div className="flex gap-2">
-                      <Tooltip title="Clear all routes">
-                        <span>
-                          <IconButton
-                            sx={iconBtnSx(theme)}
-                            onClick={clearAllRoutes}
-                            size="small"
-                          >
-                            <MapPinMinus />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-
-                      <Tooltip title="Add destination">
-                        <span>
-                          <IconButton
-                            sx={iconBtnSx(theme)}
-                            onClick={handleAddDestination}
-                            size="small"
-                          >
-                            <MapPinPlus />
-                          </IconButton>
-                        </span>
-                      </Tooltip>
-                    </div>
-                  </Stack>
-
-                  {destinations.map((destination, index) => (
-                    <Stack
-                      key={`dest-${index}-${resetKey}`}
-                      direction="row"
-                      spacing={1}
-                      alignItems="flex-end"
-                    >
-                      <Box sx={{ flex: 1 }}>
-                        <LocationAutocomplete
-                          label={`Destination ${index + 1}`}
-                          value={destination}
-                          required
-                          setValue={(place) =>
-                            handleUpdateDestination(index, place)
-                          }
-                          placeholder="e.g. FixIt Auto Center"
-                          showZipCode={true}
-                          startAdornment={
-                            <MapPinned
-                              size={18}
-                              color={theme.currentPalette.primary}
-                            />
-                          }
-                        />
-                      </Box>
-
-                      {destinations.length > 1 && (
-                        <Tooltip title="Remove destination">
-                          <IconButton
-                            onClick={() => handleRemoveDestination(index)}
-                            size="small"
-                            sx={{ mb: 0.5 }}
-                          >
-                            <span
-                              style={{ display: "flex", alignItems: "center" }}
-                            >
-                              <Trash2 size={18} color="red" />
-                            </span>
-                          </IconButton>
-                        </Tooltip>
-                      )}
-                    </Stack>
-                  ))}
-
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: 18,
-                        fontWeight: 800,
-                        color: theme.currentPalette.primary,
-                      }}
-                    >
-                      Load Details
-                    </Typography>
-
-                    <TextField
-                      sx={{ mt: 1.25 }}
-                      label="Notes"
-                      placeholder="Add any additional information here..."
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      fullWidth
-                      multiline
-                      minRows={4}
-                      InputLabelProps={{ shrink: true }}
-                    />
-                  </Box>
-                </Stack>
-              </Paper>
             </Stack>
           </Grid>
 
-          {/* RIGHT */}
-          <Grid size={{ xs: 12, lg: 6 }} sx={{ minWidth: 0, display: "flex" }}>
+          <Grid
+            size={{ xs: 12, lg: 6 }}
+            sx={{
+              minWidth: 0,
+            }}
+          >
             <Paper
               elevation={0}
               sx={{
@@ -1412,18 +1580,26 @@ const CalculationPage = () => {
                 borderColor: borderBlue,
                 bgcolor: "#fff",
                 width: "100%",
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
                 minWidth: 0,
                 overflow: "hidden",
+
+                height: {
+                  xs: 450,
+                  md: 520,
+                  lg: 650,
+                },
               }}
             >
+              {/* MAP HEADER */}
               <Stack
                 direction="row"
                 justifyContent="space-between"
                 alignItems="center"
-                sx={{ mb: 2, minWidth: 0, gap: 1 }}
+                sx={{
+                  mb: 2,
+                  minWidth: 0,
+                  gap: 1,
+                }}
               >
                 <Typography
                   sx={{
@@ -1445,7 +1621,10 @@ const CalculationPage = () => {
                   sx={{
                     flexShrink: 0,
                     color: theme.currentPalette.primary,
-                    backgroundColor: alpha(theme.currentPalette.primary, 0.02),
+                    backgroundColor: alpha(
+                      theme.currentPalette.primary,
+                      0.02,
+                    ),
                     maxWidth: 140,
                     "& .MuiChip-label": {
                       overflow: "hidden",
@@ -1456,7 +1635,16 @@ const CalculationPage = () => {
                 />
               </Stack>
 
-              <Box sx={{ flex: 1, minHeight: 0, width: "100%" }}>
+              {/* MAP */}
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "calc(100% - 48px)",
+                  minHeight: 0,
+                  overflow: "hidden",
+                  borderRadius: 2,
+                }}
+              >
                 <Suspense fallback={<MapFallback />}>
                   <LazyGoogleMapsLoader>
                     <LazyMapWithRoute
@@ -1470,10 +1658,276 @@ const CalculationPage = () => {
                 </Suspense>
               </Box>
             </Paper>
+
+            {selectedTruckId && visibleRateCalculationRows.length > 0 && (
+              <Paper
+                elevation={0}
+                sx={{
+                  mt: 3,
+                  borderRadius: 2,
+                  border: "1px solid",
+                  borderColor: borderBlue,
+                  bgcolor: "#fff",
+                  p: 2.25,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: 18,
+                    fontWeight: 800,
+                    color: theme.currentPalette.primary,
+                  }}
+                >
+                  Rate History
+                </Typography>
+
+                <Typography
+                  sx={{ mt: 0.5, mb: 2, fontSize: 12, color: "text.secondary" }}
+                >
+                  Saved rate calculations
+                </Typography>
+
+                <TableContainer
+                  sx={{
+                    border: "1px solid",
+                    borderColor: "divider",
+                    borderRadius: 2,
+                    maxHeight: 500,
+                    overflowX: "hidden",
+                    width: "100%",
+                  }}
+                >
+                  <MuiTable
+                    stickyHeader
+                    size="small"
+                    sx={{
+                      tableLayout: "fixed",
+                      width: "100%",
+                      "& th, & td": {
+                        px: 0.5,
+                        py: 1,
+                        fontSize: 12,
+                        verticalAlign: "middle",
+                      },
+
+                      "& th": {
+                        height: 58,
+                        fontWeight: 800,
+                        lineHeight: 1.3,
+                      },
+                    }}
+                  >
+                    <TableHead>
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            width: "36%",
+                            fontWeight: 800,
+                          }}
+                        >
+                          Route
+                        </TableCell>
+
+                        <TableCell
+                          align="center"
+                          sx={{
+                            width: "12%",
+                            fontWeight: 800,
+                          }}
+                        >
+                          Total
+                          <br />
+                          Miles
+                        </TableCell>
+
+                        <TableCell
+                          align="center"
+                          sx={{
+                            width: "11%",
+                            fontWeight: 800,
+                          }}
+                        >
+                          Price
+                        </TableCell>
+
+                        <TableCell
+                          align="center"
+                          sx={{
+                            width: "14%",
+                            fontWeight: 800,
+                          }}
+                        >
+                          Total
+                          <br />
+                          Price
+                        </TableCell>
+
+                        <TableCell
+                          align="center"
+                          sx={{
+                            width: "18%",
+                            fontWeight: 800,
+                          }}
+                        >
+                          Total Price
+                          <br />
+                          / Week
+                        </TableCell>
+
+                        <TableCell
+                          align="center"
+                          sx={{
+                            width: "9%",
+                            fontWeight: 800,
+                            px: 0.25,
+                          }}
+                        >
+                          Action
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {visibleRateCalculationRows.map((row) => (
+                        <TableRow key={row.id} hover>
+                          {/* ROUTE */}
+                          <TableCell
+                            sx={{
+                              overflowWrap: "anywhere",
+                              pl: 1.5,
+                            }}
+                          >
+                            <Stack spacing={0.6}>
+                              {row.route
+                                .split(/\s*→\s*/)
+                                .filter((stop) => stop && stop !== "—")
+                                .map((stop, index, stops) => {
+                                  const StopIcon =
+                                    index === 0
+                                      ? MapPinHouse
+                                      : index === stops.length - 1
+                                        ? MapPinned
+                                        : Navigation;
+
+                                  return (
+                                    <Stack
+                                      key={`${index}-${stop}`}
+                                      direction="row"
+                                      spacing={0.7}
+                                      alignItems="center"
+                                      sx={{ minWidth: 0 }}
+                                    >
+                                      <StopIcon
+                                        size={14}
+                                        color={theme.currentPalette.primary}
+                                        style={{ flexShrink: 0 }}
+                                      />
+                                      <Typography
+                                        sx={{
+                                          fontSize: 11,
+                                          lineHeight: 1.4,
+                                          minWidth: 0,
+                                          overflowWrap: "anywhere",
+                                          wordBreak: "break-word",
+                                        }}
+                                      >
+                                        {formatRouteStop(stop)}
+                                      </Typography>
+                                    </Stack>
+                                  );
+                                })}
+
+                              {(!row.route || row.route === "—") && (
+                                <Typography
+                                  sx={{
+                                    fontSize: 11,
+                                    color: "text.secondary",
+                                  }}
+                                >
+                                  —
+                                </Typography>
+                              )}
+                            </Stack>
+                          </TableCell>
+
+                          {/* TOTAL MILES */}
+                          <TableCell
+                            align="center"
+                            sx={{
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            {Number(row.totalMiles ?? 0).toFixed(1)}
+                          </TableCell>
+
+                          {/* PRICE */}
+                          <TableCell
+                            align="center"
+                            sx={{
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            ${Number(row.pricePerMile ?? 0).toFixed(2)}
+                          </TableCell>
+
+                          {/* TOTAL PRICE */}
+                          <TableCell
+                            align="center"
+                            sx={{
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            ${Number(row.totalPrice ?? 0).toFixed(2)}
+                          </TableCell>
+
+                          {/* TOTAL PRICE / WEEK */}
+                          <TableCell
+                            align="center"
+                            sx={{
+                              whiteSpace: "nowrap",
+                              fontVariantNumeric: "tabular-nums",
+                            }}
+                          >
+                            $
+                            {Number(
+                              row.totalPricePerWeek ??
+                              row.pricePerMilePerWeek ??
+                              0,
+                            ).toFixed(2)}
+                          </TableCell>
+
+                          {/* ACTION */}
+                          <TableCell
+                            align="center"
+                            sx={{
+                              px: 0.5,
+                            }}
+                          >
+                            <Tooltip title="Delete">
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  dispatch(removeRateCalculation(row.id))
+                                }
+                              >
+                                <Trash2 size={17} color="red" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </MuiTable>
+
+                </TableContainer>
+              </Paper>
+            )}
           </Grid>
-
-
         </Grid>
+
       </Container>
 
       <Popover
