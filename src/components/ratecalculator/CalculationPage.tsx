@@ -77,6 +77,7 @@ import {
 import {
   useAddMessageMutation,
   useCreateOrGetConversationMutation,
+  useGetAllTruckQuery,
   useGetTrucksQuery,
   useLazyGetTruckPreviewQuery,
 } from "@/redux/slices/apiSlice";
@@ -477,7 +478,7 @@ const CalculationPage = () => {
   }, []);
 
   const { data: trucksData, isLoading: isLoadingTrucks } =
-    useGetTrucksQuery(undefined);
+    useGetAllTruckQuery(undefined);
 
   const [
     getTruckPreview,

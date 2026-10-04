@@ -788,6 +788,12 @@ export const apiSlice = api.injectEndpoints({
       providesTags: ["Trucks"],
       keepUnusedDataFor: 60 * 60 * 24,
     }),
+    getAllTruck: builder.query({
+      query: () => `/api/v1/trucks`,
+      providesTags: ["Trucks"],
+      keepUnusedDataFor: 60 * 60 * 24,
+    }),
+
     getRepairById: builder.query<{ data: any }, string>({
       query: (id) => `/api/v1/repairs/${id}`,
       providesTags: ["Repairs"],
@@ -1126,8 +1132,8 @@ export const apiSlice = api.injectEndpoints({
       query: (jobId) => `/api/v1/adminDashboard?jobId=${jobId}`,
       providesTags: (result, error, jobId) => [{ type: "Dispatchers", id: jobId }],
     }),
-    getUserByRole: builder.query({
-      query: (role) => `/api/v1/adminDashboard?role=${role}`,
+    getUserByRole: builder.query<any, string>({
+      query: (role) => `/api/v1/adminDashboard?role=${encodeURIComponent(role)}`,
       providesTags: (result, error, role) => [{ type: "Dispatchers", id: role }],
     }),
 
@@ -1444,6 +1450,7 @@ export const {
   useGetTrucksWithPaginationQuery,
   useGetAllTrucksQuery,
   useGetAllTrucksUnUsedQuery,
+  useGetAllTruckQuery,
   useGetTruckSummaryQuery,
   useLazyGetTruckPreviewQuery,
   // useGetTruckGraphSummaryQuery,
