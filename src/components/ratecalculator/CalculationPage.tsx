@@ -394,16 +394,9 @@ const CalculationPage = () => {
   const getFridayToThursdayPeriod = () => {
     const today = new Date();
 
-    // JS:
-    // Sunday = 0
-    // Monday = 1
-    // ...
-    // Friday = 5
-    // Saturday = 6
 
     const currentDay = today.getDay();
 
-    // Number of days since the most recent Friday
     const daysSinceFriday = (currentDay - 5 + 7) % 7;
 
     const friday = new Date(today);
@@ -496,15 +489,14 @@ const CalculationPage = () => {
   // const [toDate, setToDate] = useState("");
   const [truckPreview, setTruckPreview] = useState<any>(null);
 
-  const visibleRateCalculationRows = useMemo(
-    () =>
-      selectedTruckId
-        ? rateCalculationRows.filter(
-          (row) => String(row.truckId) === String(selectedTruckId),
-        )
-        : rateCalculationRows,
-    [rateCalculationRows, selectedTruckId],
-  );
+  const visibleRateCalculationRows = useMemo(() => {
+    if (!selectedTruckId) return [];
+
+    return rateCalculationRows.filter(
+      (row) => String(row.truckId) === String(selectedTruckId),
+    );
+  }, [rateCalculationRows, selectedTruckId]);
+
 
   const clearRateInputs = useCallback(() => {
     setDho(null);
@@ -1481,14 +1473,11 @@ const CalculationPage = () => {
                                 color: theme.currentPalette.primary,
                               }}
                             >
-                              {hasNum(dh) &&
-                                hasNum(loadMiles) &&
-                                hasNum(rate) &&
-                                hasNum(calc) &&
-                                truckPreview?.projected?.averagePerMile != null
+                              {truckPreview?.projected?.averagePerMile != null
                                 ? `$${Number(truckPreview.projected.averagePerMile).toFixed(2)}`
                                 : "$0.00"}
                             </Typography>
+
                           </Box>
                         </Grid>
 
@@ -1663,136 +1652,150 @@ const CalculationPage = () => {
               </Box>
             </Paper>
 
-            {selectedTruckId && visibleRateCalculationRows.length > 0 && (
-              <Paper
-                elevation={0}
+            <Paper
+              elevation={0}
+              sx={{
+                mt: 3,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: borderBlue,
+                bgcolor: "#fff",
+                p: 2.25,
+              }}
+            >
+              <Typography
                 sx={{
-                  mt: 3,
-                  borderRadius: 2,
-                  border: "1px solid",
-                  borderColor: borderBlue,
-                  bgcolor: "#fff",
-                  p: 2.25,
+                  fontSize: 18,
+                  fontWeight: 800,
+                  color: theme.currentPalette.primary,
                 }}
               >
-                <Typography
-                  sx={{
-                    fontSize: 18,
-                    fontWeight: 800,
-                    color: theme.currentPalette.primary,
-                  }}
-                >
-                  Rate History
-                </Typography>
+                Rate History
+              </Typography>
 
-                <Typography
-                  sx={{ mt: 0.5, mb: 2, fontSize: 12, color: "text.secondary" }}
-                >
-                  Saved rate calculations
-                </Typography>
+              <Typography
+                sx={{ mt: 0.5, mb: 2, fontSize: 12, color: "text.secondary" }}
+              >
+                Saved rate calculations
+              </Typography>
 
-                <TableContainer
+              <TableContainer
+                sx={{
+                  border: "1px solid",
+                  borderColor: "divider",
+                  borderRadius: 2,
+                  maxHeight: 500,
+                  overflowX: "hidden",
+                  width: "100%",
+                }}
+              >
+                <MuiTable
+                  stickyHeader
+                  size="small"
                   sx={{
-                    border: "1px solid",
-                    borderColor: "divider",
-                    borderRadius: 2,
-                    maxHeight: 500,
-                    overflowX: "hidden",
+                    tableLayout: "fixed",
                     width: "100%",
+                    "& th, & td": {
+                      px: 0.5,
+                      py: 1,
+                      fontSize: 12,
+                      verticalAlign: "middle",
+                    },
+
+                    "& th": {
+                      height: 58,
+                      fontWeight: 800,
+                      lineHeight: 1.3,
+                    },
                   }}
                 >
-                  <MuiTable
-                    stickyHeader
-                    size="small"
-                    sx={{
-                      tableLayout: "fixed",
-                      width: "100%",
-                      "& th, & td": {
-                        px: 0.5,
-                        py: 1,
-                        fontSize: 12,
-                        verticalAlign: "middle",
-                      },
+                  <TableHead>
+                    <TableRow>
+                      <TableCell
+                        sx={{
+                          width: "36%",
+                          fontWeight: 800,
+                        }}
+                      >
+                        Route
+                      </TableCell>
 
-                      "& th": {
-                        height: 58,
-                        fontWeight: 800,
-                        lineHeight: 1.3,
-                      },
-                    }}
-                  >
-                    <TableHead>
+                      <TableCell
+                        align="center"
+                        sx={{
+                          width: "12%",
+                          fontWeight: 800,
+                        }}
+                      >
+                        Total
+                        <br />
+                        Miles
+                      </TableCell>
+
+                      <TableCell
+                        align="center"
+                        sx={{
+                          width: "11%",
+                          fontWeight: 800,
+                        }}
+                      >
+                        Price
+                      </TableCell>
+
+                      <TableCell
+                        align="center"
+                        sx={{
+                          width: "14%",
+                          fontWeight: 800,
+                        }}
+                      >
+                        Total
+                        <br />
+                        Price
+                      </TableCell>
+
+                      <TableCell
+                        align="center"
+                        sx={{
+                          width: "18%",
+                          fontWeight: 800,
+                        }}
+                      >
+                        Total Price
+                        <br />
+                        / Week
+                      </TableCell>
+
+                      <TableCell
+                        align="center"
+                        sx={{
+                          width: "9%",
+                          fontWeight: 800,
+                          px: 0.25,
+                        }}
+                      >
+                        Action
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+
+                  <TableBody>
+                    {visibleRateCalculationRows.length === 0 ? (
                       <TableRow>
                         <TableCell
-                          sx={{
-                            width: "36%",
-                            fontWeight: 800,
-                          }}
-                        >
-                          Route
-                        </TableCell>
-
-                        <TableCell
+                          colSpan={6}
                           align="center"
                           sx={{
-                            width: "12%",
-                            fontWeight: 800,
+                            py: 5,
+                            color: "text.secondary",
+                            fontSize: 13,
                           }}
                         >
-                          Total
-                          <br />
-                          Miles
-                        </TableCell>
-
-                        <TableCell
-                          align="center"
-                          sx={{
-                            width: "11%",
-                            fontWeight: 800,
-                          }}
-                        >
-                          Price
-                        </TableCell>
-
-                        <TableCell
-                          align="center"
-                          sx={{
-                            width: "14%",
-                            fontWeight: 800,
-                          }}
-                        >
-                          Total
-                          <br />
-                          Price
-                        </TableCell>
-
-                        <TableCell
-                          align="center"
-                          sx={{
-                            width: "18%",
-                            fontWeight: 800,
-                          }}
-                        >
-                          Total Price
-                          <br />
-                          / Week
-                        </TableCell>
-
-                        <TableCell
-                          align="center"
-                          sx={{
-                            width: "9%",
-                            fontWeight: 800,
-                            px: 0.25,
-                          }}
-                        >
-                          Action
+                          No rate calculations yet
                         </TableCell>
                       </TableRow>
-                    </TableHead>
-
-                    <TableBody>
-                      {visibleRateCalculationRows.map((row) => (
+                    ) : (
+                      visibleRateCalculationRows.map((row) => (
                         <TableRow key={row.id} hover>
                           {/* ROUTE */}
                           <TableCell
@@ -1826,6 +1829,7 @@ const CalculationPage = () => {
                                         color={theme.currentPalette.primary}
                                         style={{ flexShrink: 0 }}
                                       />
+
                                       <Typography
                                         sx={{
                                           fontSize: 11,
@@ -1855,61 +1859,27 @@ const CalculationPage = () => {
                           </TableCell>
 
                           {/* TOTAL MILES */}
-                          <TableCell
-                            align="center"
-                            sx={{
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <TableCell align="center">
                             {Number(row.totalMiles ?? 0).toFixed(1)}
                           </TableCell>
 
                           {/* PRICE */}
-                          <TableCell
-                            align="center"
-                            sx={{
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <TableCell align="center">
                             ${Number(row.pricePerMile ?? 0).toFixed(2)}
                           </TableCell>
 
                           {/* TOTAL PRICE */}
-                          <TableCell
-                            align="center"
-                            sx={{
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
+                          <TableCell align="center">
                             ${Number(row.totalPrice ?? 0).toFixed(2)}
                           </TableCell>
 
                           {/* TOTAL PRICE / WEEK */}
-                          <TableCell
-                            align="center"
-                            sx={{
-                              whiteSpace: "nowrap",
-                              fontVariantNumeric: "tabular-nums",
-                            }}
-                          >
-                            $
-                            {Number(
-                              row.totalPricePerWeek ??
-                              row.pricePerMilePerWeek ??
-                              0,
-                            ).toFixed(2)}
+                          <TableCell align="center">
+                            ${Number(row.totalPricePerWeek ?? 0).toFixed(2)}
                           </TableCell>
 
                           {/* ACTION */}
-                          <TableCell
-                            align="center"
-                            sx={{
-                              px: 0.5,
-                            }}
-                          >
+                          <TableCell align="center">
                             <Tooltip title="Delete">
                               <IconButton
                                 size="small"
@@ -1922,13 +1892,13 @@ const CalculationPage = () => {
                             </Tooltip>
                           </TableCell>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </MuiTable>
+                      ))
+                    )}
+                  </TableBody>
+                </MuiTable>
 
-                </TableContainer>
-              </Paper>
-            )}
+              </TableContainer>
+            </Paper>
           </Grid>
         </Grid>
 
