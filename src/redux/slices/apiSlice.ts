@@ -762,6 +762,49 @@ export const apiSlice = api.injectEndpoints({
 
     // ! ========== Trucks ==========
 
+    updateTruckDispatcherAssignment: builder.mutation({
+      query: ({
+        assignmentId,
+        ...body
+      }: {
+        assignmentId: string;
+        dispatcherId?: string;
+        status?: "active" | "inactive";
+        notes?: string;
+        currentLocation?: string;
+      }) => ({
+        url: `/api/v1/truck-dispatchers/${assignmentId}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["TruckDispatchers"],
+    }),
+
+    updateMyTruckAssignment: builder.mutation({
+      query: ({
+        assignmentId,
+        ...body
+      }: {
+        assignmentId: string;
+        notes?: string;
+        currentLocation?: string;
+      }) => ({
+        url: `/api/v1/truck-dispatchers/my-trucks/${assignmentId}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["TruckDispatchers"],
+    }),
+    // updateTruckDispatcher: builder.mutation({
+    //   query: ({ id, ...body }) => ({
+    //     url: `/api/v1/truck-dispatchers/${id}`,
+    //     method: "PATCH",
+    //     body,
+    //   }),
+
+    //   invalidatesTags: ["TruckDispatchers"],
+    // }),
+
     getTruckPreview: builder.query({
       query: ({
         truckId,
@@ -958,44 +1001,40 @@ export const apiSlice = api.injectEndpoints({
         { type: "TruckSummary", id },
       ],
     }),
-    getTruckDispatchers: builder.query<
-      any,
-      {
-        page?: number;
-        limit?: number;
-        keyword?: string;
-        status?: string;
-        unusedTrucks?: boolean;
-      }
-    >({
-      query: ({
-        page = 1,
-        limit = 10,
-        keyword,
-        status,
-        unusedTrucks,
-      }) => ({
+    getTruckDispatchers: builder.query({
+      query: ({ page = 1, limit = 10, keyword, unusedTrucks }) => ({
         url: "/api/v1/truck-dispatchers",
         method: "GET",
-
         params: {
           page,
           limit,
-
-          ...(keyword && {
-            keyword,
-          }),
-
-          ...(status && {
-            status,
-          }),
-
-          ...(unusedTrucks !==
-            undefined && {
-            unusedTrucks,
-          }),
+          keyword,
+          unusedTrucks,
         },
       }),
+
+      providesTags: ["TruckDispatchers"],
+    }),
+
+    getMyTruckAssignments: builder.query<unknown, void>({
+      query: () => "/api/v1/truck-dispatchers/my-trucks",
+      providesTags: ["TruckDispatchers"],
+    }),
+
+    updateMyTruckAssignmentAdmin: builder.mutation<
+      unknown,
+      {
+        assignmentId: string;
+        notes: string;
+        currentLocation: string;
+      }
+    >({
+      query: ({ assignmentId, ...body }) => ({
+        url: `/api/v1/truck-dispatchers/my-trucks/${assignmentId}`,
+        method: "PATCH",
+        body,
+      }),
+      invalidatesTags: ["TruckDispatchers"],
     }),
 
     // getTruckDispatchers: builder.query<unknown, void>({
@@ -1006,14 +1045,26 @@ export const apiSlice = api.injectEndpoints({
       query: (id: string) => `/api/v1/truck-dispatchers/${id}`,
       providesTags: ["TruckDispatchers"],
     }),
+    getTruckAssignmentsByDispatcherId: builder.query<unknown, string>({
+      query: (dispatcherId) =>
+        `/api/v1/truck-dispatchers/dispatcher/${dispatcherId}`,
+      providesTags: ["TruckDispatchers"],
+    }),
     createTruckDispatcher: builder.mutation({
-      query: (body: { truckId: string; dispatcherId: string; notes?: string }) => ({
+      query: (
+        body: {
+          truckId: string;
+          dispatcherId: string;
+          notes?: string;
+        }[]
+      ) => ({
         url: "/api/v1/truck-dispatchers",
         method: "POST",
         body,
       }),
       invalidatesTags: ["TruckDispatchers"],
     }),
+
     updateTruckDispatcher: builder.mutation({
       query: ({ id, ...body }: {
         id: string;
@@ -1469,7 +1520,10 @@ export const {
   useUpdateTruckMutation,
   useDeleteTruckMutation,
   useGetTruckDispatchersQuery,
+  useGetMyTruckAssignmentsQuery,
+  useUpdateMyTruckAssignmentAdminMutation,
   useGetTruckDispatcherByIdQuery,
+  useLazyGetTruckAssignmentsByDispatcherIdQuery,
   useCreateTruckDispatcherMutation,
   useUpdateTruckDispatcherMutation,
 
@@ -1484,6 +1538,7 @@ export const {
   useCreateMaintenanceMutation,
   useUpdateMaintenanceMutation,
   useDeleteMaintenanceMutation,
+  useUpdateTruckDispatcherAssignmentMutation,
 
   // TODO: ----- Notes -----
   useAddNoteMutation,
@@ -1582,4 +1637,4 @@ export const {
   // verify email
   useVerifyEmailMutation,
   useResendVerificationCodeMutation
-} = apiSlice;
+} = apiSlice;a
