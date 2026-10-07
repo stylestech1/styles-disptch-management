@@ -64,6 +64,12 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <UserPlus />,
     },
     {
+      label: "Truck Dispatcher Assignments",
+      subtitle: "View and edit truck dispatcher assignments",
+      icon: <Truck />,
+      path: "truck-dispatchers",
+    },
+    {
       label: "Maintenance",
       icon: <Wrench />,
       children: [
@@ -141,6 +147,12 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <Boxes />,
     },
     {
+      label: "My Trucks",
+      subtitle: "View the trucks assigned to you",
+      icon: <Truck />,
+      path: "truck-dispatchers",
+    },
+    {
       label: "Rate Calculator",
       subtitle:
         "Calculate rates and plan your routes with real-time distance measurements",
@@ -213,7 +225,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       children: [
         {
           label: "Truck Maintenance",
-          subtitle: "Monitor and manage maintenance sc  hedules across your entire fleet",
+          subtitle: "Monitor and manage maintenance schedules across your entire fleet",
           // icon: <HandymanIcon />,
           path: "trucksmaintenance",
         },
