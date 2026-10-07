@@ -178,6 +178,7 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       subtitle: "Manage your notifications and stay updated.",
     },
   ],
+
   driver: [
     {
       label: "Loads",
