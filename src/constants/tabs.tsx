@@ -11,7 +11,8 @@ import {
   Users,
   UserStar,
   Wrench,
-  UserPlus
+  UserPlus,
+  Info
 } from "lucide-react";
 import { MdOutlineHandyman } from "react-icons/md";
 
@@ -64,9 +65,9 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
       icon: <UserPlus />,
     },
     {
-      label: "Truck Dispatcher Assignments",
+      label: "Truck Status",
       subtitle: "View and edit truck dispatcher assignments",
-      icon: <Truck />,
+      icon: <Info />,
       path: "truck-dispatchers",
     },
     {
