@@ -201,9 +201,14 @@ export const TABS_CONFIG: Record<TUserRole, TabItem[]> = {
         "Manage and track all your shipments and deliveries in one place.",
       icon: <Boxes />,
     },
+    // {
+    //   label: "Hiring Dispatchers",
+    //   subtitle: "Review, approve, and manage dispatcher recruitment requests",
+    //   icon: <UserPlus />,
+    // },
     {
-      label: "Hiring Dispatchers",
-      subtitle: "Review, approve, and manage dispatcher recruitment requests",
+      label: "Hiring Drivers",
+      subtitle: "Review, approve, and manage driver recruitment requests",
       icon: <UserPlus />,
     },
     {
