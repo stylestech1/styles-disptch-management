@@ -49,7 +49,7 @@ import useError from "@/hook/useError";
 import { StatusChip } from "@/components/ui/TablesMUI";
 import { useSearchSubmit } from "@/hook/useSearchSubmit";
 import { setLoading } from "@/redux/slices/uiSlice";
-import SearchInput from "@/components/ui/SearchInput";
+// import SearchInput from "@/components/ui/SearchInput";
 import DataTable from "@/components/ui/DataTable";
 import { truckColumns } from "@/data/truckTables";
 import {
@@ -62,13 +62,6 @@ import {
   Trash2,
   CircleEllipsis,
   X,
-  Building2,
-  Calendar,
-  IdCard,
-  Fuel,
-  Weight,
-  ShieldUser,
-  CarFront,
   Wrench,
 } from "lucide-react";
 import { getErrorMessage } from "@/utils/getErrorMessage";
@@ -525,11 +518,11 @@ const TrucksPage: React.FC = () => {
 
         <td className="p-4 text-center">
           {typeof t.assignedDriver === "object"
-            ? (t.assignedDriver as any)?.name
+            ? t.assignedDriver.name
             : t.assignedDriver || "Unassigned"}
-          {typeof t.assignedDriver === "object" && (t.assignedDriver as any)?.driverId && (
+          {typeof t.assignedDriver === "object" && t.assignedDriver.driverId != null && (
             <Box component="span" sx={{ fontSize: "0.75rem", color: "text.secondary", display: "block" }}>
-              ID: {(t.assignedDriver as any)?.driverId}
+              ID: {t.assignedDriver.driverId}
             </Box>
           )}
         </td>
