@@ -9,6 +9,8 @@ const initialState: TAuthState = {
   token: null,
 };
 
+
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -42,5 +44,8 @@ const authSlice = createSlice({
     },
   },
 });
+
+
+
 export const { loginSuccess, logout } = authSlice.actions;
 export default authSlice.reducer;
