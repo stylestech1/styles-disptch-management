@@ -6,30 +6,32 @@ import {
     Alert,
     Box,
     Button,
+    Card,
+    CardActionArea,
+    CardActions,
+    CardContent,
     Chip,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
     IconButton,
-    InputAdornment,
-    TableCell,
-    TableRow,
+    Skeleton,
+    Stack,
     TextField,
     Typography,
 } from "@mui/material";
 
 import {
+    Eye,
     MapPin,
     Pencil,
-    Search,
     Truck,
     X,
 } from "lucide-react";
 
 import toast, { Toaster } from "react-hot-toast";
 
-import DataTable, { Column } from "@/components/ui/DataTable";
 import Pagination from "@/components/ui/Pagination";
 
 import {
@@ -45,18 +47,19 @@ import LocationAutocomplete, { TPlace } from "../sections/LocationAutocomplete";
 
 
 type CurrentLoad = {
-    id: string;
-    loadId: string;
-    origin: string;
-    destination: string[];
-    status: "pending" | "in_transit";
-    pickupAtFrom: string;
+    id?: string;
+    loadId?: string;
+    origin?: string;
+    destination?: string[];
+    status?: string;
+    pickupAtFrom?: string;
     pickupAtTo?: string;
     completedAt?: string;
     arrivalAtReceiver?: string;
     leftReceiver?: string;
     deliveredAt?: string;
-    truckType: string;
+    truckType?: string;
+    tonu?: Record<string, unknown>;
 };
 
 
@@ -70,15 +73,15 @@ type TruckType = {
     truckNumber: string;
     model: string;
 
-    type?: "van" | "reefer";
-    source?: "company" | "other";
+    type?: string;
+    source?: string;
 
     year?: number;
     capacity?: number;
     fuelPerMile?: number;
     totalMileage?: number;
 
-    status?: "available" | "busy" | "inactive";
+    status?: string;
 
     currentLocation?: string;
 
@@ -96,6 +99,9 @@ type Dispatcher = {
     role?: string;
     jobId?: number;
     active?: boolean;
+    position?: string;
+    hireDate?: string;
+    emailVerifiedAt?: string;
 };
 
 type Assignment = {
@@ -129,43 +135,6 @@ type AssignmentsResponse = {
     };
 };
 
-
-const columns: Column[] = [
-    {
-        key: "truck",
-        header: "Truck",
-        width: "16%",
-    },
-    {
-        key: "location",
-        header: "Current Location",
-        width: "20%",
-    },
-    {
-        key: "LOAD TIMELINE",
-        header: "Load Timeline",
-        width: "24%",
-    },
-    {
-        key: "notes",
-        header: "Notes",
-        width: "24%",
-    },
-    {
-        key: "status",
-        header: "Status",
-        width: "12%",
-    },
-    {
-        key: "actions",
-        header: "Actions",
-        width: "8%",
-    },
-];
-
-/* =========================================================
-   HELPERS
-========================================================= */
 
 const unwrapAssignments = (response: unknown): Assignment[] => {
     if (!response) return [];
@@ -206,7 +175,6 @@ const getCityState = (address?: string) => {
 
     if (parts.length < 2) return address;
 
-    // Example: 5656 Kelley St, Houston, TX 77026, USA
     const city = parts[parts.length - 3];
     const state = parts[parts.length - 2]
         ?.replace(/\s+\d{5}(?:-\d{4})?$/, "");
@@ -254,9 +222,6 @@ export default function TruckDispatcher() {
         return () => clearTimeout(timer);
     }, [search]);
 
-    /* =======================================================
-       ADMIN REQUEST
-    ======================================================= */
 
     const {
         data: adminResponse,
@@ -274,8 +239,6 @@ export default function TruckDispatcher() {
             skip: !isAdminOrManager,
         }
     );
-
-
 
     const {
         data: dispatcherResponse,
@@ -312,8 +275,6 @@ export default function TruckDispatcher() {
         [response]
     );
 
-
-
     const adminData = adminResponse as
         | AssignmentsResponse
         | undefined;
@@ -334,10 +295,6 @@ export default function TruckDispatcher() {
                 ),
             }
             : null;
-
-    /* =======================================================
-       LOADING / ERROR
-    ======================================================= */
 
     const isLoading = isAdminOrManager
         ? isAdminLoading || isAdminFetching
@@ -444,60 +401,67 @@ export default function TruckDispatcher() {
             <Box
                 sx={{
                     mb: 2.5,
-
                     p: {
                         xs: 2,
                         md: 2.5,
                     },
-
                     display: "flex",
-
                     alignItems: {
                         xs: "stretch",
                         md: "center",
                     },
 
                     justifyContent: "space-between",
-
                     gap: 2,
-
                     flexWrap: "wrap",
-
                     bgcolor: "background.paper",
-
                     border: "1px solid",
-
                     borderColor: "divider",
-
                     borderRadius: 2,
                 }}
             >
-                <Box>
-                    <Typography
-                        variant="h5"
-                        sx={{
-                            color: "primary.main",
-                            fontWeight: 700,
-                        }}
-                    >
-                        {isAdminOrManager
-                            ? "Truck Dispatcher Assignments"
-                            : "My Trucks"}
-                    </Typography>
+                <Box
+                    sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        flexWrap: "wrap",
+                        gap: 1.5,
+                    }}
+                >
+                    <Box>
+                        <Typography
+                            variant="h5"
+                            sx={{
+                                color: "primary.main",
+                                fontWeight: 700,
+                            }}
+                        >
+                            {isAdminOrManager
+                                ? "Truck Status"
+                                : "My Trucks"}
+                        </Typography>
 
-                    <Typography
-                        variant="body2"
-                        color="text.secondary"
-                    >
-                        {isAdminOrManager
-                            ? "View and manage assigned trucks"
-                            : "View your assigned trucks and details"}
-                    </Typography>
+                        <Typography
+                            variant="body2"
+                            color="text.secondary"
+                        >
+                            {isAdminOrManager
+                                ? "View and manage status trucks"
+                                : "View and manage status trucks and details"}
+                        </Typography>
+                    </Box>
+
+                    <Chip
+                        size="small"
+                        label={`${paginationResult?.total ?? assignments.length} trucks`}
+                        color="primary"
+                        variant="outlined"
+                    />
                 </Box>
 
                 {/* SEARCH */}
 
-                <Box
+                {/* <Box
                     sx={{
                         display: "flex",
                         gap: 1.5,
@@ -541,7 +505,9 @@ export default function TruckDispatcher() {
                             },
                         }}
                     />
-                </Box>
+                </Box> */}
+
+
             </Box>
 
 
@@ -563,232 +529,260 @@ export default function TruckDispatcher() {
 
 
 
-            <DataTable
-                columns={columns}
-                data={assignments}
-                loading={isLoading}
-                renderRow={(assignment: Assignment, index) => {
-                    const NOTES_LIMIT = 40;
-
-                    const displayedNotes = assignment.notes
-                        ? assignment.notes.length > NOTES_LIMIT
-                            ? `${assignment.notes.slice(0, NOTES_LIMIT)}...`
-                            : assignment.notes
-                        : "-";
-
-                    return (
-                        <TableRow
-                            key={assignment.id || index}
-                            hover
-                            onClick={() => openDetails(assignment)}
+            {isLoading ? (
+                <Box
+                    sx={{
+                        display: "grid",
+                        gridTemplateColumns: {
+                            xs: "1fr",
+                            sm: "repeat(2, minmax(0, 1fr))",
+                            md: "repeat(3, minmax(0, 1fr))",
+                            lg: "repeat(4, minmax(0, 1fr))",
+                            xl: "repeat(4, minmax(0, 1fr))",
+                        },
+                        gap: 3,
+                    }}
+                >
+                    {Array.from({ length: 12 }).map((_, index) => (
+                        <Card key={index} variant="outlined" sx={{ borderRadius: 2 }}>
+                            <CardContent sx={{ p: 2 }}>
+                                <Skeleton width="55%" height={28} />
+                                <Skeleton width="75%" />
+                                <Skeleton width="90%" sx={{ mt: 2 }} />
+                                <Skeleton width="65%" />
+                            </CardContent>
+                        </Card>
+                    ))}
+                </Box>
+            ) : assignments.length > 0 ? (
+                <Box
+                    sx={{
+                        display: "grid",
+                        gridTemplateColumns: {
+                            xs: "1fr",
+                            sm: "repeat(2, minmax(0, 1fr))",
+                            md: "repeat(3, minmax(0, 1fr))",
+                            lg: "repeat(4, minmax(0, 1fr))",
+                            xl: "repeat(4, minmax(0, 1fr))",
+                        },
+                        gap: 3,
+                    }}
+                >
+                    {assignments.map((assignment, index) => (
+                        <Card
+                            key={assignment.id || assignment.truck?.id || index}
+                            variant="outlined"
                             sx={{
-                                cursor: "pointer",
-                                "&:last-child td": {
-                                    borderBottom: 0,
-                                },
+                                display: "flex",
+                                flexDirection: "column",
+                                minWidth: 0,
+                                borderRadius: 2,
+                                transition: "box-shadow 0.2s, transform 0.2s",
                                 "&:hover": {
-                                    backgroundColor: "action.hover",
+                                    boxShadow: 3,
+                                    transform: "translateY(-2px)",
                                 },
-                                height: 82,
                             }}
                         >
-                            {/* TRUCK NUMBER + DISPATCHER NAME */}
-                            <TableCell align="center">
-                                <Box
+                            <CardActionArea
+                                onClick={() => openDetails(assignment)}
+                                aria-label={`View details for truck ${assignment.truck?.truckNumber || ""}`}
+                                sx={{ flexGrow: 1, alignItems: "stretch" }}
+                            >
+                                <CardContent
                                     sx={{
                                         display: "flex",
                                         flexDirection: "column",
-                                        alignItems: "center",
-                                        gap: 0.5,
+                                        gap: 1.5,
+                                        p: 2,
+                                        "&:last-child": { pb: 2 },
                                     }}
                                 >
-                                    <Typography
-                                        variant="body2"
-                                        sx={{
-                                            fontWeight: 700,
-                                            color: "primary.main",
-                                        }}
-                                    >
-                                        {assignment.truck?.truckNumber || "-"}
-                                    </Typography>
-
-                                    <Typography
-                                        variant="caption"
-                                        sx={{
-                                            color: "text.secondary",
-                                            fontWeight: 500,
-                                        }}
-                                    >
-                                        {assignment.dispatcher?.name || "-"}
-                                    </Typography>
-                                </Box>
-                            </TableCell>
-
-
-                            {/* CURRENT LOCATION */}
-                            <TableCell align="center" sx={{ py: 2 }}>
-                                {assignment.truck?.currentLocation ? (
                                     <Box
                                         sx={{
                                             display: "flex",
-                                            alignItems: "center",
-                                            gap: 1.5,
-                                            minWidth: 150,
+                                            alignItems: "flex-start",
+                                            justifyContent: "space-between",
+                                            gap: 1,
+                                        }}
+                                    >
+                                        <Box sx={{ minWidth: 0 }}>
+                                            <Typography
+                                                variant="subtitle1"
+                                                fontWeight={700}
+                                                color="primary.main"
+                                                noWrap
+                                                title={assignment.truck?.truckNumber || "-"}
+                                            >
+                                                {assignment.truck?.truckNumber || "Truck"}
+                                            </Typography>
+                                            <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                                noWrap
+                                                title={assignment.truck?.model || ""}
+                                            >
+                                                {assignment.truck?.model || "No model"}
+                                            </Typography>
+                                        </Box>
+                                        <Chip
+                                            size="small"
+                                            label={assignment.status || "-"}
+                                            sx={{
+                                                textTransform: "capitalize",
+                                                color:
+                                                    assignment.status === "active"
+                                                        ? "success.main"
+                                                        : "text.secondary",
+                                                bgcolor: "action.selected",
+                                                border: "1px solid",
+                                                borderColor: "divider",
+                                                fontWeight: 600,
+                                            }}
+                                        />
+                                    </Box>
+
+                                    <Box sx={{ minWidth: 0 }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Dispatcher
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight={600} noWrap>
+                                            {assignment.dispatcher?.name || "-"}
+                                        </Typography>
+                                    </Box>
+
+                                    <Box
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "flex-start",
+                                            gap: 0.75,
+                                            minWidth: 0,
                                         }}
                                     >
                                         <MapPin
-                                            size={17}
+                                            size={16}
                                             color="#1565C0"
-                                            style={{ flexShrink: 0 }}
+                                            style={{ flexShrink: 0, marginTop: 2 }}
                                         />
-
                                         <Typography
                                             variant="body2"
-                                            title={assignment.truck.currentLocation}
+                                            color="text.secondary"
+                                            title={assignment.truck?.currentLocation || ""}
                                             sx={{
-                                                fontWeight: 600,
-                                                color: "primary.main",
-                                                whiteSpace: "nowrap",
+                                                overflow: "hidden",
+                                                display: "-webkit-box",
+                                                WebkitBoxOrient: "vertical",
+                                                WebkitLineClamp: 2,
+                                                overflowWrap: "anywhere",
                                             }}
                                         >
-                                            {getCityState(assignment.truck.currentLocation)}
+                                            {assignment.truck?.currentLocation
+                                                ? getCityState(assignment.truck.currentLocation)
+                                                : "Location unavailable"}
                                         </Typography>
                                     </Box>
-                                ) : (
-                                    <Typography variant="body2" color="text.secondary">
-                                        -
-                                    </Typography>
-                                )}
-                            </TableCell>
 
+                                    <Stack
+                                        direction="row"
+                                        spacing={0.75}
+                                        useFlexGap
+                                        flexWrap="wrap"
+                                    >
+                                        <Chip
+                                            size="small"
+                                            variant="outlined"
+                                            label={`Truck: ${assignment.truck?.status || "-"}`}
+                                        />
+                                        <Chip
+                                            size="small"
+                                            variant="outlined"
+                                            label={assignment.truck?.type || "Type -"}
+                                        />
+                                        {assignment.truck?.year && (
+                                            <Chip
+                                                size="small"
+                                                variant="outlined"
+                                                label={String(assignment.truck.year)}
+                                            />
+                                        )}
+                                    </Stack>
 
+                                    <Box sx={{ minWidth: 0 }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Current load
+                                        </Typography>
+                                        <Typography variant="body2" fontWeight={600} noWrap>
+                                            {assignment.truck?.currentLoad?.loadId || "No load"}
+                                            {assignment.truck?.currentLoad?.status
+                                                ? ` · ${assignment.truck.currentLoad.status}`
+                                                : ""}
+                                        </Typography>
+                                    </Box>
 
-
-                            {/* LOAD TIMELINE */}
-                            <TableCell align="left">
-                                {(() => {
-                                    const timeline = [
-                                        {
-                                            label: "Completed At",
-                                            value: assignment.truck?.currentLoad?.completedAt,
-                                        },
-                                        {
-                                            label: "Arrival At Receiver",
-                                            value: assignment.truck?.currentLoad?.arrivalAtReceiver,
-                                        },
-                                        {
-                                            label: "Left Receiver",
-                                            value: assignment.truck?.currentLoad?.leftReceiver,
-                                        },
-                                        {
-                                            label: "Delivered At",
-                                            value: assignment.truck?.currentLoad?.deliveredAt,
-                                        },
-                                    ].filter(
-                                        (item) =>
-                                            item.value &&
-                                            !Number.isNaN(new Date(item.value).getTime())
-                                    );
-
-                                    if (!timeline.length) return null;
-
-                                    return (
-                                        <Box
-                                            sx={{
-                                                display: "flex",
-                                                flexDirection: "column",
-                                                gap: 1,
-                                                minWidth: 280,
-                                                py: 1,
-                                            }}
+                                    <Box sx={{ minWidth: 0 }}>
+                                        <Typography variant="caption" color="text.secondary">
+                                            Notes
+                                        </Typography>
+                                        <Typography
+                                            variant="body2"
+                                            color="text.secondary"
+                                            title={assignment.notes || "No notes"}
+                                            noWrap
                                         >
-                                            {timeline.map(({ label, value }) => (
-                                                <Box
-                                                    key={label}
-                                                    sx={{
-                                                        display: "flex",
-                                                        alignItems: "center",
-                                                        gap: 1,
-                                                        flexWrap: "wrap",
-                                                    }}
-                                                >
-                                                    <Typography
-                                                        variant="body2"
-                                                        color="text.secondary"
-                                                        sx={{ whiteSpace: "nowrap" }}
-                                                    >
-                                                        {label}:
-                                                    </Typography>
-
-                                                    <Typography
-                                                        variant="body2"
-                                                        fontWeight={600}
-                                                        sx={{ whiteSpace: "nowrap" }}
-                                                    >
-                                                        {formatDate(value)}
-                                                    </Typography>
-                                                </Box>
-                                            ))}
-                                        </Box>
-                                    );
-                                })()}
-                            </TableCell>
-
-
-
-                            {/* NOTES */}
-                            <TableCell align="center">
-                                <Typography
-                                    variant="body2"
-                                    title={assignment.notes || "No notes"}
-                                    sx={{
-                                        maxWidth: 250,
-                                        mx: "auto",
-                                        overflow: "hidden",
-                                        textOverflow: "ellipsis",
-                                        whiteSpace: "nowrap",
-                                    }}
-                                >
-                                    {displayedNotes}
-                                </Typography>
-                            </TableCell>
-
-                            {/* STATUS */}
-                            <TableCell align="center">
-                                <Chip
+                                            {assignment.notes || "No notes"}
+                                        </Typography>
+                                    </Box>
+                                </CardContent>
+                            </CardActionArea>
+                            <CardActions
+                                sx={{
+                                    justifyContent: "flex-end",
+                                    px: 1.5,
+                                    py: 0.5,
+                                    borderTop: "1px solid",
+                                    borderColor: "divider",
+                                }}
+                            >
+                                <Button
                                     size="small"
-                                    label={assignment.status || "-"}
-                                    sx={{
-                                        textTransform: "capitalize",
-                                        color:
-                                            assignment.status === "active"
-                                                ? "success.main"
-                                                : "text.secondary",
-                                        bgcolor: "action.selected",
-                                        border: "1px solid",
-                                        borderColor: "divider",
-                                        fontWeight: 600,
-                                    }}
-                                />
-                            </TableCell>
-
-                            {/* ACTION */}
-                            <TableCell align="center">
-                                <IconButton
-                                    aria-label="Edit assignment"
-                                    size="small"
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        openEdit(assignment);
-                                    }}
+                                    startIcon={<Eye size={16} />}
+                                    onClick={() => openDetails(assignment)}
                                 >
-                                    <Pencil size={18} />
-                                </IconButton>
-                            </TableCell>
-                        </TableRow>
-                    );
-                }}
-            />
+                                    View
+                                </Button>
+                                <Button
+                                    size="small"
+                                    startIcon={<Pencil size={16} />}
+                                    onClick={() => openEdit(assignment)}
+                                >
+                                    Edit
+                                </Button>
+                            </CardActions>
+                        </Card>
+                    ))}
+                </Box>
+            ) : (
+                <Box
+                    sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: 1,
+                        py: 7,
+                        px: 2,
+                        border: "1px solid",
+                        borderColor: "divider",
+                        borderRadius: 2,
+                        textAlign: "center",
+                    }}
+                >
+                    <Truck size={36} color="#9e9e9e" />
+                    <Typography variant="h6">No trucks found</Typography>
+                    <Typography variant="body2" color="text.secondary">
+                        There are no truck assignments to display.
+                    </Typography>
+                </Box>
+            )}
 
             {isAdminOrManager &&
                 paginationResult &&
@@ -861,7 +855,7 @@ export default function TruckDispatcher() {
                                 variant="h6"
                                 fontWeight={700}
                             >
-                                Truck Assignment Details
+                                Truck Details
                             </Typography>
 
                             <Typography
@@ -886,11 +880,8 @@ export default function TruckDispatcher() {
                 {/* CONTENT */}
 
                 <DialogContent dividers>
-
                     {viewingAssignment && (
                         <>
-
-
                             <Box
                                 sx={{
                                     display: "grid",
@@ -901,7 +892,6 @@ export default function TruckDispatcher() {
                                     },
 
                                     gap: 1.5,
-
                                     py: 1,
                                 }}
                             >
@@ -912,7 +902,6 @@ export default function TruckDispatcher() {
                                             .dispatcher
                                             ?.name || "-",
                                     ],
-
                                     [
                                         "Email",
                                         viewingAssignment
@@ -926,12 +915,14 @@ export default function TruckDispatcher() {
                                             .dispatcher
                                             ?.phone || "-",
                                     ],
-
                                     [
-                                        "Job ID",
-                                        viewingAssignment
-                                            .dispatcher
-                                            ?.jobId ?? "-",
+                                        "Hire Date",
+
+                                        formatDate(viewingAssignment.dispatcher?.hireDate),
+                                    ],
+                                    [
+                                        "Email Verified At",
+                                        formatDate(viewingAssignment.dispatcher?.emailVerifiedAt),
                                     ],
 
                                     [
@@ -954,7 +945,22 @@ export default function TruckDispatcher() {
                                             .truck
                                             ?.type || "-",
                                     ],
-
+                                    [
+                                        "Year",
+                                        viewingAssignment.truck?.year ?? "-",
+                                    ],
+                                    [
+                                        "Capacity",
+                                        viewingAssignment.truck?.capacity ?? "-",
+                                    ],
+                                    [
+                                        "Fuel Per Mile",
+                                        viewingAssignment.truck?.fuelPerMile ?? "-",
+                                    ],
+                                    [
+                                        "Total Mileage",
+                                        viewingAssignment.truck?.totalMileage?.toFixed(2) ?? "-",
+                                    ],
                                     [
                                         "Current Location",
                                         viewingAssignment
@@ -975,7 +981,6 @@ export default function TruckDispatcher() {
                                         viewingAssignment
                                             .status || "-",
                                     ],
-
                                     [
                                         "Assigned By",
                                         viewingAssignment
@@ -1083,10 +1088,6 @@ export default function TruckDispatcher() {
                                 </Box>
                             </Box>
 
-                            {/* ============================================
-                  CURRENT LOAD
-              ============================================ */}
-
                             {viewingAssignment
                                 .truck?.currentLoad && (
                                     <Box
@@ -1142,12 +1143,7 @@ export default function TruckDispatcher() {
                                                 <Typography
                                                     fontWeight={600}
                                                 >
-                                                    {
-                                                        viewingAssignment
-                                                            .truck
-                                                            .currentLoad
-                                                            .loadId
-                                                    }
+                                                    {viewingAssignment.truck.currentLoad.loadId || "-"}
                                                 </Typography>
                                             </Box>
 
@@ -1168,10 +1164,10 @@ export default function TruckDispatcher() {
                                                             "capitalize",
                                                     }}
                                                 >
-                                                    {viewingAssignment.truck.currentLoad.status.replace(
+                                                    {viewingAssignment.truck.currentLoad.status?.replaceAll(
                                                         "_",
                                                         " "
-                                                    )}
+                                                    ) || "-"}
                                                 </Typography>
                                             </Box>
 
@@ -1188,12 +1184,7 @@ export default function TruckDispatcher() {
                                                 <Typography
                                                     fontWeight={600}
                                                 >
-                                                    {
-                                                        viewingAssignment
-                                                            .truck
-                                                            .currentLoad
-                                                            .origin
-                                                    }
+                                                    {viewingAssignment.truck.currentLoad.origin || "-"}
                                                 </Typography>
                                             </Box>
 
@@ -1213,6 +1204,48 @@ export default function TruckDispatcher() {
                                                     {viewingAssignment.truck.currentLoad.destination?.join(
                                                         ", "
                                                     ) || "-"}
+                                                </Typography>
+                                            </Box>
+
+                                            <Box>
+                                                <Typography
+                                                    variant="caption"
+                                                    color="text.secondary"
+                                                >
+                                                    Load Record ID
+                                                </Typography>
+                                                <Typography fontWeight={600}>
+                                                    {viewingAssignment.truck.currentLoad.id || "-"}
+                                                </Typography>
+                                            </Box>
+
+                                            <Box>
+                                                <Typography
+                                                    variant="caption"
+                                                    color="text.secondary"
+                                                >
+                                                    Truck Type
+                                                </Typography>
+                                                <Typography fontWeight={600}>
+                                                    {viewingAssignment.truck.currentLoad.truckType || "-"}
+                                                </Typography>
+                                            </Box>
+
+                                            <Box sx={{ gridColumn: { sm: "1 / -1" } }}>
+                                                <Typography
+                                                    variant="caption"
+                                                    color="text.secondary"
+                                                >
+                                                    TONU
+                                                </Typography>
+                                                <Typography
+                                                    fontWeight={600}
+                                                    sx={{ overflowWrap: "anywhere" }}
+                                                >
+                                                    {viewingAssignment.truck.currentLoad.tonu &&
+                                                        Object.keys(viewingAssignment.truck.currentLoad.tonu).length > 0
+                                                        ? JSON.stringify(viewingAssignment.truck.currentLoad.tonu)
+                                                        : "-"}
                                                 </Typography>
                                             </Box>
 
